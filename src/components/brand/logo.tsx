@@ -4,7 +4,6 @@ import Link from "next/link";
 type Props = {
   className?: string;
   priority?: boolean;
-  /** header / footer / mobile */
   size?: "sm" | "md" | "lg";
 };
 
@@ -14,23 +13,26 @@ const sizes = {
   lg: { width: 200, height: 60, className: "h-12 w-auto sm:h-14 md:h-16" },
 };
 
+/**
+ * Transparent logos only:
+ * - light: Pirrahanmardane-logo-T.webp
+ * - dark:  blue_t_bg.webp
+ */
 export function Logo({ className, priority, size = "md" }: Props) {
   const s = sizes[size];
 
   return (
     <Link href="/" className={className} aria-label="پیراهن مردانه">
-      {/* transparent light */}
       <Image
-        src="/brand/logo-light.webp"
+        src="/brand/logo-light-transparent.webp"
         alt="پیراهن مردانه"
         width={s.width}
         height={s.height}
         className={`${s.className} dark:hidden`}
         priority={priority}
       />
-      {/* transparent dark */}
       <Image
-        src="/brand/logo-dark.webp"
+        src="/brand/logo-dark-transparent.webp"
         alt="پیراهن مردانه"
         width={s.width}
         height={s.height}
