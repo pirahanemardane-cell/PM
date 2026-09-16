@@ -117,8 +117,15 @@ export function Footer({
         </div>
 
         {/* Logo frame: border kept, NO fill background on inner */}
-        <div className="border-border/70 absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-3xl border-2 bg-white/55 p-3 shadow-[0_8px_28px_rgba(0,0,0,0.10)] backdrop-blur-2xl backdrop-saturate-150 duration-300 hover:border-foreground supports-[backdrop-filter]:bg-white/45 md:bottom-20 dark:border-white/20 dark:bg-white/15 dark:shadow-[0_8px_28px_rgba(0,0,0,0.40)] dark:supports-[backdrop-filter]:bg-white/10">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-transparent sm:h-16 sm:w-16 md:h-24 md:w-24">
+        <div className="absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center md:bottom-20">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-3xl border-2 border-white/60 p-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:h-20 sm:w-20 md:h-28 md:w-28 dark:border-white/25 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.58)",
+              backdropFilter: "blur(28px) saturate(160%)",
+              WebkitBackdropFilter: "blur(28px) saturate(160%)",
+            }}
+          >
             {brandIcon}
           </div>
         </div>
