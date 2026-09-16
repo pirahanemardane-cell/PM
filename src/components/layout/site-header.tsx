@@ -187,14 +187,12 @@ export function SiteHeader() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link
-                    href="/products"
-                    className="hover:bg-accent rounded-md px-4 py-2 text-sm font-medium"
-                  >
-                    همه محصولات
-                  </Link>
-                </NavigationMenuLink>
+                <Link
+                  href="/products"
+                  className="hover:bg-accent rounded-md px-4 py-2 text-sm font-medium"
+                >
+                  همه محصولات
+                </Link>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -288,26 +286,24 @@ function ListItem({
   ...props
 }: React.ComponentPropsWithoutRef<"a"> & LinkItem) {
   return (
-    <NavigationMenuLink asChild>
-      <Link
-        href={href}
-        className={cn(
-          "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex w-full flex-row gap-x-2 rounded-sm p-2",
-          className
-        )}
-        {...props}
-      >
-        <div className="bg-background/40 flex aspect-square size-12 items-center justify-center rounded-md border shadow-sm">
-          <Icon className="text-foreground size-5" />
-        </div>
-        <div className="flex flex-col items-start justify-center text-start">
-          <span className="font-medium">{title}</span>
-          {description ? (
-            <span className="text-muted-foreground text-xs">{description}</span>
-          ) : null}
-        </div>
-      </Link>
-    </NavigationMenuLink>
+    <Link
+      href={href}
+      className={cn(
+        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex w-full flex-row gap-x-2 rounded-sm p-2",
+        className
+      )}
+      {...props}
+    >
+      <div className="bg-background/40 flex aspect-square size-12 items-center justify-center rounded-md border shadow-sm">
+        <Icon className="text-foreground size-5" />
+      </div>
+      <div className="flex flex-col items-start justify-center text-start">
+        <span className="font-medium">{title}</span>
+        {description ? (
+          <span className="text-muted-foreground text-xs">{description}</span>
+        ) : null}
+      </div>
+    </Link>
   );
 }
 
