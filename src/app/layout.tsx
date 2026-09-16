@@ -68,8 +68,9 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
+          storageKey="pm-theme"
           disableTransitionOnChange
         >
           {children}
