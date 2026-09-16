@@ -305,7 +305,7 @@ export function ProductCard1({
         )}
       </CardContent>
 
-      <CardFooter className="p-3.5 pt-0 sm:p-4 sm:pt-0">
+      <CardFooter className="bg-white p-3.5 pt-0 sm:p-4 sm:pt-0">
         <Button
           type="button"
           className="h-10 w-full rounded-xl text-sm font-medium"
