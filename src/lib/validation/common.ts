@@ -1,8 +1,11 @@
 import { z } from "zod";
+import { normalizePhone, isValidIranianPhone } from "@/lib/numbers";
 
 export const phoneSchema = z
   .string()
-  .regex(/^09\d{9}$/, "شماره موبایل معتبر نیست");
+  .min(1, "شماره موبایل الزامی است")
+  .transform(normalizePhone)
+  .refine(isValidIranianPhone, "شماره موبایل معتبر نیست");
 
 export const emailSchema = z.string().email("ایمیل معتبر نیست");
 
