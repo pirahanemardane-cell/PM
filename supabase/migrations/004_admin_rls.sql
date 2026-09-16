@@ -1,0 +1,2 @@
+-- Admin/Staff RLS policies + is_admin_or_staff()
+-- Applied manually in Supabase SQL Editor
