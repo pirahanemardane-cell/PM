@@ -14,3 +14,22 @@ export function toPersianDigits(value: string | number): string {
   };
   return str.replace(/[0-9]/g, (d) => map[d] ?? d);
 }
+
+export function toEnglishDigits(value: string): string {
+  return value
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
+/** Normalize Iranian mobile to 09xxxxxxxxx */
+export function normalizePhone(input: string): string {
+  let phone = toEnglishDigits(input).replace(/[\s\-()]/g, "");
+  if (phone.startsWith("+98")) phone = "0" + phone.slice(3);
+  if (phone.startsWith("98") && phone.length === 12) phone = "0" + phone.slice(2);
+  return phone;
+}
+
+export function isValidIranianPhone(input: string): boolean {
+  const phone = normalizePhone(input);
+  return /^09\d{9}$/.test(phone);
+}
