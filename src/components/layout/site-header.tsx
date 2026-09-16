@@ -17,7 +17,7 @@ import {
   RotateCcw,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
 import {
@@ -200,12 +200,12 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          <Button variant="outline" asChild>
-            <Link href="/login">ورود</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/products">خرید</Link>
-          </Button>
+          <Link href="/login" className={buttonVariants({ variant: "outline" })}>
+            ورود
+          </Link>
+          <Link href="/products" className={buttonVariants()}>
+            خرید
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -235,16 +235,20 @@ export function SiteHeader() {
           ))}
         </div>
         <div className="flex flex-col gap-2">
-          <Button variant="outline" className="w-full bg-transparent" asChild>
-            <Link href="/login" onClick={() => setOpen(false)}>
-              ورود
-            </Link>
-          </Button>
-          <Button className="w-full" asChild>
-            <Link href="/products" onClick={() => setOpen(false)}>
-              خرید
-            </Link>
-          </Button>
+          <Link
+            href="/login"
+            onClick={() => setOpen(false)}
+            className={buttonVariants({ variant: "outline", className: "w-full bg-transparent" })}
+          >
+            ورود
+          </Link>
+          <Link
+            href="/products"
+            onClick={() => setOpen(false)}
+            className={buttonVariants({ className: "w-full" })}
+          >
+            خرید
+          </Link>
         </div>
       </MobileMenu>
     </header>
