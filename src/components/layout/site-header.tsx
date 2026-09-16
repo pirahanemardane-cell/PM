@@ -170,7 +170,7 @@ export function SiteHeader() {
                     <ul className="space-y-1 p-2">
                       {legalLinks.map((item) => (
                         <li key={item.href}>
-                          <NavigationMenuLink asChild>
+                          <NavigationMenuLink>
                             <Link
                               href={item.href}
                               className="hover:bg-accent flex flex-row items-center gap-x-2 rounded-md p-2"
