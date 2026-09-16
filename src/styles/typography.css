@@ -1,0 +1,243 @@
+/* =========================================================
+   TYPOGRAPHY ONLY — IRANYekanX + Material 3 type roles
+   License: E0QI1G9U
+   No color tokens here.
+   ========================================================= */
+
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Heavy.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-sans: "IRANYekanX", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "IRANYekanX", ui-sans-serif, system-ui, sans-serif;
+
+  /* Display */
+  --type-display-lg-size: 3.5625rem;
+  --type-display-lg-line: 4rem;
+  --type-display-md-size: 2.8125rem;
+  --type-display-md-line: 3.25rem;
+  --type-display-sm-size: 2.25rem;
+  --type-display-sm-line: 2.75rem;
+
+  /* Headline */
+  --type-headline-lg-size: 2rem;
+  --type-headline-lg-line: 2.5rem;
+  --type-headline-md-size: 1.75rem;
+  --type-headline-md-line: 2.25rem;
+  --type-headline-sm-size: 1.5rem;
+  --type-headline-sm-line: 2rem;
+
+  /* Title */
+  --type-title-lg-size: 1.375rem;
+  --type-title-lg-line: 1.75rem;
+  --type-title-md-size: 1rem;
+  --type-title-md-line: 1.5rem;
+  --type-title-sm-size: 0.875rem;
+  --type-title-sm-line: 1.25rem;
+
+  /* Body */
+  --type-body-lg-size: 1rem;
+  --type-body-lg-line: 1.5rem;
+  --type-body-md-size: 0.875rem;
+  --type-body-md-line: 1.25rem;
+  --type-body-sm-size: 0.75rem;
+  --type-body-sm-line: 1rem;
+
+  /* Label */
+  --type-label-lg-size: 0.875rem;
+  --type-label-lg-line: 1.25rem;
+  --type-label-md-size: 0.75rem;
+  --type-label-md-line: 1rem;
+  --type-label-sm-size: 0.6875rem;
+  --type-label-sm-line: 1rem;
+
+  --type-weight-regular: 400;
+  --type-weight-medium: 500;
+  --type-weight-extrabold: 800;
+  --type-weight-heavy: 900;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  font-weight: var(--type-weight-regular);
+}
+
+h1 {
+  font-family: var(--font-heading);
+  font-size: var(--type-headline-lg-size);
+  line-height: var(--type-headline-lg-line);
+  font-weight: var(--type-weight-regular);
+}
+
+h2 {
+  font-family: var(--font-heading);
+  font-size: var(--type-headline-md-size);
+  line-height: var(--type-headline-md-line);
+  font-weight: var(--type-weight-regular);
+}
+
+h3 {
+  font-family: var(--font-heading);
+  font-size: var(--type-headline-sm-size);
+  line-height: var(--type-headline-sm-line);
+  font-weight: var(--type-weight-regular);
+}
+
+h4 {
+  font-family: var(--font-heading);
+  font-size: var(--type-title-lg-size);
+  line-height: var(--type-title-lg-line);
+  font-weight: var(--type-weight-regular);
+}
+
+h5 {
+  font-family: var(--font-heading);
+  font-size: var(--type-title-md-size);
+  line-height: var(--type-title-md-line);
+  font-weight: var(--type-weight-medium);
+}
+
+h6 {
+  font-family: var(--font-heading);
+  font-size: var(--type-title-sm-size);
+  line-height: var(--type-title-sm-line);
+  font-weight: var(--type-weight-medium);
+}
+
+button,
+[data-slot="button"] {
+  font-family: var(--font-sans);
+  font-size: var(--type-label-lg-size);
+  line-height: var(--type-label-lg-line);
+  font-weight: var(--type-weight-medium);
+}
+
+input,
+textarea,
+select {
+  font-family: var(--font-sans);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  font-weight: var(--type-weight-regular);
+}
+
+label {
+  font-family: var(--font-sans);
+  font-size: var(--type-label-lg-size);
+  line-height: var(--type-label-lg-line);
+  font-weight: var(--type-weight-medium);
+}
+
+.type-display-lg {
+  font-size: var(--type-display-lg-size);
+  line-height: var(--type-display-lg-line);
+  font-weight: 400;
+}
+.type-display-md {
+  font-size: var(--type-display-md-size);
+  line-height: var(--type-display-md-line);
+  font-weight: 400;
+}
+.type-display-sm {
+  font-size: var(--type-display-sm-size);
+  line-height: var(--type-display-sm-line);
+  font-weight: 400;
+}
+.type-headline-lg {
+  font-size: var(--type-headline-lg-size);
+  line-height: var(--type-headline-lg-line);
+  font-weight: 400;
+}
+.type-headline-md {
+  font-size: var(--type-headline-md-size);
+  line-height: var(--type-headline-md-line);
+  font-weight: 400;
+}
+.type-headline-sm {
+  font-size: var(--type-headline-sm-size);
+  line-height: var(--type-headline-sm-line);
+  font-weight: 400;
+}
+.type-title-lg {
+  font-size: var(--type-title-lg-size);
+  line-height: var(--type-title-lg-line);
+  font-weight: 400;
+}
+.type-title-md {
+  font-size: var(--type-title-md-size);
+  line-height: var(--type-title-md-line);
+  font-weight: 500;
+}
+.type-title-sm {
+  font-size: var(--type-title-sm-size);
+  line-height: var(--type-title-sm-line);
+  font-weight: 500;
+}
+.type-body-lg {
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line);
+  font-weight: 400;
+}
+.type-body-md {
+  font-size: var(--type-body-md-size);
+  line-height: var(--type-body-md-line);
+  font-weight: 400;
+}
+.type-body-sm {
+  font-size: var(--type-body-sm-size);
+  line-height: var(--type-body-sm-line);
+  font-weight: 400;
+}
+.type-label-lg {
+  font-size: var(--type-label-lg-size);
+  line-height: var(--type-label-lg-line);
+  font-weight: 500;
+}
+.type-label-md {
+  font-size: var(--type-label-md-size);
+  line-height: var(--type-label-md-line);
+  font-weight: 500;
+}
+.type-label-sm {
+  font-size: var(--type-label-sm-size);
+  line-height: var(--type-label-sm-line);
+  font-weight: 500;
+}
