@@ -40,13 +40,13 @@ export function Footer({
 }: FooterProps) {
   return (
     <section className={cn("relative mt-0 w-full overflow-hidden", className)}>
-      <footer className="border-t bg-background relative mt-12">
+      <footer className="border-t bg-background relative mt-20">
         <div className="relative mx-auto flex min-h-[30rem] w-full max-w-7xl flex-col justify-between p-4 py-10 sm:min-h-[35rem] md:min-h-[40rem]">
-          <div className="mb-6 flex w-full flex-col sm:mb-10 md:mb-0">
+          <div className="mb-12 flex w-full flex-col sm:mb-20 md:mb-0">
             <div className="flex w-full flex-col items-center">
               <div className="flex flex-1 flex-col items-center space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-foreground text-3xl font-bold whitespace-nowrap">
+                  <span className="text-foreground whitespace-nowrap text-3xl font-bold">
                     {brandName}
                   </span>
                 </div>
@@ -90,7 +90,7 @@ export function Footer({
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col items-center justify-center gap-2 px-4 md:mt-12 md:flex-row md:items-center md:justify-between md:gap-1 md:px-0">
+          <div className="mt-20 flex flex-col items-center justify-center gap-2 px-4 md:mt-24 md:flex-row md:items-center md:justify-between md:gap-1 md:px-0">
             <p className="text-muted-foreground text-center text-base md:text-start">
               ©{new Date().getFullYear()} {brandName}. تمامی حقوق محفوظ است.
             </p>
@@ -108,22 +108,23 @@ export function Footer({
           </div>
         </div>
 
-        {/* Large background text — English, single line */}
+        {/* Large background text */}
         <div
-          className="from-foreground/20 via-foreground/10 pointer-events-none absolute bottom-32 left-1/2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap bg-gradient-to-b to-transparent bg-clip-text px-4 text-center leading-none font-extrabold tracking-tighter text-transparent select-none md:bottom-24"
+          className="from-foreground/20 via-foreground/10 pointer-events-none absolute bottom-40 left-1/2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap bg-gradient-to-b to-transparent bg-clip-text px-4 text-center leading-none font-extrabold tracking-tighter text-transparent select-none md:bottom-32"
           style={{ fontSize: "clamp(2rem, 8vw, 7rem)" }}
         >
           {watermarkName}
         </div>
 
-        <div className="absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center md:bottom-14">
-          <div className="flex items-center justify-center bg-transparent">
+        {/* Logo frame: border kept, NO fill background on inner */}
+        <div className="border-border bg-background/60 absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-3xl border-2 p-3 drop-shadow-[0_0px_20px_rgba(0,0,0,0.5)] backdrop-blur-sm duration-300 hover:border-foreground md:bottom-20 dark:drop-shadow-[0_0px_20px_rgba(255,255,255,0.3)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-transparent sm:h-16 sm:w-16 md:h-24 md:w-24">
             {brandIcon}
           </div>
         </div>
 
-        <div className="via-border absolute bottom-24 left-1/2 h-1 w-full -translate-x-1/2 bg-gradient-to-r from-transparent to-transparent backdrop-blur-sm sm:bottom-26" />
-        <div className="from-background via-background/80 to-background/40 absolute bottom-20 h-16 w-full bg-gradient-to-t blur-[1em]" />
+        <div className="via-border absolute bottom-32 left-1/2 h-1 w-full -translate-x-1/2 bg-gradient-to-r from-transparent to-transparent backdrop-blur-sm sm:bottom-34" />
+        <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
       </footer>
     </section>
   );
