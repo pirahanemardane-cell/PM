@@ -116,8 +116,8 @@ export function Footer({
           {watermarkName}
         </div>
 
-        <div className="bg-background/60 absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-3xl border-2 border-border p-3 backdrop-blur-sm duration-300 hover:border-foreground md:bottom-14">
-          <div className="from-foreground to-foreground/80 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg sm:h-16 sm:w-16 md:h-24 md:w-24">
+        <div className="absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center md:bottom-14">
+          <div className="flex items-center justify-center bg-transparent">
             {brandIcon}
           </div>
         </div>
