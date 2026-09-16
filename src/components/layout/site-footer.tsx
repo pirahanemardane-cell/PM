@@ -1,68 +1,67 @@
-import Link from "next/link";
-import { Logo } from "@/components/brand/logo";
+"use client";
+
+import Image from "next/image";
+import { Mail, Phone } from "lucide-react";
+import { Footer } from "@/components/ui/modem-animated-footer";
+
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
 
 export function SiteFooter() {
-  const year = new Date().getFullYear();
-
   return (
-    <footer className="mt-auto border-t">
-      <div className="container mx-auto grid gap-8 px-4 py-10 md:grid-cols-3">
-        <div className="space-y-3">
-          <Logo />
-          <p className="text-muted-foreground text-sm leading-7">
-            فروشگاه تخصصی پیراهن مردانه — رسمی، اسپرت، کروات و اکسسوری.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold">دسترسی سریع</h3>
-          <ul className="text-muted-foreground space-y-2 text-sm">
-            <li>
-              <Link href="/products" className="hover:text-foreground">
-                همه محصولات
-              </Link>
-            </li>
-            <li>
-              <Link href="/products?featured=true" className="hover:text-foreground">
-                محصولات ویژه
-              </Link>
-            </li>
-            <li>
-              <Link href="/size-guide" className="hover:text-foreground">
-                راهنمای سایز
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold">پشتیبانی</h3>
-          <ul className="text-muted-foreground space-y-2 text-sm">
-            <li>
-              <Link href="/shipping" className="hover:text-foreground">
-                ارسال و تحویل
-              </Link>
-            </li>
-            <li>
-              <Link href="/returns" className="hover:text-foreground">
-                مرجوعی و تعویض
-              </Link>
-            </li>
-            <li>
-              <Link href="/faq" className="hover:text-foreground">
-                سوالات متداول
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="border-t">
-        <div className="text-muted-foreground container mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs">
-          <span>© {year} پیراهن مردانه</span>
-          <span>تمامی حقوق محفوظ است</span>
-        </div>
-      </div>
-    </footer>
+    <Footer
+      brandName="پیراهن مردانه"
+      brandDescription="فروشگاه تخصصی پیراهن مردانه — رسمی، اسپرت، کروات، پاپیون و اکسسوری"
+      socialLinks={[
+        {
+          icon: <InstagramIcon className="h-6 w-6" />,
+          href: "https://instagram.com",
+          label: "اینستاگرام",
+        },
+        {
+          icon: <Mail className="h-6 w-6" />,
+          href: "mailto:info@pirahanmardane.ir",
+          label: "ایمیل",
+        },
+        {
+          icon: <Phone className="h-6 w-6" />,
+          href: "tel:+980000000000",
+          label: "تلفن",
+        },
+      ]}
+      navLinks={[
+        { label: "محصولات", href: "/products" },
+        { label: "راهنمای سایز", href: "/size-guide" },
+        { label: "ارسال", href: "/shipping" },
+        { label: "مرجوعی", href: "/returns" },
+        { label: "حریم خصوصی", href: "/privacy" },
+        { label: "تماس", href: "/contact" },
+      ]}
+      brandIcon={
+        <Image
+          src="/brand/logo-light.webp"
+          alt="پیراهن مردانه"
+          width={80}
+          height={80}
+          className="h-10 w-auto object-contain sm:h-12 md:h-16"
+        />
+      }
+    />
   );
 }
