@@ -1,0 +1,2 @@
+-- Seed data already applied manually in Supabase SQL Editor
+-- categories: 14 | brands: 2 | attributes: 11 | options: 40 | size_guides: 1 | rows: 5
