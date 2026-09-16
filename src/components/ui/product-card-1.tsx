@@ -128,7 +128,7 @@ export function ProductCard1({
               type="button"
               variant="secondary"
               size="icon"
-              className="bg-background/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
               onClick={prevImage}
             >
               <ChevronRight className="h-4 w-4" />
@@ -137,7 +137,7 @@ export function ProductCard1({
               type="button"
               variant="secondary"
               size="icon"
-              className="bg-background/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
               onClick={nextImage}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -156,7 +156,7 @@ export function ProductCard1({
                   "h-1.5 rounded-full transition-all",
                   index === currentImageIndex
                     ? "bg-primary w-4"
-                    : "bg-background/70 w-1.5"
+                    : "bg-whitend/70 w-1.5"
                 )}
                 onClick={(e) => {
                   e.preventDefault();
@@ -193,7 +193,7 @@ export function ProductCard1({
           variant="secondary"
           size="icon"
           className={cn(
-            "bg-background/90 absolute top-2.5 end-2.5 h-8 w-8 rounded-full border-0 shadow-sm backdrop-blur-sm",
+            "bg-whitend/90 absolute top-2.5 end-2.5 h-8 w-8 rounded-full border-0 shadow-sm backdrop-blur-sm",
             isWishlisted && "text-rose-500"
           )}
           onClick={(e) => {
