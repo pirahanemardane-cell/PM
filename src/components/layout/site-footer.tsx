@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { Mail, Phone } from "lucide-react";
 import { Footer } from "@/components/ui/modem-animated-footer";
+import { Logo } from "@/components/brand/logo";
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -54,15 +54,7 @@ export function SiteFooter() {
         { label: "حریم خصوصی", href: "/privacy" },
         { label: "تماس", href: "/contact" },
       ]}
-      brandIcon={
-        <Image
-          src="/brand/logo-light.webp"
-          alt="پیراهن مردانه"
-          width={80}
-          height={80}
-          className="h-10 w-auto object-contain sm:h-12 md:h-16"
-        />
-      }
+      brandIcon={<Logo size="lg" className="pointer-events-none" />}
     />
   );
 }
