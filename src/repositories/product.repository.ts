@@ -1,5 +1,6 @@
 import { BaseRepository } from "./base.repository";
 import type { Product, ProductVariant, ProductImage } from "@/types/database";
+import type { ProductFilterInput } from "@/lib/validation/product";
 
 export type ProductWithRelations = Product & {
   brand?: { id: string; name: string; slug: string } | null;
@@ -9,15 +10,10 @@ export type ProductWithRelations = Product & {
 };
 
 export class ProductRepository extends BaseRepository {
-  async findPublished(options?: {
-    page?: number;
-    pageSize?: number;
-    categorySlug?: string;
-    featured?: boolean;
-  }) {
+  async findPublished(filters: ProductFilterInput = { page: 1, pageSize: 12 }) {
     const client = await this.getClient();
-    const page = options?.page ?? 1;
-    const pageSize = options?.pageSize ?? 12;
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 12;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -34,37 +30,82 @@ export class ProductRepository extends BaseRepository {
         { count: "exact" }
       )
       .eq("status", "published")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .range(from, to);
+      .is("deleted_at", null);
 
-    if (options?.featured) {
-      query = query.eq("is_featured", true);
-    }
-
-    if (options?.categorySlug) {
+    // دسته‌بندی
+    if (filters.categorySlug) {
       const { data: category } = await client
         .from("categories")
         .select("id")
-        .eq("slug", options.categorySlug)
+        .eq("slug", filters.categorySlug)
         .eq("is_active", true)
-        .single();
-
-      if (category) {
-        query = query.eq("category_id", category.id);
-      }
+        .maybeSingle();
+      if (category) query = query.eq("category_id", category.id);
     }
 
-    const { data, error, count } = await query;
+    // برند
+    if (filters.brandSlug) {
+      const { data: brand } = await client
+        .from("brands")
+        .select("id")
+        .eq("slug", filters.brandSlug)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (brand) query = query.eq("brand_id", brand.id);
+    }
 
+    // فلگ‌ها
+    if (filters.featured === true) query = query.eq("is_featured", true);
+    if (filters.isNew === true) query = query.eq("is_new", true);
+    if (filters.bestseller === true) query = query.eq("is_bestseller", true);
+
+    // جستجو
+    if (filters.q) {
+      query = query.ilike("name", `%${filters.q}%`);
+    }
+
+    // مرتب‌سازی
+    switch (filters.sort) {
+      case "price_asc":
+      case "price_desc":
+        // مرتب‌سازی دقیق قیمت نیاز به view دارد؛ فعلاً newest
+        query = query.order("created_at", { ascending: false });
+        break;
+      case "popular":
+        query = query.order("review_count", { ascending: false });
+        break;
+      default:
+        query = query.order("created_at", { ascending: false });
+    }
+
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
     if (error) throw error;
 
+    let items = (data ?? []) as ProductWithRelations[];
+
+    // فیلتر سمت اپ برای سایز / رنگ / موجودی / قیمت (روی variants)
+    if (filters.sizeId || filters.colorId || filters.inStock || filters.minPrice != null || filters.maxPrice != null) {
+      items = items.filter((p) => {
+        const variants = (p.variants ?? []).filter((v) => v.is_active);
+        return variants.some((v) => {
+          if (filters.sizeId && v.size_id !== filters.sizeId) return false;
+          if (filters.colorId && v.color_id !== filters.colorId) return false;
+          if (filters.inStock && v.stock_quantity <= 0) return false;
+          if (filters.minPrice != null && Number(v.price) < filters.minPrice) return false;
+          if (filters.maxPrice != null && Number(v.price) > filters.maxPrice) return false;
+          return true;
+        });
+      });
+    }
+
     return {
-      data: (data ?? []) as ProductWithRelations[],
-      total: count ?? 0,
+      data: items,
+      total: count ?? items.length,
       page,
       pageSize,
-      totalPages: Math.ceil((count ?? 0) / pageSize),
+      totalPages: Math.ceil((count ?? items.length) / pageSize),
     };
   }
 
