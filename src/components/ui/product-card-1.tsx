@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
+import { cn } from "@/lib/utils";
 
 export interface ProductCard1Props {
   href?: string;
@@ -32,11 +33,11 @@ export interface ProductCard1Props {
   isBestSeller?: boolean;
   discount?: number;
   freeShipping?: boolean;
-  currencyLabel?: string;
+  className?: string;
 }
 
 function formatToman(price: number) {
-  return toPersianDigits(price.toLocaleString("en-US")) + " تومان";
+  return toPersianDigits(Math.round(price).toLocaleString("en-US")) + " تومان";
 }
 
 export function ProductCard1({
@@ -54,8 +55,12 @@ export function ProductCard1({
   isBestSeller = false,
   discount = 0,
   freeShipping = false,
+  className,
 }: ProductCard1Props) {
-  const safeImages = images.length > 0 ? images : ["/brand/logo-light-transparent.webp"];
+  const safeImages =
+    images.length > 0 ? images : [];
+  const hasImage = safeImages.length > 0;
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(colors[0] ?? "");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -66,12 +71,14 @@ export function ProductCard1({
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!hasImage) return;
     setCurrentImageIndex((prev) => (prev + 1) % safeImages.length);
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!hasImage) return;
     setCurrentImageIndex(
       (prev) => (prev - 1 + safeImages.length) % safeImages.length
     );
@@ -89,26 +96,39 @@ export function ProductCard1({
     }, 800);
   };
 
-  const body = (
-    <Card className="group bg-card text-foreground w-full max-w-sm overflow-hidden rounded-md shadow-xl transition-all duration-300 hover:shadow-lg">
-      <div className="relative aspect-[3/4] overflow-hidden">
-        <motion.img
-          key={currentImageIndex}
-          src={safeImages[currentImageIndex]}
-          alt={`${name} - ${currentImageIndex + 1}`}
-          className="h-full w-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        />
+  const card = (
+    <Card
+      className={cn(
+        "group bg-card text-foreground w-full overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        className
+      )}
+    >
+      {/* Image */}
+      <div className="bg-muted/40 relative aspect-[3/4] overflow-hidden">
+        {hasImage ? (
+          <motion.img
+            key={currentImageIndex}
+            src={safeImages[currentImageIndex]}
+            alt={name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          />
+        ) : (
+          <div className="text-muted-foreground flex h-full w-full items-center justify-center px-4 text-center text-sm">
+            بدون تصویر
+          </div>
+        )}
 
+        {/* Arrows — only if multiple images */}
         {safeImages.length > 1 && (
-          <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between px-2 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
               type="button"
               variant="secondary"
               size="icon"
-              className="bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              className="bg-background/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
               onClick={prevImage}
             >
               <ChevronRight className="h-4 w-4" />
@@ -117,7 +137,7 @@ export function ProductCard1({
               type="button"
               variant="secondary"
               size="icon"
-              className="bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              className="bg-background/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
               onClick={nextImage}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -125,17 +145,19 @@ export function ProductCard1({
           </div>
         )}
 
+        {/* Dots */}
         {safeImages.length > 1 && (
-          <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1.5">
+          <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
             {safeImages.map((_, index) => (
               <button
                 key={index}
                 type="button"
-                className={`h-1.5 rounded-full transition-all ${
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
                   index === currentImageIndex
                     ? "bg-primary w-4"
-                    : "bg-primary/30 w-1.5"
-                }`}
+                    : "bg-background/70 w-1.5"
+                )}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -146,141 +168,147 @@ export function ProductCard1({
           </div>
         )}
 
-        <div className="absolute top-3 start-3 flex flex-col gap-2">
+        {/* Badges — start (RTL right) */}
+        <div className="absolute top-2.5 start-2.5 flex flex-col gap-1.5">
           {isNew && (
-            <Badge className="bg-blue-500 hover:bg-blue-500/90">جدید</Badge>
+            <Badge className="rounded-full border-0 bg-blue-600 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              جدید
+            </Badge>
           )}
           {isBestSeller && (
-            <Badge className="bg-amber-500 hover:bg-amber-500/90">
+            <Badge className="rounded-full border-0 bg-amber-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
               پرفروش
             </Badge>
           )}
           {discount > 0 && (
-            <Badge className="bg-rose-500 hover:bg-rose-500/90">
+            <Badge className="rounded-full border-0 bg-rose-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
               ٪{toPersianDigits(String(discount))}-
             </Badge>
           )}
         </div>
 
+        {/* Wishlist — end (RTL left) */}
         <Button
           type="button"
           variant="secondary"
           size="icon"
-          className={`bg-background/80 absolute top-3 end-3 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm ${
-            isWishlisted ? "text-rose-500" : ""
-          }`}
+          className={cn(
+            "bg-background/90 absolute top-2.5 end-2.5 h-8 w-8 rounded-full border-0 shadow-sm backdrop-blur-sm",
+            isWishlisted && "text-rose-500"
+          )}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setIsWishlisted((v) => !v);
           }}
+          aria-label="علاقه‌مندی"
         >
-          <Heart
-            className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
-          />
+          <Heart className={cn("h-4 w-4", isWishlisted && "fill-rose-500")} />
         </Button>
       </div>
 
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div>
-            {brand ? (
-              <p className="text-muted-foreground text-xs">{brand}</p>
-            ) : null}
-            <h3 className="line-clamp-1 font-medium">{name}</h3>
-            <div className="mt-1 flex items-center gap-2">
+      {/* Content — balanced spacing */}
+      <CardContent className="space-y-3 p-3.5 sm:p-4">
+        <div className="space-y-1">
+          {brand ? (
+            <p className="text-muted-foreground text-[11px] leading-4 tracking-wide">
+              {brand}
+            </p>
+          ) : null}
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px]">
+            {name}
+          </h3>
+
+          {(rating > 0 || freeShipping) && (
+            <div className="flex items-center gap-2 pt-0.5">
               {rating > 0 && (
-                <div className="flex items-center">
+                <div className="flex items-center gap-1">
                   <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                  <span className="me-1 text-sm font-medium">
+                  <span className="text-xs font-medium">
                     {toPersianDigits(rating.toFixed(1))}
                   </span>
+                  {reviewCount > 0 && (
+                    <span className="text-muted-foreground text-[11px]">
+                      ({toPersianDigits(String(reviewCount))})
+                    </span>
+                  )}
                 </div>
               )}
-              {reviewCount > 0 && (
-                <span className="text-muted-foreground text-xs">
-                  ({toPersianDigits(String(reviewCount))} نظر)
-                </span>
-              )}
               {freeShipping && (
-                <span className="ms-auto text-xs text-emerald-600">
+                <span className="ms-auto text-[11px] font-medium text-emerald-600">
                   ارسال رایگان
                 </span>
               )}
             </div>
-          </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold">{formatToman(price)}</span>
-            {originalPrice != null && originalPrice > price && (
-              <span className="text-muted-foreground text-sm line-through">
-                {formatToman(originalPrice)}
-              </span>
-            )}
-          </div>
-
-          {(colors.length > 0 || sizes.length > 0) && (
-            <div className="space-y-3">
-              {colors.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="text-muted-foreground text-xs">رنگ</div>
-                  <div className="flex gap-2">
-                    {colors.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`h-6 w-6 rounded-full transition-all ${
-                          selectedColor === color
-                            ? "ring-primary ring-2 ring-offset-2"
-                            : "ring-muted hover:ring-primary ring-1"
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedColor(color);
-                        }}
-                        aria-label={`رنگ ${color}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {sizes.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="text-muted-foreground text-xs">سایز</div>
-                  <div className="flex flex-wrap gap-2">
-                    {sizes.map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        className={`h-8 min-w-[2.5rem] rounded-md px-2 text-xs font-medium transition-all ${
-                          selectedSize === size
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/60 hover:bg-muted"
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedSize(size);
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           )}
         </div>
+
+        {/* Price */}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-bold tracking-tight sm:text-[17px]">
+            {formatToman(price)}
+          </span>
+          {originalPrice != null && originalPrice > price && (
+            <span className="text-muted-foreground text-xs line-through">
+              {formatToman(originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Colors / sizes — compact, only if data exists */}
+        {colors.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {colors.slice(0, 5).map((color) => (
+              <button
+                key={color}
+                type="button"
+                className={cn(
+                  "h-5 w-5 rounded-full border border-black/5 transition-all",
+                  selectedColor === color
+                    ? "ring-primary ring-2 ring-offset-1"
+                    : "hover:ring-muted-foreground/30 hover:ring-1"
+                )}
+                style={{ backgroundColor: color }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedColor(color);
+                }}
+                aria-label={`رنگ ${color}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {sizes.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {sizes.slice(0, 6).map((size) => (
+              <button
+                key={size}
+                type="button"
+                className={cn(
+                  "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
+                  selectedSize === size
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/70 text-foreground hover:bg-muted"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedSize(size);
+                }}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-3.5 pt-0 sm:p-4 sm:pt-0">
         <Button
           type="button"
-          className="w-full"
+          className="h-10 w-full rounded-xl text-sm font-medium"
           onClick={handleAddToCart}
           disabled={isAddingToCart || isAddedToCart}
         >
@@ -292,7 +320,7 @@ export function ProductCard1({
           ) : isAddedToCart ? (
             <>
               <Check className="ms-2 h-4 w-4" />
-              به سبد اضافه شد
+              اضافه شد
             </>
           ) : (
             <>
@@ -307,11 +335,11 @@ export function ProductCard1({
 
   if (href) {
     return (
-      <Link href={href} className="block w-full max-w-sm">
-        {body}
+      <Link href={href} className="block w-full outline-none">
+        {card}
       </Link>
     );
   }
 
-  return body;
+  return card;
 }
