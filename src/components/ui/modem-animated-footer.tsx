@@ -17,6 +17,7 @@ interface SocialLink {
 
 interface FooterProps {
   brandName?: string;
+  watermarkName?: string;
   brandDescription?: string;
   socialLinks?: SocialLink[];
   navLinks?: FooterLink[];
@@ -28,7 +29,8 @@ interface FooterProps {
 
 export function Footer({
   brandName = "پیراهن مردانه",
-  brandDescription = "فروشگاه تخصصی پیراهن مردانه، کروات، پاپیون و اکسسوری",
+  watermarkName = "PirahanMardane",
+  brandDescription = "فروشگاه تخصصی پیراهن مردانه — رسمی، اسپرت، کروات، پاپیون و اکسسوری",
   socialLinks = [],
   navLinks = [],
   creatorName,
@@ -44,11 +46,11 @@ export function Footer({
             <div className="flex w-full flex-col items-center">
               <div className="flex flex-1 flex-col items-center space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-foreground text-3xl font-bold">
+                  <span className="text-foreground text-3xl font-bold whitespace-nowrap">
                     {brandName}
                   </span>
                 </div>
-                <p className="text-muted-foreground w-full max-w-sm px-4 text-center font-semibold sm:w-96 sm:px-0">
+                <p className="text-muted-foreground max-w-4xl px-4 text-center text-sm font-semibold whitespace-nowrap sm:text-base">
                   {brandDescription}
                 </p>
               </div>
@@ -106,11 +108,12 @@ export function Footer({
           </div>
         </div>
 
+        {/* Large background text — English, single line */}
         <div
-          className="from-foreground/20 via-foreground/10 pointer-events-none absolute bottom-40 left-1/2 max-w-[95vw] -translate-x-1/2 bg-gradient-to-b to-transparent bg-clip-text px-4 text-center leading-none font-extrabold tracking-tighter text-transparent select-none md:bottom-32"
-          style={{ fontSize: "clamp(2.5rem, 10vw, 8rem)" }}
+          className="from-foreground/20 via-foreground/10 pointer-events-none absolute bottom-40 left-1/2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap bg-gradient-to-b to-transparent bg-clip-text px-4 text-center leading-none font-extrabold tracking-tighter text-transparent select-none md:bottom-32"
+          style={{ fontSize: "clamp(2rem, 8vw, 7rem)" }}
         >
-          {brandName}
+          {watermarkName}
         </div>
 
         <div className="bg-background/60 absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-3xl border-2 border-border p-3 backdrop-blur-sm duration-300 hover:border-foreground md:bottom-20">

@@ -27,6 +27,7 @@ export function SiteFooter() {
   return (
     <Footer
       brandName="پیراهن مردانه"
+      watermarkName="PirahanMardane"
       brandDescription="فروشگاه تخصصی پیراهن مردانه — رسمی، اسپرت، کروات، پاپیون و اکسسوری"
       socialLinks={[
         {
