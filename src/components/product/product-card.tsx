@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ProductCard as ProductCardUI } from "@/components/ui/product-card-1";
+import { ProductCard1 as ProductCardUI } from "@/components/ui/product-card-1";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 
 type Props = {
@@ -23,7 +23,9 @@ export function ProductCard({ product }: Props) {
   const price = prices.length ? Math.min(...prices) : 0;
 
   const compares = variants
-    .map((v) => Number((v as { compare_at_price?: number | null }).compare_at_price))
+    .map((v) =>
+      Number((v as { compare_at_price?: number | null }).compare_at_price)
+    )
     .filter((n) => !Number.isNaN(n) && n > 0);
   const originalPrice = compares.length ? Math.max(...compares) : price;
 
@@ -48,32 +50,32 @@ export function ProductCard({ product }: Props) {
     ),
   ];
 
-  const card = (
-    <ProductCardUI
-      name={product.name}
-      price={price}
-      originalPrice={originalPrice}
-      rating={4.8}
-      reviewCount={0}
-      images={
-        images.length
-          ? images
-          : [
-              "https://cdn.21st.dev/assets/mirror/ad/ade63a3c4df44b7c8e7277a749d732494e317e8289fd2ed72d57de841ff63896.jpg",
-            ]
-      }
-      colors={colors.length ? colors : ["#1e293b", "#a855f7", "#0ea5e9", "#84cc16"]}
-      sizes={sizes.length ? sizes : ["S", "M", "L", "XL"]}
-      isNew={Boolean(product.is_new)}
-      isBestSeller={Boolean(product.is_bestseller)}
-      discount={discount}
-      freeShipping
-    />
-  );
-
   return (
     <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
-      {card}
+      <ProductCardUI
+        name={product.name}
+        price={price}
+        originalPrice={originalPrice}
+        rating={4.8}
+        reviewCount={0}
+        images={
+          images.length
+            ? images
+            : [
+                "https://cdn.21st.dev/assets/mirror/ad/ade63a3c4df44b7c8e7277a749d732494e317e8289fd2ed72d57de841ff63896.jpg",
+              ]
+        }
+        colors={
+          colors.length
+            ? colors
+            : ["#1e293b", "#a855f7", "#0ea5e9", "#84cc16"]
+        }
+        sizes={sizes.length ? sizes : ["S", "M", "L", "XL"]}
+        isNew={Boolean(product.is_new)}
+        isBestSeller={Boolean(product.is_bestseller)}
+        discount={discount}
+        freeShipping
+      />
     </Link>
   );
 }
