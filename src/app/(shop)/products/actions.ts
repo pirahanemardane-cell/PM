@@ -1,0 +1,55 @@
+"use server";
+
+import { ProductService } from "@/services/product.service";
+import type { ProductWithRelations } from "@/repositories/product.repository";
+
+export type LoadProductsResult = {
+  success: boolean;
+  products: ProductWithRelations[];
+  page: number;
+  totalPages: number;
+  hasMore: boolean;
+  error?: string;
+};
+
+export async function loadProductsPage(input: {
+  page: number;
+  pageSize?: number;
+  categorySlug?: string;
+  q?: string;
+  sort?: "newest" | "price_asc" | "price_desc" | "popular";
+  featured?: boolean;
+}): Promise<LoadProductsResult> {
+  const service = new ProductService();
+  const pageSize = input.pageSize ?? 12;
+
+  const result = await service.getPublishedProducts({
+    page: input.page,
+    pageSize,
+    categorySlug: input.categorySlug,
+    q: input.q,
+    sort: input.sort ?? "newest",
+    featured: input.featured,
+  });
+
+  if (!result.success) {
+    return {
+      success: false,
+      products: [],
+      page: input.page,
+      totalPages: 0,
+      hasMore: false,
+      error: result.error,
+    };
+  }
+
+  const { data, page, totalPages } = result.data;
+
+  return {
+    success: true,
+    products: data,
+    page,
+    totalPages,
+    hasMore: page < totalPages,
+  };
+}
