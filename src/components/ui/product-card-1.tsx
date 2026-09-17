@@ -67,6 +67,7 @@ export function ProductCard1({
   className,
   brand,
   brandHref,
+  isSpecialSale = false,
 }: ProductCard1Props) {
   const safeImages =
     images.length > 0 ? images : [];
