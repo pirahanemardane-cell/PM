@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
+import { AppToaster } from "@/components/ui/app-toaster";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
 
@@ -75,6 +76,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster position="top-center" richColors closeButton />
+                  <AppToaster />
         </ThemeProvider>
       </body>
     </html>

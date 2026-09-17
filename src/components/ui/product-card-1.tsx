@@ -161,7 +161,7 @@ export function ProductCard1({
         {/* Badges row — right side only, never overlaps left actions */}
         <div className="pointer-events-auto absolute top-2 right-2 z-20 flex max-w-[calc(100%-3.5rem)] flex-nowrap items-center justify-end gap-1 overflow-hidden sm:top-3 sm:right-3 sm:max-w-[calc(100%-4rem)] sm:gap-1.5">
           {isNew ? (
-            <Badge className="shrink-0 border-0 bg-blue-500 px-2 py-0.5 text-[10px] leading-4 text-white hover:bg-blue-500/90 sm:text-xs">
+            <Badge className="shrink-0 border-0 bg-sky-100 px-2.5 py-1 text-[10px] leading-none text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 sm:text-xs">
               جدید
             </Badge>
           ) : null}
@@ -177,7 +177,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="secondary"
-                className="w-full truncate border-0 bg-background/90 px-2 py-0.5 text-[10px] leading-4 text-foreground backdrop-blur-sm hover:bg-background sm:text-xs"
+                className="w-full truncate border-0 bg-violet-100 px-2.5 py-1 text-[10px] leading-none text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 sm:text-xs"
               >
                 {category}
               </Badge>
@@ -195,7 +195,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="outline"
-                className="w-full truncate bg-background/90 px-2 py-0.5 text-[10px] leading-4 backdrop-blur-sm hover:bg-background sm:text-xs"
+                className="w-full truncate border-0 bg-emerald-100 px-2.5 py-1 text-[10px] leading-none text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 sm:text-xs"
               >
                 {brand}
               </Badge>
@@ -206,7 +206,7 @@ export function ProductCard1({
         {/* فروش ویژه — پایین سمت راست تصویر */}
         {isSpecialSale ? (
           <div className="pointer-events-none absolute bottom-2 right-2 z-20 sm:bottom-3 sm:right-3">
-            <Badge className="border-0 bg-rose-600 px-2 py-0.5 text-[10px] leading-4 text-white shadow-sm hover:bg-rose-600/90 sm:text-xs">
+            <Badge className="border-0 bg-rose-100 px-2.5 py-1 text-[10px] leading-none text-rose-800 shadow-sm dark:bg-rose-900/40 dark:text-rose-200 sm:text-xs">
               فروش ویژه
             </Badge>
           </div>
@@ -222,7 +222,7 @@ export function ProductCard1({
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
