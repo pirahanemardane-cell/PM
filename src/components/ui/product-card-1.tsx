@@ -283,8 +283,7 @@ export function ProductCard1({
             </Badge>
           )}
 
-          {(category || brand) && (
-            )}
+          
 
 
           
