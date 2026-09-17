@@ -62,7 +62,7 @@ export function HeaderActivitySheet({ open, onOpenChange, items = [] }: Props) {
       onOpenChange={(o) => {
         if (!o) onOpenChange(false);
       }}
-      direction="left"
+      direction="right"
     >
       <DrawerContent>
         {info ? (
