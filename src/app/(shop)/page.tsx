@@ -153,7 +153,7 @@ export default async function HomePage() {
           <SectionHeader title="محصولات جدید" href="/products?sort=newest" />
           <HorizontalRail>
             {newest.map((product) => (
-              <div key={product.id} className="w-44 shrink-0 sm:w-52">
+              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -167,7 +167,7 @@ export default async function HomePage() {
           <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=true" />
           <HorizontalRail>
             {deals.map((product) => (
-              <div key={product.id} className="w-44 shrink-0 sm:w-52">
+              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -181,7 +181,7 @@ export default async function HomePage() {
           <SectionHeader title="پرفروش‌ترین‌ها" href="/products" />
           <HorizontalRail>
             {bestsellers.map((product) => (
-              <div key={product.id} className="w-44 shrink-0 sm:w-52">
+              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
                 <ProductCard product={product} />
               </div>
             ))}
