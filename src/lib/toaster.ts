@@ -21,3 +21,15 @@ export function showToast(opts: {
     type: opts.type ?? "info",
   });
 }
+
+/** میانبرهای رایج */
+export const toast = {
+  success: (title: string, description?: string) =>
+    showToast({ title, description, type: "success" }),
+  error: (title: string, description?: string) =>
+    showToast({ title, description, type: "error" }),
+  warning: (title: string, description?: string) =>
+    showToast({ title, description, type: "warning" }),
+  info: (title: string, description?: string) =>
+    showToast({ title, description, type: "info" }),
+};

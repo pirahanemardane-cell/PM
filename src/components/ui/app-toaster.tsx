@@ -46,34 +46,31 @@ export function AppToaster() {
   return (
     <Portal>
       <Toaster toaster={toaster}>
-        {(toast) => {
-          const toastConfig = toastTypes.find((t) => t.type === toast.type);
-          const Icon = toastConfig?.icon || Info;
+        {(toastItem) => {
+          const cfg = toastTypes.find((t) => t.type === toastItem.type);
+          const Icon = cfg?.icon || Info;
           return (
             <Toast.Root
-              className={`min-w-80 rounded-lg p-4 shadow-lg relative transition-all duration-300 will-change-transform h-(--height) opacity-(--opacity) translate-x-(--x) translate-y-(--y) scale-(--scale) z-(--z-index) ${
-                toastConfig?.colors ||
-                "bg-white border border-gray-100 dark:bg-gray-900"
+              className={`relative min-w-80 rounded-lg p-4 shadow-lg transition-all duration-300 will-change-transform h-(--height) opacity-(--opacity) translate-x-(--x) translate-y-(--y) scale-(--scale) z-(--z-index) ${
+                cfg?.colors || "border border-gray-100 bg-white dark:bg-gray-900"
               }`}
             >
               <div className="flex items-start gap-3">
                 <Icon
-                  className={`mt-0.5 h-4 w-4 shrink-0 ${
-                    toastConfig?.iconColor || "text-gray-500"
-                  }`}
+                  className={`mt-0.5 h-4 w-4 shrink-0 ${cfg?.iconColor || "text-gray-500"}`}
                 />
                 <div className="flex-1 pe-6">
                   <Toast.Title className="text-sm font-semibold">
-                    {toast.title}
+                    {toastItem.title}
                   </Toast.Title>
-                  {toast.description ? (
+                  {toastItem.description ? (
                     <Toast.Description className="mt-0.5 text-sm opacity-80">
-                      {toast.description}
+                      {toastItem.description}
                     </Toast.Description>
                   ) : null}
                 </div>
               </div>
-              <Toast.CloseTrigger className="absolute top-3 end-3 rounded p-1 transition-colors hover:bg-black/10">
+              <Toast.CloseTrigger className="absolute top-3 end-3 rounded p-1 hover:bg-black/10">
                 <X className="h-3 w-3" />
               </Toast.CloseTrigger>
             </Toast.Root>

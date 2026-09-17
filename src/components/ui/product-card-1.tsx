@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "@/lib/toaster";
+
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,6 +134,9 @@ export function ProductCard1({
               e.preventDefault();
               e.stopPropagation();
               setIsWishlisted(!isWishlisted);
+              toast.success(
+                !isWishlisted ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد"
+              );
             }}
             aria-label="علاقه‌مندی"
           >
@@ -150,6 +155,9 @@ export function ProductCard1({
               e.preventDefault();
               e.stopPropagation();
               setIsCompared(!isCompared);
+              toast.success(
+                !isCompared ? "به لیست مقایسه اضافه شد" : "از لیست مقایسه حذف شد"
+              );
             }}
             aria-label="مقایسه"
           >
