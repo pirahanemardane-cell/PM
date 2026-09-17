@@ -200,7 +200,41 @@ export function SiteHeader() {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+
+          <div className="flex items-center gap-1">
+            <Link
+              href="/آخرین-مشاهده-ها"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="آخرین مشاهده‌ها"
+            >
+              <History className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/سبد-خرید"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="سبد خرید"
+            >
+              <ShoppingBag className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/مقایسه"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="مقایسه"
+            >
+              <ArrowLeftRight className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/علاقه-مندی-ها"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="علاقه‌مندی‌ها"
+            >
+              <Heart className="h-5 w-5" />
+            </Link>
+          </div>
+
+          </div>
           <Link href="/ورود" className={buttonVariants({ variant: "outline" })}>
             ورود
           </Link>
@@ -253,39 +287,7 @@ export function SiteHeader() {
         </div>
       </MobileMenu>
     
-          {/* Wishlist / Compare / Cart / Recently viewed */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <Link
-              href="/علاقه-مندی-ها"
-              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              aria-label="علاقه‌مندی‌ها"
-            >
-              <Heart className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/مقایسه"
-              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              aria-label="مقایسه"
-            >
-              <ArrowLeftRight className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/سبد-خرید"
-              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              aria-label="سبد خرید"
-            >
-              <ShoppingBag className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/آخرین-مشاهده-ها"
-              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
-              aria-label="آخرین مشاهده‌ها"
-            >
-              <History className="h-5 w-5" />
-            </Link>
-          </div>
-
-      </header>
+          </header>
   );
 }
 
