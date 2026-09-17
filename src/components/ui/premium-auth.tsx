@@ -22,7 +22,11 @@ type RegistrationStep = "details" | "verification" | "complete";
 type OtpStep = "phone" | "code";
 
 interface AuthFormProps {
-  onSuccess?: (userData: { email?: string; phone?: string; name?: string }) => void;
+  onSuccess?: (userData: {
+    email?: string;
+    phone?: string;
+    name?: string;
+  }) => void;
   onClose?: () => void;
   initialMode?: AuthMode;
   className?: string;
@@ -38,6 +42,7 @@ interface FormData {
   rememberMe: boolean;
   verificationCode: string;
   otpCode: string;
+  loginId: string; // موبایل یا ایمیل در ورود با رمز
 }
 
 interface FormErrors {
@@ -46,6 +51,7 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
   phone?: string;
+  loginId?: string;
   agreeToTerms?: string;
   general?: string;
   verificationCode?: string;
@@ -55,6 +61,18 @@ interface FormErrors {
 function isValidIranPhone(phone: string) {
   const p = phone.replace(/[\s\-()]/g, "");
   return /^(?:\+98|0)?9\d{9}$/.test(p);
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/** ورود با رمز: موبایل یا ایمیل */
+function isValidLoginId(value: string) {
+  const v = value.trim();
+  if (!v) return false;
+  if (v.includes("@")) return isValidEmail(v);
+  return isValidIranPhone(v);
 }
 
 export function AuthForm({
@@ -82,6 +100,7 @@ export function AuthForm({
     rememberMe: false,
     verificationCode: "",
     otpCode: "",
+    loginId: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -105,7 +124,7 @@ export function AuthForm({
       if (authMode === "login" && loginMethod === "otp") {
         if (otpStep === "phone") {
           if (!formData.phone.trim() || !isValidIranPhone(formData.phone)) {
-            setErrors({ phone: "شماره موبایل معتبر وارد کنید (مثال: 0912…)" });
+            setErrors({ phone: "شماره موبایل معتبر وارد کنید (مثال: ۰۹۱۲…)" });
             return;
           }
           setOtpStep("code");
@@ -116,15 +135,17 @@ export function AuthForm({
           setErrors({ otpCode: "کد ۶ رقمی را وارد کنید" });
           return;
         }
-        setSuccessMessage("ورود با OTP موفق");
+        setSuccessMessage("ورود با رمز یکبارمصرف موفق بود");
         onSuccess?.({ phone: formData.phone });
         return;
       }
 
-      // ——— ورود با رمز ———
+      // ——— ورود با رمز (موبایل یا ایمیل) ———
       if (authMode === "login" && loginMethod === "password") {
-        if (!formData.phone.trim() || !isValidIranPhone(formData.phone)) {
-          setErrors({ phone: "شماره موبایل برای ورود الزامی است" });
+        if (!isValidLoginId(formData.loginId)) {
+          setErrors({
+            loginId: "شماره موبایل یا ایمیل معتبر وارد کنید",
+          });
           return;
         }
         if (!formData.password) {
@@ -132,42 +153,50 @@ export function AuthForm({
           return;
         }
         if (formData.rememberMe) {
-          localStorage.setItem("userPhone", formData.phone);
+          localStorage.setItem("userLoginId", formData.loginId.trim());
           localStorage.setItem("rememberMe", "true");
         }
+        const id = formData.loginId.trim();
         setSuccessMessage("ورود موفق");
-        onSuccess?.({ phone: formData.phone, email: formData.email || undefined });
+        if (id.includes("@")) {
+          onSuccess?.({ email: id });
+        } else {
+          onSuccess?.({ phone: id });
+        }
         return;
       }
 
       // ——— بازیابی ———
       if (authMode === "reset") {
-        if (!formData.phone.trim() || !isValidIranPhone(formData.phone)) {
-          setErrors({ phone: "شماره موبایل معتبر وارد کنید" });
-          return;
+        if (!isValidLoginId(formData.loginId) && !isValidIranPhone(formData.phone)) {
+          const id = formData.loginId || formData.phone;
+          if (!isValidLoginId(id)) {
+            setErrors({ loginId: "موبایل یا ایمیل معتبر وارد کنید" });
+            return;
+          }
         }
         setSuccessMessage("لینک / کد بازیابی ارسال شد");
         setTimeout(() => setAuthMode("login"), 1500);
         return;
       }
 
-      // ——— ثبت‌نام ———
+      // ——— ثبت‌نام: موبایل اجباری، ایمیل اختیاری ———
       if (authMode === "signup") {
         if (registrationStep === "details") {
           if (!formData.name.trim()) {
-            setErrors({ name: "نام الزامی است" });
+            setErrors({ name: "نام و نام خانوادگی الزامی است" });
             return;
           }
           if (!formData.phone.trim() || !isValidIranPhone(formData.phone)) {
             setErrors({ phone: "شماره موبایل الزامی و باید معتبر باشد" });
             return;
           }
-          if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          if (formData.email.trim() && !isValidEmail(formData.email)) {
             setErrors({ email: "ایمیل معتبر نیست (اختیاری است)" });
             return;
           }
           if (!formData.password || formData.password.length < 6) {
-            setErrors({ password: "رمز حداقل ۶ کاراکتر" });
+            setErrors({ password: "رمز عبور حداقل ۶ کاراکتر باشد" });
             return;
           }
           if (formData.password !== formData.confirmPassword) {
@@ -192,7 +221,7 @@ export function AuthForm({
           setSuccessMessage("ثبت‌نام کامل شد");
           onSuccess?.({
             phone: formData.phone,
-            email: formData.email || undefined,
+            email: formData.email.trim() || undefined,
             name: formData.name,
           });
           return;
@@ -227,14 +256,14 @@ export function AuthForm({
           {authMode === "login"
             ? "ورود"
             : authMode === "reset"
-              ? "بازیابی رمز"
+              ? "بازیابی رمز عبور"
               : "عضویت"}
         </h2>
         <p className="text-muted-foreground text-sm">
           {authMode === "login"
-            ? "ورود با رمز یا کد یکبارمصرف"
+            ? "ورود با موبایل/ایمیل یا کد یکبارمصرف"
             : authMode === "reset"
-              ? "بازیابی دسترسی با موبایل"
+              ? "بازیابی دسترسی"
               : "موبایل الزامی — ایمیل اختیاری"}
         </p>
       </div>
@@ -321,16 +350,15 @@ export function AuthForm({
             <div className="relative">
               <Phone className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
               <input
-                type="tel"
-                placeholder="شماره موبایل"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
+                type="text"
+                placeholder="موبایل یا ایمیل"
+                value={formData.loginId}
+                onChange={(e) => handleInputChange("loginId", e.target.value)}
                 className={inputCls}
-                dir="rtl"
               />
             </div>
-            {errors.phone ? (
-              <p className="text-destructive text-xs">{errors.phone}</p>
+            {errors.loginId ? (
+              <p className="text-destructive text-xs">{errors.loginId}</p>
             ) : null}
             <button
               type="submit"
@@ -363,7 +391,6 @@ export function AuthForm({
                     value={formData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
                     className={inputCls}
-                    dir="rtl"
                   />
                 </div>
                 {errors.phone ? (
@@ -384,7 +411,7 @@ export function AuthForm({
             ) : (
               <>
                 <p className="text-muted-foreground text-center text-sm">
-                  کد به <strong dir="rtl">{formData.phone}</strong> ارسال شد
+                  کد به <strong>{formData.phone}</strong> ارسال شد
                 </p>
                 <input
                   type="text"
@@ -398,7 +425,6 @@ export function AuthForm({
                     )
                   }
                   className="border-input bg-muted/50 w-full rounded-xl border py-3 text-center font-mono text-2xl tracking-widest"
-                  dir="rtl"
                 />
                 {errors.otpCode ? (
                   <p className="text-destructive text-xs">{errors.otpCode}</p>
@@ -431,7 +457,7 @@ export function AuthForm({
           registrationStep === "verification" ? (
           <>
             <p className="text-muted-foreground text-center text-sm">
-              کد به موبایل <strong dir="rtl">{formData.phone}</strong> ارسال شد
+              کد به موبایل <strong>{formData.phone}</strong> ارسال شد
             </p>
             <input
               type="text"
@@ -445,7 +471,6 @@ export function AuthForm({
                 )
               }
               className="border-input bg-muted/50 w-full rounded-xl border py-3 text-center font-mono text-2xl tracking-widest"
-              dir="rtl"
             />
             {errors.verificationCode ? (
               <p className="text-destructive text-xs">{errors.verificationCode}</p>
@@ -472,7 +497,7 @@ export function AuthForm({
                 onClose?.();
                 onSuccess?.({
                   phone: formData.phone,
-                  email: formData.email || undefined,
+                  email: formData.email.trim() || undefined,
                   name: formData.name,
                 });
               }}
@@ -499,23 +524,41 @@ export function AuthForm({
               </div>
             ) : null}
 
-            {/* موبایل — اجباری در ثبت‌نام و ورود با رمز */}
-            <div className="relative">
-              <Phone className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
-              <input
-                type="tel"
-                placeholder="شماره موبایل *"
-                value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value)}
-                className={inputCls}
-                dir="rtl"
-              />
-              {errors.phone ? (
-                <p className="text-destructive mt-1 text-xs">{errors.phone}</p>
-              ) : null}
-            </div>
+            {/* ورود با رمز: موبایل یا ایمیل */}
+            {authMode === "login" ? (
+              <div className="relative">
+                <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="شماره موبایل یا ایمیل *"
+                  value={formData.loginId}
+                  onChange={(e) => handleInputChange("loginId", e.target.value)}
+                  className={inputCls}
+                />
+                {errors.loginId ? (
+                  <p className="text-destructive mt-1 text-xs">{errors.loginId}</p>
+                ) : null}
+              </div>
+            ) : null}
 
-            {/* ایمیل — فقط ثبت‌نام و اختیاری */}
+            {/* ثبت‌نام: موبایل اجباری */}
+            {authMode === "signup" ? (
+              <div className="relative">
+                <Phone className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
+                <input
+                  type="tel"
+                  placeholder="شماره موبایل *"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  className={inputCls}
+                />
+                {errors.phone ? (
+                  <p className="text-destructive mt-1 text-xs">{errors.phone}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* ثبت‌نام: ایمیل اختیاری */}
             {authMode === "signup" ? (
               <div className="relative">
                 <Mail className="text-muted-foreground absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2" />
@@ -525,7 +568,6 @@ export function AuthForm({
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   className={inputCls}
-                  dir="rtl"
                 />
                 {errors.email ? (
                   <p className="text-destructive mt-1 text-xs">{errors.email}</p>
@@ -540,8 +582,7 @@ export function AuthForm({
                 placeholder="رمز عبور *"
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
-                className={cn(inputCls, "pr-12 text-right")}
-                dir="rtl"
+                className={cn(inputCls, "pl-10 pr-12")}
               />
               <button
                 type="button"
@@ -570,8 +611,7 @@ export function AuthForm({
                     onChange={(e) =>
                       handleInputChange("confirmPassword", e.target.value)
                     }
-                    className={cn(inputCls, "pr-12 text-right")}
-                    dir="rtl"
+                    className={cn(inputCls, "pl-10 pr-12")}
                   />
                   <button
                     type="button"

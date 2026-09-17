@@ -1,4 +1,3 @@
-import { DemoShopActions } from "@/components/shop/demo-shop-actions";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -29,9 +28,6 @@ function SectionHeader({
   href?: string;
 }) {
   return (
-    <>
-      <DemoShopActions />
-      (
     <div className="mb-5 flex items-end justify-between gap-4">
       <h2 className="text-xl font-bold md:text-2xl">{title}</h2>
       {href ? (

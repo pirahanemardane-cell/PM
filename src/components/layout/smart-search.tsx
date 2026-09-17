@@ -1,4 +1,5 @@
 "use client";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -43,8 +44,16 @@ export function SmartSearch({ className }: { className?: string }) {
     if (minPrice) params.set("min", minPrice);
     if (maxPrice) params.set("max", maxPrice);
     const qs = params.toString();
-    router.push(qs ? `/products?${qs}` : "/products");
+    router.push(qs ? `/محصولات?${qs}` : "/محصولات");
     setOpen(false);
+  }
+
+  function clearFilters() {
+    setCategory("");
+    setBrand("");
+    setColor("");
+    setMinPrice("");
+    setMaxPrice("");
   }
 
   return (
@@ -56,7 +65,7 @@ export function SmartSearch({ className }: { className?: string }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="جستجوی هوشمند محصول، برند، رنگ…"
-            className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-2 text-sm text-right outline-none"
+            className="font-iranyekan placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-2 text-sm text-right outline-none"
             dir="rtl"
           />
           <button
@@ -64,8 +73,11 @@ export function SmartSearch({ className }: { className?: string }) {
             onClick={() => setOpen((v) => !v)}
             className={cn(
               "relative ml-1 flex h-8 items-center gap-1 rounded-lg px-2 text-xs",
-              open || activeFilters ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+              open || activeFilters
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted"
             )}
+            aria-label="فیلترها"
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">فیلتر</span>
@@ -76,7 +88,10 @@ export function SmartSearch({ className }: { className?: string }) {
             ) : null}
           </button>
         </div>
-        <button type="submit" className="bg-primary text-primary-foreground hidden h-10 rounded-xl px-4 text-sm font-medium sm:inline-flex sm:items-center">
+        <button
+          type="submit"
+          className="bg-primary text-primary-foreground hidden h-10 rounded-xl px-4 text-sm font-medium sm:inline-flex sm:items-center"
+        >
           جستجو
         </button>
       </form>
@@ -85,42 +100,94 @@ export function SmartSearch({ className }: { className?: string }) {
         <div className="border-border bg-card absolute top-[calc(100%+8px)] right-0 left-0 z-50 rounded-2xl border p-4 shadow-lg">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium">فیلتر پیشرفته</span>
-            <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground">
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={clearFilters} className="text-muted-foreground text-xs hover:underline">
+                پاک کردن
+              </button>
+              <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">دسته‌بندی</span>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right">
+              <span className="text-muted-foreground">دسته‌بندی محصول</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+              >
                 <option value="">همه</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </label>
+
             <label className="space-y-1 text-xs">
               <span className="text-muted-foreground">برند</span>
-              <select value={brand} onChange={(e) => setBrand(e.target.value)} className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right">
+              <select
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+              >
                 <option value="">همه</option>
-                {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                {BRANDS.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
               </select>
             </label>
+
             <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">حداقل قیمت</span>
-              <input type="number" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right" dir="rtl" />
+              <span className="text-muted-foreground">حداقل قیمت (تومان)</span>
+              <input
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                dir="rtl"
+              />
             </label>
+
             <label className="space-y-1 text-xs">
-              <span className="text-muted-foreground">حداکثر قیمت</span>
-              <input type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right" dir="rtl" />
+              <span className="text-muted-foreground">حداکثر قیمت (تومان)</span>
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                dir="rtl"
+              />
             </label>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {COLORS.map((c) => (
-              <button key={c.value} type="button" onClick={() => setColor(color === c.value ? "" : c.value)} className={cn("rounded-full border px-3 py-1 text-xs", color === c.value ? "border-primary bg-primary/10 text-primary" : "border-border")}>
-                {c.name}
-              </button>
-            ))}
+
+          <div className="mt-3 space-y-1 text-xs">
+            <span className="text-muted-foreground">رنگ</span>
+            <div className="flex flex-wrap gap-2">
+              {COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setColor(color === c.value ? "" : c.value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs",
+                    color === c.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:bg-muted"
+                  )}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
           </div>
-          <button type="button" onClick={() => submit()} className="bg-primary text-primary-foreground mt-4 h-10 w-full rounded-xl text-sm font-medium">
+
+          <button
+            type="button"
+            onClick={() => submit()}
+            className="bg-primary text-primary-foreground mt-4 h-10 w-full rounded-xl text-sm font-medium"
+          >
             اعمال فیلتر و جستجو
           </button>
         </div>

@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 import { AppToaster } from "@/components/ui/app-toaster";
-import { HeaderSearchStrip } from "@/components/layout/header-search-strip";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
 
@@ -68,7 +67,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased" suppressHydrationWarning>
-        <HeaderSearchStrip />
+        
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

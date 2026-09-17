@@ -1,4 +1,5 @@
 "use client";
+
 import { useShopStore } from "@/lib/shop-store";
 import { useEffect, useState } from "react";
 
@@ -16,7 +17,7 @@ export function useShopCounts() {
 export function CountBadge({ count }: { count: number }) {
   if (!count) return null;
   return (
-    <span className="bg-primary text-primary-foreground absolute -top-1.5 -left-1.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none">
+    <span className="bg-primary text-primary-foreground absolute -top-1.5 -left-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none">
       {count > 99 ? "99+" : count}
     </span>
   );
