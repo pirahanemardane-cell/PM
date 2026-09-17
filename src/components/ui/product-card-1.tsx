@@ -231,16 +231,7 @@ export function ProductCard1({
             بدون تصویر
           </div>
         )}
-
-        {/* Arrows — only if multiple images */}
-        {safeImages.length > 1 && (
-          )}
-
-        {/* Dots */}
-        {safeImages.length > 1 && (
-          )}
-
-        {/* Badges — start (RTL right) */}
+{/* Badges — start (RTL right) */}
         {/* Wishlist — end (RTL left) */}
         </div>
 
