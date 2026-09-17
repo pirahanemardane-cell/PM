@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ProductCard as ProductCardUI } from "@/components/ui/product-card-1";
+import { ProductCard1 as ProductCardUI } from "@/components/ui/product-card-1";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 
 type Props = {
@@ -50,19 +50,6 @@ export function ProductCard({ product }: Props) {
     ),
   ];
 
-  const categoryName =
-    (product as { category?: { name?: string } | null }).category?.name ||
-    (product as { categories?: { name?: string }[] }).categories?.[0]?.name;
-
-  const brandName = product.brand?.name;
-
-  const isSpecialSale = Boolean(
-    (product as { is_featured?: boolean }).is_featured ||
-      (product as { is_special_sale?: boolean }).is_special_sale ||
-      (product as { on_sale?: boolean }).on_sale ||
-      discount > 0
-  );
-
   return (
     <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
       <ProductCardUI
@@ -88,9 +75,6 @@ export function ProductCard({ product }: Props) {
         isBestSeller={Boolean(product.is_bestseller)}
         discount={discount}
         freeShipping
-        category={categoryName}
-        brand={brandName}
-        isSpecialSale={isSpecialSale}
       />
     </Link>
   );

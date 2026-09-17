@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,14 @@ import {
   ChevronRight,
   Check,
   Loader2,
-  GitCompareArrows,
 } from "lucide-react";
+import { toPersianDigits } from "@/lib/numbers";
+import { cn } from "@/lib/utils";
 
-export interface ProductCardProps {
+export interface ProductCard1Props {
+  href?: string;
   name?: string;
+  brand?: string;
   price?: number;
   originalPrice?: number;
   rating?: number;
@@ -29,47 +33,60 @@ export interface ProductCardProps {
   isBestSeller?: boolean;
   discount?: number;
   freeShipping?: boolean;
-  category?: string;
-  brand?: string;
-  isSpecialSale?: boolean;
+  className?: string;
 }
 
-export function ProductCard({
-  name = "Premium Wool Sweater",
-  price = 89.99,
-  originalPrice = 129.99,
-  rating = 4.8,
-  reviewCount = 142,
-  images = ["/logo.svg", "/logo.svg", "/logo.svg"],
-  colors = ["#1e293b", "#a855f7", "#0ea5e9", "#84cc16"],
-  sizes = ["XS", "S", "M", "L", "XL"],
-  isNew = true,
-  isBestSeller = true,
-  discount = 30,
-  freeShipping = true,
-  category,
+function formatToman(price: number) {
+  return toPersianDigits(Math.round(price).toLocaleString("en-US")) + " تومان";
+}
+
+export function ProductCard1({
+  href,
+  name = "محصول",
   brand,
-  isSpecialSale = false,
-}: ProductCardProps) {
+  price = 0,
+  originalPrice,
+  rating = 0,
+  reviewCount = 0,
+  images = [],
+  colors = [],
+  sizes = [],
+  isNew = false,
+  isBestSeller = false,
+  discount = 0,
+  freeShipping = false,
+  className,
+}: ProductCard1Props) {
+  const safeImages =
+    images.length > 0 ? images : [];
+  const hasImage = safeImages.length > 0;
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
+  const [selectedColor, setSelectedColor] = useState(colors[0] ?? "");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isCompared, setIsCompared] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    if (!hasImage) return;
+    setCurrentImageIndex((prev) => (prev + 1) % safeImages.length);
   };
 
   const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    if (!hasImage) return;
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + safeImages.length) % safeImages.length
+    );
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isAddedToCart) return;
     setIsAddingToCart(true);
     setTimeout(() => {
@@ -79,222 +96,250 @@ export function ProductCard({
     }, 800);
   };
 
-  return (
-    <Card className="group bg-white text-foreground w-full max-w-sm overflow-hidden rounded-md shadow-xl transition-all duration-300 hover:shadow-lg">
-      <div className="relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
-        <motion.img
-          key={currentImageIndex}
-          src={images[currentImageIndex]}
-          alt={`${name} - View ${currentImageIndex + 1}`}
-          className="h-full w-full object-contain"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        />
-
-        <div className="absolute inset-0 flex items-center justify-between p-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            variant="secondary"
-            size="icon"
-            className="bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
-            onClick={prevImage}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
-            onClick={nextImage}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1.5">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`h-1.5 rounded-full transition-all ${
-                index === currentImageIndex
-                  ? "bg-primary w-4"
-                  : "bg-primary/30 w-1.5"
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentImageIndex(index);
-              }}
-            />
-          ))}
-        </div>
-
-        {/* بالا چپ: جدید → دسته → برند (زیر هم) */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
-          {isNew && (
-            <Badge className="bg-blue-500 hover:bg-blue-500/90">جدید</Badge>
-          )}
-          {category ? (
-            <Badge
-              variant="secondary"
-              className="bg-background/90 text-foreground max-w-[9rem] truncate backdrop-blur-sm"
-            >
-              {category}
-            </Badge>
-          ) : null}
-          {brand ? (
-            <Badge
-              variant="outline"
-              className="bg-background/90 max-w-[9rem] truncate backdrop-blur-sm"
-            >
-              {brand}
-            </Badge>
-          ) : null}
-        </div>
-
-        {/* بالا راست: لایک + مقایسه (کنار هم) */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className={`bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm ${
-              isWishlisted ? "text-rose-500" : ""
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsWishlisted(!isWishlisted);
-            }}
-            aria-label="علاقه‌مندی"
-          >
-            <Heart
-              className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
-            />
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className={`bg-background/80 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm ${
-              isCompared ? "text-primary" : ""
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsCompared(!isCompared);
-            }}
-            aria-label="مقایسه"
-          >
-            <GitCompareArrows className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* پایین چپ تصویر: فروش ویژه */}
-        {isSpecialSale && (
-          <div className="absolute bottom-3 left-3 z-10">
-            <Badge className="bg-rose-600 shadow-sm hover:bg-rose-600/90">
-              فروش ویژه
-            </Badge>
+  const card = (
+    <Card
+      className={cn(
+        "group bg-card text-foreground w-full overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        className
+      )}
+    >
+      {/* Image */}
+      <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
+        {hasImage ? (
+          <motion.img
+            key={currentImageIndex}
+            src={safeImages[currentImageIndex]}
+            alt={name}
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25 }}
+          />
+        ) : (
+          <div className="text-muted-foreground flex h-full w-full items-center justify-center px-4 text-center text-sm">
+            بدون تصویر
           </div>
         )}
+
+        {/* Arrows — only if multiple images */}
+        {safeImages.length > 1 && (
+          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between px-2 opacity-0 transition-opacity group-hover:opacity-100">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              onClick={prevImage}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
+              onClick={nextImage}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Dots */}
+        {safeImages.length > 1 && (
+          <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+            {safeImages.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  index === currentImageIndex
+                    ? "bg-primary w-4"
+                    : "bg-whitend/70 w-1.5"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentImageIndex(index);
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Badges — start (RTL right) */}
+        <div className="absolute top-2.5 start-2.5 flex flex-col gap-1.5">
+          {isNew && (
+            <Badge className="rounded-full border-0 bg-blue-600 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              جدید
+            </Badge>
+          )}
+          {isBestSeller && (
+            <Badge className="rounded-full border-0 bg-amber-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              پرفروش
+            </Badge>
+          )}
+          {discount > 0 && (
+            <Badge className="rounded-full border-0 bg-rose-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              ٪{toPersianDigits(String(discount))}-
+            </Badge>
+          )}
+        </div>
+
+        {/* Wishlist — end (RTL left) */}
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          className={cn(
+            "bg-whitend/90 absolute top-2.5 end-2.5 h-8 w-8 rounded-full border-0 shadow-sm backdrop-blur-sm",
+            isWishlisted && "text-rose-500"
+          )}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsWishlisted((v) => !v);
+          }}
+          aria-label="علاقه‌مندی"
+        >
+          <Heart className={cn("h-4 w-4", isWishlisted && "fill-rose-500")} />
+        </Button>
       </div>
 
-      <CardContent className="bg-white space-y-2 p-3">
-        <div className="space-y-2">
-          <div>
-            <h3 className="line-clamp-1 font-medium">{name}</h3>
-            <div className="mt-1 flex items-center gap-2">
-              <div className="flex items-center">
-                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                <span className="ml-1 text-sm font-medium">{rating}</span>
-              </div>
-              <span className="text-muted-foreground text-xs">
-                ({reviewCount} reviews)
-              </span>
+      {/* Content — balanced spacing */}
+      <CardContent className="space-y-3 p-3.5 sm:p-4">
+        <div className="space-y-1">
+          {brand ? (
+            <p className="text-muted-foreground text-[11px] leading-4 tracking-wide">
+              {brand}
+            </p>
+          ) : null}
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px]">
+            {name}
+          </h3>
+
+          {(rating > 0 || freeShipping) && (
+            <div className="flex items-center gap-2 pt-0.5">
+              {rating > 0 && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                  <span className="text-xs font-medium">
+                    {toPersianDigits(rating.toFixed(1))}
+                  </span>
+                  {reviewCount > 0 && (
+                    <span className="text-muted-foreground text-[11px]">
+                      ({toPersianDigits(String(reviewCount))})
+                    </span>
+                  )}
+                </div>
+              )}
               {freeShipping && (
-                <span className="ml-auto text-xs text-emerald-600">
-                  Free shipping
+                <span className="ms-auto text-[11px] font-medium text-emerald-600">
+                  ارسال رایگان
                 </span>
               )}
             </div>
-          </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold">${price.toFixed(2)}</span>
-            {originalPrice > price && (
-              <span className="text-muted-foreground text-sm line-through">
-                ${originalPrice.toFixed(2)}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="space-y-1.5">
-              <div className="text-muted-foreground text-xs">Colors</div>
-              <div className="flex gap-2">
-                {colors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`h-6 w-6 rounded-full transition-all ${
-                      selectedColor === color
-                        ? "ring-primary ring-2 ring-offset-2"
-                        : "ring-muted hover:ring-primary ring-1"
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                    aria-label={`Select color ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="text-muted-foreground text-xs">Sizes</div>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    className={`h-8 min-w-[2.5rem] rounded-md px-2 text-xs font-medium transition-all ${
-                      selectedSize === size
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/60 hover:bg-muted"
-                    }`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
+
+        {/* Price */}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-base font-bold tracking-tight sm:text-[17px]">
+            {formatToman(price)}
+          </span>
+          {originalPrice != null && originalPrice > price && (
+            <span className="text-muted-foreground text-xs line-through">
+              {formatToman(originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Colors / sizes — compact, only if data exists */}
+        {colors.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            {colors.slice(0, 5).map((color) => (
+              <button
+                key={color}
+                type="button"
+                className={cn(
+                  "h-5 w-5 rounded-full border border-black/5 transition-all",
+                  selectedColor === color
+                    ? "ring-primary ring-2 ring-offset-1"
+                    : "hover:ring-muted-foreground/30 hover:ring-1"
+                )}
+                style={{ backgroundColor: color }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedColor(color);
+                }}
+                aria-label={`رنگ ${color}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {sizes.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {sizes.slice(0, 6).map((size) => (
+              <button
+                key={size}
+                type="button"
+                className={cn(
+                  "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
+                  selectedSize === size
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/70 text-foreground hover:bg-muted"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedSize(size);
+                }}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
       </CardContent>
 
-      <CardFooter className="border-0 bg-white p-3 pt-2">
+      <CardFooter className="border-0 bg-white p-4 pt-4">
         <Button
-          className="w-full"
+          type="button"
+          className="h-10 w-full rounded-xl text-sm font-medium"
           onClick={handleAddToCart}
           disabled={isAddingToCart || isAddedToCart}
         >
           {isAddingToCart ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Adding...
+              <Loader2 className="ms-2 h-4 w-4 animate-spin" />
+              در حال افزودن...
             </>
           ) : isAddedToCart ? (
             <>
-              <Check className="mr-2 h-4 w-4" />
-              Added to Cart
+              <Check className="ms-2 h-4 w-4" />
+              اضافه شد
             </>
           ) : (
             <>
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Add to Cart
+              <ShoppingCart className="ms-2 h-4 w-4" />
+              افزودن به سبد
             </>
           )}
         </Button>
       </CardFooter>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block w-full outline-none">
+        {card}
+      </Link>
+    );
+  }
+
+  return card;
 }
