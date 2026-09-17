@@ -16,7 +16,10 @@ import {
   Shield,
   RotateCcw,
   type LucideIcon,
-} from "lucide-react";
+  Heart,
+  ShoppingBag,
+  History,
+  ArrowLeftRight} from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
@@ -249,7 +252,40 @@ export function SiteHeader() {
           </Link>
         </div>
       </MobileMenu>
-    </header>
+    
+          {/* Wishlist / Compare / Cart / Recently viewed */}
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <Link
+              href="/wishlist"
+              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+              aria-label="علاقه‌مندی‌ها"
+            >
+              <Heart className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/compare"
+              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+              aria-label="مقایسه"
+            >
+              <ArrowLeftRight className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/cart"
+              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+              aria-label="سبد خرید"
+            >
+              <ShoppingBag className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/recently-viewed"
+              className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+              aria-label="آخرین مشاهده‌ها"
+            >
+              <History className="h-5 w-5" />
+            </Link>
+          </div>
+
+      </header>
   );
 }
 
