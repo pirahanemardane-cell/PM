@@ -266,9 +266,7 @@ export function ProductCard1({
 
         {/* Badges — start (RTL right) */}
         <div className="absolute top-2.5 start-2.5 flex flex-col gap-1.5">
-          {isNew && (
-            
-          )}
+          
 
           
 
