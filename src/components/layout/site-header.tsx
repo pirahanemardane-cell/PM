@@ -1,5 +1,7 @@
 "use client";
 
+import { HeaderActions } from "@/components/layout/header-actions";
+
 import * as React from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
