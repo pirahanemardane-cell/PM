@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // اگر مسیر فرق دارد فقط این خط را عوض کن:
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 type Props = {
   className?: string;
