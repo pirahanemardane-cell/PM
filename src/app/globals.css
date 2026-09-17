@@ -55,6 +55,8 @@ h4, .h4 {
 }
 
 :root {
+  --surface-primary: #F8F9FA;
+  --surface-muted: #e9ecef;
   --font-sans: "IRANYekanX", Tahoma, sans-serif;
 }
 
@@ -204,6 +206,8 @@ h4, .h4 {
 }
 
 .dark {
+  --surface-primary: #212529;
+  --surface-muted: #343a40;
   --background: #212529;
   --foreground: #F8F9FA;
   --card: #2A2E32;
@@ -322,3 +326,19 @@ h4, .h4 { font-weight: 600 !important; }
 .font-iranyekan-black { font-weight: 950 !important; }
 .font-iranyekan-extrablack { font-weight: 1000 !important; }
 
+
+
+/* تفکیک سکشن‌ها: رنگ اول و چهارم یکی‌درمیان */
+.bg-surface-primary { background-color: var(--surface-primary); }
+.bg-surface-muted { background-color: var(--surface-muted); }
+.section-zebra > section:nth-child(odd),
+.section-zebra > div:nth-child(odd) {
+  background-color: var(--surface-primary);
+}
+.section-zebra > section:nth-child(even),
+.section-zebra > div:nth-child(even) {
+  background-color: var(--surface-muted);
+}
+/* اگر مستقیم روی سکشن کلاس بگذاری */
+.section-a { background-color: var(--surface-primary); }
+.section-b { background-color: var(--surface-muted); }

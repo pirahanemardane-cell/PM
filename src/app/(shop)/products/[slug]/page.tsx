@@ -62,17 +62,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
-      <nav className="text-muted-foreground mb-6 text-sm">
-        <Link href="/" className="hover:text-foreground">
-          خانه
-        </Link>
-        <span className="mx-2">/</span>
-        <Link href="/products" className="hover:text-foreground">
-          محصولات
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-foreground">{product.name}</span>
-      </nav>
+      
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">

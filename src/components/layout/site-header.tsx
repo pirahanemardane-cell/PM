@@ -1,342 +1,109 @@
 "use client";
 
-import { HeaderActions } from "@/components/layout/header-actions";
-
-import * as React from "react";
 import Link from "next/link";
-import { createPortal } from "react-dom";
+import { SmartSearch } from "@/components/layout/smart-search";
+import { CountBadge, useShopCounts } from "@/components/layout/header-badges";
 import {
-  Shirt,
-  Gem,
-  CircleDot,
-  Link2,
-  Sparkles,
-  Star,
-  Tag,
-  HelpCircle,
-  FileText,
-  Shield,
-  RotateCcw,
-  type LucideIcon,
   Heart,
-  ShoppingBag,
+  GitCompareArrows,
+  ShoppingCart,
   History,
-  ArrowLeftRight} from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+  UserRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MenuToggleIcon } from "@/components/ui/menu-toggle-icon";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import { Logo } from "@/components/brand/logo";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-type LinkItem = {
-  title: string;
-  href: string;
-  icon: LucideIcon;
-  description?: string;
-};
-
-const productLinks: LinkItem[] = [
-  {
-    title: "پیراهن مردانه",
-    href: "/products?category=shirts",
-    description: "رسمی، کژوال، لینن، آکسفورد و …",
-    icon: Shirt,
-  },
-  {
-    title: "کروات",
-    href: "/products?category=ties",
-    description: "ابریشم، طرح‌دار، باریک و پهن",
-    icon: Link2,
-  },
-  {
-    title: "پاپیون",
-    href: "/products?category=bow-ties",
-    description: "قابل تنظیم و پیش‌گره",
-    icon: CircleDot,
-  },
-  {
-    title: "دکمه سردست",
-    href: "/products?category=cufflinks",
-    description: "فلزی، سنگی، میناکاری",
-    icon: Gem,
-  },
-  {
-    title: "اکسسوری",
-    href: "/products?category=accessories",
-    description: "گیره کروات، دستمال جیب و …",
-    icon: Sparkles,
-  },
-  {
-    title: "محصولات ویژه",
-    href: "/products?featured=true",
-    description: "منتخب و پیشنهاد فروشگاه",
-    icon: Star,
-  },
+const NAV = [
+  { href: "/products", label: "محصولات" },
+  { href: "/products", label: "همه محصولات" },
 ];
 
-const supportLinks: LinkItem[] = [
-  {
-    title: "راهنمای سایز",
-    href: "/size-guide",
-    description: "جدول اندازه‌گیری پیراهن",
-    icon: FileText,
-  },
-  {
-    title: "ارسال و تحویل",
-    href: "/shipping",
-    description: "روش‌ها و زمان ارسال",
-    icon: Tag,
-  },
-  {
-    title: "مرجوعی و تعویض",
-    href: "/returns",
-    description: "سیاست بازگشت کالا",
-    icon: RotateCcw,
-  },
-];
-
-const legalLinks: LinkItem[] = [
-  { title: "حریم خصوصی", href: "/privacy", icon: Shield },
-  { title: "شرایط استفاده", href: "/terms", icon: FileText },
-  { title: "سوالات متداول", href: "/faq", icon: HelpCircle },
-];
-
-export function SiteHeader() {
-  const [open, setOpen] = React.useState(false);
-  const scrolled = useScroll(10);
-
-  React.useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+export function SiteHeader({ className }: { className?: string }) {
+  const counts = useShopCounts();
 
   return (
     <header
-      className={cn("sticky top-0 z-50 w-full border-b border-transparent", {
-        "bg-background/95 supports-[backdrop-filter]:bg-background/50 border-border backdrop-blur-lg":
-          scrolled,
-      })}
-    >
-      <nav className="container mx-auto flex h-14 items-center justify-between gap-3 px-4">
-        <div className="flex items-center gap-4 md:gap-6">
-          <Logo priority />
-
-          <NavigationMenu className="hidden md:flex" dir="rtl">
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent">
-                  محصولات
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-background p-1">
-                  <ul className="bg-popover grid w-[min(100vw-2rem,36rem)] grid-cols-2 gap-2 rounded-md border p-2 shadow">
-                    {productLinks.map((item) => (
-                      <li key={item.href}>
-                        <ListItem {...item} />
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="p-2">
-                    <p className="text-muted-foreground text-sm">
-                      همه کالاها را ببینید:{" "}
-                      <Link
-                        href="/محصولات"
-                        className="text-foreground font-medium hover:underline"
-                      >
-                        فروشگاه
-                      </Link>
-                    </p>
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent">
-                  خدمات
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-background p-1 pb-1.5">
-                  <div className="grid w-[min(100vw-2rem,36rem)] grid-cols-2 gap-2">
-                    <ul className="bg-popover space-y-2 rounded-md border p-2 shadow">
-                      {supportLinks.map((item) => (
-                        <li key={item.href}>
-                          <ListItem {...item} />
-                        </li>
-                      ))}
-                    </ul>
-                    <ul className="space-y-1 p-2">
-                      {legalLinks.map((item) => (
-                        <li key={item.href}>
-                          <Link
-                              href={item.href}
-                              className="hover:bg-accent flex flex-row items-center gap-x-2 rounded-md p-2"
-                            >
-                              <item.icon className="text-foreground size-4" />
-                              <span className="font-medium">{item.title}</span>
-                            </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <Link
-                  href="/محصولات"
-                  className="hover:bg-accent rounded-md px-4 py-2 text-sm font-medium"
-                >
-                  همه محصولات
-                </Link>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
-
-        <div className="hidden items-center gap-2 md:flex">
-          <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1">
-            <HeaderActions />
-
-          </div>
-
-          </div>
-          <Link
-            href="/ورود"
-            className="inline-flex h-9 min-h-9 max-h-9 items-center justify-center rounded-md border border-primary bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            ورود
-          </Link>
-          <Link
-            href="/محصولات"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-h-9 max-h-9 items-center justify-center rounded-md px-3 text-sm font-medium shadow-sm"
-          >
-            خرید
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2 md:hidden">
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="mobile-menu"
-            aria-label="منو"
-          >
-            <MenuToggleIcon open={open} className="size-5" duration={300} />
-          </Button>
-        </div>
-      </nav>
-
-      <MobileMenu open={open} className="flex flex-col justify-between gap-4 overflow-y-auto">
-        <div className="flex w-full flex-col gap-y-3">
-          <span className="text-muted-foreground text-sm">محصولات</span>
-          {productLinks.map((link) => (
-            <ListItem key={link.title} {...link} onClick={() => setOpen(false)} />
-          ))}
-          <span className="text-muted-foreground mt-2 text-sm">خدمات</span>
-          {[...supportLinks, ...legalLinks].map((link) => (
-            <ListItem key={link.title} {...link} onClick={() => setOpen(false)} />
-          ))}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Link
-            href="/ورود"
-            onClick={() => setOpen(false)}
-            className="inline-flex h-9 w-full items-center justify-center rounded-md border border-primary bg-background px-3 text-sm font-medium"
-          >
-            ورود
-          </Link>
-          <Link
-            href="/محصولات"
-            onClick={() => setOpen(false)}
-            className={buttonVariants({ className: "w-full" })}
-          >
-            خرید
-          </Link>
-        </div>
-      </MobileMenu>
-    
-          </header>
-  );
-}
-
-function MobileMenu({
-  open,
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"div"> & { open: boolean }) {
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-  if (!open || !mounted) return null;
-
-  return createPortal(
-    <div
-      id="mobile-menu"
       className={cn(
-        "bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg",
-        "fixed inset-x-0 top-14 bottom-0 z-40 flex flex-col overflow-hidden border-y md:hidden"
-      )}
-    >
-      <div className={cn("size-full p-4", className)} {...props}>
-        {children}
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-function ListItem({
-  title,
-  description,
-  icon: Icon,
-  className,
-  href,
-  ...props
-}: React.ComponentPropsWithoutRef<"a"> & LinkItem) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex w-full flex-row gap-x-2 rounded-sm p-2",
+        "border-border bg-background/95 sticky top-0 z-50 border-b backdrop-blur",
         className
       )}
-      {...props}
+      dir="rtl"
     >
-      <div className="bg-background/40 flex aspect-square size-12 items-center justify-center rounded-md border shadow-sm">
-        <Icon className="text-foreground size-5" />
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3">
+        {/* لوگو */}
+        <Link href="/" className="shrink-0 text-xl font-black tracking-tight">
+          PM
+        </Link>
+
+        {/* منو */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {NAV.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="text-muted-foreground hover:text-foreground rounded-lg px-2.5 py-1.5 text-sm"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* سرچ فیلتردار */}
+        <div className="min-w-[200px] flex-1">
+          <SmartSearch />
+        </div>
+
+        {/* آیکون‌ها + ورود + خرید */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <Link
+            href="/dashboard"
+            className="relative rounded-full border border-border bg-background p-2 hover:bg-muted"
+            title="بازدید اخیر"
+          >
+            <History className="h-4 w-4" />
+            <CountBadge count={counts.recent} />
+          </Link>
+          <Link
+            href="/dashboard"
+            className="relative rounded-full border border-border bg-background p-2 hover:bg-muted"
+            title="مقایسه"
+          >
+            <GitCompareArrows className="h-4 w-4" />
+            <CountBadge count={counts.compare} />
+          </Link>
+          <Link
+            href="/dashboard"
+            className="relative rounded-full border border-border bg-background p-2 hover:bg-muted"
+            title="علاقه‌مندی"
+          >
+            <Heart className="h-4 w-4" />
+            <CountBadge count={counts.wishlist} />
+          </Link>
+          <Link
+            href="/dashboard"
+            className="relative rounded-full border border-border bg-background p-2 hover:bg-muted"
+            title="سبد خرید"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <CountBadge count={counts.cart} />
+          </Link>
+
+          <Link
+            href="/login"
+            className="border-border hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm"
+          >
+            <UserRound className="h-4 w-4" />
+            ورود
+          </Link>
+          <Link
+            href="/products"
+            className="bg-primary text-primary-foreground inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium"
+          >
+            خرید
+          </Link>
+        </div>
       </div>
-      <div className="flex flex-col items-start justify-center text-start">
-        <span className="font-medium">{title}</span>
-        {description ? (
-          <span className="text-muted-foreground text-xs">{description}</span>
-        ) : null}
-      </div>
-    </Link>
+    </header>
   );
 }
 
-function useScroll(threshold: number) {
-  const [scrolled, setScrolled] = React.useState(false);
-  const onScroll = React.useCallback(() => {
-    setScrolled(window.scrollY > threshold);
-  }, [threshold]);
-
-  React.useEffect(() => {
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onScroll]);
-
-  return scrolled;
-}
+export default SiteHeader;
