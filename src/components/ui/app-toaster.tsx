@@ -51,7 +51,7 @@ export function AppToaster() {
           const Icon = toastConfig?.icon || Info;
           return (
             <Toast.Root
-              className={`min-w-80 rounded-lg p-4 shadow-lg relative overflow-anywhere transition-all duration-300 will-change-transform h-(--height) opacity-(--opacity) translate-x-(--x) translate-y-(--y) scale-(--scale) z-(--z-index) ${
+              className={`min-w-80 rounded-lg p-4 shadow-lg relative transition-all duration-300 will-change-transform h-(--height) opacity-(--opacity) translate-x-(--x) translate-y-(--y) scale-(--scale) z-(--z-index) ${
                 toastConfig?.colors ||
                 "bg-white border border-gray-100 dark:bg-gray-900"
               }`}

@@ -1,27 +1,48 @@
 "use client";
 
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerBody,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { Heart, ArrowLeftRight, ShoppingBag, History } from "lucide-react";
 
 export type ActivityPanel = "cart" | "wishlist" | "compare" | "recent" | null;
 
-const titles: Record<Exclude<ActivityPanel, null>, string> = {
-  cart: "سبد خرید",
-  wishlist: "علاقه‌مندی‌ها",
-  compare: "مقایسه محصولات",
-  recent: "آخرین بازدیدها",
-};
-
-const emptyText: Record<Exclude<ActivityPanel, null>, string> = {
-  cart: "هنوز محصولی به سبد اضافه نشده است.",
-  wishlist: "لیست علاقه‌مندی‌ها خالی است.",
-  compare: "محصولی برای مقایسه انتخاب نشده است.",
-  recent: "هنوز محصولی بازدید نشده است.",
+const meta: Record<
+  Exclude<ActivityPanel, null>,
+  { title: string; description: string; empty: string; Icon: typeof Heart }
+> = {
+  cart: {
+    title: "سبد خرید",
+    description: "محصولات آماده‌ی خرید را بررسی کنید.",
+    empty: "هنوز محصولی به سبد اضافه نشده است.",
+    Icon: ShoppingBag,
+  },
+  wishlist: {
+    title: "علاقه‌مندی‌ها",
+    description: "محصولاتی که ذخیره کرده‌اید.",
+    empty: "لیست علاقه‌مندی‌ها خالی است.",
+    Icon: Heart,
+  },
+  compare: {
+    title: "مقایسه محصولات",
+    description: "محصولات انتخاب‌شده برای مقایسه.",
+    empty: "محصولی برای مقایسه انتخاب نشده است.",
+    Icon: ArrowLeftRight,
+  },
+  recent: {
+    title: "آخرین بازدیدها",
+    description: "محصولاتی که اخیراً دیده‌اید.",
+    empty: "هنوز محصولی بازدید نشده است.",
+    Icon: History,
+  },
 };
 
 type Props = {
@@ -31,42 +52,61 @@ type Props = {
 };
 
 export function HeaderActivitySheet({ open, onOpenChange, items = [] }: Props) {
+  const key = open;
+  const info = key ? meta[key] : null;
+  const Icon = info?.Icon ?? ShoppingBag;
+
   return (
-    <Sheet
+    <Drawer
       open={!!open}
       onOpenChange={(o) => {
         if (!o) onOpenChange(false);
       }}
+      direction="left"
     >
-      <SheetContent side="left" className="w-full max-w-sm sm:max-w-md">
-        {open ? (
+      <DrawerContent>
+        {info ? (
           <>
-            <SheetHeader>
-              <SheetTitle>{titles[open]}</SheetTitle>
-              <SheetDescription>
-                سوابق مربوط به این بخش اینجاست.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6 flex flex-col gap-3 overflow-y-auto">
+            <DrawerHeader>
+              <DrawerTitle className="flex items-center gap-2">
+                <Icon className="h-5 w-5" />
+                {info.title}
+              </DrawerTitle>
+              <DrawerDescription>{info.description}</DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody className="max-h-[60vh]">
               {items.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  {emptyText[open]}
-                </p>
+                <div className="py-8 text-center">
+                  <Icon className="text-muted-foreground/40 mx-auto mb-4 h-16 w-16" />
+                  <p className="text-muted-foreground mb-4 text-sm">{info.empty}</p>
+                  <DrawerClose asChild>
+                    <Button variant="outline">ادامه خرید</Button>
+                  </DrawerClose>
+                </div>
               ) : (
-                items.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.href ?? "#"}
-                    className="hover:bg-muted rounded-lg border p-3 text-sm transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                ))
+                <div className="space-y-3">
+                  {items.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.href ?? "#"}
+                      className="hover:bg-muted block rounded-lg border p-3 text-sm transition-colors"
+                    >
+                      {item.title}
+                    </a>
+                  ))}
+                </div>
               )}
-            </div>
+            </DrawerBody>
+            <DrawerFooter className="grid-cols-1">
+              <DrawerClose asChild>
+                <Button variant="outline" className="w-full">
+                  بستن
+                </Button>
+              </DrawerClose>
+            </DrawerFooter>
           </>
         ) : null}
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   );
 }
