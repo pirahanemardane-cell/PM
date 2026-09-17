@@ -7,7 +7,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Heart,
   ArrowLeftRight,
@@ -244,7 +250,7 @@ export function ProductCard1({
               {brand}
             </p>
           ) : null}
-          <h3 className="line-clamp-1 font-black min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px] font-black" title={name}>{name}
+          <h3 className="line-clamp-1 font-black min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px] font-black">{name}
           </h3>
 
           {(rating > 0 || freeShipping) && (
