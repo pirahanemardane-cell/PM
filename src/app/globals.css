@@ -7,7 +7,30 @@
 
 
 
-/* ——— IRANYekanX only (4 weights) ——— */
+
+
+/* ——— IRANYekanX full family ——— */
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-UltraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: "IRANYekanX";
   src: url("/fonts/iranyekan/IRANYekanX-Regular.woff2") format("woff2");
@@ -19,6 +42,20 @@
   font-family: "IRANYekanX";
   src: url("/fonts/iranyekan/IRANYekanX-Medium.woff2") format("woff2");
   font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-DemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Bold.woff2") format("woff2");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -36,6 +73,20 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-Black.woff2") format("woff2");
+  font-weight: 950;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IRANYekanX";
+  src: url("/fonts/iranyekan/IRANYekanX-ExtraBlack.woff2") format("woff2");
+  font-weight: 1000;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --font-sans: "IRANYekanX", system-ui, sans-serif;
@@ -46,47 +97,62 @@ html, body {
   font-weight: 400;
 }
 
-.font-regular { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 400; }
-.font-medium  { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 500; }
-.font-extrabold,
-.font-iranyekan-extrabold {
-  font-family: "IRANYekanX", system-ui, sans-serif;
-  font-weight: 800;
-}
-.font-black,
-.font-heavy,
-.font-iranyekan-heavy {
-  font-family: "IRANYekanX", system-ui, sans-serif;
-  font-weight: 900;
-}
-
-:root {
-  --font-sans: "IRANYekanX", system-ui, sans-serif;
-}
-
-html,
-body {
-  font-family: "IRANYekanX", system-ui, sans-serif;
-  font-weight: 400;
-}
-
-/* utilities */
-.font-regular { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 400; }
-.font-medium  { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 500; }
-.font-extrabold,
-.font-iranyekan-extrabold {
-  font-family: "IRANYekanX", system-ui, sans-serif;
-  font-weight: 800;
-}
-.font-black,
-.font-heavy,
-.font-iranyekan-heavy {
+/* ——— Typography scale (do not change H1 / product-card title) ——— */
+/* 100 */ .font-thin { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 100; }
+/* 200 */ .font-ultralight { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 200; }
+/* 300 */ .font-light { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 300; }
+/* 400 */ .font-regular, .font-normal { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 400; }
+/* 500 */ .font-medium { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 500; }
+/* 600 */ .font-semibold, .font-demibold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 600; }
+/* 700 */ .font-bold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 700; }
+/* 800 */ .font-extrabold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 800; }
+/* 900 */ .font-black, .font-heavy, .font-iranyekan-heavy {
   font-family: "IRANYekanX", system-ui, sans-serif;
   font-weight: 900;
 }
+/* 950 */ .font-extra-black, .font-iranyekan-black {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 950;
+}
+/* 1000 */ .font-ultra-black, .font-iranyekan-extrablack {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 1000;
+}
 
-/*
-This set of fonts are used in this project under the license: E0QI1G9U
+/* Semantic roles */
+h1, .h1 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 900; /* Heavy — locked */
+}
+h2, .h2 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 800; /* ExtraBold */
+}
+h3, .h3 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 700; /* Bold */
+}
+h4, .h4 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 600; /* DemiBold */
+}
+.lead, .subtitle {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 500; /* Medium */
+}
+.caption, .muted-label {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 400; /* Regular */
+}
+.price {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 700; /* Bold */
+}
+.badge, .chip {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 600; /* DemiBold */
+}
+
 */
 
 /* ==============================
@@ -259,10 +325,4 @@ This set of fonts are used in this project under the license: E0QI1G9U
   animation-delay: -1.25s;
 }
 
-/* All H1 → IRANYekanX Heavy (900) */
-h1,
-.h1 {
-  font-family: "IRANYekanX", system-ui, sans-serif;
-  font-weight: 900;
-}
 
