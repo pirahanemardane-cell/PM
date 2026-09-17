@@ -9,7 +9,7 @@ export default function ShopLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <div className="flex-1">{children}</div>
+      <div className="flex-1"><div className="w-full max-w-none">{children}</div></div>
       <SiteFooter />
     </div>
   );

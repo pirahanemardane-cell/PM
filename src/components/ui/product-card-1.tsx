@@ -1,28 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import { useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Heart,
   ArrowLeftRight,
   ShoppingCart,
   Star,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Loader2,
 } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";

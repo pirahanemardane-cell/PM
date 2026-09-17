@@ -147,7 +147,7 @@ export function SiteHeader() {
                     <p className="text-muted-foreground text-sm">
                       همه کالاها را ببینید:{" "}
                       <Link
-                        href="/products"
+                        href="/محصولات"
                         className="text-foreground font-medium hover:underline"
                       >
                         فروشگاه
@@ -189,7 +189,7 @@ export function SiteHeader() {
 
               <NavigationMenuItem>
                 <Link
-                  href="/products"
+                  href="/محصولات"
                   className="hover:bg-accent rounded-md px-4 py-2 text-sm font-medium"
                 >
                   همه محصولات
@@ -201,10 +201,10 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          <Link href="/login" className={buttonVariants({ variant: "outline" })}>
+          <Link href="/ورود" className={buttonVariants({ variant: "outline" })}>
             ورود
           </Link>
-          <Link href="/products" className={buttonVariants()}>
+          <Link href="/محصولات" className={buttonVariants()}>
             خرید
           </Link>
         </div>
@@ -237,14 +237,14 @@ export function SiteHeader() {
         </div>
         <div className="flex flex-col gap-2">
           <Link
-            href="/login"
+            href="/ورود"
             onClick={() => setOpen(false)}
             className={buttonVariants({ variant: "outline", className: "w-full bg-transparent" })}
           >
             ورود
           </Link>
           <Link
-            href="/products"
+            href="/محصولات"
             onClick={() => setOpen(false)}
             className={buttonVariants({ className: "w-full" })}
           >
@@ -256,28 +256,28 @@ export function SiteHeader() {
           {/* Wishlist / Compare / Cart / Recently viewed */}
           <div className="flex items-center gap-1 sm:gap-1.5">
             <Link
-              href="/wishlist"
+              href="/علاقه-مندی-ها"
               className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
               aria-label="علاقه‌مندی‌ها"
             >
               <Heart className="h-5 w-5" />
             </Link>
             <Link
-              href="/compare"
+              href="/مقایسه"
               className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
               aria-label="مقایسه"
             >
               <ArrowLeftRight className="h-5 w-5" />
             </Link>
             <Link
-              href="/cart"
+              href="/سبد-خرید"
               className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
               aria-label="سبد خرید"
             >
               <ShoppingBag className="h-5 w-5" />
             </Link>
             <Link
-              href="/recently-viewed"
+              href="/آخرین-مشاهده-ها"
               className="hover:bg-muted relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors"
               aria-label="آخرین مشاهده‌ها"
             >
