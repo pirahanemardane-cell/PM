@@ -209,10 +209,16 @@ export function SiteHeader() {
           </div>
 
           </div>
-          <Link href="/ورود" className={buttonVariants({ variant: "outline" })}>
+          <Link
+            href="/ورود"
+            className="inline-flex h-9 min-h-9 max-h-9 items-center justify-center rounded-md border border-primary bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
             ورود
           </Link>
-          <Link href="/محصولات" className={buttonVariants()}>
+          <Link
+            href="/محصولات"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-h-9 max-h-9 items-center justify-center rounded-md px-3 text-sm font-medium shadow-sm"
+          >
             خرید
           </Link>
         </div>
@@ -247,7 +253,7 @@ export function SiteHeader() {
           <Link
             href="/ورود"
             onClick={() => setOpen(false)}
-            className={buttonVariants({ variant: "outline", className: "w-full bg-transparent" })}
+            className="inline-flex h-9 w-full items-center justify-center rounded-md border border-primary bg-background px-3 text-sm font-medium"
           >
             ورود
           </Link>
