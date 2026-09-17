@@ -35,6 +35,8 @@ export interface ProductCard1Props {
   freeShipping?: boolean;
   category?: string;
   categoryHref?: string;
+  brand?: string;
+  brandHref?: string;
   className?: string;
 }
 
@@ -180,27 +182,55 @@ export function ProductCard1({
             </Badge>
           )}
 
-          {category && categoryHref ? (
-            <a
-              href={categoryHref}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex"
-            >
-              <Badge
-                variant="secondary"
-                className="bg-background/90 text-foreground max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
-              >
-                {category}
-              </Badge>
-            </a>
-          ) : category ? (
-            <Badge
-              variant="secondary"
-              className="bg-background/90 text-foreground max-w-[9rem] truncate backdrop-blur-sm"
-            >
-              {category}
-            </Badge>
-          ) : null}
+          {(category || brand) && (
+            <div className="flex max-w-[11rem] flex-wrap items-center gap-1.5">
+              {category && categoryHref ? (
+                <a
+                  href={categoryHref}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex"
+                >
+                  <Badge
+                    variant="secondary"
+                    className="bg-background/90 text-foreground max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
+                  >
+                    {category}
+                  </Badge>
+                </a>
+              ) : category ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-background/90 text-foreground max-w-[9rem] truncate backdrop-blur-sm"
+                >
+                  {category}
+                </Badge>
+              ) : null}
+              {brand && brandHref ? (
+                <a
+                  href={brandHref}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex"
+                >
+                  <Badge
+                    variant="outline"
+                    className="bg-background/90 max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
+                  >
+                    {brand}
+                  </Badge>
+                </a>
+              ) : brand ? (
+                <Badge
+                  variant="outline"
+                  className="bg-background/90 max-w-[9rem] truncate backdrop-blur-sm"
+                >
+                  {brand}
+                </Badge>
+              ) : null}
+            </div>
+          )}
+
+
+          
 
           {isBestSeller && (
             <Badge className="rounded-full border-0 bg-amber-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">

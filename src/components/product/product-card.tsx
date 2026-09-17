@@ -65,12 +65,28 @@ export function ProductCard({ product }: Props) {
       ? `/products?category=${encodeURIComponent(categoryName)}`
       : undefined;
 
+  
+  const brandName =
+    product.brand?.name ||
+    (product as { brand?: { name?: string; slug?: string } | null }).brand?.name;
+
+  const brandSlug =
+    (product as { brand?: { slug?: string } | null }).brand?.slug;
+
+  const brandHref = brandSlug
+    ? `/products?brand=${brandSlug}`
+    : brandName
+      ? `/products?brand=${encodeURIComponent(brandName)}`
+      : undefined;
+
   return (
     <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
       <ProductCardUI
 
         category={categoryName}
         categoryHref={categoryHref}
+        brand={brandName}
+        brandHref={brandHref}
                 name={product.name}
         price={price}
         originalPrice={originalPrice}
