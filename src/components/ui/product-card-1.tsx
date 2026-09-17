@@ -117,9 +117,7 @@ export function ProductCard1({
     >
       {/* Image */}
       <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
-
-        {/* بج‌ها افقی: جدید | دسته | برند */}
-        <div className="absolute top-3 right-3 z-20 flex max-w-[70%] flex-row flex-wrap items-center justify-end gap-1.5">
+<div className="absolute top-3 right-3 z-20 flex max-w-[70%] flex-row flex-wrap items-center justify-end gap-1.5">
           {isNew && (
             <Badge className="shrink-0 bg-blue-500 hover:bg-blue-500/90">جدید</Badge>
           )}
@@ -174,9 +172,7 @@ export function ProductCard1({
             </Badge>
           ) : null}
         </div>
-
-        {/* لایک + مقایسه کنار هم */}
-        <div className="absolute top-3 left-3 z-20 flex flex-row items-center gap-2">
+<div className="absolute top-3 left-3 z-20 flex flex-col items-center gap-2">
           <Button
             type="button"
             variant="secondary"
@@ -213,6 +209,9 @@ export function ProductCard1({
           </Button>
         </div>
 
+
+        {/* بج‌ها افقی: جدید | دسته | برند */}
+        {/* لایک + مقایسه کنار هم */}
         {hasImage ? (
           <motion.img
             key={currentImageIndex}
@@ -285,59 +284,7 @@ export function ProductCard1({
           )}
 
           {(category || brand) && (
-            <div className="flex max-w-[11rem] flex-wrap items-center gap-1.5">
-              {category && categoryHref ? (
-                <button
-                  type="button"
-                  className="inline-flex"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    router.push(categoryHref);
-                  }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="bg-background/90 text-foreground max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
-                  >
-                    {category}
-                  </Badge>
-                </button>
-              ) : category ? (
-                <Badge
-                  variant="secondary"
-                  className="bg-background/90 text-foreground max-w-[9rem] truncate backdrop-blur-sm"
-                >
-                  {category}
-                </Badge>
-              ) : null}
-              {brand && brandHref ? (
-                <button
-                  type="button"
-                  className="inline-flex"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    router.push(brandHref);
-                  }}
-                >
-                  <Badge
-                    variant="outline"
-                    className="bg-background/90 max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
-                  >
-                    {brand}
-                  </Badge>
-                </button>
-              ) : brand ? (
-                <Badge
-                  variant="outline"
-                  className="bg-background/90 max-w-[9rem] truncate backdrop-blur-sm"
-                >
-                  {brand}
-                </Badge>
-              ) : null}
-            </div>
-          )}
+            )}
 
 
           
