@@ -47,7 +47,6 @@ function formatToman(price: number) {
 export function ProductCard1({
   href,
   name = "محصول",
-  brand,
   price = 0,
   originalPrice,
   rating = 0,
@@ -62,6 +61,8 @@ export function ProductCard1({
   category,
   categoryHref,
   className,
+  brand,
+  brandHref,
 }: ProductCard1Props) {
   const safeImages =
     images.length > 0 ? images : [];
