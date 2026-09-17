@@ -29,9 +29,7 @@ export function HeaderActions({ className, showTheme = true }: Props) {
     <>
       <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
         {showTheme ? (
-          <div className={cn(headerIconClass, "overflow-hidden p-0")}>
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         ) : null}
 
         <HeaderIconButton

@@ -206,37 +206,6 @@ export function SiteHeader() {
             <div className="flex items-center gap-1">
             <HeaderActions />
 
-          <div className="flex items-center gap-1">
-            <Link
-              href="/آخرین-مشاهده-ها"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="آخرین مشاهده‌ها"
-            >
-              <History className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/سبد-خرید"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="سبد خرید"
-            >
-              <ShoppingBag className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/مقایسه"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="مقایسه"
-            >
-              <ArrowLeftRight className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/علاقه-مندی-ها"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="علاقه‌مندی‌ها"
-            >
-              <Heart className="h-5 w-5" />
-            </Link>
-          </div>
-
           </div>
 
           </div>
