@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import { toast } from "@/lib/toaster";
 
 import { motion } from "framer-motion";
@@ -251,8 +258,18 @@ export function ProductCard1({
               {brand}
             </p>
           ) : null}
-          <h3 className="line-clamp-1 min-h-[2.5rem] text-sm leading-5 sm:text-[15px] font-iranyekan-heavy">{name}
-          </h3>
+          <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <h3 className="font-iranyekan-heavy block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-5 sm:text-[15px]">
+                          {name}
+                        </h3>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-sm">
+                        {name}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
           {(rating > 0 || freeShipping) && (
             <div className="flex items-center gap-2 pt-0.5">

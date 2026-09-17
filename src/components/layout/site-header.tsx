@@ -224,7 +224,6 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
           <Button
             size="icon"
             variant="outline"
