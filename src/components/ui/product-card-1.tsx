@@ -298,7 +298,7 @@ export function ProductCard1({
         {/* Price */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-base font-bold tracking-tight sm:text-[17px]">
-            {formatToman(price)}
+            <span className="price font-bold">{formatToman(price)}</span>
           </span>
           {originalPrice != null && originalPrice > price && (
             <span className="text-muted-foreground text-xs line-through">

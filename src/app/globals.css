@@ -9,7 +9,9 @@
 
 
 
-/* ——— IRANYekanX full family ——— */
+
+
+/* ========== IRANYekanX (full family) ========== */
 @font-face {
   font-family: "IRANYekanX";
   src: url("/fonts/iranyekan/IRANYekanX-Thin.woff2") format("woff2");
@@ -88,6 +90,48 @@
   font-display: swap;
 }
 
+.font-thin { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 100; }
+.font-ultralight { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 200; }
+.font-light { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 300; }
+.font-regular { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 400; }
+.font-medium { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 500; }
+.font-semibold, .font-demibold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 600; }
+.font-bold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 700; }
+.font-extrabold { font-family: "IRANYekanX", system-ui, sans-serif; font-weight: 800; }
+.font-black, .font-heavy, .font-iranyekan-heavy {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 900;
+}
+.font-extra-black, .font-iranyekan-black {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 950;
+}
+.font-ultra-black, .font-iranyekan-extrablack {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 1000;
+}
+
+h1, .h1 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 900;
+}
+h2, .h2 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 800;
+}
+h3, .h3 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 700;
+}
+h4, .h4 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 600;
+}
+.price {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 700;
+}
+
 :root {
   --font-sans: "IRANYekanX", system-ui, sans-serif;
 }
@@ -152,8 +196,6 @@ h4, .h4 {
   font-family: "IRANYekanX", system-ui, sans-serif;
   font-weight: 600; /* DemiBold */
 }
-
-*/
 
 /* ==============================
    IRANYekanX Font Faces
@@ -324,5 +366,4 @@ h4, .h4 {
 .animation-delay-luma {
   animation-delay: -1.25s;
 }
-
 
