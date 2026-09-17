@@ -33,6 +33,8 @@ export interface ProductCard1Props {
   isBestSeller?: boolean;
   discount?: number;
   freeShipping?: boolean;
+  category?: string;
+  categoryHref?: string;
   className?: string;
 }
 
@@ -55,6 +57,8 @@ export function ProductCard1({
   isBestSeller = false,
   discount = 0,
   freeShipping = false,
+  category,
+  categoryHref,
   className,
 }: ProductCard1Props) {
   const safeImages =
@@ -175,6 +179,29 @@ export function ProductCard1({
               جدید
             </Badge>
           )}
+
+          {category && categoryHref ? (
+            <a
+              href={categoryHref}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex"
+            >
+              <Badge
+                variant="secondary"
+                className="bg-background/90 text-foreground max-w-[9rem] cursor-pointer truncate backdrop-blur-sm hover:bg-background"
+              >
+                {category}
+              </Badge>
+            </a>
+          ) : category ? (
+            <Badge
+              variant="secondary"
+              className="bg-background/90 text-foreground max-w-[9rem] truncate backdrop-blur-sm"
+            >
+              {category}
+            </Badge>
+          ) : null}
+
           {isBestSeller && (
             <Badge className="rounded-full border-0 bg-amber-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
               پرفروش

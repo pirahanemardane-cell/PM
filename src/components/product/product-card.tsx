@@ -50,10 +50,28 @@ export function ProductCard({ product }: Props) {
     ),
   ];
 
+  
+  const categoryName =
+    (product as { category?: { name?: string; slug?: string } | null }).category?.name ||
+    (product as { categories?: { name?: string; slug?: string }[] }).categories?.[0]?.name;
+
+  const categorySlug =
+    (product as { category?: { slug?: string } | null }).category?.slug ||
+    (product as { categories?: { slug?: string }[] }).categories?.[0]?.slug;
+
+  const categoryHref = categorySlug
+    ? `/products?category=${categorySlug}`
+    : categoryName
+      ? `/products?category=${encodeURIComponent(categoryName)}`
+      : undefined;
+
   return (
     <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
       <ProductCardUI
-        name={product.name}
+
+        category={categoryName}
+        categoryHref={categoryHref}
+                name={product.name}
         price={price}
         originalPrice={originalPrice}
         rating={4.8}
