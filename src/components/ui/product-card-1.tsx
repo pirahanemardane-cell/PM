@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -68,6 +70,7 @@ export function ProductCard1({
     images.length > 0 ? images : [];
   const hasImage = safeImages.length > 0;
 
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(colors[0] ?? "");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -186,10 +189,14 @@ export function ProductCard1({
           {(category || brand) && (
             <div className="flex max-w-[11rem] flex-wrap items-center gap-1.5">
               {category && categoryHref ? (
-                <a
-                  href={categoryHref}
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
                   className="inline-flex"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(categoryHref);
+                  }}
                 >
                   <Badge
                     variant="secondary"
@@ -197,7 +204,7 @@ export function ProductCard1({
                   >
                     {category}
                   </Badge>
-                </a>
+                </button>
               ) : category ? (
                 <Badge
                   variant="secondary"
@@ -207,10 +214,14 @@ export function ProductCard1({
                 </Badge>
               ) : null}
               {brand && brandHref ? (
-                <a
-                  href={brandHref}
-                  onClick={(e) => e.stopPropagation()}
+                <button
+                  type="button"
                   className="inline-flex"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(brandHref);
+                  }}
                 >
                   <Badge
                     variant="outline"
@@ -218,7 +229,7 @@ export function ProductCard1({
                   >
                     {brand}
                   </Badge>
-                </a>
+                </button>
               ) : brand ? (
                 <Badge
                   variant="outline"
