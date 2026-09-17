@@ -201,6 +201,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 md:flex">
           <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
             <ThemeToggle />
 
           <div className="flex items-center gap-1">
@@ -232,6 +233,8 @@ export function SiteHeader() {
             >
               <Heart className="h-5 w-5" />
             </Link>
+          </div>
+
           </div>
 
           </div>
