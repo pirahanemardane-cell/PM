@@ -79,6 +79,13 @@ export function ProductCard({ product }: Props) {
       ? `/products?brand=${encodeURIComponent(brandName)}`
       : undefined;
 
+  
+  const isSpecialSale = Boolean(
+    (product as { is_featured?: boolean }).is_featured ||
+      (product as { is_special_sale?: boolean }).is_special_sale ||
+      (product as { on_sale?: boolean }).on_sale
+  );
+
   return (
     <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
       <ProductCardUI
@@ -87,6 +94,7 @@ export function ProductCard({ product }: Props) {
         categoryHref={categoryHref}
         brand={brandName}
         brandHref={brandHref}
+        isSpecialSale={isSpecialSale}
                 name={product.name}
         price={price}
         originalPrice={originalPrice}

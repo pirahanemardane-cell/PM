@@ -40,6 +40,7 @@ export interface ProductCard1Props {
   categoryHref?: string;
   brand?: string;
   brandHref?: string;
+  isSpecialSale?: boolean;
   className?: string;
 }
 
@@ -118,13 +119,13 @@ export function ProductCard1({
       {/* Image */}
       <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
 
-        {/* Actions: like on top, compare under — all breakpoints */}
-        <div className="absolute top-2 left-2 z-20 flex flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:gap-2">
+        {/* Like + Compare — left column only */}
+        <div className="pointer-events-auto absolute top-2 left-2 z-30 flex w-9 flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:w-10 sm:gap-2">
           <Button
             type="button"
             variant="secondary"
             size="icon"
-            className={`h-7 w-7 rounded-full bg-background/85 shadow-sm backdrop-blur-sm sm:h-8 sm:w-8 ${
+            className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isWishlisted ? "text-rose-500" : ""
             }`}
             onClick={(e) => {
@@ -134,13 +135,15 @@ export function ProductCard1({
             }}
             aria-label="علاقه‌مندی"
           >
-            <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isWishlisted ? "fill-rose-500" : ""}`} />
+            <Heart
+              className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
+            />
           </Button>
           <Button
             type="button"
             variant="secondary"
             size="icon"
-            className={`h-7 w-7 rounded-full bg-background/85 shadow-sm backdrop-blur-sm sm:h-8 sm:w-8 ${
+            className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isCompared ? "text-primary" : ""
             }`}
             onClick={(e) => {
@@ -150,21 +153,21 @@ export function ProductCard1({
             }}
             aria-label="مقایسه"
           >
-            <ArrowLeftRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <ArrowLeftRight className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Badges: ONE horizontal row — New | Category | Brand (no wrap on mobile) */}
-        <div className="absolute top-2 right-2 z-20 flex max-w-[calc(100%-3.25rem)] flex-nowrap items-center justify-end gap-1 overflow-hidden sm:top-3 sm:right-3 sm:max-w-[calc(100%-4rem)] sm:gap-1.5">
+        {/* Badges row — right side only, never overlaps left actions */}
+        <div className="pointer-events-auto absolute top-2 right-2 z-20 flex max-w-[calc(100%-3.5rem)] flex-nowrap items-center justify-end gap-1 overflow-hidden sm:top-3 sm:right-3 sm:max-w-[calc(100%-4rem)] sm:gap-1.5">
           {isNew ? (
-            <Badge className="shrink-0 bg-blue-500 px-1.5 py-0 text-[10px] leading-5 hover:bg-blue-500/90 sm:px-2.5 sm:text-xs">
+            <Badge className="shrink-0 border-0 bg-blue-500 px-2 py-0.5 text-[10px] leading-4 text-white hover:bg-blue-500/90 sm:text-xs">
               جدید
             </Badge>
           ) : null}
           {category ? (
             <button
               type="button"
-              className="inline-flex min-w-0 shrink"
+              className="inline-flex min-w-0 max-w-[40%] shrink"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -173,7 +176,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="secondary"
-                className="max-w-[4.5rem] truncate bg-background/90 px-1.5 py-0 text-[10px] leading-5 text-foreground backdrop-blur-sm hover:bg-background sm:max-w-[6.5rem] sm:px-2.5 sm:text-xs"
+                className="w-full truncate border-0 bg-background/90 px-2 py-0.5 text-[10px] leading-4 text-foreground backdrop-blur-sm hover:bg-background sm:text-xs"
               >
                 {category}
               </Badge>
@@ -182,7 +185,7 @@ export function ProductCard1({
           {brand ? (
             <button
               type="button"
-              className="inline-flex min-w-0 shrink"
+              className="inline-flex min-w-0 max-w-[40%] shrink"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -191,7 +194,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="outline"
-                className="max-w-[4.5rem] truncate bg-background/90 px-1.5 py-0 text-[10px] leading-5 backdrop-blur-sm hover:bg-background sm:max-w-[6.5rem] sm:px-2.5 sm:text-xs"
+                className="w-full truncate bg-background/90 px-2 py-0.5 text-[10px] leading-4 backdrop-blur-sm hover:bg-background sm:text-xs"
               >
                 {brand}
               </Badge>
@@ -199,7 +202,19 @@ export function ProductCard1({
           ) : null}
         </div>
 
-{/* بج‌ها افقی: جدید | دسته | برند */}
+        {/* فروش ویژه — پایین سمت راست تصویر */}
+        {isSpecialSale ? (
+          <div className="pointer-events-none absolute bottom-2 right-2 z-20 sm:bottom-3 sm:right-3">
+            <Badge className="border-0 bg-rose-600 px-2 py-0.5 text-[10px] leading-4 text-white shadow-sm hover:bg-rose-600/90 sm:text-xs">
+              فروش ویژه
+            </Badge>
+          </div>
+        ) : null}
+
+
+        {/* Actions: like on top, compare under — all breakpoints */}
+        {/* Badges: ONE horizontal row — New | Category | Brand (no wrap on mobile) */}
+        {/* بج‌ها افقی: جدید | دسته | برند */}
         {/* لایک + مقایسه کنار هم */}
         {hasImage ? (
           <motion.img
@@ -219,91 +234,15 @@ export function ProductCard1({
 
         {/* Arrows — only if multiple images */}
         {safeImages.length > 1 && (
-          <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-between px-2 opacity-0 transition-opacity group-hover:opacity-100">
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
-              onClick={prevImage}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="bg-whitend/90 h-8 w-8 rounded-full shadow-sm backdrop-blur-sm"
-              onClick={nextImage}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+          )}
 
         {/* Dots */}
         {safeImages.length > 1 && (
-          <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
-            {safeImages.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  index === currentImageIndex
-                    ? "bg-primary w-4"
-                    : "bg-whitend/70 w-1.5"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCurrentImageIndex(index);
-                }}
-              />
-            ))}
-          </div>
-        )}
+          )}
 
         {/* Badges — start (RTL right) */}
-        <div className="absolute top-2.5 start-2.5 flex flex-col gap-1.5">
-          
-
-          
-
-
-          
-
-          {isBestSeller && (
-            <Badge className="rounded-full border-0 bg-amber-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              پرفروش
-            </Badge>
-          )}
-          {discount > 0 && (
-            <Badge className="rounded-full border-0 bg-rose-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              ٪{toPersianDigits(String(discount))}-
-            </Badge>
-          )}
-        </div>
-
         {/* Wishlist — end (RTL left) */}
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className={cn(
-            "bg-whitend/90 absolute top-2.5 end-2.5 h-8 w-8 rounded-full border-0 shadow-sm backdrop-blur-sm",
-            isWishlisted && "text-rose-500"
-          )}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsWishlisted((v) => !v);
-          }}
-          aria-label="علاقه‌مندی"
-        >
-          <Heart className={cn("h-4 w-4", isWishlisted && "fill-rose-500")} />
-        </Button>
-      </div>
+        </div>
 
       {/* Content — balanced spacing */}
       <CardContent className="space-y-3 p-3.5 sm:p-4">
