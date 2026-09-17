@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Heart,
+  ArrowLeftRight,
   ShoppingCart,
   Star,
   ChevronLeft,
@@ -75,6 +76,7 @@ export function ProductCard1({
   const [selectedColor, setSelectedColor] = useState(colors[0] ?? "");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isCompared, setIsCompared] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
@@ -115,6 +117,102 @@ export function ProductCard1({
     >
       {/* Image */}
       <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
+
+        {/* بج‌ها افقی: جدید | دسته | برند */}
+        <div className="absolute top-3 right-3 z-20 flex max-w-[70%] flex-row flex-wrap items-center justify-end gap-1.5">
+          {isNew && (
+            <Badge className="shrink-0 bg-blue-500 hover:bg-blue-500/90">جدید</Badge>
+          )}
+          {category && categoryHref ? (
+            <button
+              type="button"
+              className="inline-flex shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(categoryHref);
+              }}
+            >
+              <Badge
+                variant="secondary"
+                className="max-w-[6.5rem] cursor-pointer truncate bg-background/90 text-foreground backdrop-blur-sm hover:bg-background"
+              >
+                {category}
+              </Badge>
+            </button>
+          ) : category ? (
+            <Badge
+              variant="secondary"
+              className="max-w-[6.5rem] shrink-0 truncate bg-background/90 text-foreground backdrop-blur-sm"
+            >
+              {category}
+            </Badge>
+          ) : null}
+          {brand && brandHref ? (
+            <button
+              type="button"
+              className="inline-flex shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                router.push(brandHref);
+              }}
+            >
+              <Badge
+                variant="outline"
+                className="max-w-[6.5rem] cursor-pointer truncate bg-background/90 backdrop-blur-sm hover:bg-background"
+              >
+                {brand}
+              </Badge>
+            </button>
+          ) : brand ? (
+            <Badge
+              variant="outline"
+              className="max-w-[6.5rem] shrink-0 truncate bg-background/90 backdrop-blur-sm"
+            >
+              {brand}
+            </Badge>
+          ) : null}
+        </div>
+
+        {/* لایک + مقایسه کنار هم */}
+        <div className="absolute top-3 left-3 z-20 flex flex-row items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className={`h-8 w-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm ${
+              isWishlisted ? "text-rose-500" : ""
+            }`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsWishlisted(!isWishlisted);
+            }}
+            aria-label="علاقه‌مندی"
+          >
+            <Heart
+              className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
+            />
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className={`h-8 w-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm ${
+              isCompared ? "text-primary" : ""
+            }`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsCompared(!isCompared);
+            }}
+            aria-label="مقایسه"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+          </Button>
+        </div>
+
         {hasImage ? (
           <motion.img
             key={currentImageIndex}
