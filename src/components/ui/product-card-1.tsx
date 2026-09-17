@@ -260,10 +260,10 @@ export function ProductCard1({
           ) : null}
           <TooltipProvider delayDuration={300}>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <h3 className="font-iranyekan-heavy block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-5 sm:text-[15px]">
+                      <TooltipTrigger className="block w-full max-w-full cursor-default text-start">
+                        <span className="font-iranyekan-heavy block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-5 sm:text-[15px] block w-full overflow-hidden text-ellipsis whitespace-nowrap">
                           {name}
-                        </h3>
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-xs text-sm">
                         {name}
