@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       { source: "/آخرین-مشاهده-ها", destination: "/recently-viewed" },
       { source: "/محصولات", destination: "/products" },
       { source: "/ورود", destination: "/login" },
+      { source: "/%D9%88%D8%B1%D9%88%D8%AF", destination: "/login" },
       { source: "/ثبت-نام", destination: "/register" },
     ];
   },
