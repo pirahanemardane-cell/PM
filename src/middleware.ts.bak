@@ -13,12 +13,16 @@ const PERSIAN_ROUTES: Record<string, string> = {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // exact match
   const dest = PERSIAN_ROUTES[pathname];
   if (dest) {
     const url = request.nextUrl.clone();
     url.pathname = dest;
     return NextResponse.rewrite(url);
   }
+
+  // decoded match (in case of encoding quirks)
   try {
     const decoded = decodeURIComponent(pathname);
     const dest2 = PERSIAN_ROUTES[decoded];
@@ -28,8 +32,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.rewrite(url);
     }
   } catch {
-    /* ignore */
+    // ignore
   }
+
   return NextResponse.next();
 }
 
@@ -42,5 +47,6 @@ export const config = {
     "/سبد-خرید",
     "/آخرین-مشاهده-ها",
     "/محصولات",
+    "/((?!_next/static|_next/image|favicon.ico|fonts|.*\\..*).*)",
   ],
 };
