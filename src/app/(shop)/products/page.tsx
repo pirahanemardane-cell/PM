@@ -49,7 +49,7 @@ export default async function ProductsPage({
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-extrabold md:text-3xl">محصولات</h1>
+        <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">محصولات</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {toPersianDigits(String(total))} محصول
         </p>

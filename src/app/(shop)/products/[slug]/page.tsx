@@ -99,7 +99,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 {product.brand.name}
               </p>
             )}
-            <h1 className="text-2xl font-extrabold md:text-3xl">
+            <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">
               {product.name}
             </h1>
             <div className="flex flex-wrap gap-2">

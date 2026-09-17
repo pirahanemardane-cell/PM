@@ -258,3 +258,11 @@ This set of fonts are used in this project under the license: E0QI1G9U
 .animation-delay-luma {
   animation-delay: -1.25s;
 }
+
+/* All H1 → IRANYekanX Heavy (900) */
+h1,
+.h1 {
+  font-family: "IRANYekanX", system-ui, sans-serif;
+  font-weight: 900;
+}
+

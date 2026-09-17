@@ -205,7 +205,7 @@ function AuthSignIn({
       className="p-8"
     >
       <div className="mb-8 text-center">
-        <h1 className="text-foreground text-3xl font-semibold">خوش آمدید</h1>
+        <h1 className="text-foreground text-3xl font-iranyekan-heavy">خوش آمدید</h1>
         <p className="text-muted-foreground mt-2 text-sm">ورود به حساب کاربری</p>
       </div>
       <AuthError message={formState.error} />
@@ -341,7 +341,7 @@ function AuthSignUp({ onSignIn }: { onSignIn: () => void }) {
       className="p-8"
     >
       <div className="mb-8 text-center">
-        <h1 className="text-foreground text-3xl font-semibold">ایجاد حساب</h1>
+        <h1 className="text-foreground text-3xl font-iranyekan-heavy">ایجاد حساب</h1>
         <p className="text-muted-foreground mt-2 text-sm">عضویت در فروشگاه</p>
       </div>
       <AuthError message={formState.error} />
@@ -506,7 +506,7 @@ function AuthForgotPassword({
         <span className="sr-only">بازگشت</span>
       </Button>
       <div className="mb-8 text-center">
-        <h1 className="text-foreground text-3xl font-semibold">بازیابی رمز</h1>
+        <h1 className="text-foreground text-3xl font-iranyekan-heavy">بازیابی رمز</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           ایمیل خود را وارد کنید
         </p>
@@ -566,7 +566,7 @@ function AuthResetSuccess({ onSignIn }: { onSignIn: () => void }) {
       <div className="bg-primary/10 mb-6 flex h-16 w-16 items-center justify-center rounded-full">
         <MailCheck className="text-primary h-8 w-8" />
       </div>
-      <h1 className="text-foreground text-2xl font-semibold">ایمیل را چک کنید</h1>
+      <h1 className="text-foreground text-2xl font-iranyekan-heavy">ایمیل را چک کنید</h1>
       <p className="text-muted-foreground mt-2 text-sm">
         لینک بازیابی رمز ارسال شد (حالت دمو).
       </p>
