@@ -244,8 +244,7 @@ export function ProductCard1({
               {brand}
             </p>
           ) : null}
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px]">
-            {name}
+          <h3 className="line-clamp-1 font-black min-h-[2.5rem] text-sm leading-5 font-semibold sm:text-[15px] font-black" title={name}>{name}
           </h3>
 
           {(rating > 0 || freeShipping) && (
