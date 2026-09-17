@@ -237,7 +237,7 @@ export function ProductCard1({
         </div>
 
       {/* Content — balanced spacing */}
-      <CardContent className="space-y-3 p-3.5 sm:p-4">
+      <CardContent className="bg-white dark:bg-[#2A2E32] space-y-3 p-3.5 sm:p-4">
         <div className="space-y-1">
           {brand ? (
             <p className="text-muted-foreground text-[11px] leading-4 tracking-wide">
@@ -334,7 +334,7 @@ export function ProductCard1({
         )}
       </CardContent>
 
-      <CardFooter className="border-0 bg-white p-4 pt-4">
+      <CardFooter className="border-0 bg-white dark:bg-[#2A2E32] p-4 pt-4">
         <Button
           type="button"
           className="h-10 w-full rounded-xl text-sm font-medium"
