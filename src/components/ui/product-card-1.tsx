@@ -117,67 +117,14 @@ export function ProductCard1({
     >
       {/* Image */}
       <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
-<div className="absolute top-3 right-3 z-20 flex max-w-[70%] flex-row flex-wrap items-center justify-end gap-1.5">
-          {isNew && (
-            <Badge className="shrink-0 bg-blue-500 hover:bg-blue-500/90">جدید</Badge>
-          )}
-          {category && categoryHref ? (
-            <button
-              type="button"
-              className="inline-flex shrink-0"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push(categoryHref);
-              }}
-            >
-              <Badge
-                variant="secondary"
-                className="max-w-[6.5rem] cursor-pointer truncate bg-background/90 text-foreground backdrop-blur-sm hover:bg-background"
-              >
-                {category}
-              </Badge>
-            </button>
-          ) : category ? (
-            <Badge
-              variant="secondary"
-              className="max-w-[6.5rem] shrink-0 truncate bg-background/90 text-foreground backdrop-blur-sm"
-            >
-              {category}
-            </Badge>
-          ) : null}
-          {brand && brandHref ? (
-            <button
-              type="button"
-              className="inline-flex shrink-0"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push(brandHref);
-              }}
-            >
-              <Badge
-                variant="outline"
-                className="max-w-[6.5rem] cursor-pointer truncate bg-background/90 backdrop-blur-sm hover:bg-background"
-              >
-                {brand}
-              </Badge>
-            </button>
-          ) : brand ? (
-            <Badge
-              variant="outline"
-              className="max-w-[6.5rem] shrink-0 truncate bg-background/90 backdrop-blur-sm"
-            >
-              {brand}
-            </Badge>
-          ) : null}
-        </div>
-<div className="absolute top-3 left-3 z-20 flex flex-col items-center gap-2">
+
+        {/* Actions: like on top, compare under — all breakpoints */}
+        <div className="absolute top-2 left-2 z-20 flex flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:gap-2">
           <Button
             type="button"
             variant="secondary"
             size="icon"
-            className={`h-8 w-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm ${
+            className={`h-7 w-7 rounded-full bg-background/85 shadow-sm backdrop-blur-sm sm:h-8 sm:w-8 ${
               isWishlisted ? "text-rose-500" : ""
             }`}
             onClick={(e) => {
@@ -187,15 +134,13 @@ export function ProductCard1({
             }}
             aria-label="علاقه‌مندی"
           >
-            <Heart
-              className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
-            />
+            <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isWishlisted ? "fill-rose-500" : ""}`} />
           </Button>
           <Button
             type="button"
             variant="secondary"
             size="icon"
-            className={`h-8 w-8 rounded-full bg-background/80 shadow-sm backdrop-blur-sm ${
+            className={`h-7 w-7 rounded-full bg-background/85 shadow-sm backdrop-blur-sm sm:h-8 sm:w-8 ${
               isCompared ? "text-primary" : ""
             }`}
             onClick={(e) => {
@@ -205,12 +150,56 @@ export function ProductCard1({
             }}
             aria-label="مقایسه"
           >
-            <ArrowLeftRight className="h-4 w-4" />
+            <ArrowLeftRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </div>
 
+        {/* Badges: ONE horizontal row — New | Category | Brand (no wrap on mobile) */}
+        <div className="absolute top-2 right-2 z-20 flex max-w-[calc(100%-3.25rem)] flex-nowrap items-center justify-end gap-1 overflow-hidden sm:top-3 sm:right-3 sm:max-w-[calc(100%-4rem)] sm:gap-1.5">
+          {isNew ? (
+            <Badge className="shrink-0 bg-blue-500 px-1.5 py-0 text-[10px] leading-5 hover:bg-blue-500/90 sm:px-2.5 sm:text-xs">
+              جدید
+            </Badge>
+          ) : null}
+          {category ? (
+            <button
+              type="button"
+              className="inline-flex min-w-0 shrink"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (categoryHref) router.push(categoryHref);
+              }}
+            >
+              <Badge
+                variant="secondary"
+                className="max-w-[4.5rem] truncate bg-background/90 px-1.5 py-0 text-[10px] leading-5 text-foreground backdrop-blur-sm hover:bg-background sm:max-w-[6.5rem] sm:px-2.5 sm:text-xs"
+              >
+                {category}
+              </Badge>
+            </button>
+          ) : null}
+          {brand ? (
+            <button
+              type="button"
+              className="inline-flex min-w-0 shrink"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (brandHref) router.push(brandHref);
+              }}
+            >
+              <Badge
+                variant="outline"
+                className="max-w-[4.5rem] truncate bg-background/90 px-1.5 py-0 text-[10px] leading-5 backdrop-blur-sm hover:bg-background sm:max-w-[6.5rem] sm:px-2.5 sm:text-xs"
+              >
+                {brand}
+              </Badge>
+            </button>
+          ) : null}
+        </div>
 
-        {/* بج‌ها افقی: جدید | دسته | برند */}
+{/* بج‌ها افقی: جدید | دسته | برند */}
         {/* لایک + مقایسه کنار هم */}
         {hasImage ? (
           <motion.img
@@ -278,9 +267,7 @@ export function ProductCard1({
         {/* Badges — start (RTL right) */}
         <div className="absolute top-2.5 start-2.5 flex flex-col gap-1.5">
           {isNew && (
-            <Badge className="rounded-full border-0 bg-blue-600 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              جدید
-            </Badge>
+            
           )}
 
           
