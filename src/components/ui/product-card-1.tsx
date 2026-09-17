@@ -104,13 +104,13 @@ export function ProductCard1({
       )}
     >
       {/* Image */}
-      <div className="bg-muted/40 relative aspect-[3/4] overflow-hidden">
+      <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
         {hasImage ? (
           <motion.img
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
