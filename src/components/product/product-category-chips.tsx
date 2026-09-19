@@ -13,6 +13,7 @@ type Props = {
   q?: string;
   sort?: string;
   featured?: boolean;
+  attrs?: Record<string, string>;
 };
 
 function buildHref(
@@ -25,6 +26,11 @@ function buildHref(
   if (props.q) params.set("q", props.q);
   if (props.sort && props.sort !== "newest") params.set("sort", props.sort);
   if (props.featured) params.set("featured", "1");
+  if (props.attrs) {
+    for (const [k, v] of Object.entries(props.attrs)) {
+      if (v) params.set(k, v);
+    }
+  }
   const qs = params.toString();
   return qs ? `/products?${qs}` : "/products";
 }
@@ -37,12 +43,12 @@ export function ProductCategoryChips({
   if (!categories.length) return null;
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <span className="text-muted-foreground me-1 text-sm">دسته:</span>
+    <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <span className="text-muted-foreground shrink-0 text-sm">دسته:</span>
       <Link
         href={buildHref(undefined, rest)}
         className={cn(
-          "rounded-full border px-3 py-1.5 text-xs transition-colors",
+          "shrink-0 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors",
           !currentCategory
             ? "border-primary bg-primary text-primary-foreground"
             : "bg-background hover:bg-muted"
@@ -55,7 +61,7 @@ export function ProductCategoryChips({
           key={c.slug}
           href={buildHref(c.slug, rest)}
           className={cn(
-            "rounded-full border px-3 py-1.5 text-xs transition-colors",
+            "shrink-0 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors",
             currentCategory === c.slug
               ? "border-primary bg-primary text-primary-foreground"
               : "bg-background hover:bg-muted"

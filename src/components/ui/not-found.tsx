@@ -1,11 +1,13 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, ArrowRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface NotFoundProps {
@@ -83,9 +85,15 @@ export function NotFound({
           />
           بازگشت
         </Button>
-        <Button asChild className="-order-1 sm:order-none">
-          <Link href="/">صفحه اصلی</Link>
-        </Button>
+        <Link
+          href="/"
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "-order-1 sm:order-none"
+          )}
+        >
+          صفحه اصلی
+        </Link>
       </div>
     </div>
   );

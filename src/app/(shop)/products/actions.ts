@@ -20,6 +20,7 @@ export async function loadProductsPage(input: {
   q?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   featured?: boolean;
+  attrs?: Record<string, string>;
 }): Promise<LoadProductsResult> {
   const service = new ProductService();
   const pageSize = input.pageSize ?? 12;
@@ -32,6 +33,7 @@ export async function loadProductsPage(input: {
     q: input.q,
     sort: input.sort ?? "newest",
     featured: input.featured,
+    attrs: input.attrs,
   });
 
   if (!result.success) {

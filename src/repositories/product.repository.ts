@@ -61,6 +61,67 @@ export class ProductRepository extends BaseRepository {
       if (brand) query = query.eq("brand_id", brand.id);
     }
 
+
+    // فیلتر attribute (facet) — AND بین attributeها
+    if (filters.attrs && Object.keys(filters.attrs).length > 0) {
+      let matchedIds: string[] | null = null;
+
+      for (const [attrSlug, optionSlug] of Object.entries(filters.attrs)) {
+        if (!attrSlug || !optionSlug) continue;
+
+        const { data: attr } = await client
+          .from("attributes")
+          .select("id")
+          .eq("slug", attrSlug)
+          .eq("is_filterable", true)
+          .maybeSingle();
+        if (!attr) {
+          matchedIds = [];
+          break;
+        }
+
+        const { data: opt } = await client
+          .from("attribute_options")
+          .select("id")
+          .eq("attribute_id", (attr as { id: string }).id)
+          .eq("slug", optionSlug)
+          .maybeSingle();
+        if (!opt) {
+          matchedIds = [];
+          break;
+        }
+
+        const { data: pav } = await client
+          .from("product_attribute_values")
+          .select("product_id")
+          .eq("attribute_id", (attr as { id: string }).id)
+          .eq("option_id", (opt as { id: string }).id);
+
+        const ids = (pav ?? []).map(
+          (r) => (r as { product_id: string }).product_id
+        );
+        matchedIds =
+          matchedIds === null
+            ? ids
+            : matchedIds.filter((id) => ids.includes(id));
+
+        if (matchedIds.length === 0) break;
+      }
+
+      if (matchedIds !== null) {
+        if (matchedIds.length === 0) {
+          return {
+            data: [],
+            total: 0,
+            page,
+            pageSize,
+            totalPages: 0,
+          };
+        }
+        query = query.in("id", matchedIds);
+      }
+    }
+
     // فلگ‌ها
     if (filters.featured === true) query = query.eq("is_featured", true);
     if (filters.isNew === true) query = query.eq("is_new", true);

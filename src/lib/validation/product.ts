@@ -19,6 +19,8 @@ export const productFilterSchema = paginationSchema.extend({
     .enum(["newest", "price_asc", "price_desc", "popular"])
     .default("newest")
     .optional(),
+  /** فیلتر facet: { "fit": "slim-fit", "fabric": "cotton" } */
+  attrs: z.record(z.string(), z.string()).optional(),
 });
 
 export type ProductFilterInput = z.infer<typeof productFilterSchema>;

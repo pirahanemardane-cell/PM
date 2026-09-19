@@ -79,8 +79,8 @@ export function HeaderActivitySheet({ open, onOpenChange, items = [] }: Props) {
                 <div className="py-8 text-center">
                   <Icon className="text-muted-foreground/40 mx-auto mb-4 h-16 w-16" />
                   <p className="text-muted-foreground mb-4 text-sm">{info.empty}</p>
-                  <DrawerClose asChild>
-                    <Button variant="outline">ادامه خرید</Button>
+                  <DrawerClose className="border-input bg-background hover:bg-muted inline-flex h-8 w-full items-center justify-center rounded-md border px-3 text-sm">
+                    ادامه خرید
                   </DrawerClose>
                 </div>
               ) : (
@@ -98,10 +98,8 @@ export function HeaderActivitySheet({ open, onOpenChange, items = [] }: Props) {
               )}
             </DrawerBody>
             <DrawerFooter className="grid-cols-1">
-              <DrawerClose asChild>
-                <Button variant="outline" className="w-full">
-                  بستن
-                </Button>
+              <DrawerClose className="border-input bg-background hover:bg-muted inline-flex h-8 w-full items-center justify-center rounded-md border px-3 text-sm">
+                بستن
               </DrawerClose>
             </DrawerFooter>
           </>

@@ -17,6 +17,7 @@ type Props = {
   q?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   featured?: boolean;
+  attrs?: Record<string, string>;
 };
 
 export function ProductInfiniteList({
@@ -28,6 +29,7 @@ export function ProductInfiniteList({
   q,
   sort,
   featured,
+  attrs,
 }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [page, setPage] = useState(initialPage);
@@ -36,6 +38,14 @@ export function ProductInfiniteList({
   const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
+
+  // وقتی URL/فیلتر عوض شود، لیست از سرور دوباره می‌آید
+  useEffect(() => {
+    setProducts(initialProducts);
+    setPage(initialPage);
+    setHasMore(initialHasMore);
+    setError(null);
+  }, [initialProducts, initialPage, initialHasMore]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || loadingRef.current) return;
@@ -51,6 +61,7 @@ export function ProductInfiniteList({
         q,
         sort,
         featured,
+        attrs,
       });
 
       if (!result.success) {
@@ -72,7 +83,7 @@ export function ProductInfiniteList({
       setError(null);
       loadingRef.current = false;
     });
-  }, [hasMore, page, categorySlug, brandSlug, q, sort, featured]);
+  }, [hasMore, page, categorySlug, brandSlug, q, sort, featured, attrs]);
 
   useEffect(() => {
     const node = sentinelRef.current;
