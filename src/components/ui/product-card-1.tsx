@@ -121,12 +121,12 @@ export function ProductCard1({
   const card = (
     <Card
       className={cn(
-        "group bg-card text-foreground w-full overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        "w-full overflow-hidden rounded-2xl border bg-card text-foreground shadow-sm",
         className
       )}
     >
       {/* Image */}
-      <div className="bg-muted/40 relative aspect-[4/5] max-h-[220px] overflow-hidden bg-muted/30 sm:max-h-[240px] lg:max-h-[260px]">
+      <div className="relative -mt-px h-[220px] w-full overflow-hidden bg-neutral-200">
 
         {/* Like + Compare — left column only */}
         <div className="pointer-events-auto absolute top-2 left-2 z-30 flex w-9 flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:w-10 sm:gap-2">
@@ -136,7 +136,7 @@ export function ProductCard1({
             size="icon"
             className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isWishlisted ? "text-rose-500" : ""
-            }`}
+            } text-foreground hover:!bg-primary hover:!text-primary-foreground`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -147,8 +147,7 @@ export function ProductCard1({
             }}
             aria-label="علاقه‌مندی"
           >
-            <Heart
-              className={`h-4 w-4 ${isWishlisted ? "fill-rose-500" : ""}`}
+            <Heart className={`h-4 w-4 ${isWishlisted ? "fill-rose-500 text-rose-500" : ""}`}
             />
           </Button>
           <Button
@@ -157,7 +156,7 @@ export function ProductCard1({
             size="icon"
             className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isCompared ? "text-primary" : ""
-            }`}
+            } text-foreground hover:!bg-primary hover:!text-primary-foreground`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -172,17 +171,12 @@ export function ProductCard1({
           </Button>
         </div>
 
-        {/* Badges row — right side only, never overlaps left actions */}
-        <div className="pointer-events-auto absolute top-2 right-2 z-20 flex max-w-[calc(100%-3.5rem)] flex-nowrap items-center justify-end gap-1 overflow-hidden sm:top-3 sm:right-3 sm:max-w-[calc(100%-4rem)] sm:gap-1.5">
-          {isNew ? (
-            <Badge className="shrink-0 border-0 bg-sky-100 px-2.5 py-1 text-[10px] leading-none text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 sm:text-xs">
-              جدید
-            </Badge>
-          ) : null}
+        {/* Badges — vertical stack, right-aligned, full text */}
+        <div className="pointer-events-auto absolute top-2 right-2 z-20 flex flex-col items-end gap-1.5 sm:top-3 sm:right-3">
           {category ? (
             <button
               type="button"
-              className="inline-flex min-w-0 max-w-[40%] shrink"
+              className="me-auto inline-flex w-fit shrink-0 self-start"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -191,7 +185,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="secondary"
-                className="w-full truncate border-0 bg-violet-100 px-2.5 py-1 text-[10px] leading-none text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 sm:text-xs"
+                className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 sm:text-xs"
               >
                 {category}
               </Badge>
@@ -200,7 +194,7 @@ export function ProductCard1({
           {brand ? (
             <button
               type="button"
-              className="inline-flex min-w-0 max-w-[40%] shrink"
+              className="me-auto inline-flex w-fit shrink-0 self-start"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -209,7 +203,7 @@ export function ProductCard1({
             >
               <Badge
                 variant="outline"
-                className="w-full truncate border-0 bg-emerald-100 px-2.5 py-1 text-[10px] leading-none text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 sm:text-xs"
+                className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 sm:text-xs"
               >
                 {brand}
               </Badge>
@@ -220,7 +214,7 @@ export function ProductCard1({
         {/* فروش ویژه — پایین سمت راست تصویر */}
         {isSpecialSale ? (
           <div className="pointer-events-none absolute bottom-2 right-2 z-20 sm:bottom-3 sm:right-3">
-            <Badge className="border-0 bg-rose-100 px-2.5 py-1 text-[10px] leading-none text-rose-800 shadow-sm dark:bg-rose-900/40 dark:text-rose-200 sm:text-xs">
+            <Badge className="me-auto w-fit self-start border-0 bg-rose-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-rose-800 dark:bg-rose-900/40 dark:text-rose-200 sm:text-xs">
               فروش ویژه
             </Badge>
           </div>
@@ -236,7 +230,8 @@ export function ProductCard1({
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+            className="absolute inset-0 z-0 h-full w-full object-cover object-top"
+            
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
@@ -318,7 +313,7 @@ export function ProductCard1({
                   "h-5 w-5 rounded-full border border-black/5 transition-all",
                   selectedColor === color
                     ? "ring-primary ring-2 ring-offset-1"
-                    : "hover:ring-muted-foreground/30 hover:ring-1"
+                    : ""
                 )}
                 style={{ backgroundColor: color }}
                 onClick={(e) => {
