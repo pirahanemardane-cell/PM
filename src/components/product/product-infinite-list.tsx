@@ -13,6 +13,7 @@ type Props = {
   initialPage: number;
   initialHasMore: boolean;
   categorySlug?: string;
+  brandSlug?: string;
   q?: string;
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   featured?: boolean;
@@ -23,6 +24,7 @@ export function ProductInfiniteList({
   initialPage,
   initialHasMore,
   categorySlug,
+  brandSlug,
   q,
   sort,
   featured,
@@ -45,6 +47,7 @@ export function ProductInfiniteList({
         page: nextPage,
         pageSize: 12,
         categorySlug,
+        brandSlug,
         q,
         sort,
         featured,
@@ -69,7 +72,7 @@ export function ProductInfiniteList({
       setError(null);
       loadingRef.current = false;
     });
-  }, [hasMore, page, categorySlug, q, sort, featured]);
+  }, [hasMore, page, categorySlug, brandSlug, q, sort, featured]);
 
   useEffect(() => {
     const node = sentinelRef.current;

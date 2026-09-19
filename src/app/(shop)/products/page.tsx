@@ -20,6 +20,8 @@ export default async function ProductsPage({
 
   const categorySlug =
     typeof params.category === "string" ? params.category : undefined;
+  const brandSlug =
+    typeof params.brand === "string" ? params.brand : undefined;
   const q = typeof params.q === "string" ? params.q : undefined;
   const sort =
     typeof params.sort === "string"
@@ -31,6 +33,7 @@ export default async function ProductsPage({
     page: 1,
     pageSize: 12,
     categorySlug,
+    brandSlug,
     q,
     sort,
     featured,
@@ -60,6 +63,7 @@ export default async function ProductsPage({
         initialPage={page}
         initialHasMore={page < totalPages}
         categorySlug={categorySlug}
+        brandSlug={brandSlug}
         q={q}
         sort={sort}
         featured={featured}

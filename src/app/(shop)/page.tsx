@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ProductService } from "@/services/product.service";
 import { CategoryService } from "@/services/category.service";
+import { BrandService } from "@/services/brand.service";
 import { ProductCard } from "@/components/product/product-card";
 import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
@@ -53,12 +54,14 @@ function HorizontalRail({ children }: { children: React.ReactNode }) {
 export default async function HomePage() {
   const productService = new ProductService();
   const categoryService = new CategoryService();
+  const brandService = new BrandService();
 
-  const [featuredResult, newResult, categoriesResult] = await Promise.all([
+  const [featuredResult, newResult, categoriesResult, brandsResult] = await Promise.all([
     productService.getPublishedProducts({ page: 1, limit: 8, featured: true }),
     productService.getPublishedProducts({ page: 1, limit: 8, sort: "newest" }),
     categoryService.getRoots(),
-  ]);
+        brandService.getActive(),
+    ]);
 
   const featured =
     featuredResult.success && featuredResult.data
@@ -70,6 +73,8 @@ export default async function HomePage() {
     categoriesResult.success && categoriesResult.data
       ? categoriesResult.data
       : [];
+  const brands =
+    brandsResult.success && brandsResult.data ? brandsResult.data : [];
 
   // تا اضافه شدن فیلتر bestseller / sale واقعی
   const bestsellers = newest;
@@ -114,20 +119,23 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {/* 2. Brands placeholder */}
-      <section aria-label="برندها">
-        <SectionHeader title="برندها" href="/brands" />
-        <HorizontalRail>
-          {["برند ۱", "برند ۲", "برند ۳", "برند ۴"].map((b) => (
-            <div
-              key={b}
-              className="bg-muted/40 flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border text-sm font-medium"
-            >
-              {b}
-            </div>
-          ))}
-        </HorizontalRail>
-      </section>
+      {/* 2. Brands */}
+      {brands.length > 0 ? (
+        <section aria-label="برندها">
+          <SectionHeader title="برندها" href="/brands" />
+          <HorizontalRail>
+            {brands.map((b) => (
+              <Link
+                key={b.id}
+                href={`/brands/${b.slug}`}
+                className="bg-muted/40 hover:border-foreground/20 flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60"
+              >
+                {b.name}
+              </Link>
+            ))}
+          </HorizontalRail>
+        </section>
+      ) : null}
 
       {/* 3. Categories */}
       {categories.length > 0 && (
@@ -137,7 +145,7 @@ export default async function HomePage() {
             {categories.map((cat) => (
               <Link
                 key={cat.id}
-                href={`/products?category=${cat.slug}`}
+                href={`/categories/${cat.slug}`}
                 className="hover:border-foreground/20 flex h-24 w-40 shrink-0 items-center justify-center rounded-2xl border p-4 text-center text-sm font-medium transition-colors hover:bg-muted/40"
               >
                 {cat.name}
