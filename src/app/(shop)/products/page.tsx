@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ProductService } from "@/services/product.service";
 import { ProductInfiniteList } from "@/components/product/product-infinite-list";
+import { ProductSortBar } from "@/components/product/product-sort-bar";
 import { toPersianDigits } from "@/lib/numbers";
 
 export const metadata: Metadata = {
@@ -57,6 +58,14 @@ export default async function ProductsPage({
           {toPersianDigits(String(total))} محصول
         </p>
       </div>
+
+      <ProductSortBar
+        currentSort={sort}
+        categorySlug={categorySlug}
+        brandSlug={brandSlug}
+        q={q}
+        featured={featured}
+      />
 
       <ProductInfiniteList
         initialProducts={products}
