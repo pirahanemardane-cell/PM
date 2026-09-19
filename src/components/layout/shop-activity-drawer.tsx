@@ -10,7 +10,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useShopStore } from "@/lib/shop-store";
-import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
 export type ActivityTab = "cart" | "wishlist" | "compare" | "recent";
@@ -26,12 +25,11 @@ export function ShopActivityDrawer({
   open,
   tab,
   onOpenChange,
-  onTabChange,
 }: {
   open: boolean;
   tab: ActivityTab;
   onOpenChange: (open: boolean) => void;
-  onTabChange: (tab: ActivityTab) => void;
+  onTabChange?: (tab: ActivityTab) => void;
 }) {
   const cart = useShopStore((s) => s.cart);
   const wishlist = useShopStore((s) => s.wishlist);
@@ -42,73 +40,53 @@ export function ShopActivityDrawer({
   const toggleCompare = useShopStore((s) => s.toggleCompare);
 
   const items =
-    tab === "cart" ? cart : tab === "wishlist" ? wishlist : tab === "compare" ? compare : recent;
+    tab === "cart"
+      ? cart
+      : tab === "wishlist"
+        ? wishlist
+        : tab === "compare"
+          ? compare
+          : recent;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} direction="right">
       <DrawerContent className="h-full max-h-none rounded-none" dir="rtl">
-        <DrawerHeader className="flex flex-row items-center justify-between gap-2">
+        <DrawerHeader className="flex flex-row items-center justify-between gap-2 border-b border-border/40">
           <DrawerTitle>{LABELS[tab]}</DrawerTitle>
-          <DrawerClose className="hover:bg-muted rounded-full p-2">
+          <DrawerClose className="hover:bg-primary hover:text-primary-foreground rounded-full p-2">
             <X className="h-4 w-4" />
           </DrawerClose>
         </DrawerHeader>
-
-        <div className="border-border flex gap-1 overflow-x-auto border-b px-3 py-2">
-          {(Object.keys(LABELS) as ActivityTab[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => onTabChange(k)}
-              className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs",
-                tab === k ? "bg-primary text-primary-foreground" : "bg-muted"
-              )}
-            >
-              {LABELS[k]}
-            </button>
-          ))}
-        </div>
 
         <div className="flex-1 overflow-y-auto p-4">
           {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">موردی نیست.</p>
           ) : (
             <ul className="space-y-3">
-              {items.map((p) => (
+              {items.map((p: { id: string; title: string; price?: number }) => (
                 <li key={p.id} className="border-border rounded-xl border p-3">
                   <p className="text-sm font-medium">{p.title}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {p.price.toLocaleString("fa-IR")} تومان
-                  </p>
+                  {typeof p.price === "number" ? (
+                    <p className="text-muted-foreground text-xs">
+                      {p.price.toLocaleString("fa-IR")} تومان
+                    </p>
+                  ) : null}
                   <div className="mt-2">
-                    {tab === "cart" ? (
-                      <button
-                        type="button"
-                        className="text-destructive text-xs"
-                        onClick={() => removeFromCart(p.id)}
-                      >
+                    {tab === "cart" && (
+                      <button type="button" className="text-destructive text-xs" onClick={() => removeFromCart(p.id)}>
                         حذف از سبد
                       </button>
-                    ) : null}
-                    {tab === "wishlist" ? (
-                      <button
-                        type="button"
-                        className="text-destructive text-xs"
-                        onClick={() => toggleWishlist(p)}
-                      >
+                    )}
+                    {tab === "wishlist" && (
+                      <button type="button" className="text-destructive text-xs" onClick={() => toggleWishlist(p as never)}>
                         حذف
                       </button>
-                    ) : null}
-                    {tab === "compare" ? (
-                      <button
-                        type="button"
-                        className="text-destructive text-xs"
-                        onClick={() => toggleCompare(p)}
-                      >
+                    )}
+                    {tab === "compare" && (
+                      <button type="button" className="text-destructive text-xs" onClick={() => toggleCompare(p as never)}>
                         حذف از مقایسه
                       </button>
-                    ) : null}
+                    )}
                   </div>
                 </li>
               ))}
@@ -117,14 +95,13 @@ export function ShopActivityDrawer({
         </div>
 
         <DrawerFooter>
-          <DrawerClose asChild>
-            <Link
-              href="/dashboard"
-              className="bg-primary text-primary-foreground flex h-10 w-full items-center justify-center rounded-xl text-sm font-medium"
-            >
-              مشاهده در پنل خریدار
-            </Link>
-          </DrawerClose>
+          <Link
+            href="/dashboard"
+            onClick={() => onOpenChange(false)}
+            className="bg-primary text-primary-foreground flex h-10 w-full items-center justify-center rounded-xl text-sm font-medium"
+          >
+            مشاهده در پنل خریدار
+          </Link>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

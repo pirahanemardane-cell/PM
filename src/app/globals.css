@@ -55,6 +55,10 @@ h4, .h4 {
 }
 
 :root {
+  --secondary-foreground: #F8F9FA;
+  --secondary: #023047;
+  --foreground: #212529;
+  --primary-foreground: #F8F9FA;
   --surface-primary: #F8F9FA;
   --surface-muted: #e9ecef;
   --font-sans: "IRANYekanX", Tahoma, sans-serif;
@@ -179,14 +183,14 @@ h4, .h4 {
   --popover-foreground: #023047;
   --primary: #023047;
   --primary-foreground: #F8F9FA;
-  --secondary: #DEE2E6;
+  --secondary: #023047;
   --secondary-foreground: #023047;
   --muted: #DEE2E6;
   --muted-foreground: #495057;
   --accent: #DEE2E6;
   --accent-foreground: #023047;
   --destructive: #DC2626;
-  --border: #DEE2E6;
+  --border: #023047;
   --input: #DEE2E6;
   --ring: #023047;
   --chart-1: #023047;
@@ -216,14 +220,14 @@ h4, .h4 {
   --popover-foreground: #F8F9FA;
   --primary: #13ABC4;
   --primary-foreground: #212529;
-  --secondary: #495057;
-  --secondary-foreground: #F8F9FA;
+  --secondary: #13ABC4;
+  --secondary-foreground: #212529;
   --muted: #495057;
   --muted-foreground: #DEE2E6;
   --accent: #495057;
   --accent-foreground: #F8F9FA;
   --destructive: #EF4444;
-  --border: #495057;
+  --border: #13ABC4;
   --input: #495057;
   --ring: #13ABC4;
   --chart-1: #13ABC4;
@@ -342,3 +346,70 @@ h4, .h4 { font-weight: 600 !important; }
 /* اگر مستقیم روی سکشن کلاس بگذاری */
 .section-a { background-color: var(--surface-primary); }
 .section-b { background-color: var(--surface-muted); }
+
+/* سرچ: هوور فیلتر از باکس بیرون نزند */
+[data-search-box] {
+  overflow: hidden;
+}
+[data-search-box] button:hover,
+[data-search-box] button:focus {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* هوور استاندارد */
+.link-hover {
+  @apply transition-colors hover:text-secondary;
+}
+.btn-hover-secondary {
+  @apply transition-colors hover:bg-secondary hover:text-secondary-foreground;
+}
+.btn-hover {
+  @apply transition-colors hover:bg-primary hover:text-primary-foreground;
+}
+
+/* ========== PM Design Tokens (full system) ========== */
+:root {
+  --background: #F8F9FA;
+  --foreground: #212529;
+  --card: #FFFFFF;
+  --card-foreground: #212529;
+  --popover: #FFFFFF;
+  --popover-foreground: #212529;
+  --primary: #023047;
+  --primary-foreground: #FFFFFF;
+  --secondary: #9B2226;
+  --secondary-foreground: #FFFFFF;
+  --muted: #E9ECEF;
+  --muted-foreground: #495057;
+  --accent: #DEE2E6;
+  --accent-foreground: #023047;
+  --destructive: #B3261E;
+  --destructive-foreground: #FFFFFF;
+  --border: #DEE2E6;
+  --input: #DEE2E6;
+  --ring: #023047;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #212529;
+  --foreground: #EBFFFB;
+  --card: #2A2E32;
+  --card-foreground: #EBFFFB;
+  --popover: #2A2E32;
+  --popover-foreground: #EBFFFB;
+  --primary: #13ABC4;
+  --primary-foreground: #00363D;
+  --secondary: #EBFFFB;
+  --secondary-foreground: #00363D;
+  --muted: #343A40;
+  --muted-foreground: #ADB5BD;
+  --accent: #004F58;
+  --accent-foreground: #EBFFFB;
+  --destructive: #F2B8B5;
+  --destructive-foreground: #601410;
+  --border: #495057;
+  --input: #495057;
+  --ring: #13ABC4;
+}

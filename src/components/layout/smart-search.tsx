@@ -58,31 +58,31 @@ export function SmartSearch({ className }: { className?: string }) {
 
   return (
     <div className={cn("relative w-full max-w-xl", className)} dir="rtl">
-      <form onSubmit={submit} className="flex items-center gap-2">
-        <div className="border-border bg-background relative flex min-h-10 flex-1 items-center rounded-xl border shadow-sm">
-          <Search className="text-muted-foreground mr-3 h-4 w-4 shrink-0" />
+      <form onSubmit={submit} className="flex h-10 items-center gap-2">
+        <div className="border-border bg-background flex h-10 min-w-0 flex-1 items-center overflow-hidden rounded-xl border">
+          <Search className="text-muted-foreground mr-2 ml-3 h-4 w-4 shrink-0" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="جستجوی هوشمند محصول، برند، رنگ…"
-            className="font-iranyekan placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent py-2 text-sm text-right outline-none"
+            className="font-iranyekan placeholder:text-muted-foreground h-10 min-w-0 flex-1 bg-transparent py-0 text-sm outline-none"
             dir="rtl"
           />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             className={cn(
-              "relative ml-1 flex h-8 items-center gap-1 rounded-lg px-2 text-xs",
+              "flex h-10 shrink-0 items-center gap-1 border-r border-border px-2.5 text-xs",
               open || activeFilters
                 ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted"
+                : "text-muted-foreground hover:bg-primary hover:text-primary-foreground"
             )}
             aria-label="فیلترها"
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">فیلتر</span>
             {activeFilters > 0 ? (
-              <span className="bg-primary text-primary-foreground absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full text-[10px]">
+              <span className="bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px]">
                 {activeFilters}
               </span>
             ) : null}
@@ -90,18 +90,18 @@ export function SmartSearch({ className }: { className?: string }) {
         </div>
         <button
           type="submit"
-          className="bg-primary text-primary-foreground hidden h-10 rounded-xl px-4 text-sm font-medium sm:inline-flex sm:items-center"
+          className="bg-primary text-primary-foreground hidden h-10 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-medium sm:inline-flex"
         >
           جستجو
         </button>
       </form>
 
       {open ? (
-        <div className="border-border bg-card absolute top-[calc(100%+8px)] right-0 left-0 z-50 rounded-2xl border p-4 shadow-lg">
+        <div className="border-border bg-card absolute top-[calc(100%+8px)] right-0 left-0 z-50 rounded-xl border p-4 shrink-0 overflow-hidden">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium">فیلتر پیشرفته</span>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={clearFilters} className="text-muted-foreground text-xs hover:underline">
+              <button type="button" onClick={clearFilters} className="text-muted-foreground text-xs hover:underline h-10 items-center justify-center rounded-xl hover:bg-primary hover:text-primary-foreground shrink-0">
                 پاک کردن
               </button>
               <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground">
@@ -116,7 +116,7 @@ export function SmartSearch({ className }: { className?: string }) {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm text-right overflow-hidden"
               >
                 <option value="">همه</option>
                 {CATEGORIES.map((c) => (
@@ -130,7 +130,7 @@ export function SmartSearch({ className }: { className?: string }) {
               <select
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm text-right overflow-hidden"
               >
                 <option value="">همه</option>
                 {BRANDS.map((b) => (
@@ -145,7 +145,7 @@ export function SmartSearch({ className }: { className?: string }) {
                 type="number"
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value)}
-                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm text-right overflow-hidden"
                 dir="rtl"
               />
             </label>
@@ -156,7 +156,7 @@ export function SmartSearch({ className }: { className?: string }) {
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                className="border-input bg-background h-9 w-full rounded-lg border px-2 text-sm text-right"
+                className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm text-right overflow-hidden"
                 dir="rtl"
               />
             </label>
@@ -171,10 +171,10 @@ export function SmartSearch({ className }: { className?: string }) {
                   type="button"
                   onClick={() => setColor(color === c.value ? "" : c.value)}
                   className={cn(
-                    "rounded-full border px-3 py-1 text-xs",
+                    "rounded-xl border px-3 py-1 text-xs",
                     color === c.value
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-muted"
+                      : "border-border hover:bg-primary hover:text-primary-foreground"
                   )}
                 >
                   {c.name}
@@ -186,7 +186,7 @@ export function SmartSearch({ className }: { className?: string }) {
           <button
             type="button"
             onClick={() => submit()}
-            className="bg-primary text-primary-foreground mt-4 h-10 w-full rounded-xl text-sm font-medium"
+            className="bg-primary text-primary-foreground mt-4 h-10 w-full rounded-xl text-sm font-medium hover:bg-primary hover:text-primary-foreground shrink-0"
           >
             اعمال فیلتر و جستجو
           </button>

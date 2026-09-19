@@ -71,7 +71,7 @@ export default async function ProductDetailPage({ params }: Props) {
               src={primaryImage.url}
               alt={primaryImage.alt_text ?? product.name}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />

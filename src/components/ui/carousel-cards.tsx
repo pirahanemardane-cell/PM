@@ -76,9 +76,9 @@ export function CarouselCards({
                 key={item.id}
                 className={cn(
                   "pr-4",
-                  slidesToShow === 2 && "basis-1/2",
+                  slidesToShow === 2 && "basis-[85%]",
                   slidesToShow === 3 && "md:basis-1/3",
-                  slidesToShow === 4 && "sm:basis-1/2 md:basis-1/3 lg:basis-1/4"
+                  slidesToShow === 4 && "sm:basis-[85%] md:basis-1/3 lg:basis-[22.22%]"
                 )}
               >
                 <Link
@@ -90,7 +90,7 @@ export function CarouselCards({
                       src={item.imageUrl}
                       alt={item.imageAlt || item.title}
                       fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-contain transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     />
                     {item.badge && (

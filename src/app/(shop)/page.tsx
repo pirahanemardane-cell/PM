@@ -33,7 +33,7 @@ function SectionHeader({
       {href ? (
         <Link
           href={href}
-          className="text-muted-foreground hover:text-foreground text-sm"
+          className=" hover:text-foreground text-sm"
         >
           مشاهده همه
         </Link>

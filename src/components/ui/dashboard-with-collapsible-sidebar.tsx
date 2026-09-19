@@ -33,7 +33,7 @@ export default function DashboardWithSidebar({ isAdmin = false }: Props) {
         </div>
         <nav className="flex-1 space-y-1 p-2">
           {items.map((it) => (
-            <a key={it.href} href={it.href} className="hover:bg-accent flex items-center gap-3 rounded-md px-3 py-2.5 text-sm">
+            <a key={it.href} href={it.href} className="hover:bg-primary hover:text-primary-foreground flex items-center gap-3 rounded-md px-3 py-2.5 text-sm">
               <it.icon className="h-4 w-4 shrink-0" />
               {open ? <span>{it.label}</span> : null}
             </a>
