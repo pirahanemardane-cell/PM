@@ -124,12 +124,12 @@ export function ProductCard1({
   const card = (
     <Card
       className={cn(
-        "w-full overflow-hidden rounded-2xl border bg-card text-foreground shadow-sm",
+        "w-full overflow-hidden rounded-2xl border bg-card text-foreground shadow-sm p-0 gap-0",
         className
       )}
     >
       {/* Image */}
-      <div className="relative -mt-px h-[220px] w-full overflow-hidden bg-neutral-200">
+ <div className="m-0 p-0 relative - h-[220px] w-full overflow-hidden bg-neutral-200">
 
         {/* Like + Compare — left column only */}
         <div className="pointer-events-auto absolute top-2 left-2 z-30 flex w-9 flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:w-10 sm:gap-2">
@@ -233,7 +233,7 @@ export function ProductCard1({
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="absolute inset-0 z-0 h-full w-full object-cover object-top"
+            className="z-0 absolute inset-0 h-full w-full object-cover object-top"
             
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -249,7 +249,7 @@ export function ProductCard1({
         </div>
 
       {/* Content — balanced spacing */}
-      <CardContent className="bg-white dark:bg-[#2A2E32] space-y-3 p-3.5 sm:p-4">
+      <CardContent className="space-y-3 bg-white p-3 dark:bg-[#2A2E32] sm:space-y-2.5">
         <div className="space-y-1">
           {brand ? (
             <p className="text-muted-foreground text-[11px] leading-4 tracking-wide">
@@ -355,7 +355,7 @@ export function ProductCard1({
         )}
       </CardContent>
 
-      <CardFooter className="border-0 bg-white dark:bg-[#2A2E32] p-4 pt-4">
+      <CardFooter className="border-0 bg-white p-3 pt-0 dark:bg-[#2A2E32]">
         <Button
           type="button"
           className="h-10 w-full rounded-xl text-sm font-medium"
