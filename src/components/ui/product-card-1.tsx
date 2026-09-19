@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +27,8 @@ import {
   ArrowLeftRight,
   ShoppingCart,
   Star,
+  Loader2,
+  Check,
 } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
@@ -46,7 +50,6 @@ export interface ProductCard1Props {
   freeShipping?: boolean;
   category?: string;
   categoryHref?: string;
-  brand?: string;
   brandHref?: string;
   isSpecialSale?: boolean;
   className?: string;
@@ -253,7 +256,7 @@ export function ProductCard1({
               {brand}
             </p>
           ) : null}
-          <TooltipProvider delayDuration={300}>
+          <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger className="block w-full max-w-full cursor-default text-start">
                         <span className="font-iranyekan-heavy block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-5 sm:text-[15px] block w-full overflow-hidden text-ellipsis whitespace-nowrap">
