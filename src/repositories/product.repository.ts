@@ -21,7 +21,14 @@ export class ProductRepository extends BaseRepository {
       .from("products")
       .select(
         `
-        *,
+        id,
+        name,
+        slug,
+        status,
+        is_featured,
+        is_new,
+        is_bestseller,
+        created_at,
         brand:brands(id, name, slug),
         category:categories(id, name, slug),
         images:product_images(id, url, alt_text, is_primary, sort_order),
@@ -116,7 +123,16 @@ export class ProductRepository extends BaseRepository {
       .from("products")
       .select(
         `
-        *,
+        id,
+        name,
+        slug,
+        status,
+        short_description,
+        description,
+        is_featured,
+        is_new,
+        is_bestseller,
+        created_at,
         brand:brands(id, name, slug),
         category:categories(id, name, slug),
         images:product_images(id, url, alt_text, is_primary, sort_order),
