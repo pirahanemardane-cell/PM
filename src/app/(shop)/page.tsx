@@ -156,46 +156,52 @@ export default async function HomePage() {
       )}
 
       {/* 4. Newest */}
-      {newest.length > 0 && (
-        <section aria-label="محصولات جدید">
-          <SectionHeader title="محصولات جدید" href="/products?sort=newest" />
+      <section aria-label="محصولات جدید">
+        <SectionHeader title="محصولات جدید" href="/products?sort=newest" />
+        {newest.length > 0 ? (
           <HorizontalRail>
             {newest.map((product) => (
-              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
+              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
                 <ProductCard product={product} />
               </div>
             ))}
           </HorizontalRail>
-        </section>
-      )}
+        ) : (
+          <p className="text-muted-foreground text-sm">فعلاً محصول جدیدی موجود نیست.</p>
+        )}
+      </section>
 
       {/* 5. Deals */}
-      {deals.length > 0 && (
-        <section aria-label="پیشنهاد شگفت‌انگیز">
-          <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=true" />
+      <section aria-label="پیشنهاد شگفت‌انگیز">
+        <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=true" />
+        {deals.length > 0 ? (
           <HorizontalRail>
             {deals.map((product) => (
-              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
+              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
                 <ProductCard product={product} />
               </div>
             ))}
           </HorizontalRail>
-        </section>
-      )}
+        ) : (
+          <p className="text-muted-foreground text-sm">پیشنهاد شگفت‌انگیزی فعلاً فعال نیست.</p>
+        )}
+      </section>
 
       {/* 6. Bestsellers */}
-      {bestsellers.length > 0 && (
-        <section aria-label="پرفروش‌ترین‌ها">
-          <SectionHeader title="پرفروش‌ترین‌ها" href="/products" />
+      <section aria-label="پرفروش‌ترین‌ها">
+        <SectionHeader title="پرفروش‌ترین‌ها" href="/products" />
+        {bestsellers.length > 0 ? (
           <HorizontalRail>
             {bestsellers.map((product) => (
-              <div key={product.id} className="w-[calc((100%-0.5rem)/1.5)] shrink-0 sm:w-[calc((100%-2rem)/2.25)] lg:w-[calc((100%-3rem)/3.25)]">
+              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
                 <ProductCard product={product} />
               </div>
             ))}
           </HorizontalRail>
-        </section>
-      )}
+        ) : (
+          <p className="text-muted-foreground text-sm">پرفروش‌ترین‌ها فعلاً خالی است.</p>
+        )}
+      </section>
 
       {/* 7. Recently viewed */}
       <RecentlyViewed />
