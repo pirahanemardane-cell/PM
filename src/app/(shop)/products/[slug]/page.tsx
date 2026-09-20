@@ -169,12 +169,6 @@ export default async function ProductDetailPage({ params }: Props) {
             variants={variantOptions}
           />
 
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {product.description && (
             <div className="border-t pt-6">

@@ -7,6 +7,7 @@ import {
   type LoadProductsResult,
 } from "@/app/(shop)/products/actions";
 import { ProductCard } from "./product-card";
+import { LumaSpin } from "@/components/ui/luma-spin";
 
 type Props = {
   initialProducts: ProductWithRelations[];
@@ -118,7 +119,7 @@ export function ProductInfiniteList({
 
       <div ref={sentinelRef} className="flex min-h-10 items-center justify-center">
         {isPending && (
-          <p className="text-muted-foreground text-sm">در حال بارگذاری...</p>
+          <div className="flex justify-center py-8" dir="rtl"><LumaSpin /></div>
         )}
         {!hasMore && products.length > 0 && (
           <p className="text-muted-foreground text-sm">همه محصولات نمایش داده شد</p>

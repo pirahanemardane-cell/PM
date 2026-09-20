@@ -11,6 +11,7 @@ export default function DashboardWithSidebar({ isAdmin = false }: Props) {
         { icon: Home, label: "داشبورد ادمین", href: "/admin/dashboard" },
         { icon: Package, label: "محصولات", href: "/admin/products" },
         { icon: ShoppingCart, label: "سفارش‌ها", href: "/admin/orders" },
+        { icon: BarChart3, label: "تخفیف‌ها", href: "/admin/discounts" },
         { icon: Users, label: "کاربران", href: "/admin/users" },
         { icon: BarChart3, label: "گزارش‌ها", href: "/admin/analytics" },
         { icon: Settings, label: "تنظیمات", href: "/admin/settings" },

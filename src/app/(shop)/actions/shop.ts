@@ -611,56 +611,87 @@ export type DiscountPreview = {
 };
 
 /** اعتبارسنجی کد تخفیف برای مبلغ فعلی سبد */
-export async function validateDiscountAction(code: string, subtotal: number) {
-  try {
-    const raw = (code || "").trim().toUpperCase();
-    if (!raw) return { ok: false as const, error: "empty" };
-    if (subtotal <= 0) return { ok: false as const, error: "empty_cart" };
-
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("discounts")
-      .select("id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active")
-      .ilike("code", raw)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data || !data.is_active) return { ok: false as const, error: "invalid" };
-
-    const now = Date.now();
-    if (data.starts_at && new Date(data.starts_at).getTime() > now)
-      return { ok: false as const, error: "not_started" };
-    if (data.ends_at && new Date(data.ends_at).getTime() < now)
-      return { ok: false as const, error: "expired" };
-    if (data.max_uses != null && Number(data.used_count ?? 0) >= Number(data.max_uses))
-      return { ok: false as const, error: "exhausted" };
-
-    const minAmt = Number(data.min_order_amount ?? 0);
-    if (minAmt > 0 && subtotal < minAmt)
-      return { ok: false as const, error: "min_order", min: minAmt };
-
-    const value = Number(data.value ?? 0);
-    let discountAmount = 0;
-    if (data.type === "percentage") {
-      discountAmount = Math.floor((subtotal * value) / 100);
-    } else {
-      discountAmount = Math.floor(value);
+export async function validateDiscountAction(
+  code: string,
+  subtotal: number,
+): Promise<
+  | {
+      ok: true;
+      discount: {
+        code: string;
+        type: string;
+        value: number;
+        discountAmount: number;
+        finalTotal: number;
+      };
     }
-    if (discountAmount > subtotal) discountAmount = subtotal;
-    if (discountAmount < 0) discountAmount = 0;
+  | { ok: false; error: string }
+> {
+  const raw = (code || "").trim();
+  if (!raw) return { ok: false, error: "empty" };
+  if (!Number.isFinite(subtotal) || subtotal < 0) {
+    return { ok: false, error: "bad_subtotal" };
+  }
 
-    const preview: DiscountPreview = {
-      code: String(data.code),
-      type: data.type as "percentage" | "fixed",
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("discounts")
+    .select(
+      "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active",
+    )
+    .ilike("code", raw)
+    .maybeSingle();
+
+  if (error) {
+    console.error("validateDiscount", error);
+    return { ok: false, error: "db" };
+  }
+  if (!data) return { ok: false, error: "not_found" };
+  if (!data.is_active) return { ok: false, error: "inactive" };
+
+  const now = Date.now();
+  if (data.starts_at && new Date(data.starts_at).getTime() > now) {
+    return { ok: false, error: "not_started" };
+  }
+  if (data.ends_at && new Date(data.ends_at).getTime() < now) {
+    return { ok: false, error: "expired" };
+  }
+
+  const maxUses = data.max_uses;
+  const used = Number(data.used_count ?? 0);
+  if (maxUses != null && used >= Number(maxUses)) {
+    return { ok: false, error: "max_uses" };
+  }
+
+  const minOrder = Number(data.min_order_amount ?? 0);
+  if (subtotal < minOrder) return { ok: false, error: "min_order" };
+
+  const value = Number(data.value);
+  const t = String(data.type || "").toLowerCase();
+  let discountAmount = 0;
+  if (t === "percentage" || t === "percent") {
+    discountAmount = Math.floor((subtotal * value) / 100);
+  } else if (t === "fixed" || t === "amount") {
+    discountAmount = Math.floor(value);
+  } else {
+    return { ok: false, error: "bad_type" };
+  }
+
+  if (discountAmount > subtotal) discountAmount = subtotal;
+  if (discountAmount < 0) discountAmount = 0;
+
+  return {
+    ok: true,
+    discount: {
+      code: data.code,
+      type: data.type,
       value,
       discountAmount,
       finalTotal: subtotal - discountAmount,
-    };
-    return { ok: true as const, discount: preview };
-  } catch (e) {
-    console.error("[validateDiscount]", e);
-    return { ok: false as const, error: "server" };
-  }
+    },
+  };
 }
+
 
 /** لیست کدهای فعال برای تب پنل (فقط نمایش عمومی) */
 export async function listActiveDiscountsAction() {
