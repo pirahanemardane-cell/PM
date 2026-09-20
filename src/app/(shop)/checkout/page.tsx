@@ -1,22 +1,32 @@
 "use client";
-import { toast } from "@/lib/toaster";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  getCartAction,
   createOrderAction,
-  type CartLineDTO,
+  getCartAction,
   listMyAddressesAction,
-  validateDiscountAction} from "@/app/(shop)/actions/shop";
+  validateDiscountAction,
+  type CartLineDTO,
+} from "@/app/(shop)/actions/shop";
 import { useShopStore } from "@/lib/shop-store";
+import { LumaSpin } from "@/components/ui/luma-spin";
+import { AnimatedTicket } from "@/components/ui/ticket-confirmation-card";
+
+type Step = 1 | 2 | 3;
 
 export default function CheckoutPage() {
   const clearCartLocal = useShopStore((s) => s.clearCart);
+
   const [items, setItems] = useState<CartLineDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [step, setStep] = useState<Step>(1);
+  const [payMethod, setPayMethod] = useState<"cod" | "online">("cod");
+  const [doneOrder, setDoneOrder] = useState<{ id: string; total: number } | null>(null);
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -25,7 +35,6 @@ export default function CheckoutPage() {
     postal: "",
     note: "",
   });
-
 
   const [savedAddresses, setSavedAddresses] = useState<
     {
@@ -41,6 +50,7 @@ export default function CheckoutPage() {
     }[]
   >([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+
   const [discountCode, setDiscountCode] = useState("");
   const [discountPreview, setDiscountPreview] = useState<{
     code: string;
@@ -92,14 +102,27 @@ export default function CheckoutPage() {
     })();
   }, []);
 
+  const total = useMemo(
+    () => items.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
+    [items],
+  );
+  const payable = discountPreview?.finalTotal ?? total;
 
-  const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  function goStep2() {
+    setError(null);
+    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
+      setError("نام، موبایل و آدرس الزامی است.");
+      return;
+    }
+    setStep(2);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
       setError("نام، موبایل و آدرس الزامی است.");
+      setStep(1);
       return;
     }
     setSubmitting(true);
@@ -110,12 +133,12 @@ export default function CheckoutPage() {
       city: form.city.trim() || undefined,
       postal: form.postal.trim() || undefined,
       note: form.note.trim() || undefined,
-      discountCode: discountPreview?.code || undefined,
+      discountCode: (discountPreview?.code || discountCode).trim() || undefined,
     });
     setSubmitting(false);
     if (!res.ok) {
       if (res.error === "login_required") {
-        window.location.href = "/login";
+        window.location.href = "/ورود?next=/checkout";
         return;
       }
       if (res.error === "empty_cart") {
@@ -126,32 +149,21 @@ export default function CheckoutPage() {
       return;
     }
     clearCartLocal();
-    window.location.href = `/dashboard?tab=orders&order=${res.orderId}`;
+    setDoneOrder({
+      id: res.orderId,
+      total: discountPreview?.finalTotal ?? total,
+    });
   }
 
   if (loading) {
-  
-  useEffect(() => {
-    (async () => {
-      const res = await listMyAddressesAction();
-      if (!res.ok) return;
-      setSavedAddresses(res.items as typeof savedAddresses);
-      const def = res.items.find((a: { is_default?: boolean }) => a.is_default) ?? res.items[0];
-      if (def) {
-        setSelectedAddressId(def.id);
-        // پر کردن فرم — نام فیلدها را در مرحله بعد با state واقعی جفت می‌کنیم
-      }
-    })();
-  }, []);
-
-  return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center" dir="rtl">
-        در حال بارگذاری…
+    return (
+      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
+        <LumaSpin />
       </div>
     );
   }
 
-  if (!items.length) {
+  if (!items.length && !doneOrder) {
     return (
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-16 text-center" dir="rtl">
         <p>سبد خرید خالی است.</p>
@@ -162,214 +174,290 @@ export default function CheckoutPage() {
     );
   }
 
+  if (doneOrder) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-4" dir="rtl">
+        <AnimatedTicket
+          ticketId={doneOrder.id}
+          amount={doneOrder.total}
+          cardHolder={payMethod === "cod" ? "پرداخت در محل" : "پرداخت آنلاین"}
+        />
+      </div>
+    );
+  }
+
+  const steps = [
+    { n: 1 as const, label: "آدرس" },
+    { n: 2 as const, label: "پرداخت" },
+    { n: 3 as const, label: "مرور و ثبت" },
+  ];
+
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 lg:grid-cols-2">
-        <form onSubmit={handleSubmit} className="border-border bg-card space-y-4 rounded-2xl border p-6 shadow-sm">
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        <h1 className="mb-6 text-xl font-bold">تسویه حساب</h1>
 
-          {savedAddresses.length > 0 ? (
-            <div className="mb-6 space-y-2">
-              <p className="text-sm font-medium">آدرس‌های ذخیره‌شده</p>
-              <ul className="space-y-2">
-                {savedAddresses.map((a) => (
-                  <li key={a.id}>
-                    <button
-                      type="button"
-                      onClick={() => applyAddress(a)}
-                      className={`w-full rounded-xl border p-3 text-right text-sm transition ${
-                        selectedAddressId === a.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:bg-muted/40"
-                      }`}
-                    >
-                      <span className="font-medium">
-                        {a.title || "آدرس"}
-                        {a.is_default ? " · پیش‌فرض" : ""}
-                      </span>
-                      <span className="text-muted-foreground mt-1 block text-xs">
-                        {a.full_name} — {a.phone}
-                        <br />
-                        {[a.province, a.city].filter(Boolean).join("، ")}
-                        {a.address_line ? ` — ${a.address_line}` : ""}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-muted-foreground text-xs">
-                یا فرم زیر را دستی پر کنید.
-              </p>
-            </div>
-          ) : null}
-
-          <h1 className="text-xl font-bold">تکمیل سفارش</h1>
-          <div>
-            <label className="mb-1 block text-sm">نام گیرنده *</label>
-            <input
-              className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">موبایل *</label>
-            <input
-              className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">آدرس *</label>
-            <textarea
-              className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-              rows={3}
-              value={form.address}
-              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-sm">شهر</label>
-              <input
-                className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-                value={form.city}
-                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">کد پستی</label>
-              <input
-                className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-                value={form.postal}
-                onChange={(e) => setForm((f) => ({ ...f, postal: e.target.value }))}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">توضیحات</label>
-            <textarea
-              className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-              rows={2}
-              value={form.note}
-              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-            />
-          </div>
-          {error ? <p className="text-destructive text-sm">{error}</p> : null}
-          
-          <div className="border-border space-y-2 rounded-xl border p-4">
-            <p className="text-sm font-medium">کد تخفیف</p>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                value={discountCode}
-                onChange={(e) => {
-                  setDiscountCode(e.target.value);
-                  setDiscountError(null);
-                }}
-                placeholder="مثلاً WELCOME20"
-                className="border-border bg-background h-11 flex-1 rounded-xl border px-3 text-sm"
-                dir="ltr"
-              />
+        {/* progress */}
+        <div className="mb-8 flex items-center justify-center gap-2">
+          {steps.map((s, i) => (
+            <div key={s.n} className="flex items-center gap-2">
               <button
                 type="button"
-                disabled={discountLoading || !items.length}
-                className="border-border h-11 rounded-xl border px-4 text-sm font-medium disabled:opacity-50"
-                onClick={async () => {
-                  setDiscountLoading(true);
-                  setDiscountError(null);
-                  setDiscountPreview(null);
-                  const res = await validateDiscountAction(discountCode, total);
-                  setDiscountLoading(false);
-                  if (!res.ok) {
-                    const map: Record<string, string> = {
-                      empty: "کد را وارد کنید.",
-                      invalid: "کد نامعتبر است.",
-                      expired: "این کد منقضی شده.",
-                      exhausted: "سقف استفاده از این کد تمام شده.",
-                      not_started: "این کد هنوز فعال نیست.",
-                      min_order: "مبلغ سبد به حداقل لازم نرسیده.",
-                      empty_cart: "سبد خالی است.",
-                      server: "خطای سرور.",
-                    };
-                    const msg = map[res.error] || "کد قابل اعمال نیست.";
-                    setDiscountError(msg);
-                    toast.error(msg);
-                    return;
-                  }
-                  setDiscountPreview(res.discount);
-                  toast.success("تخفیف اعمال شد");
+                onClick={() => {
+                  if (s.n < step) setStep(s.n);
                 }}
+                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium ${
+                  step === s.n
+                    ? "bg-primary text-primary-foreground"
+                    : step > s.n
+                      ? "bg-secondary text-secondary-foreground"
+                      : "bg-muted text-muted-foreground"
+                }`}
               >
-                {discountLoading ? "…" : "اعمال"}
+                {s.n}
               </button>
+              <span className="text-muted-foreground hidden text-sm sm:inline">{s.label}</span>
+              {i < steps.length - 1 ? (
+                <span className="bg-border mx-1 h-px w-6 sm:w-10" />
+              ) : null}
             </div>
-            {discountError ? (
-              <p className="text-destructive text-xs">{discountError}</p>
+          ))}
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-6 shadow-sm">
+            {error ? <p className="text-destructive text-sm">{error}</p> : null}
+
+            {step === 1 ? (
+              <>
+                <h2 className="font-semibold">آدرس تحویل</h2>
+                {savedAddresses.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground text-xs">آدرس‌های ذخیره‌شده</p>
+                    <ul className="space-y-2">
+                      {savedAddresses.map((a) => (
+                        <li key={a.id}>
+                          <button
+                            type="button"
+                            onClick={() => applyAddress(a)}
+                            className={`w-full rounded-xl border p-3 text-right text-sm ${
+                              selectedAddressId === a.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:bg-muted/50"
+                            }`}
+                          >
+                            <span className="font-medium">{a.full_name}</span>
+                            <span className="text-muted-foreground mt-1 block text-xs">
+                              {a.city} — {a.address_line}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {(
+                  [
+                    ["name", "نام و نام خانوادگی", "text"],
+                    ["phone", "موبایل", "tel"],
+                    ["address", "آدرس", "text"],
+                    ["city", "شهر", "text"],
+                    ["postal", "کد پستی", "text"],
+                    ["note", "توضیحات (اختیاری)", "text"],
+                  ] as const
+                ).map(([key, label, type]) => (
+                  <label key={key} className="block space-y-1 text-sm">
+                    <span>{label}</span>
+                    <input
+                      type={type}
+                      value={form[key]}
+                      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                      className="border-input bg-background h-10 w-full rounded-xl border px-3"
+                      dir="rtl"
+                    />
+                  </label>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={goStep2}
+                  className="bg-primary text-primary-foreground h-11 w-full rounded-xl text-sm font-medium"
+                >
+                  ادامه — روش پرداخت
+                </button>
+              </>
             ) : null}
-            {discountPreview ? (
-              <p className="text-sm text-green-700 dark:text-green-400">
-                {discountPreview.discountAmount.toLocaleString("fa-IR")} تومان تخفیف
-                {" · "}
-                قابل پرداخت: {discountPreview.finalTotal.toLocaleString("fa-IR")} تومان
-              </p>
+
+            {step === 2 ? (
+              <>
+                <h2 className="font-semibold">روش پرداخت</h2>
+                <div className="space-y-2">
+                  {(
+                    [
+                      ["cod", "پرداخت در محل"],
+                      ["online", "پرداخت آنلاین (به‌زودی)"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setPayMethod(id)}
+                      className={`w-full rounded-xl border p-4 text-right text-sm ${
+                        payMethod === id
+                          ? "border-primary bg-primary/5 font-medium"
+                          : "border-border"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="border-border h-11 flex-1 rounded-xl border text-sm"
+                  >
+                    بازگشت
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
+                  >
+                    ادامه — مرور
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {step === 3 ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <h2 className="font-semibold">مرور و ثبت</h2>
+                <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">گیرنده: </span>
+                    {form.name} — {form.phone}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">آدرس: </span>
+                    {form.city} {form.address}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">پرداخت: </span>
+                    {payMethod === "cod" ? "در محل" : "آنلاین"}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">کد تخفیف</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={discountCode}
+                      onChange={(e) => {
+                        setDiscountCode(e.target.value);
+                        setDiscountPreview(null);
+                        setDiscountError(null);
+                      }}
+                      placeholder="مثلاً WELCOME20"
+                      className="border-input bg-background h-10 flex-1 rounded-xl border px-3 text-sm"
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      disabled={discountLoading || !items.length}
+                      className="border-border h-10 shrink-0 rounded-xl border px-4 text-sm"
+                      onClick={async () => {
+                        setDiscountLoading(true);
+                        setDiscountError(null);
+                        const res = await validateDiscountAction(discountCode, total);
+                        setDiscountLoading(false);
+                        if (!res.ok) {
+                          setDiscountPreview(null);
+                          setDiscountError(
+                            res.error === "invalid"
+                              ? "کد نامعتبر است"
+                              : res.error === "exhausted"
+                                ? "سقف استفاده تمام شده"
+                                : res.error === "min_order"
+                                  ? "حداقل مبلغ سفارش رعایت نشده"
+                                  : "خطا در بررسی کد",
+                          );
+                          return;
+                        }
+                        setDiscountPreview(res.discount);
+                      }}
+                    >
+                      {discountLoading ? "…" : "اعمال"}
+                    </button>
+                  </div>
+                  {discountError ? (
+                    <p className="text-destructive text-xs">{discountError}</p>
+                  ) : null}
+                  {discountPreview ? (
+                    <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                      {discountPreview.discountAmount.toLocaleString("fa-IR")} تومان تخفیف —
+                      قابل پرداخت: {discountPreview.finalTotal.toLocaleString("fa-IR")} تومان
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="border-border h-11 flex-1 rounded-xl border text-sm"
+                  >
+                    بازگشت
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium disabled:opacity-60"
+                  >
+                    {submitting ? "در حال ثبت…" : "ثبت نهایی سفارش"}
+                  </button>
+                </div>
+              </form>
             ) : null}
           </div>
 
-<button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60 w-full rounded-xl py-3 text-sm font-medium"
-          >
-            {submitting ? "در حال ثبت…" : "ثبت سفارش"}
-          </button>
-        </form>
-
-        <div className="border-border bg-card h-fit space-y-3 rounded-2xl border p-6 shadow-sm">
-          <h2 className="font-bold">خلاصه سبد</h2>
-          <ul className="space-y-3">
-            {items.map((line) => (
-              <li key={line.variantId} className="flex justify-between gap-2 text-sm">
-                <span className="min-w-0">
-                  <span className="font-medium">{line.title}</span>
-                  <span className="text-muted-foreground block text-xs">
-                    <span className="inline-flex items-center gap-2">
-                      {line.colorHex || (line.color && line.color.startsWith("#") ? line.color : null) ? (
-                        <span
-                          className="border-border inline-block h-3.5 w-3.5 rounded-full border"
-                          style={{
-                            backgroundColor:
-                              line.colorHex ||
-                              (line.color?.startsWith("#") ? line.color : undefined),
-                          }}
-                          title={line.color && !line.color.startsWith("#") ? line.color : ""}
-                        />
-                      ) : null}
-                      {line.size ? (
-                        <span className="border-border rounded border px-1.5 py-0.5 text-[11px] font-medium">
-                          {line.size}
-                        </span>
-                      ) : null}
-                      {line.color && !String(line.color).startsWith("#") ? line.color : null}
-                    </span>
-                    {line.quantity > 1 ? ` × ${line.quantity}` : ""}
+          {/* خلاصه سبد */}
+          <aside className="border-border bg-card h-fit rounded-2xl border p-6 shadow-sm">
+            <h2 className="mb-4 font-semibold">سبد خرید</h2>
+            <ul className="space-y-3">
+              {items.map((it) => (
+                <li key={it.itemId || it.variantId} className="flex justify-between gap-3 text-sm">
+                  <span>
+                    {it.title}
+                    <span className="text-muted-foreground"> × {it.quantity}</span>
                   </span>
-                </span>
-                <span className="shrink-0 tabular-nums">
-                  {(line.price * line.quantity).toLocaleString("fa-IR")} ت
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="border-border flex justify-between border-t pt-3 font-bold">
-            <span>جمع</span>
-            <span>{total.toLocaleString("fa-IR")} تومان</span>
-          </div>
-          <Link href="/dashboard" className="text-primary text-xs hover:underline">
-            ویرایش سبد در داشبورد
-          </Link>
+                  <span className="shrink-0">
+                    {(Number(it.price) * Number(it.quantity)).toLocaleString("fa-IR")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="border-border mt-4 space-y-1 border-t pt-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">جمع</span>
+                <span>{total.toLocaleString("fa-IR")} تومان</span>
+              </div>
+              {discountPreview ? (
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                  <span>تخفیف</span>
+                  <span>
+                    −{discountPreview.discountAmount.toLocaleString("fa-IR")} تومان
+                  </span>
+                </div>
+              ) : null}
+              <div className="flex justify-between text-base font-bold">
+                <span>قابل پرداخت</span>
+                <span>{payable.toLocaleString("fa-IR")} تومان</span>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

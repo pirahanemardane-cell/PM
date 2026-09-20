@@ -230,4 +230,52 @@ export class ProductRepository extends BaseRepository {
 
     return data as Product;
   }
+
+  /** لیست ادمین — همه وضعیت‌ها (غیرحذف‌شده) */
+  async listAdmin(limit = 50) {
+    const client = await this.getClient();
+    const { data, error } = await client
+      .from("products")
+      .select(
+        `
+        id,
+        name,
+        slug,
+        status,
+        is_featured,
+        is_new,
+        is_bestseller,
+        created_at,
+        brand:brands(id, name),
+        category:categories(id, name)
+      `
+      )
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async updateFlags(
+    id: string,
+    flags: {
+      status?: string;
+      is_featured?: boolean;
+      is_new?: boolean;
+      is_bestseller?: boolean;
+    },
+  ) {
+    const client = await this.getClient();
+    const patch: Record<string, unknown> = {};
+    if (flags.status !== undefined) patch.status = flags.status;
+    if (flags.is_featured !== undefined) patch.is_featured = flags.is_featured;
+    if (flags.is_new !== undefined) patch.is_new = flags.is_new;
+    if (flags.is_bestseller !== undefined) patch.is_bestseller = flags.is_bestseller;
+    if (!Object.keys(patch).length) return true;
+    const { error } = await client.from("products").update(patch).eq("id", id);
+    if (error) throw error;
+    return true;
+  }
+
 }

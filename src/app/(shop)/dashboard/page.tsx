@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
 import { useShopStore } from "@/lib/shop-store"
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
 import {
+import { LumaSpin } from "@/components/ui/luma-spin";
   getCartAction,
   removeCartItemAction,
   updateCartQuantityAction,
@@ -47,6 +49,9 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function BuyerDashboardPage() {
   const [tab, setTab] = useState<TabId>("cart");
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authOk, setAuthOk] = useState(false);
+  const router = useRouter();
   const serverLines = useServerCartStore((s) => s.lines);
   const refreshServerCart = useServerCartStore((s) => s.refresh);
   // سازگاری با UI قبلی
@@ -136,6 +141,26 @@ export default function BuyerDashboardPage() {
   const toggleWishlist = useShopStore((s) => s.toggleWishlist);
   const toggleCompare = useShopStore((s) => s.toggleCompare);
 
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await getMyProfileAction();
+      if (cancelled) return;
+      if (!res.ok) {
+        setAuthChecked(true);
+        setAuthOk(false);
+        router.replace("/ورود?next=/dashboard");
+        return;
+      }
+      setAuthOk(true);
+      setAuthChecked(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -157,6 +182,19 @@ export default function BuyerDashboardPage() {
       setOrdersLoading(false);
     })();
   }, [tab]);
+
+  useEffect(() => {
+    function onOrders() {
+      if (tab !== "orders") return;
+      void (async () => {
+        const res = await listMyOrdersAction();
+        if (res.ok) setMyOrders(res.items);
+      })();
+    }
+    window.addEventListener("pm:orders-changed", onOrders);
+    return () => window.removeEventListener("pm:orders-changed", onOrders);
+  }, [tab]);
+
 
   useEffect(() => {
     if (tab !== "coupons") return;
@@ -287,6 +325,23 @@ export default function BuyerDashboardPage() {
     }
   }
 
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
+        <LumaSpin />
+      </div>
+    );
+  }
+
+  if (!authOk) {
+    return (
+      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
+        <LumaSpin />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[240px_1fr]">
@@ -358,7 +413,7 @@ export default function BuyerDashboardPage() {
 
           {tab === "orders" ? (
             ordersLoading ? (
-              <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+              <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
             ) : myOrders.length === 0 ? (
               <p className="text-muted-foreground text-sm">هنوز سفارشی ثبت نکرده‌اید.</p>
             ) : (
@@ -442,7 +497,7 @@ export default function BuyerDashboardPage() {
             )
           ) : tab === "profile" ? (
             profileLoading ? (
-              <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+              <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
             ) : (
               <form
                 className="mx-auto max-w-md space-y-4 text-right"
@@ -525,7 +580,7 @@ export default function BuyerDashboardPage() {
               ) : null}
 
               {addrLoading ? (
-                <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+                <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
               ) : addressesList.length === 0 ? (
                 <p className="text-muted-foreground text-sm">آدرسی ثبت نشده.</p>
               ) : (
@@ -741,7 +796,7 @@ export default function BuyerDashboardPage() {
                 </Link>
               </div>
               {shopLoading ? (
-                <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+                <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
               ) : shopProducts.length === 0 ? (
                 <p className="text-muted-foreground text-sm">محصولی یافت نشد.</p>
               ) : (
@@ -824,7 +879,7 @@ export default function BuyerDashboardPage() {
                 کدهای فعال را کپی کنید و در صفحه تسویه حساب اعمال کنید.
               </p>
               {couponsLoading ? (
-                <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+                <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
               ) : activeDiscounts.length === 0 ? (
                 <p className="text-muted-foreground text-sm">کد فعالی نیست.</p>
               ) : (
@@ -875,7 +930,7 @@ export default function BuyerDashboardPage() {
             </p>
           ) : tab === "cart" ? (
             cartLoading ? (
-              <p className="text-muted-foreground text-sm">در حال بارگذاری…</p>
+              <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
             ) : serverCart.length === 0 && cart.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 موردی در این بخش نیست.

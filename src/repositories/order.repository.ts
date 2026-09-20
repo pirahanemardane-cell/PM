@@ -77,6 +77,8 @@ export class OrderRepository extends BaseRepository {
         id,
         status,
         total_amount,
+        discount_code,
+        discount_amount,
         shipping_name,
         shipping_phone,
         shipping_address,
@@ -100,6 +102,8 @@ export class OrderRepository extends BaseRepository {
         id,
         status,
         total_amount,
+        discount_code,
+        discount_amount,
         shipping_name,
         shipping_phone,
         shipping_address,
@@ -170,6 +174,73 @@ export class OrderRepository extends BaseRepository {
       );
       return hit ?? null;
     }
+    return data;
+  }
+
+
+  async listAll(limit = 50) {
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        `
+        id,
+        user_id,
+        status,
+        total_amount,
+        discount_code,
+        discount_amount,
+        shipping_name,
+        shipping_phone,
+        shipping_city,
+        created_at,
+        order_items(id, title, size_name, color_name, unit_price, quantity, line_total)
+      `
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async updateStatus(orderId: string, status: string) {
+    const supabase = await this.getClient();
+    const allowed = ["pending", "processing", "shipped", "delivered", "cancelled"];
+    if (!allowed.includes(status)) throw new Error("bad_status");
+    const { error } = await supabase
+      .from("orders")
+      .update({ status })
+      .eq("id", orderId);
+    if (error) throw error;
+    return true;
+  }
+
+
+  async getByIdAdmin(orderId: string) {
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        `
+        id,
+        user_id,
+        status,
+        total_amount,
+        discount_code,
+        discount_amount,
+        shipping_name,
+        shipping_phone,
+        shipping_address,
+        shipping_city,
+        shipping_postal,
+        note,
+        created_at,
+        order_items(id, title, size_name, color_name, unit_price, quantity, line_total, variant_id)
+      `
+      )
+      .eq("id", orderId)
+      .maybeSingle();
+    if (error) throw error;
     return data;
   }
 
