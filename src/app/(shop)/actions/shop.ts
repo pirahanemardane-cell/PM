@@ -7,6 +7,7 @@ import { ProductRepository } from "@/repositories/product.repository";
 import { CartRepository } from "@/repositories/cart.repository";
 import { OrderRepository } from "@/repositories/order.repository";
 import { cookies } from "next/headers";
+import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 import { randomUUID } from "crypto";
 
 async function requireUser() {
@@ -287,18 +288,30 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       discountAmount = v.discount.discountAmount;
     }
 
-    const orderRepo = new OrderRepository();
+    
+    const nameOk = assertNoLinkOrImage(payload.name, "نام");
+    if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
+    const phoneOk = assertNoLinkOrImage(payload.phone, "تلفن");
+    if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
+    const addrOk = assertNoLinkOrImage(payload.address, "آدرس");
+    if (!addrOk.ok) return { ok: false as const, error: addrOk.error };
+    const cityOk = assertNoLinkOrImage(payload.city ?? "", "شهر");
+    if (!cityOk.ok) return { ok: false as const, error: cityOk.error };
+    const noteOk = assertNoLinkOrImage(payload.note ?? "", "یادداشت");
+    if (!noteOk.ok) return { ok: false as const, error: noteOk.error };
+
+const orderRepo = new OrderRepository();
     const orderId = await orderRepo.createFromCart({
       userId: user.id,
       items,
       shipping: {
-        name: payload.name,
-        phone: payload.phone,
-        address: payload.address,
-        city: payload.city,
+        name: nameOk.text,
+        phone: phoneOk.text,
+        address: addrOk.text,
+        city: cityOk.text || null,
         postal: payload.postal,
       },
-      note: payload.note,
+      note: noteOk.text || null,
       discountCode,
       discountAmount,
       // اگر repo هنوز total را خودش از items می‌سازد، داخل repo:
