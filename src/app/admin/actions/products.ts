@@ -14,23 +14,54 @@ function slugify(input: string): string {
   );
 }
 
-export async function adminListProductsAction() {
+export async function adminListProductsAction(limit = 80) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
     const { data, error } = await gate.supabase
       .from("products")
       .select(
-        "id, name, slug, status, is_featured, category_id, brand_id, created_at, categories(name), brands(name)",
+        `
+        id, name, slug, status, is_featured, is_new, is_bestseller, created_at,
+        brand:brands(name),
+        category:categories(name)
+      `,
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(limit);
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
   } catch (e) {
     console.error("[adminListProducts]", e);
     return { ok: false as const, error: "server", items: [] };
+  }
+}
+
+export async function adminUpdateProductFlagsAction(
+  id: string,
+  flags: {
+    status?: string;
+    is_featured?: boolean;
+    is_new?: boolean;
+    is_bestseller?: boolean;
+  },
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const patch: Record<string, unknown> = {};
+    if (flags.status !== undefined) patch.status = flags.status;
+    if (flags.is_featured !== undefined) patch.is_featured = flags.is_featured;
+    if (flags.is_new !== undefined) patch.is_new = flags.is_new;
+    if (flags.is_bestseller !== undefined) patch.is_bestseller = flags.is_bestseller;
+    if (!Object.keys(patch).length) return { ok: true as const };
+    const { error } = await gate.supabase.from("products").update(patch).eq("id", id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminUpdateProductFlags]", e);
+    return { ok: false as const, error: "server" };
   }
 }
 
@@ -45,7 +76,6 @@ export type CreateProductInput = {
   is_featured?: boolean;
   is_new?: boolean;
   is_bestseller?: boolean;
-  /** واریانت اولیه / موجودی */
   price: number;
   original_price?: number | null;
   stock_quantity?: number;
@@ -53,6 +83,7 @@ export type CreateProductInput = {
   color_name?: string;
   color_hex?: string;
   sku?: string;
+  tag_ids?: string[];
 };
 
 export async function adminCreateProductAction(input: CreateProductInput) {
@@ -103,7 +134,17 @@ export async function adminCreateProductAction(input: CreateProductInput) {
     });
     if (vErr) throw vErr;
 
-    return { ok: true as const, id: product.id };
+    const tagIds = (input.tag_ids ?? []).filter(Boolean);
+    if (tagIds.length) {
+      const rows = tagIds.map((tag_id) => ({
+        product_id: product.id,
+        tag_id,
+      }));
+      const { error: tErr } = await gate.supabase.from("product_tag_map").insert(rows);
+      if (tErr) console.error("[product_tag_map]", tErr);
+    }
+
+    return { ok: true as const, id: product.id as string };
   } catch (e) {
     console.error("[adminCreateProduct]", e);
     const msg =
@@ -111,24 +152,5 @@ export async function adminCreateProductAction(input: CreateProductInput) {
         ? String((e as { message: string }).message)
         : "server";
     return { ok: false as const, error: msg };
-  }
-}
-
-export async function adminSetProductStatusAction(
-  id: string,
-  status: "draft" | "published" | "archived",
-) {
-  const gate = await requireAdmin();
-  if (!gate.ok) return { ok: false as const, error: gate.error };
-  try {
-    const { error } = await gate.supabase
-      .from("products")
-      .update({ status })
-      .eq("id", id);
-    if (error) throw error;
-    return { ok: true as const };
-  } catch (e) {
-    console.error("[adminSetProductStatus]", e);
-    return { ok: false as const, error: "server" };
   }
 }

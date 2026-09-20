@@ -8,6 +8,7 @@ import {
   adminListCategoriesAction,
   adminListBrandsAction,
 } from "@/app/admin/actions/taxonomy";
+import { adminListProductTagsAction } from "@/app/admin/actions/tags";
 import { Toolbar } from "@/components/ui/toolbar";
 
 type Opt = { id: string; name: string };
@@ -16,6 +17,8 @@ export default function NewProductPage() {
   const router = useRouter();
   const [cats, setCats] = useState<Opt[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
+  const [tags, setTags] = useState<Opt[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -39,12 +42,34 @@ export default function NewProductPage() {
 
   useEffect(() => {
     void (async () => {
-      const [c, b] = await Promise.all([
+      const [c, b, t] = await Promise.all([
         adminListCategoriesAction(),
         adminListBrandsAction(),
+        adminListProductTagsAction(),
       ]);
-      if (c.ok) setCats(c.items.map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
-      if (b.ok) setBrands(b.items.map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
+      if (c.ok) {
+        setCats(
+          (c.items as { id: string; name: string }[]).map((x) => ({
+            id: x.id,
+            name: x.name,
+          })),
+        );
+      }
+      if (b.ok) {
+        setBrands(
+          (b.items as { id: string; name: string }[]).map((x) => ({
+            id: x.id,
+            name: x.name,
+          })),
+        );
+      }
+      if (t.ok) {
+        setTags(
+          (t.items as { id: string; name: string; is_active?: boolean }[])
+            .filter((x) => x.is_active !== false)
+            .map((x) => ({ id: x.id, name: x.name })),
+        );
+      }
     })();
   }, []);
 
@@ -69,6 +94,7 @@ export default function NewProductPage() {
       size: size || undefined,
       color_name: colorName || undefined,
       sku: sku || undefined,
+      tag_ids: selectedTags,
     });
     setBusy(false);
     if (!res.ok) {
@@ -87,7 +113,10 @@ export default function NewProductPage() {
     <div className="mx-auto max-w-2xl space-y-6 p-6" dir="rtl">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">افزودن محصول</h1>
-        <Link href="/admin/products" className="text-muted-foreground text-sm underline">
+        <Link
+          href="/admin/products"
+          className="text-muted-foreground text-sm underline"
+        >
           بازگشت
         </Link>
       </div>
@@ -169,26 +198,38 @@ export default function NewProductPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">
+            <select
+              className="border-border rounded-lg border px-2 py-1"
+              value={status}
+              onChange={(e) =>
+                setStatus(e.target.value as "draft" | "published")
+              }
+            >
+              <option value="draft">پیش‌نویس</option>
+              <option value="published">منتشر</option>
+            </select>
             <label className="flex items-center gap-2">
-              <select
-                className="border-border rounded-lg border px-2 py-1"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as "draft" | "published")}
-              >
-                <option value="draft">پیش‌نویس</option>
-                <option value="published">منتشر</option>
-              </select>
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={featured}
+                onChange={(e) => setFeatured(e.target.checked)}
+              />
               ویژه
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={isNew}
+                onChange={(e) => setIsNew(e.target.checked)}
+              />
               جدید
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={bestseller} onChange={(e) => setBestseller(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={bestseller}
+                onChange={(e) => setBestseller(e.target.checked)}
+              />
               پرفروش
             </label>
           </div>
@@ -254,6 +295,34 @@ export default function NewProductPage() {
               />
             </label>
           </div>
+        </section>
+
+        <section className="border-border space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">برچسب‌ها</h2>
+          {!tags.length ? (
+            <p className="text-muted-foreground text-sm">
+              هنوز برچسبی نیست — از منوی «برچسب محصولات» یکی بسازید.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {tags.map((tg) => (
+                <label key={tg.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tg.id)}
+                    onChange={(e) => {
+                      setSelectedTags((prev) =>
+                        e.target.checked
+                          ? [...prev, tg.id]
+                          : prev.filter((id) => id !== tg.id),
+                      );
+                    }}
+                  />
+                  {tg.name}
+                </label>
+              ))}
+            </div>
+          )}
         </section>
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
