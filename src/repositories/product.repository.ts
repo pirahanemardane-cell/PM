@@ -158,7 +158,10 @@ export class ProductRepository extends BaseRepository {
       items = items.filter((p) => {
         const variants = (p.variants ?? []).filter((v) => v.is_active);
         return variants.some((v) => {
-          if (filters.sizeId && v.size_id !== filters.sizeId) return false;
+          if (filters.sizeId) {
+            const sn = typeof (v as {size?:string}).size === "string" ? (v as {size:string}).size : "";
+            if (sn && sn !== filters.sizeId) return false;
+          }
           if (filters.colorId && v.color_id !== filters.colorId) return false;
           if (filters.inStock && v.stock_quantity <= 0) return false;
           if (filters.minPrice != null && Number(v.price) < filters.minPrice) return false;
