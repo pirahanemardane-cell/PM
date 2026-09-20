@@ -1,0 +1,2 @@
+-- applied via SQL Editor; kept for history
+-- support_tickets, support_ticket_messages, return_requests

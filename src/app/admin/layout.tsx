@@ -76,6 +76,8 @@ const GROUPS: NavGroup[] = [
 ];
 
 const BOTTOM: NavLeaf[] = [
+  { href: "/admin/tickets", label: "پشتیبانی", icon: MessageSquare },
+  { href: "/admin/returns", label: "مرجوعی", icon: MessageSquare },
   { href: "/admin/reviews", label: "نظرات", icon: MessageSquare },
   { href: "/admin/discounts", label: "تخفیف‌ها", icon: Tag },
   { href: "/admin/users", label: "کاربران", icon: Users },
