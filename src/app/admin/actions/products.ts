@@ -10,26 +10,22 @@ function slugify(input: string): string {
       .replace(/\s+/g, "-")
       .replace(/[^\u0600-\u06FFa-z0-9\-]+/gi, "")
       .replace(/\-+/g, "-")
-      .replace(/^\-|\-$/g, "") || `p-${Date.now()}`
+      .replace(/^\-|\-$/g, "") || `product-${Date.now()}`
   );
 }
 
-export async function adminListProductsAction(limit = 80) {
+export async function adminListProductsAction() {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
     const { data, error } = await gate.supabase
       .from("products")
       .select(
-        `
-        id, name, slug, status, is_featured, is_new, is_bestseller, created_at,
-        brand:brands(name),
-        category:categories(name)
-      `,
+        "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, category:categories(name), brand:brands(name)",
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(100);
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
   } catch (e) {
@@ -38,34 +34,57 @@ export async function adminListProductsAction(limit = 80) {
   }
 }
 
-export async function adminUpdateProductFlagsAction(
+export async function adminSetProductFlagsAction(
   id: string,
-  flags: {
-    status?: string;
-    is_featured?: boolean;
-    is_new?: boolean;
-    is_bestseller?: boolean;
-  },
+  patch: Partial<{
+    status: "draft" | "published" | "archived";
+    is_featured: boolean;
+    is_new: boolean;
+    is_bestseller: boolean;
+  }>,
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
-    const patch: Record<string, unknown> = {};
-    if (flags.status !== undefined) patch.status = flags.status;
-    if (flags.is_featured !== undefined) patch.is_featured = flags.is_featured;
-    if (flags.is_new !== undefined) patch.is_new = flags.is_new;
-    if (flags.is_bestseller !== undefined) patch.is_bestseller = flags.is_bestseller;
-    if (!Object.keys(patch).length) return { ok: true as const };
     const { error } = await gate.supabase.from("products").update(patch).eq("id", id);
     if (error) throw error;
     return { ok: true as const };
-  } catch (e) {
-    console.error("[adminUpdateProductFlags]", e);
+  } catch {
     return { ok: false as const, error: "server" };
   }
 }
 
-export type CreateProductInput = {
+export async function adminListCategoriesAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
+  try {
+    const { data, error } = await gate.supabase
+      .from("categories")
+      .select("id, name, slug, is_active")
+      .order("name");
+    if (error) throw error;
+    return { ok: true as const, items: data ?? [] };
+  } catch {
+    return { ok: false as const, error: "server", items: [] };
+  }
+}
+
+export async function adminListBrandsAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
+  try {
+    const { data, error } = await gate.supabase
+      .from("brands")
+      .select("id, name, slug, is_active")
+      .order("name");
+    if (error) throw error;
+    return { ok: true as const, items: data ?? [] };
+  } catch {
+    return { ok: false as const, error: "server", items: [] };
+  }
+}
+
+type CreateProductInput = {
   name: string;
   slug?: string;
   category_id: string;
@@ -84,7 +103,6 @@ export type CreateProductInput = {
   color_hex?: string;
   sku?: string;
   tag_ids?: string[];
-  /** آدرس تصویر اصلی (فقط ادمین) */
   image_url?: string;
   image_alt?: string;
 };
@@ -146,7 +164,6 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       const { error: tErr } = await gate.supabase.from("product_tag_map").insert(rows);
       if (tErr) console.error("[product_tag_map]", tErr);
     }
-
 
     const imageUrl = (input.image_url || "").trim();
     if (imageUrl) {
