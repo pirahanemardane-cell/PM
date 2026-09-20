@@ -436,11 +436,14 @@ export async function updateMyProfileAction(input: {
     const supabase = await createClient();
     const patch: Record<string, string | null> = {};
     if (typeof input.full_name === "string") {
-      patch.full_name = input.full_name.trim() || null;
+      const nameOk = assertNoLinkOrImage(input.full_name, "نام");
+      if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
+      patch.full_name = nameOk.text || null;
     }
     if (typeof input.phone === "string") {
-      const phone = input.phone.trim().replace(/\s/g, "");
-      patch.phone = phone || null;
+      const phoneOk = assertNoLinkOrImage(input.phone.trim().replace(/\s/g, ""), "تلفن");
+      if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
+      patch.phone = phoneOk.text || null;
     }
     if (!Object.keys(patch).length) {
       return { ok: false as const, error: "nothing_to_update" };
@@ -487,6 +490,21 @@ export async function createMyAddressAction(input: AddressInput) {
     ) {
       return { ok: false as const, error: "required_fields" };
     }
+    const n1 = assertNoLinkOrImage(input.full_name, "نام");
+    if (!n1.ok) return { ok: false as const, error: n1.error };
+    const n2 = assertNoLinkOrImage(input.phone, "تلفن");
+    if (!n2.ok) return { ok: false as const, error: n2.error };
+    const n3 = assertNoLinkOrImage(input.city, "شهر");
+    if (!n3.ok) return { ok: false as const, error: n3.error };
+    const n4 = assertNoLinkOrImage(input.address_line, "آدرس");
+    if (!n4.ok) return { ok: false as const, error: n4.error };
+    input = {
+      ...input,
+      full_name: n1.text,
+      phone: n2.text,
+      city: n3.text,
+      address_line: n4.text,
+    };
     const repo = new AddressRepository();
     const item = await repo.create(user.id, input);
     return { ok: true as const, item };
