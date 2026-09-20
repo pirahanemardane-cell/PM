@@ -36,10 +36,20 @@ async function getSessionId() {
 async function resolveCartId() {
   const user = await requireUser();
   const cartRepo = new CartRepository();
-  return cartRepo.getOrCreateCart({
-    userId: user?.id ?? null,
-    sessionId: user ? null : await getSessionId(),
-  });
+  const sessionId = await getSessionId();
+
+  // اگر لاگین است: سبد کاربر + ادغام سبد مهمان (cookie)
+  if (user?.id) {
+    try {
+      await cartRepo.mergeSessionIntoUser(sessionId, user.id);
+    } catch (e) {
+      console.error("[mergeSessionIntoUser]", e);
+    }
+    return cartRepo.getOrCreateCart({ userId: user.id, sessionId: null });
+  }
+
+  // مهمان: فقط session
+  return cartRepo.getOrCreateCart({ userId: null, sessionId });
 }
 
 export async function toggleWishlistAction(productId: string) {
