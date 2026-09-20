@@ -118,6 +118,7 @@ export default function AdminProductsPage() {
                   <th className="p-3 font-medium">وضعیت</th>
                   <th className="p-3 font-medium">ویژه</th>
                   <th className="p-3 font-medium">جدید</th>
+                  <th className="p-3 font-medium">عملیات</th>
                   <th className="p-3 font-medium">پرفروش</th>
                 </tr>
               </thead>
@@ -126,6 +127,12 @@ export default function AdminProductsPage() {
                   <tr key={p.id} className="border-border border-t">
                     <td className="p-3">
                       <div className="font-medium">{p.name}</div>
+                      <Link
+                        href={`/admin/products/${p.id}/edit`}
+                        className="text-primary mt-1 inline-block text-xs hover:underline"
+                      >
+                        ویرایش
+                      </Link>
                       <div className="text-muted-foreground font-mono text-xs">
                         {p.slug}
                       </div>
