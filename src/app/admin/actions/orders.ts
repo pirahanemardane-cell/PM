@@ -1,29 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin/require-admin";
+
 import { OrderRepository } from "@/repositories/order.repository";
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false as const, error: "login_required" };
-
-  // اگر ستون role / is_admin داری اینجا چک کن؛ فعلاً فقط لاگین
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = (profile as { role?: string } | null)?.role;
-  if (role && role !== "admin") {
-    return { ok: false as const, error: "forbidden" };
-  }
-
-  return { ok: true as const, userId: user.id };
-}
 
 export async function adminListOrdersAction(limit = 50) {
   const gate = await requireAdmin();

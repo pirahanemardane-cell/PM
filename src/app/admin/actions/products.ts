@@ -1,27 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin/require-admin";
+
 import { ProductRepository } from "@/repositories/product.repository";
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false as const, error: "login_required" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = (profile as { role?: string } | null)?.role;
-  if (role && role !== "admin") {
-    return { ok: false as const, error: "forbidden" };
-  }
-  return { ok: true as const };
-}
 
 export async function adminListProductsAction(limit = 50) {
   const gate = await requireAdmin();

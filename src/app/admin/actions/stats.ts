@@ -1,26 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin/require-admin";
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false as const, error: "login_required", supabase };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const role = (profile as { role?: string } | null)?.role;
-  if (role && role !== "admin") {
-    return { ok: false as const, error: "forbidden", supabase };
-  }
-  return { ok: true as const, supabase };
-}
 
 export async function adminDashboardStatsAction() {
   const gate = await requireAdmin();
