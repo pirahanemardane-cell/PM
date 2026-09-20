@@ -26,7 +26,6 @@ export async function middleware(request: NextRequest) {
   if (dest) {
     const url = request.nextUrl.clone();
     url.pathname = dest;
-    // session را روی همان request هم تازه نگه می‌داریم
     const sessionRes = await updateSession(request);
     const rewrite = NextResponse.rewrite(url);
     sessionRes.cookies.getAll().forEach((c) => {
