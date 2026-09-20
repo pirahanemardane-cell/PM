@@ -1,15 +1,65 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { adminCreateBlogTagAction } from "@/app/admin/actions/tags";
 
-export default function Page() {
+export default function NewBlogTagPage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const res = await adminCreateBlogTagAction({ name, slug: slug || undefined });
+    setBusy(false);
+    if (!res.ok) {
+      setErr("خطا");
+      return;
+    }
+    router.push("/admin/blog/tags");
+  }
+
   return (
-    <div className="space-y-4 p-6" dir="rtl">
+    <div className="mx-auto max-w-md space-y-4 p-6" dir="rtl">
       <h1 className="text-2xl font-bold">افزودن برچسب مقاله</h1>
-      <p className="text-muted-foreground text-sm">فرم برچسب بلاگ.</p>
-      <Link href="/admin/dashboard" className="text-primary text-sm underline">
-        داشبورد
-      </Link>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <label className="block space-y-1 text-sm">
+          <span>نام *</span>
+          <input
+            className="border-border w-full rounded-xl border px-3 py-2"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span>اسلاگ</span>
+          <input
+            className="border-border w-full rounded-xl border px-3 py-2"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            dir="ltr"
+          />
+        </label>
+        {err ? <p className="text-destructive text-sm">{err}</p> : null}
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={busy}
+            className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm"
+          >
+            ذخیره
+          </button>
+          <Link href="/admin/blog/tags" className="border rounded-xl px-4 py-2 text-sm">
+            انصراف
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }
