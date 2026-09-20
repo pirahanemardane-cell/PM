@@ -171,6 +171,9 @@ export default function BuyerDashboardPage() {
   const [returnLoading, setReturnLoading] = useState(false);
   const [returnOrderId, setReturnOrderId] = useState("");
   const [returnReason, setReturnReason] = useState("");
+  const [returnOrderOptions, setReturnOrderOptions] = useState<
+    { id: string; label: string }[]
+  >([]);
 
 useEffect(() => {
     let cancelled = false;
@@ -391,11 +394,26 @@ useEffect(() => {
     if (tab !== "returns") return;
     let cancelled = false;
     setReturnLoading(true);
-    void listMyReturnsAction().then((res) => {
-      if (cancelled) return;
-      setReturnLoading(false);
-      if (res.ok) setReturnItems(res.items as typeof returnItems);
-    });
+    void Promise.all([listMyReturnsAction(), listMyOrdersAction()]).then(
+      ([ret, ord]) => {
+        if (cancelled) return;
+        setReturnLoading(false);
+        if (ret.ok) setReturnItems(ret.items as typeof returnItems);
+        if (ord.ok && Array.isArray((ord as { items?: unknown }).items)) {
+          const items = (ord as { items: { id: string; status?: string; created_at?: string; total?: number }[] }).items;
+          setReturnOrderOptions(
+            items.map((o) => ({
+              id: o.id,
+              label: `${o.id.slice(0, 8)}… · ${o.status ?? "—"} · ${
+                o.created_at
+                  ? new Date(o.created_at).toLocaleDateString("fa-IR")
+                  : ""
+              }`,
+            })),
+          );
+        }
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -1090,13 +1108,18 @@ useEffect(() => {
             <div className="space-y-6" dir="rtl">
               <div className="border-border space-y-3 rounded-xl border p-4">
                 <h3 className="font-semibold">درخواست مرجوعی</h3>
-                <input
-                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm font-mono"
-                  placeholder="شناسه سفارش (UUID)"
+                <select
+                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
                   value={returnOrderId}
                   onChange={(e) => setReturnOrderId(e.target.value)}
-                  dir="ltr"
-                />
+                >
+                  <option value="">انتخاب سفارش…</option>
+                  {returnOrderOptions.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
                 <textarea
                   className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
                   rows={3}
