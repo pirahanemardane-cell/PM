@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   adminGetProductAction,
   adminUpdateProductAction,
 } from "@/app/admin/actions/products";
-import { useParams } from "next/navigation";
-import { LumaSpin } from "@/components/ui/luma-spin";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
 } from "@/app/admin/actions/taxonomy";
 import { adminListProductTagsAction } from "@/app/admin/actions/tags";
 import { Toolbar } from "@/components/ui/toolbar";
+import { LumaSpin } from "@/components/ui/luma-spin";
 
 type Opt = { id: string; name: string };
 
@@ -22,6 +21,7 @@ export default function EditProductPage() {
   const params = useParams();
   const id = String(params?.id ?? "");
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [cats, setCats] = useState<Opt[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
@@ -36,9 +36,9 @@ export default function EditProductPage() {
   const [brandId, setBrandId] = useState("");
   const [shortDesc, setShortDesc] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
   const [featured, setFeatured] = useState(false);
-  const [isNew, setIsNew] = useState(true);
+  const [isNew, setIsNew] = useState(false);
   const [bestseller, setBestseller] = useState(false);
 
   const [price, setPrice] = useState("");
@@ -47,7 +47,6 @@ export default function EditProductPage() {
   const [size, setSize] = useState("");
   const [colorName, setColorName] = useState("");
   const [sku, setSku] = useState("");
-
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
 
@@ -84,17 +83,87 @@ export default function EditProductPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      const prod = await adminGetProductAction(id);
+      if (cancelled) return;
+      if (!prod.ok) {
+        setErr(prod.error === "not_found" ? "محصول یافت نشد" : "خطا در بارگذاری");
+        setLoading(false);
+        return;
+      }
+      const p = prod.product as {
+        name: string;
+        slug: string;
+        category_id: string;
+        brand_id?: string | null;
+        short_description?: string | null;
+        description?: string | null;
+        status: string;
+        is_featured?: boolean;
+        is_new?: boolean;
+        is_bestseller?: boolean;
+        product_variants?: {
+          sku?: string | null;
+          price?: number;
+          original_price?: number | null;
+          stock_quantity?: number;
+          size?: string | null;
+          color_name?: string | null;
+        }[];
+        product_images?: {
+          url?: string;
+          alt_text?: string | null;
+          is_primary?: boolean;
+        }[];
+        product_tag_map?: { tag_id: string }[];
+      };
+      setName(p.name ?? "");
+      setSlug(p.slug ?? "");
+      setCategoryId(p.category_id ?? "");
+      setBrandId(p.brand_id ?? "");
+      setShortDesc(p.short_description ?? "");
+      setDescription(p.description ?? "");
+      setStatus((p.status as "draft" | "published" | "archived") || "draft");
+      setFeatured(!!p.is_featured);
+      setIsNew(!!p.is_new);
+      setBestseller(!!p.is_bestseller);
+      const v = p.product_variants?.[0];
+      if (v) {
+        setPrice(String(v.price ?? ""));
+        setOriginalPrice(v.original_price != null ? String(v.original_price) : "");
+        setStock(String(v.stock_quantity ?? 0));
+        setSize(v.size ?? "");
+        setColorName(v.color_name ?? "");
+        setSku(v.sku ?? "");
+      }
+      const img =
+        p.product_images?.find((i) => i.is_primary) ?? p.product_images?.[0];
+      if (img) {
+        setImageUrl(img.url ?? "");
+        setImageAlt(img.alt_text ?? "");
+      }
+      setSelectedTags((p.product_tag_map ?? []).map((x) => x.tag_id));
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setErr("");
-    const res = await adminCreateProductAction({
+    const res = await adminUpdateProductAction(id, {
       name,
-      slug: slug || undefined,
       category_id: categoryId,
       brand_id: brandId || null,
-      short_description: shortDesc || undefined,
-      description: description || undefined,
+      short_description: shortDesc || null,
+      description: description || null,
       status,
       is_featured: featured,
       is_new: isNew,
@@ -102,24 +171,31 @@ export default function EditProductPage() {
       price: Number(price),
       original_price: originalPrice ? Number(originalPrice) : null,
       stock_quantity: Number(stock) || 0,
-      size: size || undefined,
-      color_name: colorName || undefined,
-      sku: sku || undefined,
+      size: size || null,
+      color_name: colorName || null,
+      sku: sku || null,
       tag_ids: selectedTags,
-      image_url: imageUrl || undefined,
-      image_alt: imageAlt || undefined,
+      image_url: imageUrl || null,
+      image_alt: imageAlt || null,
     });
     setBusy(false);
     if (!res.ok) {
-      const map: Record<string, string> = {
-        name_required: "نام الزامی است",
-        category_required: "دسته الزامی است",
-        price_invalid: "قیمت نامعتبر",
-      };
-      setErr(map[res.error] || res.error || "خطا");
+      setErr(
+        res.error === "validation"
+          ? "نام و دسته الزامی است"
+          : res.error || "خطا",
+      );
       return;
     }
     router.push("/admin/products");
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20" dir="rtl">
+        <LumaSpin />
+      </div>
+    );
   }
 
   return (
@@ -147,11 +223,11 @@ export default function EditProductPage() {
             />
           </label>
           <label className="block space-y-1 text-sm">
-            <span>اسلاگ (خالی = خودکار)</span>
+            <span>اسلاگ</span>
             <input
               className="border-border bg-background w-full rounded-xl border px-3 py-2"
               value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              readOnly
               dir="ltr"
             />
           </label>
@@ -206,21 +282,22 @@ export default function EditProductPage() {
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="توضیح محصول…"
               />
             </div>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">
-            <select
-              className="border-border rounded-lg border px-2 py-1"
-              value={status}
-              onChange={(e) =>
-                setStatus(e.target.value as "draft" | "published")
-              }
-            >
-              <option value="draft">پیش‌نویس</option>
-              <option value="published">منتشر</option>
-            </select>
+            <label className="flex items-center gap-2">
+              <span>وضعیت</span>
+              <select
+                className="border-border rounded-lg border px-2 py-1"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as typeof status)}
+              >
+                <option value="draft">پیش‌نویس</option>
+                <option value="published">منتشر</option>
+                <option value="archived">بایگانی</option>
+              </select>
+            </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -249,71 +326,34 @@ export default function EditProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">تصویر اصلی</h2>
-          <p className="text-muted-foreground text-xs">
-            فقط ادمین — آدرس کامل تصویر (مثلاً از CDN یا Storage)
-          </p>
-          <label className="block space-y-1 text-sm">
-            <span>آدرس تصویر</span>
-            <input
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              dir="ltr"
-              placeholder="https://..."
-            />
-          </label>
-          <label className="block space-y-1 text-sm">
-            <span>متن جایگزین (alt)</span>
-            <input
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
-              value={imageAlt}
-              onChange={(e) => setImageAlt(e.target.value)}
-              placeholder="نام محصول"
-            />
-          </label>
-          {imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={imageUrl}
-              alt={imageAlt || "پیش‌نمایش"}
-              className="border-border h-32 w-32 rounded-xl border object-cover"
-            />
-          ) : null}
-        </section>
-
-        <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">موجودی و قیمت (واریانت اول)</h2>
+          <h2 className="font-semibold">واریانت اصلی</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1 text-sm">
               <span>قیمت *</span>
               <input
-                type="number"
-                min={0}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 required
+                inputMode="numeric"
               />
             </label>
             <label className="block space-y-1 text-sm">
-              <span>قیمت قبل تخفیف</span>
+              <span>قیمت قبل</span>
               <input
-                type="number"
-                min={0}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2"
                 value={originalPrice}
                 onChange={(e) => setOriginalPrice(e.target.value)}
+                inputMode="numeric"
               />
             </label>
             <label className="block space-y-1 text-sm">
               <span>موجودی</span>
               <input
-                type="number"
-                min={0}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
+                inputMode="numeric"
               />
             </label>
             <label className="block space-y-1 text-sm">
@@ -345,41 +385,59 @@ export default function EditProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">برچسب‌ها</h2>
-          {!tags.length ? (
-            <p className="text-muted-foreground text-sm">
-              هنوز برچسبی نیست — از منوی برچسب محصولات بسازید.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              {tags.map((tg) => (
-                <label key={tg.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.includes(tg.id)}
-                    onChange={(e) => {
-                      setSelectedTags((prev) =>
-                        e.target.checked
-                          ? [...prev, tg.id]
-                          : prev.filter((id) => id !== tg.id),
-                      );
-                    }}
-                  />
-                  {tg.name}
-                </label>
-              ))}
-            </div>
-          )}
+          <h2 className="font-semibold">تصویر اصلی (URL)</h2>
+          <input
+            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            dir="ltr"
+            placeholder="https://…"
+          />
+          <input
+            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+            value={imageAlt}
+            onChange={(e) => setImageAlt(e.target.value)}
+            placeholder="alt"
+          />
         </section>
+
+        {tags.length ? (
+          <section className="border-border space-y-2 rounded-xl border p-4">
+            <h2 className="font-semibold">برچسب‌ها</h2>
+            <div className="flex flex-wrap gap-2 text-sm">
+              {tags.map((tg) => {
+                const on = selectedTags.includes(tg.id);
+                return (
+                  <button
+                    key={tg.id}
+                    type="button"
+                    className={
+                      on
+                        ? "bg-primary text-primary-foreground rounded-lg px-2 py-1"
+                        : "border-border rounded-lg border px-2 py-1"
+                    }
+                    onClick={() =>
+                      setSelectedTags((prev) =>
+                        on ? prev.filter((x) => x !== tg.id) : [...prev, tg.id],
+                      )
+                    }
+                  >
+                    {tg.name}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
 
         <button
           type="submit"
           disabled={busy}
-          className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm disabled:opacity-50"
+          className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm disabled:opacity-60"
         >
-          {busy ? "در حال ذخیره…" : "ذخیره محصول"}
+          {busy ? "در حال ذخیره…" : "ذخیره تغییرات"}
         </button>
       </form>
     </div>
