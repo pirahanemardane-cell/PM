@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
-import { getMyProfileAction } from "@/app/(shop)/actions/shop";
+import { getMyProfileAction, mergeGuestCartAction } from "@/app/(shop)/actions/shop";
+import { useServerCartStore } from "@/lib/server-cart-store";
 
 type Props = {
   className?: string;
@@ -23,6 +24,16 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
         if (res.ok) {
           const name = (res.profile?.full_name || "").trim();
           setLabel(name || (res.email ? res.email.split("@")[0] : "حساب من"));
+          // یک‌بار merge سبد مهمان → کاربر
+          try {
+            await mergeGuestCartAction();
+            await useServerCartStore.getState().refresh();
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("pm:cart-changed"));
+            }
+          } catch {
+            /* ignore merge errors on header load */
+          }
         } else {
           setLabel("");
         }

@@ -129,4 +129,38 @@ export class CartRepository extends BaseRepository {
     if (error) throw error;
   }
 
+
+  /** اقلام سبد session مهمان را به سبد کاربر منتقل می‌کند و سبد مهمان را خالی/حذف می‌کند */
+  async mergeSessionIntoUser(sessionId: string, userId: string): Promise<void> {
+    if (!sessionId || !userId) return;
+    const supabase = await this.getClient();
+
+    const { data: guestCart } = await supabase
+      .from("carts")
+      .select("id")
+      .eq("session_id", sessionId)
+      .is("user_id", null)
+      .maybeSingle();
+
+    if (!guestCart?.id) return;
+
+    const userCartId = await this.getOrCreateCart({ userId });
+    if (guestCart.id === userCartId) return;
+
+    const { data: guestItems } = await supabase
+      .from("cart_items")
+      .select("variant_id, quantity")
+      .eq("cart_id", guestCart.id);
+
+    for (const row of guestItems ?? []) {
+      const vid = (row as { variant_id: string }).variant_id;
+      const qty = Number((row as { quantity: number }).quantity) || 1;
+      if (!vid) continue;
+      await this.addItem(userCartId, vid, qty);
+    }
+
+    await this.clearCart(guestCart.id);
+    await supabase.from("carts").delete().eq("id", guestCart.id);
+  }
+
 }

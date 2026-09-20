@@ -709,3 +709,19 @@ export async function listActiveDiscountsAction() {
   }
 }
 
+/** بعد از لاگین: سبد cookie مهمان → سبد کاربر */
+export async function mergeGuestCartAction() {
+  try {
+    const user = await requireUser();
+    if (!user) return { ok: false as const, error: "login_required" };
+    const sid = await getSessionId();
+    if (!sid) return { ok: true as const, skipped: true as const };
+    const cartRepo = new CartRepository();
+    await cartRepo.mergeSessionIntoUser(sid, user.id);
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[mergeGuestCart]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
