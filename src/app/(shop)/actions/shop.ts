@@ -9,6 +9,7 @@ import { OrderRepository } from "@/repositories/order.repository";
 import { cookies } from "next/headers";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 import { randomUUID } from "crypto";
+import { normalizeIranMobile, toEnglishDigits } from "@/lib/numbers";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -301,7 +302,11 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     
     const nameOk = assertNoLinkOrImage(payload.name, "نام");
     if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
-    const phoneOk = assertNoLinkOrImage(payload.phone, "تلفن");
+    const phoneNorm = normalizeIranMobile(payload.phone || "");
+    if (!phoneNorm) {
+      return { ok: false as const, error: "شماره موبایل نامعتبر است" };
+    }
+    const phoneOk = assertNoLinkOrImage(phoneNorm, "تلفن");
     if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
     const addrOk = assertNoLinkOrImage(payload.address, "آدرس");
     if (!addrOk.ok) return { ok: false as const, error: addrOk.error };
@@ -451,9 +456,18 @@ export async function updateMyProfileAction(input: {
       patch.full_name = nameOk.text || null;
     }
     if (typeof input.phone === "string") {
-      const phoneOk = assertNoLinkOrImage(input.phone.trim().replace(/\s/g, ""), "تلفن");
-      if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
-      patch.phone = phoneOk.text || null;
+      const raw = input.phone.trim().replace(/\s/g, "");
+      if (!raw) {
+        patch.phone = null;
+      } else {
+        const phoneNorm = normalizeIranMobile(raw);
+        if (!phoneNorm) {
+          return { ok: false as const, error: "شماره موبایل نامعتبر است" };
+        }
+        const phoneOk = assertNoLinkOrImage(phoneNorm, "تلفن");
+        if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
+        patch.phone = phoneOk.text || null;
+      }
     }
     if (!Object.keys(patch).length) {
       return { ok: false as const, error: "nothing_to_update" };
@@ -502,7 +516,11 @@ export async function createMyAddressAction(input: AddressInput) {
     }
     const n1 = assertNoLinkOrImage(input.full_name, "نام");
     if (!n1.ok) return { ok: false as const, error: n1.error };
-    const n2 = assertNoLinkOrImage(input.phone, "تلفن");
+    const phoneNormAddr = normalizeIranMobile(input.phone || "");
+    if (!phoneNormAddr) {
+      return { ok: false as const, error: "شماره موبایل نامعتبر است" };
+    }
+    const n2 = assertNoLinkOrImage(phoneNormAddr, "تلفن");
     if (!n2.ok) return { ok: false as const, error: n2.error };
     const n3 = assertNoLinkOrImage(input.city, "شهر");
     if (!n3.ok) return { ok: false as const, error: n3.error };
@@ -758,4 +776,3 @@ export async function mergeGuestCartAction() {
     return { ok: false as const, error: "server" };
   }
 }
-

@@ -1,62 +1,77 @@
-/**
- * تبدیل اعداد فارسی و عربی به لاتین
- */
-export function toEnglishDigits(value: string): string {
-  if (!value) return value;
+/** تبدیل ارقام فارسی/عربی به لاتین */
+const FA_AR_TO_EN: Record<string, string> = {
+  "۰": "0",
+  "۱": "1",
+  "۲": "2",
+  "۳": "3",
+  "۴": "4",
+  "۵": "5",
+  "۶": "6",
+  "۷": "7",
+  "۸": "8",
+  "۹": "9",
+  "٠": "0",
+  "١": "1",
+  "٢": "2",
+  "٣": "3",
+  "٤": "4",
+  "٥": "5",
+  "٦": "6",
+  "٧": "7",
+  "٨": "8",
+  "٩": "9",
+};
 
-  const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
-  const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+const EN_TO_FA: Record<string, string> = {
+  "0": "۰",
+  "1": "۱",
+  "2": "۲",
+  "3": "۳",
+  "4": "۴",
+  "5": "۵",
+  "6": "۶",
+  "7": "۷",
+  "8": "۸",
+  "9": "۹",
+};
 
-  return value
-    .split("")
-    .map((char) => {
-      const persianIndex = persianDigits.indexOf(char);
-      if (persianIndex > -1) return String(persianIndex);
+export function toEnglishDigits(input: string): string {
+  return String(input ?? "").replace(
+    /[۰-۹٠-٩]/g,
+    (ch) => FA_AR_TO_EN[ch] ?? ch,
+  );
+}
 
-      const arabicIndex = arabicDigits.indexOf(char);
-      if (arabicIndex > -1) return String(arabicIndex);
+export function toPersianDigits(input: string | number): string {
+  return String(input ?? "").replace(/[0-9]/g, (ch) => EN_TO_FA[ch] ?? ch);
+}
 
-      return char;
-    })
-    .join("");
+/** فقط رقم (بعد از نرمال به لاتین) */
+export function digitsOnly(input: string): string {
+  return toEnglishDigits(input).replace(/\D/g, "");
 }
 
 /**
- * تبدیل اعداد لاتین به فارسی
+ * نرمال‌سازی موبایل ایران → 09xxxxxxxxx
+ * قبول: ۰۹۱۲…، 0912، +98912، 0098912، 98912
  */
-export function toPersianDigits(value: string | number): string {
-  if (value === null || value === undefined) return "";
-
-  const str = String(value);
-  const persianDigits = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
-
-  return str.replace(/\d/g, (digit) => persianDigits[Number(digit)]);
+export function normalizeIranMobile(input: string): string | null {
+  let d = digitsOnly(input);
+  if (d.startsWith("0098")) d = d.slice(4);
+  else if (d.startsWith("98")) d = d.slice(2);
+  if (d.startsWith("9") && d.length === 10) d = `0${d}`;
+  if (d.length === 10 && d.startsWith("9")) d = `0${d}`;
+  if (!/^09\d{9}$/.test(d)) return null;
+  return d;
 }
 
-/**
- * نرمال‌سازی شماره موبایل ایرانی
- * پشتیبانی از اعداد فارسی + حذف فاصله و خط تیره
- */
-export function normalizePhone(phone: string): string {
-  if (!phone) return "";
-
-  let normalized = toEnglishDigits(phone);
-  normalized = normalized.replace(/[\s\-\(\)]/g, "");
-
-  // تبدیل +98 یا 98 به 0
-  if (normalized.startsWith("+98")) {
-    normalized = "0" + normalized.slice(3);
-  } else if (normalized.startsWith("98") && normalized.length === 12) {
-    normalized = "0" + normalized.slice(2);
-  }
-
-  return normalized;
+export function isValidIranMobile(input: string): boolean {
+  return normalizeIranMobile(input) !== null;
 }
 
-/**
- * اعتبارسنجی شماره موبایل ایرانی (بعد از نرمال‌سازی)
- */
-export function isValidIranianPhone(phone: string): boolean {
-  const normalized = normalizePhone(phone);
-  return /^09\d{9}$/.test(normalized);
+/** عدد اعشاری/صحیح از رشته با ارقام فارسی */
+export function parseLocaleNumber(input: string): number | null {
+  const n = toEnglishDigits(input).replace(/,/g, "").trim();
+  if (!n || Number.isNaN(Number(n))) return null;
+  return Number(n);
 }

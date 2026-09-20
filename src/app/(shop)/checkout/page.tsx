@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeIranMobile } from "@/lib/numbers";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -128,7 +130,7 @@ export default function CheckoutPage() {
     setSubmitting(true);
     const res = await createOrderAction({
       name: form.name.trim(),
-      phone: form.phone.trim(),
+      phone: normalizeIranMobile(form.phone.trim()) || form.phone.trim(),
       address: form.address.trim(),
       city: form.city.trim() || undefined,
       postal: form.postal.trim() || undefined,
