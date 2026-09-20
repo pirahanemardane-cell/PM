@@ -1,14 +1,25 @@
 import type { Metadata } from "next";
+import { StaticPage } from "@/components/content/static-page";
 
-export const metadata: Metadata = { title: "حریم خصوصی" };
+export const metadata: Metadata = {
+  title: "حریم خصوصی | پیراهن مردانه",
+  description: "نحوه جمع‌آوری و استفاده از اطلاعات کاربران",
+};
 
-export default function Page() {
+export default function PrivacyPage() {
   return (
-    <main className="container mx-auto max-w-3xl px-4 py-10" dir="rtl">
-      <h1 className="text-2xl font-bold mb-4">حریم خصوصی</h1>
-      <p className="text-muted-foreground leading-7 text-sm">
-        این صفحه به‌زودی با جزئیات کامل به‌روزرسانی می‌شود. برای پیگیری سفارش از داشبورد استفاده کنید.
+    <StaticPage title="حریم خصوصی">
+      <p>
+        اطلاعات تماس، آدرس ارسال و سابقه سفارش فقط برای پردازش خرید، پشتیبانی و
+        الزامات قانونی استفاده می‌شود.
       </p>
-    </main>
+      <p>
+        رمزها و کلیدهای سرویس‌های پرداخت/پیامک هرگز در مرورگر شما ذخیره یا نمایش
+        داده نمی‌شوند. دسترسی کارکنان به داده‌ها حداقل و مبتنی بر نقش است.
+      </p>
+      <p>
+        برای درخواست حذف یا اصلاح اطلاعات، از طریق صفحه تماس با ما پیام بگذارید.
+      </p>
+    </StaticPage>
   );
 }

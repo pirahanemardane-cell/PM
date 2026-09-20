@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
+import { StaticPage } from "@/components/content/static-page";
 
-export const metadata: Metadata = { title: "ارسال" };
+export const metadata: Metadata = {
+  title: "ارسال و تحویل | پیراهن مردانه",
+  description: "روش‌ها و زمان تقریبی ارسال سفارش‌ها",
+};
 
-export default function Page() {
+export default function ShippingPage() {
   return (
-    <main className="container mx-auto max-w-3xl px-4 py-10" dir="rtl">
-      <h1 className="text-2xl font-bold mb-4">ارسال</h1>
-      <p className="text-muted-foreground leading-7 text-sm">
-        این صفحه به‌زودی با جزئیات کامل به‌روزرسانی می‌شود. برای پیگیری سفارش از داشبورد استفاده کنید.
+    <StaticPage title="ارسال و تحویل">
+      <p>
+        سفارش‌ها پس از تأیید پرداخت در انبار آماده‌سازی می‌شوند. زمان تقریبی
+        پردازش ۱ تا ۳ روز کاری است.
       </p>
-    </main>
+      <p>
+        هزینه و روش ارسال بر اساس شهر مقصد در مرحله تسویه‌حساب اعلام می‌شود.
+        پس از تحویل به پست/تیپاکس، وضعیت از داشبورد قابل پیگیری است.
+      </p>
+    </StaticPage>
   );
 }

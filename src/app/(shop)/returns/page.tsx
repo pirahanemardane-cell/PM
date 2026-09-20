@@ -1,14 +1,30 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { StaticPage } from "@/components/content/static-page";
 
-export const metadata: Metadata = { title: "مرجوعی" };
+export const metadata: Metadata = {
+  title: "سیاست مرجوعی | پیراهن مردانه",
+  description: "شرایط بازگرداندن و تعویض کالا",
+};
 
-export default function Page() {
+export default function ReturnsPolicyPage() {
   return (
-    <main className="container mx-auto max-w-3xl px-4 py-10" dir="rtl">
-      <h1 className="text-2xl font-bold mb-4">مرجوعی</h1>
-      <p className="text-muted-foreground leading-7 text-sm">
-        این صفحه به‌زودی با جزئیات کامل به‌روزرسانی می‌شود. برای پیگیری سفارش از داشبورد استفاده کنید.
+    <StaticPage title="سیاست مرجوعی">
+      <p>
+        کالای استفاده‌نشده، بدون آسیب و با برچسب اصلی، در بازه اعلام‌شده پس از
+        تحویل قابل درخواست مرجوعی یا تعویض است.
       </p>
-    </main>
+      <p>
+        کاربران واردشده می‌توانند از{" "}
+        <Link href="/dashboard" className="text-foreground underline">
+          داشبورد
+        </Link>{" "}
+        برای سفارش‌های خود درخواست مرجوعی ثبت کنند.
+      </p>
+      <p>
+        هزینه بازگشت در موارد نقص کالا با فروشگاه است؛ در سایر موارد طبق قوانین
+        اعلامی در زمان ثبت درخواست مشخص می‌شود.
+      </p>
+    </StaticPage>
   );
 }

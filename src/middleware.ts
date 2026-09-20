@@ -9,6 +9,14 @@ const PERSIAN_ROUTES: Record<string, string> = {
   "/سبد-خرید": "/cart",
   "/آخرین-مشاهده-ها": "/recently-viewed",
   "/محصولات": "/products",
+  "/تماس": "/contact",
+  "/درباره-ما": "/about",
+  "/سوالات-متداول": "/faq",
+  "/شرایط-استفاده": "/terms",
+  "/حریم-خصوصی": "/privacy",
+  "/ارسال": "/shipping",
+  "/مرجوعی": "/returns",
+  "/راهنمای-سایز": "/size-guide",
 };
 
 export async function middleware(request: NextRequest) {
