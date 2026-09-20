@@ -10,6 +10,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  MessageSquare,
   Tag,
   ChevronLeft,
   ChevronRight,
@@ -75,6 +76,7 @@ const GROUPS: NavGroup[] = [
 ];
 
 const BOTTOM: NavLeaf[] = [
+  { href: "/admin/reviews", label: "نظرات", icon: MessageSquare },
   { href: "/admin/discounts", label: "تخفیف‌ها", icon: Tag },
   { href: "/admin/users", label: "کاربران", icon: Users },
   { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },

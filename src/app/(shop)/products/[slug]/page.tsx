@@ -6,6 +6,7 @@ import { ProductService } from "@/services/product.service";
 import { toPersianDigits } from "@/lib/numbers";
 import { Badge } from "@/components/ui/badge";
 import { ProductBuyBox } from "@/components/product/product-buy-box";
+import { ProductReviews } from "@/components/shop/product-reviews";
 
 type Props = {
   params: Promise<{ slug: string }>;
