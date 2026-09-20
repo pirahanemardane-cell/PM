@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { signInAction, signUpAction, resetPasswordAction } from "@/app/(shop)/actions/auth";
 import {
   Mail,
   Lock,
@@ -118,8 +119,6 @@ export function AuthForm({
     setSuccessMessage("");
 
     try {
-      await new Promise((r) => setTimeout(r, 700));
-
       // ——— ورود با OTP ———
       if (authMode === "login" && loginMethod === "otp") {
         if (otpStep === "phone") {
@@ -143,26 +142,29 @@ export function AuthForm({
       // ——— ورود با رمز (موبایل یا ایمیل) ———
       if (authMode === "login" && loginMethod === "password") {
         if (!isValidLoginId(formData.loginId)) {
-          setErrors({
-            loginId: "شماره موبایل یا ایمیل معتبر وارد کنید",
-          });
+          setErrors({ loginId: "شماره موبایل یا ایمیل معتبر وارد کنید" });
+          setIsLoading(false);
           return;
         }
         if (!formData.password) {
           setErrors({ password: "رمز عبور الزامی است" });
+          setIsLoading(false);
           return;
         }
-        if (formData.rememberMe) {
-          localStorage.setItem("userLoginId", formData.loginId.trim());
-          localStorage.setItem("rememberMe", "true");
-        }
         const id = formData.loginId.trim();
-        setSuccessMessage("ورود موفق");
-        if (id.includes("@")) {
-          onSuccess?.({ email: id });
-        } else {
-          onSuccess?.({ phone: id });
+        if (!id.includes("@")) {
+          setErrors({ loginId: "فعلاً فقط ورود با ایمیل فعال است" });
+          setIsLoading(false);
+          return;
         }
+        const res = await signInAction(id, formData.password);
+        if (!res.ok) {
+          setErrors({ general: res.error || "ورود ناموفق" });
+          setIsLoading(false);
+          return;
+        }
+        onSuccess?.({ email: id });
+        setIsLoading(false);
         return;
       }
 

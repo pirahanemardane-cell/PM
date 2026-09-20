@@ -1,10 +1,11 @@
 "use client";
 
-import { useShopStore } from "@/lib/shop-store";
 import { useEffect, useState } from "react";
+import { useShopStore } from "@/lib/shop-store";
+import { useUnifiedCart } from "@/lib/use-unified-cart";
 
 export function useShopCounts() {
-  const cart = useShopStore((s) => s.cart.length);
+  const { count: cart } = useUnifiedCart();
   const wishlist = useShopStore((s) => s.wishlist.length);
   const compare = useShopStore((s) => s.compare.length);
   const recent = useShopStore((s) => s.recentlyViewed.length);

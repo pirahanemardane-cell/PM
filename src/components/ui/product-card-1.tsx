@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/tooltip";
 
 import { toast } from "@/lib/toaster";
+import { useShopStore } from "@/lib/shop-store";
+import { toggleWishlistAction, addToCartAction } from "@/app/(shop)/actions/shop";
+import { useServerCartStore } from "@/lib/server-cart-store";
 
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +37,8 @@ import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
 
 export interface ProductCard1Props {
+  variantOptions?: { id: string; size?: string | null; color?: string | null; price?: number }[];
+  productId?: string;
   href?: string;
   name?: string;
   brand?: string;
@@ -60,6 +65,8 @@ function formatToman(price: number) {
 }
 
 export function ProductCard1({
+  productId,
+  variantOptions = [],
   href,
   name = "محصول",
   price = 0,
@@ -84,13 +91,23 @@ export function ProductCard1({
     images.length > 0 ? images : [];
   const hasImage = safeImages.length > 0;
 
-  const router = useRouter();
+    const router = useRouter();
+  const toggleWishlistStore = useShopStore((s) => s.toggleWishlist);
+  const toggleCompareStore = useShopStore((s) => s.toggleCompare);
+  const addToCartStore = useShopStore((s) => s.addToCart);
+  const refreshServerCart = useServerCartStore((s) => s.refresh);
+  const compare = useShopStore((s) => s.compare);
+  const wishlist = useShopStore((s) => s.wishlist);
+  const isWishlisted = productId
+    ? wishlist.some((x) => x.id === productId)
+    : false;
+  const isCompared = productId
+    ? compare.some((x) => x.id === productId)
+    : false;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(colors[0] ?? "");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isCompared, setIsCompared] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+      const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const nextImage = (e: React.MouseEvent) => {
@@ -109,17 +126,77 @@ export function ProductCard1({
     );
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isAddedToCart) return;
+      async function handleAddToCart(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (!productId) {
+      toast.error("محصول نامعتبر است");
+      return;
+    }
+    if ((sizes?.length ?? 0) > 0 && !selectedSize) {
+      toast.error("سایز را انتخاب کنید");
+      return;
+    }
+    // match variant
+    const opts = variantOptions ?? [];
+    let variantId: string | undefined;
+    if (opts.length) {
+      const match = opts.find((v) => {
+        const sizeOk = !selectedSize || !v.size || v.size === selectedSize;
+        const colorOk =
+          !selectedColor ||
+          !v.color ||
+          v.color === selectedColor ||
+          v.color?.toLowerCase() === selectedColor?.toLowerCase();
+        return sizeOk && colorOk;
+      });
+      variantId = match?.id ?? opts[0]?.id;
+    }
+    if (!variantId) {
+      toast.error("این ترکیب موجود نیست");
+      return;
+    }
     setIsAddingToCart(true);
-    setTimeout(() => {
+    try {
+      // optimistic UI
+      addToCartStore({
+        id: productId,
+        title: name ?? "محصول",
+        price: price ?? 0,
+        image: (images && images[0]) || undefined,
+        href: href,
+        color: selectedColor || undefined,
+        size: selectedSize || undefined,
+        colors: colors?.length ? colors : undefined,
+        sizes: sizes?.length ? sizes : undefined,
+        quantity: 1,
+        variantId,
+      });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } })
+        );
+      }
+      console.log("addCart", { variantId, selectedSize, selectedColor, optsLen: opts.length });
+      const res = await addToCartAction(variantId, 1);
+            if (res.ok) {
+        void refreshServerCart();
+        window.dispatchEvent(new CustomEvent("pm:cart-changed"));
+      }
+// مهمان: فقط local — لاگین اجباری نیست
+      if (!res.ok && res.error !== "login_required") {
+        toast.error(res.error ? `سبد: ${res.error}` : "خطا در افزودن به سبد");
+      } else {
+        setIsAddedToCart(true);
+        toast.success("به سبد خرید اضافه شد");
+        setTimeout(() => setIsAddedToCart(false), 1500);
+      }
+    } finally {
       setIsAddingToCart(false);
-      setIsAddedToCart(true);
-      setTimeout(() => setIsAddedToCart(false), 2000);
-    }, 800);
-  };
+    }
+  }
+
+
 
   const card = (
     <Card
@@ -140,13 +217,49 @@ export function ProductCard1({
             className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isWishlisted ? "text-rose-500" : ""
             } text-foreground hover:!bg-primary hover:!text-primary-foreground`}
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIsWishlisted(!isWishlisted);
-              toast.success(
-                !isWishlisted ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد"
-              );
+              if (!productId) {
+                toast.error("محصول نامعتبر است");
+                return;
+              }
+              const item = {
+                id: productId,
+                title: name ?? "محصول",
+                price: price ?? 0,
+                image: (images && images[0]) || undefined,
+                href: href,
+              };
+              // همیشه UI هدر / پنل کناری
+              toggleWishlistStore(item);
+              const nowIn = useShopStore.getState().wishlist.some((x) => x.id === productId);
+              // اگر لاگین باشد، همزمان DB
+              try {
+                const res = await toggleWishlistAction(productId);
+                
+      if (res.ok && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("pm:wishlist-changed"));
+      }
+if (res.ok === false && res.error === "login_required") {
+                  // مهمان: فقط store — درست است
+                  toast.success(
+                    nowIn ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد"
+                  );
+                  return;
+                }
+                if (res.ok === false) {
+                  toast.error("خطا در همگام‌سازی سرور");
+                  return;
+                }
+                toast.success(
+                  res.added ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد"
+                );
+              } catch {
+                toast.success(
+                  nowIn ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد"
+                );
+              }
             }}
             aria-label="علاقه‌مندی"
           >
@@ -163,9 +276,21 @@ export function ProductCard1({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIsCompared(!isCompared);
+              if (!productId) {
+                toast.error("محصول نامعتبر است");
+                return;
+              }
+              const item = {
+                id: productId,
+                title: name ?? "محصول",
+                price: price ?? 0,
+                image: (images && images[0]) || undefined,
+                href: href,
+              };
+              toggleCompareStore(item);
+              const nowIn = useShopStore.getState().compare.some((x) => x.id === productId);
               toast.success(
-                !isCompared ? "به لیست مقایسه اضافه شد" : "از لیست مقایسه حذف شد"
+                nowIn ? "به لیست مقایسه اضافه شد" : "از لیست مقایسه حذف شد"
               );
             }}
             aria-label="مقایسه"

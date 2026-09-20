@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "@/lib/toaster";
 
 import Link from "next/link";
 import {
@@ -10,6 +11,8 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useShopStore } from "@/lib/shop-store";
+import { useUnifiedCart } from "@/lib/use-unified-cart";
+import { removeCartItemAction, updateCartQuantityAction } from "@/app/(shop)/actions/shop";
 import { X } from "lucide-react";
 
 export type ActivityTab = "cart" | "wishlist" | "compare" | "recent";
@@ -32,16 +35,23 @@ export function ShopActivityDrawer({
   onTabChange?: (tab: ActivityTab) => void;
 }) {
   const cart = useShopStore((s) => s.cart);
+  const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } = useUnifiedCart();
   const wishlist = useShopStore((s) => s.wishlist);
   const compare = useShopStore((s) => s.compare);
   const recent = useShopStore((s) => s.recentlyViewed);
   const removeFromCart = useShopStore((s) => s.removeFromCart);
+  const updateCartItem = useShopStore((s) => s.updateCartItem);
+  const setCartQuantity = useShopStore((s) => s.setCartQuantity);
   const toggleWishlist = useShopStore((s) => s.toggleWishlist);
   const toggleCompare = useShopStore((s) => s.toggleCompare);
 
+  const cartTotal = isLoggedIn
+    ? unifiedTotal
+    : cart.reduce((sum, x) => sum + (x.price ?? 0) * (x.quantity ?? 1), 0);
+
   const items =
     tab === "cart"
-      ? cart
+      ? (isLoggedIn ? unifiedLines : cart)
       : tab === "wishlist"
         ? wishlist
         : tab === "compare"
@@ -50,55 +60,258 @@ export function ShopActivityDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="h-full max-h-none rounded-none" dir="rtl">
-        <DrawerHeader className="flex flex-row items-center justify-between gap-2 border-b border-border/40">
+      <DrawerContent className="data-[vaul-drawer-direction=right]:sm:max-w-md fixed inset-y-0 right-0 left-auto mt-0 flex h-full w-full max-w-md flex-col rounded-none border-l bg-background" dir="rtl">
+        <DrawerHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b border-border/40 px-2">
           <DrawerTitle>{LABELS[tab]}</DrawerTitle>
           <DrawerClose className="hover:bg-primary hover:text-primary-foreground rounded-full p-2">
             <X className="h-4 w-4" />
           </DrawerClose>
         </DrawerHeader>
-
-        <div className="flex-1 overflow-y-auto p-4">
+<div className="min-h-0 flex-1 overflow-y-auto p-4">
           {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">موردی نیست.</p>
           ) : (
             <ul className="space-y-3">
-              {items.map((p: { id: string; title: string; price?: number }) => (
-                <li key={p.id} className="border-border rounded-xl border p-3">
-                  <p className="text-sm font-medium">{p.title}</p>
-                  {typeof p.price === "number" ? (
-                    <p className="text-muted-foreground text-xs">
-                      {p.price.toLocaleString("fa-IR")} تومان
+              {items.map((p) => (
+                <div
+                  key={(p as { key?: string }).key ?? `${(p as { id?: string; productId?: string }).id ?? (p as { productId?: string }).productId}|${p.color ?? ""}|${p.size ?? ""}`}
+                  className="flex gap-3 rounded-xl border border-border/60 bg-background p-3"
+                >
+                  {p.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.image}
+                      alt={p.title || ""}
+                      className="h-16 w-16 shrink-0 rounded-lg object-cover bg-muted"
+                    />
+                  ) : (
+                    <div className="bg-muted h-16 w-16 shrink-0 rounded-lg" />
+                  )}
+                  <div className="min-w-0 flex-1 text-right">
+                    <p className="truncate text-sm font-medium">
+                      {p.title || "محصول"}
                     </p>
-                  ) : null}
-                  <div className="mt-2">
+                    {typeof p.price === "number" ? (
+                      <div className="mt-0.5 space-y-0.5 text-xs">
+                        <p className="text-muted-foreground">
+                          {p.price.toLocaleString("fa-IR")} تومان
+                          {tab === "cart" && (p.quantity ?? 1) > 1
+                            ? " × " + (p.quantity ?? 1)
+                            : ""}
+                        </p>
+                        {tab === "cart" ? (
+                          <p className="font-medium text-foreground">
+                            جمع:{" "}
+                            {(
+                              p.price * (p.quantity ?? 1)
+                            ).toLocaleString("fa-IR")}{" "}
+                            تومان
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {tab === "cart" && (
-                      <button type="button" className="text-destructive text-xs" onClick={() => removeFromCart(p.id)}>
-                        حذف از سبد
-                      </button>
+                      <div className="mt-2 space-y-2">
+                        {(p as { source?: string }).source === "server" ? (
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {(p as { colorHex?: string }).colorHex || (p.color && String(p.color).startsWith("#")) ? (
+                              <span
+                                className="border-border inline-block h-4 w-4 rounded-full border"
+                                style={{
+                                  backgroundColor:
+                                    (p as { colorHex?: string }).colorHex ||
+                                    (p.color?.startsWith("#") ? p.color : undefined),
+                                }}
+                              />
+                            ) : null}
+                            {p.size ? (
+                              <span className="border-border rounded-md border px-1.5 py-0.5 text-[11px] font-medium">
+                                {p.size}
+                              </span>
+                            ) : null}
+                            {p.color && !String(p.color).startsWith("#") ? (
+                              <span className="text-muted-foreground text-[11px]">{p.color}</span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {(p as { source?: string }).source !== "server" && p.colors && (p as { colors?: string[] }).colors && (p as { colors: string[] }).colors.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 justify-end">
+                            {p.colors.map((c: string) => (
+                              <button
+                                key={c}
+                                type="button"
+                                title={c}
+                                className={
+                                  "h-5 w-5 rounded-full border-2 " +
+                                  (p.color === c
+                                    ? "border-primary ring-1 ring-primary"
+                                    : "border-transparent opacity-70")
+                                }
+                                style={{ backgroundColor: c.startsWith("#") ? c : c.match(/^[0-9A-Fa-f]{3,8}$/) ? `#${c}` : undefined }}
+                                onClick={() => {
+                                  const key = `${p.id}|${p.color ?? ""}|${p.size ?? ""}`;
+                                  updateCartItem(key, { color: c });
+                                }}
+                              >
+                                {!c.startsWith("#") ? (
+                                  <span className="text-[9px]">{c}</span>
+                                ) : null}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {p.sizes && p.sizes.length > 0 && (
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {p.sizes.map((s: string) => (
+                              <button
+                                key={s}
+                                type="button"
+                                className={
+                                  "min-w-[1.75rem] rounded-md border px-1.5 py-0.5 text-[11px] " +
+                                  (p.size === s
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border bg-muted/50")
+                                }
+                                onClick={() => {
+                                  const key = `${p.id}|${p.color ?? ""}|${p.size ?? ""}`;
+                                  updateCartItem(key, { size: s });
+                                }}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            className="text-destructive text-xs"
+                            onClick={async () => {
+                              const line = p as {
+                                id?: string;
+                                productId?: string;
+                                variantId?: string;
+                                source?: string;
+                                color?: string;
+                                size?: string;
+                              };
+                              const isServer =
+                                isLoggedIn &&
+                                (line.source === "server" || Boolean(line.variantId));
+                              if (isServer && line.variantId) {
+                                const res = await removeCartItemAction(line.variantId);
+                                if (!res.ok) {
+                                  console.error("[drawer remove]", res.error);
+                                  return;
+                                }
+                                window.dispatchEvent(new Event("pm:cart-changed"));
+                                  toast.success("از سبد حذف شد");
+                              } else {
+                                const pid = line.productId || line.id || (p as { id?: string }).id;
+                                if (pid) removeFromCart(pid, { color: p.color, size: p.size });
+                              }
+                            }}
+                          >
+                            حذف
+                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="border-border h-7 w-7 rounded-md border text-sm"
+                              onClick={async () => {
+                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string };
+                                const q = (p.quantity ?? 1) - 1;
+                                if (isLoggedIn && (line.source === "server" || line.variantId) && line.variantId) {
+                                  if (q < 1) {
+                                    await removeCartItemAction(line.variantId);
+                                    window.dispatchEvent(new Event("pm:cart-changed"));
+                                  } else {
+                                    await updateCartQuantityAction(line.variantId, q);
+                                    window.dispatchEvent(new Event("pm:cart-changed"));
+                                  }
+                                } else {
+                                  const pid = line.productId || line.id || (p as { id?: string }).id;
+                                  const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
+                                  if (q < 1) removeFromCart(pid!);
+                                  else setCartQuantity(key, q);
+                                }
+                              }}
+                            >
+                              −
+                            </button>
+                            <span className="min-w-[1.5rem] text-center text-sm">
+                              {p.quantity ?? 1}
+                            </span>
+                            <button
+                              type="button"
+                              className="border-border h-7 w-7 rounded-md border text-sm"
+                              onClick={async () => {
+                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string };
+                                const q = (p.quantity ?? 1) + 1;
+                                if (isLoggedIn && (line.source === "server" || line.variantId) && line.variantId) {
+                                  await updateCartQuantityAction(line.variantId, q);
+                                  window.dispatchEvent(new Event("pm:cart-changed"));
+                                } else {
+                                  const pid = line.productId || line.id || (p as { id?: string }).id;
+                                  const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
+                                  setCartQuantity(key, q);
+                                }
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     {tab === "wishlist" && (
-                      <button type="button" className="text-destructive text-xs" onClick={() => toggleWishlist(p as never)}>
+                      <button
+                        type="button"
+                        className="text-destructive mt-1 text-xs"
+                        onClick={() => toggleWishlist(p)}
+                      >
                         حذف
                       </button>
                     )}
                     {tab === "compare" && (
-                      <button type="button" className="text-destructive text-xs" onClick={() => toggleCompare(p as never)}>
+                      <button
+                        type="button"
+                        className="text-destructive mt-1 text-xs"
+                        onClick={() => toggleCompare(p)}
+                      >
                         حذف از مقایسه
                       </button>
                     )}
                   </div>
-                </li>
+                </div>
               ))}
             </ul>
           )}
         </div>
 
-        <DrawerFooter>
+        {tab === "cart" && (isLoggedIn ? unifiedLines.length > 0 : cart.length > 0) ? (
+          <div className="border-border flex items-center justify-between border-t px-4 py-3">
+            <span className="text-sm font-medium">جمع کل</span>
+            <span className="text-sm font-bold">
+              {cartTotal.toLocaleString("fa-IR")} تومان
+            </span>
+          </div>
+        ) : null}
+
+        <DrawerFooter className="shrink-0 space-y-2 border-t border-border/40">
+          {tab === "cart" && (isLoggedIn ? unifiedLines.length > 0 : cart.length > 0) ? (
+            <Link
+              href="/checkout"
+              onClick={() => onOpenChange(false)}
+              className="bg-primary text-primary-foreground flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
+            >
+              تسویه حساب
+            </Link>
+          ) : null}
           <Link
             href="/dashboard"
             onClick={() => onOpenChange(false)}
-            className="bg-primary text-primary-foreground flex h-10 w-full items-center justify-center rounded-xl text-sm font-medium"
+            className="border-border text-foreground hover:bg-muted flex h-10 w-full items-center justify-center rounded-xl border text-sm font-medium"
           >
             مشاهده در پنل خریدار
           </Link>

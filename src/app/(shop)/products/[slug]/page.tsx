@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ProductService } from "@/services/product.service";
 import { toPersianDigits } from "@/lib/numbers";
 import { Badge } from "@/components/ui/badge";
+import { ProductBuyBox } from "@/components/product/product-buy-box";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -50,15 +51,64 @@ export default async function ProductDetailPage({ params }: Props) {
       ? Math.min(...activeVariants.map((v) => Number(v.price)))
       : null;
   const sizes = [
-    ...new Set(activeVariants.map((v) => v.size).filter(Boolean)),
-  ] as string[];
+    ...new Set(
+      activeVariants
+        .map((v) => {
+          const s = (v as { size?: string | { name?: string | null } | null }).size;
+          if (typeof s === "string" && s) return s;
+          if (s && typeof s === "object" && s.name) return s.name;
+          return null;
+        })
+        .filter((s): s is string => Boolean(s))
+    ),
+  ];
   const colors = [
     ...new Map(
       activeVariants
-        .filter((v) => v.color_name)
-        .map((v) => [v.color_name, v.color_hex])
+        .map((v) => {
+          const c = (v as {
+            color_name?: string | null;
+            color_hex?: string | null;
+            color?: string | { name?: string | null; hex_code?: string | null; hex?: string | null } | null;
+          });
+          if (c.color_name) return [c.color_name, c.color_hex ?? null] as const;
+          if (typeof c.color === "string" && c.color) return [c.color, null] as const;
+          if (c.color && typeof c.color === "object") {
+            const name = c.color.name ?? c.color.hex_code ?? c.color.hex ?? null;
+            const hex = c.color.hex_code ?? c.color.hex ?? null;
+            if (name) return [name, hex] as const;
+          }
+          return null;
+        })
+        .filter((x): x is readonly [string, string | null] => Boolean(x))
+        .map((x) => [x[0], x[1]] as [string, string | null])
     ).entries(),
   ];
+
+
+  const variantOptions = activeVariants.map((v) => {
+    const s = (v as { size?: string | { name?: string | null } | null }).size;
+    const sizeName =
+      typeof s === "string" ? s : s && typeof s === "object" ? s.name ?? null : null;
+    const c = (v as {
+      color?: string | { name?: string | null; hex_code?: string | null; hex?: string | null } | null;
+      color_hex?: string | null;
+      color_name?: string | null;
+    });
+    let colorVal: string | null = c.color_hex ?? c.color_name ?? null;
+    if (!colorVal && c.color && typeof c.color === "object") {
+      colorVal = c.color.hex_code ?? c.color.hex ?? c.color.name ?? null;
+    } else if (typeof c.color === "string") {
+      colorVal = c.color;
+    }
+    return {
+      id: (v as { id: string }).id,
+      size: sizeName,
+      color: colorVal,
+      price: Number((v as { price?: number }).price ?? 0),
+      stock: Number((v as { stock_quantity?: number }).stock_quantity ?? 0),
+    };
+  });
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
@@ -105,47 +155,20 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {minPrice != null && (
-            <p className="text-2xl font-bold">{formatPrice(minPrice)}</p>
-          )}
-
           {product.short_description && (
             <p className="text-muted-foreground leading-7">
               {product.short_description}
             </p>
           )}
 
-          {sizes.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">سایز</p>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((size) => (
-                  <span
-                    key={size}
-                    className="rounded-lg border px-3 py-1.5 text-sm"
-                  >
-                    {size}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <ProductBuyBox
+            productId={product.id}
+            title={product.name}
+            image={primaryImage?.url}
+            href={`/products/${product.slug}`}
+            variants={variantOptions}
+          />
 
-          {colors.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">رنگ</p>
-              <div className="flex flex-wrap gap-2">
-                {colors.map(([name, hex]) => (
-                  <span
-                    key={name}
-                    className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
-                  >
-                    {hex && (
-                      <span
-                        className="size-4 rounded-full border"
-                        style={{ backgroundColor: hex }}
-                      />
-                    )}
                     {name}
                   </span>
                 ))}

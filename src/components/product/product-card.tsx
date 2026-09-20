@@ -37,7 +37,14 @@ export function ProductCard({ product }: Props) {
   const sizes = [
     ...new Set(
       variants
-        .map((v) => (v as { size?: string | null }).size)
+        .map((v) => {
+          const x = v as {
+            size?: string | { name?: string | null } | null;
+          };
+          if (typeof x.size === "string" && x.size) return x.size;
+          if (x.size && typeof x.size === "object" && x.size.name) return x.size.name;
+          return null;
+        })
         .filter((s): s is string => Boolean(s))
     ),
   ];
@@ -45,7 +52,19 @@ export function ProductCard({ product }: Props) {
   const colors = [
     ...new Set(
       variants
-        .map((v) => (v as { color_hex?: string | null }).color_hex)
+        .map((v) => {
+          const x = v as {
+            color_hex?: string | null;
+            color?: string | { name?: string | null; hex?: string | null; hex_code?: string | null } | null;
+            color_name?: string | null;
+          };
+          if (x.color_hex) return x.color_hex;
+          if (typeof x.color === "string" && x.color) return x.color;
+          if (x.color && typeof x.color === "object") {
+            return x.color.hex_code || x.color.hex || x.color.name || null;
+          }
+          return x.color_name || null;
+        })
         .filter((c): c is string => Boolean(c))
     ),
   ];
@@ -86,9 +105,36 @@ export function ProductCard({ product }: Props) {
       (product as { on_sale?: boolean }).on_sale
   );
 
+  const variantOptions = variants.map((v) => {
+    const x = v as {
+      id: string;
+      price: number;
+      size?: string | { name?: string | null } | null;
+      color?: string | { name?: string | null; hex_code?: string | null; hex?: string | null } | null;
+    };
+    const sizeName =
+      typeof x.size === "string"
+        ? x.size
+        : x.size && typeof x.size === "object"
+          ? x.size.name ?? null
+          : null;
+    let colorVal: string | null = null;
+    if (typeof x.color === "string") colorVal = x.color;
+    else if (x.color && typeof x.color === "object") {
+      colorVal = x.color.hex_code || x.color.hex || x.color.name || null;
+    }
+    return {
+      id: x.id,
+      price: Number(x.price),
+      size: sizeName,
+      color: colorVal,
+    };
+  });
+
   return (
-    <Link href={`/products/${product.slug}`} className="block w-full max-w-sm">
-      <ProductCardUI
+    <ProductCardUI
+        productId={product.id}
+        href={`/products/${product.slug}`}
 
         category={categoryName}
         categoryHref={categoryHref}
@@ -98,26 +144,16 @@ export function ProductCard({ product }: Props) {
                 name={product.name}
         price={price}
         originalPrice={originalPrice}
-        rating={4.8}
-        reviewCount={0}
-        images={
-          images.length
-            ? images
-            : [
-                "https://cdn.21st.dev/assets/mirror/ad/ade63a3c4df44b7c8e7277a749d732494e317e8289fd2ed72d57de841ff63896.jpg",
-              ]
-        }
-        colors={
-          colors.length
-            ? colors
-            : ["#1e293b", "#a855f7", "#0ea5e9", "#84cc16"]
-        }
-        sizes={sizes.length ? sizes : ["S", "M", "L", "XL"]}
+        rating={typeof product.rating === 'number' ? product.rating : 0}
+        reviewCount={typeof product.review_count === 'number' ? product.review_count : 0}
+        images={images}
+        colors={colors}
+        sizes={sizes}
+        variantOptions={variantOptions}
         isNew={Boolean(product.is_new)}
         isBestSeller={Boolean(product.is_bestseller)}
         discount={discount}
-        freeShipping
+        freeShipping={Boolean((product as { free_shipping?: boolean }).free_shipping)}
       />
-    </Link>
   );
 }

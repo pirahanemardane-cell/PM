@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthForm } from "@/components/ui/premium-auth";
+import { mergeGuestCartToServer } from "@/lib/merge-guest-cart";
 
 export default function LoginPage() {
   return (
@@ -8,7 +9,8 @@ export default function LoginPage() {
       <div className="border-border bg-card w-full max-w-md rounded-2xl border shadow-sm">
         <AuthForm
           initialMode="login"
-          onSuccess={() => {
+          onSuccess={async () => {
+            await mergeGuestCartToServer();
             window.location.href = "/dashboard";
           }}
         />

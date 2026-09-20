@@ -75,6 +75,21 @@ export function AppBreadcrumb({
 }) {
   const pathname = usePathname() || "/";
 
+  // داشبورد / سبد / چک‌اوت — بدون breadcrumb
+  const path = decodeURIComponent(pathname);
+  if (
+    path.startsWith("/dashboard") ||
+    path.includes("dashboard") ||
+    path.startsWith("/داشبورد") ||
+    path.includes("داشبورد") ||
+    path === "/cart" ||
+    path.startsWith("/سبد") ||
+    path.startsWith("/checkout") ||
+    path.startsWith("/چک")
+  ) {
+    return null;
+  }
+
   if (!items?.length) {
     if (pathname === "/" || pathname === "") return null;
     if (pathname.startsWith("/admin")) return null;
@@ -113,7 +128,10 @@ export function AppBreadcrumb({
               {last || !c.href ? (
                 <span className="text-foreground font-medium">{c.label}</span>
               ) : (
-                <Link href={c.href} className="text-muted-foreground hover:text-foreground">
+                <Link
+                  href={c.href}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   {c.label}
                 </Link>
               )}
