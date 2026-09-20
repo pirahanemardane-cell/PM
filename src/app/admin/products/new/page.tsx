@@ -40,6 +40,9 @@ export default function NewProductPage() {
   const [colorName, setColorName] = useState("");
   const [sku, setSku] = useState("");
 
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+
   useEffect(() => {
     void (async () => {
       const [c, b, t] = await Promise.all([
@@ -95,6 +98,8 @@ export default function NewProductPage() {
       color_name: colorName || undefined,
       sku: sku || undefined,
       tag_ids: selectedTags,
+      image_url: imageUrl || undefined,
+      image_alt: imageAlt || undefined,
     });
     setBusy(false);
     if (!res.ok) {
@@ -236,6 +241,40 @@ export default function NewProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">تصویر اصلی</h2>
+          <p className="text-muted-foreground text-xs">
+            فقط ادمین — آدرس کامل تصویر (مثلاً از CDN یا Storage)
+          </p>
+          <label className="block space-y-1 text-sm">
+            <span>آدرس تصویر</span>
+            <input
+              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              dir="ltr"
+              placeholder="https://..."
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>متن جایگزین (alt)</span>
+            <input
+              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              value={imageAlt}
+              onChange={(e) => setImageAlt(e.target.value)}
+              placeholder="نام محصول"
+            />
+          </label>
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={imageAlt || "پیش‌نمایش"}
+              className="border-border h-32 w-32 rounded-xl border object-cover"
+            />
+          ) : null}
+        </section>
+
+        <section className="border-border space-y-3 rounded-xl border p-4">
           <h2 className="font-semibold">موجودی و قیمت (واریانت اول)</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1 text-sm">
@@ -301,7 +340,7 @@ export default function NewProductPage() {
           <h2 className="font-semibold">برچسب‌ها</h2>
           {!tags.length ? (
             <p className="text-muted-foreground text-sm">
-              هنوز برچسبی نیست — از منوی «برچسب محصولات» یکی بسازید.
+              هنوز برچسبی نیست — از منوی برچسب محصولات بسازید.
             </p>
           ) : (
             <div className="flex flex-wrap gap-3">

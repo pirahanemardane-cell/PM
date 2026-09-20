@@ -84,6 +84,9 @@ export type CreateProductInput = {
   color_hex?: string;
   sku?: string;
   tag_ids?: string[];
+  /** آدرس تصویر اصلی (فقط ادمین) */
+  image_url?: string;
+  image_alt?: string;
 };
 
 export async function adminCreateProductAction(input: CreateProductInput) {
@@ -142,6 +145,19 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       }));
       const { error: tErr } = await gate.supabase.from("product_tag_map").insert(rows);
       if (tErr) console.error("[product_tag_map]", tErr);
+    }
+
+
+    const imageUrl = (input.image_url || "").trim();
+    if (imageUrl) {
+      const { error: imgErr } = await gate.supabase.from("product_images").insert({
+        product_id: product.id,
+        url: imageUrl,
+        alt_text: (input.image_alt || name).trim() || null,
+        is_primary: true,
+        sort_order: 0,
+      });
+      if (imgErr) console.error("[product_images]", imgErr);
     }
 
     return { ok: true as const, id: product.id as string };
