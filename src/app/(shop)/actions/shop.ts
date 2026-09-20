@@ -130,15 +130,8 @@ export async function addToCartAction(variantId: string, quantity = 1) {
     if (!variantId) {
       return { ok: false as const, error: "variant_required" };
     }
-    const user = await requireUser();
-    if (!user) {
-      return { ok: false as const, error: "login_required" };
-    }
     const cartRepo = new CartRepository();
-    const cartId = await cartRepo.getOrCreateCart({
-      userId: user.id,
-      sessionId: null,
-    });
+    const cartId = await resolveCartId(); // user یا session cookie
     await cartRepo.addItem(cartId, variantId, quantity);
     return { ok: true as const };
   } catch (e) {
