@@ -48,6 +48,7 @@ export function SiteFooter() {
       ]}
       navLinks={[
         { label: "محصولات", href: "/products" },
+        { label: "بلاگ", href: "/blog" },
         { label: "راهنمای سایز", href: "/size-guide" },
         { label: "ارسال", href: "/shipping" },
         { label: "مرجوعی", href: "/returns" },

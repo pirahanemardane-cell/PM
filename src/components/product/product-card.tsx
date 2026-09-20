@@ -23,9 +23,14 @@ export function ProductCard({ product }: Props) {
   const price = prices.length ? Math.min(...prices) : 0;
 
   const compares = variants
-    .map((v) =>
-      Number((v as { compare_at_price?: number | null }).compare_at_price)
-    )
+    .map((v) => {
+      const x = v as {
+        original_price?: number | null;
+        compare_at_price?: number | null;
+      };
+      const n = Number(x.original_price ?? x.compare_at_price);
+      return n;
+    })
     .filter((n) => !Number.isNaN(n) && n > 0);
   const originalPrice = compares.length ? Math.max(...compares) : price;
 

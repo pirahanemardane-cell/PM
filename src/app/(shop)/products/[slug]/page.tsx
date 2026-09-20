@@ -190,6 +190,9 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+      <div className="mt-12">
+        <ProductReviews productId={product.id} />
+      </div>
     </main>
   );
 }
