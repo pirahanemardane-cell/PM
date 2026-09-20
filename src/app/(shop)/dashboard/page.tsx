@@ -1,5 +1,7 @@
 "use client";
 
+import { LumaSpin } from "@/components/ui/luma-spin";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import Link from "next/link";
@@ -9,7 +11,6 @@ import { useShopStore } from "@/lib/shop-store"
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
 import {
-import { LumaSpin } from "@/components/ui/luma-spin";
   getCartAction,
   removeCartItemAction,
   updateCartQuantityAction,
