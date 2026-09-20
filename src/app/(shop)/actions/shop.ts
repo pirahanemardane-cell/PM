@@ -315,14 +315,14 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     // افزایش اتمی used_count
     if (discountCode) {
       try {
-        const { error: incErr } = await supabase.rpc("increment_discount_use", {
+        const supabaseInc = await createClient();
+        const { error: incErr } = await supabaseInc.rpc("increment_discount_use", {
           p_code: discountCode,
         });
         if (incErr) console.error("[discount used_count rpc]", incErr);
       } catch (e) {
         console.error("[discount used_count]", e);
       }
-    }
     }
 
     await cartRepo.clearCart(cartId);
