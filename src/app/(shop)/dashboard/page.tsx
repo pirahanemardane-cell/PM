@@ -30,6 +30,17 @@ import {
   toggleWishlistAction,
   type CartLineDTO
 } from "@/app/(shop)/actions/shop";
+import {
+  listMyTicketsAction,
+  createTicketAction,
+  listTicketMessagesAction,
+  replyTicketAction,
+} from "@/app/(shop)/actions/support";
+import {
+  listMyReturnsAction,
+  createReturnAction,
+} from "@/app/(shop)/actions/returns";
+import { ComposerInput } from "@/components/ui/composer-input";
 
 const TABS = [
   { id: "shop", label: "فروشگاه" },
@@ -143,7 +154,25 @@ export default function BuyerDashboardPage() {
   const toggleCompare = useShopStore((s) => s.toggleCompare);
 
 
-  useEffect(() => {
+  
+  const [ticketItems, setTicketItems] = useState<
+    { id: string; subject: string; status: string; created_at: string }[]
+  >([]);
+  const [ticketLoading, setTicketLoading] = useState(false);
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketBody, setTicketBody] = useState("");
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [ticketMsgs, setTicketMsgs] = useState<
+    { id: string; body: string; is_staff: boolean; created_at: string }[]
+  >([]);
+  const [returnItems, setReturnItems] = useState<
+    { id: string; order_id: string; reason: string; status: string; created_at: string }[]
+  >([]);
+  const [returnLoading, setReturnLoading] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState("");
+  const [returnReason, setReturnReason] = useState("");
+
+useEffect(() => {
     let cancelled = false;
     (async () => {
       const res = await getMyProfileAction();
@@ -342,6 +371,45 @@ export default function BuyerDashboardPage() {
       </div>
     );
   }
+
+
+  useEffect(() => {
+    if (tab !== "tickets") return;
+    let cancelled = false;
+    setTicketLoading(true);
+    void listMyTicketsAction().then((res) => {
+      if (cancelled) return;
+      setTicketLoading(false);
+      if (res.ok) setTicketItems(res.items as typeof ticketItems);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "returns") return;
+    let cancelled = false;
+    setReturnLoading(true);
+    void listMyReturnsAction().then((res) => {
+      if (cancelled) return;
+      setReturnLoading(false);
+      if (res.ok) setReturnItems(res.items as typeof returnItems);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
+  useEffect(() => {
+    if (!activeTicketId) {
+      setTicketMsgs([]);
+      return;
+    }
+    void listTicketMessagesAction(activeTicketId).then((res) => {
+      if (res.ok) setTicketMsgs(res.items as typeof ticketMsgs);
+    });
+  }, [activeTicketId]);
 
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
@@ -925,10 +993,170 @@ export default function BuyerDashboardPage() {
                 رفتن به تسویه حساب
               </Link>
             </div>
-          ) : tab === "tickets" || tab === "returns" ? (
-            <p className="text-muted-foreground text-sm">
-              این بخش در فاز بعدی فعال می‌شود.
-            </p>
+          ) : tab === "tickets" ? (
+            <div className="space-y-6" dir="rtl">
+              <div className="border-border space-y-3 rounded-xl border p-4">
+                <h3 className="font-semibold">تیکت جدید</h3>
+                <input
+                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+                  placeholder="موضوع"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                />
+                <ComposerInput
+                  onSend={async (body) => {
+                    const res = await createTicketAction({
+                      subject: ticketSubject || "پشتیبانی",
+                      body,
+                    });
+                    if (!res.ok) {
+                      toast.error(
+                        res.error === "login_required"
+                          ? "وارد شوید"
+                          : res.error || "خطا",
+                      );
+                      return;
+                    }
+                    toast.success("تیکت ثبت شد");
+                    setTicketSubject("");
+                    const list = await listMyTicketsAction();
+                    if (list.ok) setTicketItems(list.items as typeof ticketItems);
+                  }}
+                  placeholder="پیام شما (بدون لینک و تصویر)…"
+                  sendLabel="ارسال تیکت"
+                />
+              </div>
+              {ticketLoading ? (
+                <div className="flex justify-center py-10">
+                  <LumaSpin />
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {ticketItems.map((tk) => (
+                    <li
+                      key={tk.id}
+                      className="border-border cursor-pointer rounded-xl border p-3 text-sm"
+                      onClick={() => setActiveTicketId(tk.id)}
+                    >
+                      <div className="flex justify-between gap-2">
+                        <span className="font-medium">{tk.subject}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {tk.status}
+                        </span>
+                      </div>
+                      <time className="text-muted-foreground text-xs">
+                        {new Date(tk.created_at).toLocaleDateString("fa-IR")}
+                      </time>
+                      {activeTicketId === tk.id ? (
+                        <div className="mt-3 space-y-2 border-t pt-3">
+                          {ticketMsgs.map((m) => (
+                            <p
+                              key={m.id}
+                              className={
+                                m.is_staff
+                                  ? "bg-muted rounded-lg p-2 text-xs"
+                                  : "text-xs"
+                              }
+                            >
+                              {m.is_staff ? "پشتیبانی: " : "شما: "}
+                              {m.body}
+                            </p>
+                          ))}
+                          <ComposerInput
+                            onSend={async (body) => {
+                              const res = await replyTicketAction(tk.id, body);
+                              if (!res.ok) {
+                                toast.error("خطا در ارسال");
+                                return;
+                              }
+                              const msgs = await listTicketMessagesAction(tk.id);
+                              if (msgs.ok)
+                                setTicketMsgs(msgs.items as typeof ticketMsgs);
+                            }}
+                            placeholder="پاسخ…"
+                            sendLabel="ارسال"
+                          />
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                  {!ticketItems.length ? (
+                    <p className="text-muted-foreground text-sm">تیکتی نیست</p>
+                  ) : null}
+                </ul>
+              )}
+            </div>
+          ) : tab === "returns" ? (
+            <div className="space-y-6" dir="rtl">
+              <div className="border-border space-y-3 rounded-xl border p-4">
+                <h3 className="font-semibold">درخواست مرجوعی</h3>
+                <input
+                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm font-mono"
+                  placeholder="شناسه سفارش (UUID)"
+                  value={returnOrderId}
+                  onChange={(e) => setReturnOrderId(e.target.value)}
+                  dir="ltr"
+                />
+                <textarea
+                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+                  rows={3}
+                  placeholder="دلیل مرجوعی (بدون لینک)"
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm"
+                  onClick={async () => {
+                    const res = await createReturnAction({
+                      orderId: returnOrderId,
+                      reason: returnReason,
+                    });
+                    if (!res.ok) {
+                      const map: Record<string, string> = {
+                        login_required: "وارد شوید",
+                        order_not_found: "سفارش یافت نشد",
+                        order_required: "شناسه سفارش لازم است",
+                        reason_short: "دلیل کوتاه است",
+                      };
+                      toast.error(map[res.error] || res.error || "خطا");
+                      return;
+                    }
+                    toast.success("درخواست ثبت شد");
+                    setReturnOrderId("");
+                    setReturnReason("");
+                    const list = await listMyReturnsAction();
+                    if (list.ok) setReturnItems(list.items as typeof returnItems);
+                  }}
+                >
+                  ثبت درخواست
+                </button>
+              </div>
+              {returnLoading ? (
+                <div className="flex justify-center py-10">
+                  <LumaSpin />
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {returnItems.map((r) => (
+                    <li
+                      key={r.id}
+                      className="border-border rounded-xl border p-3 text-sm"
+                    >
+                      <p className="font-mono text-xs">{r.order_id}</p>
+                      <p className="text-muted-foreground mt-1">{r.reason}</p>
+                      <p className="mt-1 text-xs">
+                        {r.status} ·{" "}
+                        {new Date(r.created_at).toLocaleDateString("fa-IR")}
+                      </p>
+                    </li>
+                  ))}
+                  {!returnItems.length ? (
+                    <p className="text-muted-foreground text-sm">درخواستی نیست</p>
+                  ) : null}
+                </ul>
+              )}
+            </div>
           ) : tab === "cart" ? (
             cartLoading ? (
               <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
