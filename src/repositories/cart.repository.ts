@@ -109,8 +109,9 @@ export class CartRepository extends BaseRepository {
           id,
           price,
           product_id,
-          size:sizes(name),
-          color:colors(name, hex_code),
+          size,
+          color_name,
+          color_hex,
           products(id, name, slug, product_images(url, is_primary, sort_order))
         )
       `
