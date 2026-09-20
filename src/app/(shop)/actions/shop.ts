@@ -312,24 +312,17 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       // total = subtotal - discountAmount
     });
 
-    // افزایش used_count
+    // افزایش اتمی used_count
     if (discountCode) {
       try {
-        const supabase = await createClient();
-        const { data: d } = await supabase
-          .from("discounts")
-          .select("id, used_count")
-          .ilike("code", discountCode)
-          .maybeSingle();
-        if (d?.id) {
-          await supabase
-            .from("discounts")
-            .update({ used_count: Number(d.used_count ?? 0) + 1 })
-            .eq("id", d.id);
-        }
+        const { error: incErr } = await supabase.rpc("increment_discount_use", {
+          p_code: discountCode,
+        });
+        if (incErr) console.error("[discount used_count rpc]", incErr);
       } catch (e) {
         console.error("[discount used_count]", e);
       }
+    }
     }
 
     await cartRepo.clearCart(cartId);
