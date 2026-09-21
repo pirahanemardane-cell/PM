@@ -33,3 +33,14 @@ export function isValidIranianPhone(input: string): boolean {
   const phone = normalizePhone(input);
   return /^09\d{9}$/.test(phone);
 }
+
+/** Alias for checkout & forms — same as normalizePhone, null if invalid */
+export function normalizeIranMobile(input: string): string | null {
+  const phone = normalizePhone(input);
+  return /^09\d{9}$/.test(phone) ? phone : null;
+}
+
+export function isValidIranMobile(input: string): boolean {
+  return normalizeIranMobile(input) !== null;
+}
+
