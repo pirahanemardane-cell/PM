@@ -15,10 +15,18 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center"
+      dir="rtl"
+    >
       <h2 className="text-2xl font-bold">خطایی رخ داد</h2>
       <p className="text-muted-foreground">متأسفانه مشکلی پیش آمده است.</p>
-      <Button onClick={() => reset()}>تلاش مجدد</Button>
+      {process.env.NODE_ENV === "development" ? (
+        <p className="text-destructive max-w-lg truncate text-xs">{error.message}</p>
+      ) : null}
+      <Button type="button" onClick={() => reset()}>
+        تلاش مجدد
+      </Button>
     </div>
   );
 }
