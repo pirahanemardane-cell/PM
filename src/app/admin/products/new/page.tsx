@@ -243,12 +243,12 @@ export default function NewProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-                    <h2 className="font-semibold">تصویر اصلی</h2>
+          <h2 className="font-semibold">تصویر اصلی</h2>
           <p className="text-muted-foreground text-xs">
             آپلود مستقیم — تبدیل به WebP، عرض حداکثر ۱۲۰۰، واترمارک بالا-راست
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
               {uploadingImage ? "در حال آپلود…" : "انتخاب فایل تصویر"}
               <input
                 type="file"
@@ -321,25 +321,28 @@ export default function NewProductPage() {
               className="mt-2 max-h-48 rounded-md border object-contain"
             />
           ) : null}
-            <div className="flex flex-wrap gap-3">
-              {tags.map((tg) => (
-                <label key={tg.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedTags.includes(tg.id)}
-                    onChange={(e) => {
-                      setSelectedTags((prev) =>
-                        e.target.checked
-                          ? [...prev, tg.id]
-                          : prev.filter((id) => id !== tg.id),
-                      );
-                    }}
-                  />
-                  {tg.name}
-                </label>
-              ))}
-            </div>
-          )}
+        </section>
+
+        <section className="border-border space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold">برچسب‌ها</h2>
+          <div className="flex flex-wrap gap-3">
+            {tags.map((tg) => (
+              <label key={tg.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(tg.id)}
+                  onChange={(e) => {
+                    setSelectedTags((prev) =>
+                      e.target.checked
+                        ? [...prev, tg.id]
+                        : prev.filter((id) => id !== tg.id),
+                    );
+                  }}
+                />
+                {tg.name}
+              </label>
+            ))}
+          </div>
         </section>
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
