@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { signInAction, signUpAction, resetPasswordAction } from "@/app/(shop)/actions/auth";
+import { signInAction, signUpAction, resetPasswordAction, requestOtpAction, verifyOtpAction } from "@/app/(shop)/actions/auth";
 import { isValidIranMobile } from "@/lib/numbers";
 import {
   Mail,
@@ -119,23 +119,57 @@ export function AuthForm({
     setSuccessMessage("");
 
     try {
-      // ——— ورود با OTP ———
+      // ——— ورود با OTP (ملی‌پیامک واقعی) ———
       if (authMode === "login" && loginMethod === "otp") {
         if (otpStep === "phone") {
           if (!formData.phone.trim() || !isValidIranPhone(formData.phone)) {
             setErrors({ phone: "شماره موبایل معتبر وارد کنید (مثال: ۰۹۱۲…)" });
+            setIsLoading(false);
+            return;
+          }
+          const res = await requestOtpAction(formData.phone);
+          if (!res.ok) {
+            const map: Record<string, string> = {
+              invalid_phone: "شماره موبایل معتبر نیست",
+              rate_limit: "کمی صبر کنید و دوباره تلاش کنید",
+              send_failed: "ارسال پیامک ناموفق بود",
+              config: "پیکربندی پیامک ناقص است",
+              server: "خطای سرور",
+            };
+            setErrors({
+              phone: map[res.error] || "ارسال کد ناموفق بود",
+            });
+            setIsLoading(false);
             return;
           }
           setOtpStep("code");
-          setSuccessMessage("کد تأیید ارسال شد (برای تست هر ۶ رقم)");
+          setSuccessMessage("کد تأیید به موبایل شما ارسال شد");
+          setIsLoading(false);
           return;
         }
         if (!/^\d{6}$/.test(formData.otpCode)) {
           setErrors({ otpCode: "کد ۶ رقمی را وارد کنید" });
+          setIsLoading(false);
           return;
         }
-        setSuccessMessage("ورود با رمز یکبارمصرف موفق بود");
+        const ver = await verifyOtpAction(formData.phone, formData.otpCode);
+        if (!ver.ok) {
+          const map: Record<string, string> = {
+            invalid_phone: "شماره نامعتبر است",
+            invalid_code: "کد نادرست است",
+            expired: "کد منقضی شده؛ دوباره درخواست کنید",
+            too_many_attempts: "تلاش بیش از حد؛ کمی بعد دوباره",
+            server: "خطای سرور در ورود",
+          };
+          setErrors({
+            otpCode: map[(ver as { error: string }).error] || "تأیید ناموفق",
+          });
+          setIsLoading(false);
+          return;
+        }
+        setSuccessMessage("ورود موفق");
         onSuccess?.({ phone: formData.phone });
+        setIsLoading(false);
         return;
       }
 
@@ -210,7 +244,7 @@ export function AuthForm({
             return;
           }
           setRegistrationStep("verification");
-          setSuccessMessage("کد تأیید به موبایل ارسال شد (هر ۶ رقم)");
+          setSuccessMessage("کد تأیید ارسال شد — در نسخه بعدی به OTP واقعی وصل می‌شود");
           return;
         }
 
