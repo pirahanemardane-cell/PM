@@ -41,6 +41,7 @@ import {
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
 import { ComposerInput } from "@/components/ui/composer-input";
+import { normalizeIranMobile } from "@/lib/numbers";
 
 const TABS = [
   { id: "shop", label: "فروشگاه" },
@@ -594,7 +595,7 @@ useEffect(() => {
                   setProfileMsg(null);
                   const res = await updateMyProfileAction({
                     full_name: profileForm.full_name,
-                    phone: profileForm.phone,
+                    phone: normalizeIranMobile(profileForm.phone) || profileForm.phone.trim(),
                   });
                   setProfileSaving(false);
                   if (res.ok) setProfileMsg("ذخیره شد.");
@@ -745,7 +746,7 @@ useEffect(() => {
                   const res = await createMyAddressAction({
                     title: addrForm.title || undefined,
                     full_name: addrForm.full_name,
-                    phone: addrForm.phone,
+                    phone: normalizeIranMobile(addrForm.phone) || addrForm.phone.trim(),
                     province: addrForm.province || undefined,
                     city: addrForm.city,
                     address_line: addrForm.address_line,

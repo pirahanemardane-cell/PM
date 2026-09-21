@@ -15,6 +15,7 @@ import {
 import { adminListProductTagsAction } from "@/app/admin/actions/tags";
 import { Toolbar } from "@/components/ui/toolbar";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { parseLocaleNumber } from "@/lib/numbers";
 
 type Opt = { id: string; name: string };
 
@@ -172,9 +173,9 @@ export default function EditProductPage() {
       is_featured: featured,
       is_new: isNew,
       is_bestseller: bestseller,
-      price: Number(price),
-      original_price: originalPrice ? Number(originalPrice) : null,
-      stock_quantity: Number(stock) || 0,
+      price: parseLocaleNumber(price) ?? 0,
+      original_price: originalPrice ? parseLocaleNumber(originalPrice) : null,
+      stock_quantity: parseLocaleNumber(stock) ?? 0,
       size: size || null,
       color_name: colorName || null,
       sku: sku || null,

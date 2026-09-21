@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { signInAction, signUpAction, resetPasswordAction } from "@/app/(shop)/actions/auth";
 import {
+import { isValidIranMobile, normalizeIranMobile, toEnglishDigits } from "@/lib/numbers";
   Mail,
   Lock,
   User,
@@ -60,8 +61,7 @@ interface FormErrors {
 }
 
 function isValidIranPhone(phone: string) {
-  const p = phone.replace(/[\s\-()]/g, "");
-  return /^(?:\+98|0)?9\d{9}$/.test(p);
+  return isValidIranMobile(phone);
 }
 
 function isValidEmail(email: string) {
