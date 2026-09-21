@@ -120,3 +120,46 @@ export async function adminDeleteProductImageAction(input: {
     return { ok: false as const, error: "delete_failed" };
   }
 }
+
+export type MediaListItem = {
+  id: string;
+  url: string;
+  alt_text: string | null;
+  is_primary: boolean | null;
+  sort_order: number | null;
+  product_id: string | null;
+  product_title: string | null;
+};
+
+export async function adminListProductImagesAction(limit = 60) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const { data, error } = await gate.supabase
+    .from("product_images")
+    .select(
+      "id, url, alt_text, is_primary, sort_order, product_id, products(name)",
+    )
+    .order("sort_order", { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 200));
+
+  if (error) {
+    console.error("[adminListProductImages]", error);
+    return { ok: false as const, error: "list_failed" };
+  }
+
+  const items: MediaListItem[] = (data ?? []).map((row: any) => ({
+    id: row.id,
+    url: row.url,
+    alt_text: row.alt_text ?? null,
+    is_primary: row.is_primary ?? null,
+    sort_order: row.sort_order ?? null,
+    product_id: row.product_id ?? null,
+    product_title:
+      row.products && typeof row.products === "object"
+        ? (row.products.name as string) ?? null
+        : null,
+  }));
+
+  return { ok: true as const, items };
+}
