@@ -6,7 +6,7 @@ import {
   processProductImageSizes,
   type ProductImageSizeName,
 } from "@/lib/process-product-image";
-import { r2PutObject, r2DeleteObject, getPublicUrl } from "@/lib/r2";
+import { r2PutObject, r2DeleteObject } from "@/lib/r2";
 
 const MAX_BYTES = 12 * 1024 * 1024; // 12MB
 
@@ -118,22 +118,5 @@ export async function adminDeleteProductImageAction(input: {
   } catch (e) {
     console.error("[adminDeleteProductImage]", e);
     return { ok: false as const, error: "delete_failed" };
-  }
-}
-
-/** ساخت URL سایز دیگر از روی URL/keyی large */
-export function productImageUrlForSize(
-  largeUrlOrKey: string,
-  size: ProductImageSizeName,
-): string {
-  const replaced = largeUrlOrKey.replace(
-    /-(thumb|small|medium|large)\.webp(\?.*)?$/,
-    `-${size}.webp`,
-  );
-  if (replaced.startsWith("http")) return replaced;
-  try {
-    return getPublicUrl(replaced);
-  } catch {
-    return replaced;
   }
 }
