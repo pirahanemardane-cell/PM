@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Footer } from "@/components/ui/modem-animated-footer";
 import { Logo } from "@/components/brand/logo";
 
@@ -30,21 +30,13 @@ export function SiteFooter() {
       watermarkName="PirahanMardane"
       brandDescription="فروشگاه تخصصی پیراهن مردانه — رسمی، اسپرت، کروات، پاپیون و اکسسوری"
       socialLinks={[
-        {
-          icon: <InstagramIcon className="h-6 w-6" />,
-          href: "https://instagram.com",
-          label: "اینستاگرام",
-        },
+        
         {
           icon: <Mail className="h-6 w-6" />,
           href: "mailto:info@pirahanmardane.ir",
           label: "ایمیل",
         },
-        {
-          icon: <Phone className="h-6 w-6" />,
-          href: "tel:+980000000000",
-          label: "تلفن",
-        },
+        
       ]}
       navLinks={[
         { label: "محصولات", href: "/products" },

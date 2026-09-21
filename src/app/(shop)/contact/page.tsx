@@ -23,17 +23,11 @@ export default function ContactPage() {
             info@pirahanmardane.ir
           </a>
         </li>
-        <li>
-          تلفن:{" "}
-          <a className="text-foreground underline" href="tel:+980000000000" dir="ltr">
-            ۰۲۱-۰۰۰۰۰۰۰۰
-          </a>
-        </li>
+        
         <li>ساعات پاسخگویی: شنبه تا پنجشنبه، ۹ تا ۱۸</li>
       </ul>
       <p className="text-muted-foreground text-xs">
-        شماره و آدرس دقیق پس از راه‌اندازی نهایی در تنظیمات فروشگاه به‌روز
-        می‌شود.
+        برای تماس سریع از ایمیل استفاده کنید. شماره تلفن پس از نهایی شدن در همین صفحه اعلام می‌شود.
       </p>
     </StaticPage>
   );
