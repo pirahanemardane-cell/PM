@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { applySecurityHeaders } from "@/lib/security/headers";
 
 const PERSIAN_ROUTES: Record<string, string> = {
   "/ورود": "/login",
@@ -39,10 +40,10 @@ export async function middleware(request: NextRequest) {
     sessionRes.cookies.getAll().forEach((c) => {
       rewrite.cookies.set(c.name, c.value);
     });
-    return rewrite;
+    return applySecurityHeaders(rewrite);
   }
 
-  return await updateSession(request);
+  return applySecurityHeaders(await updateSession(request));
 }
 
 export const config = {
