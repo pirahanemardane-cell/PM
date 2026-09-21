@@ -3,25 +3,16 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type RequireAdminOk = {
-  ok: true;
-  supabase: SupabaseClient;
-  userId: string;
-};
-
-export type RequireAdminFail = {
-  ok: false;
-  error: "login_required" | "forbidden";
-  supabase?: SupabaseClient;
-};
-
-export type RequireAdminResult = RequireAdminOk | RequireAdminFail;
+export type AdminGate =
+  | { ok: true; supabase: SupabaseClient; userId: string }
+  | { ok: false; error: "login_required" | "forbidden"; supabase?: SupabaseClient };
 
 /**
- * گیت واحد ادمین برای همه server actions پنل.
- * اگر ستون role خالی باشد (پروفایل ناقص)، فقط لاگین کافی است تا dev گیر نکند.
+ * تنها نقطهٔ ورود دسترسی CMS.
+ * نقش: profiles.role === "admin"
+ * staff بعداً می‌تواند با permission جدا گسترش یابد.
  */
-export async function requireAdmin(): Promise<RequireAdminResult> {
+export async function requireAdmin(): Promise<AdminGate> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,12 +24,12 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("role")
     .eq("id", user.id)
     .maybeSingle();
 
   const role = (profile as { role?: string } | null)?.role;
-  if (role && role !== "admin") {
+  if (role !== "admin") {
     return { ok: false, error: "forbidden", supabase };
   }
 

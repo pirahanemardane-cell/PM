@@ -9,7 +9,7 @@ import { OrderRepository } from "@/repositories/order.repository";
 import { cookies } from "next/headers";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 import { randomUUID } from "crypto";
-import { normalizeIranMobile, toEnglishDigits } from "@/lib/numbers";
+import { normalizePhone, toEnglishDigits } from "@/lib/numbers";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -302,7 +302,7 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     
     const nameOk = assertNoLinkOrImage(payload.name, "نام");
     if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
-    const phoneNorm = normalizeIranMobile(payload.phone || "");
+    const phoneNorm = normalizePhone(payload.phone || "");
     if (!phoneNorm) {
       return { ok: false as const, error: "شماره موبایل نامعتبر است" };
     }
@@ -460,7 +460,7 @@ export async function updateMyProfileAction(input: {
       if (!raw) {
         patch.phone = null;
       } else {
-        const phoneNorm = normalizeIranMobile(raw);
+        const phoneNorm = normalizePhone(raw);
         if (!phoneNorm) {
           return { ok: false as const, error: "شماره موبایل نامعتبر است" };
         }
@@ -516,7 +516,7 @@ export async function createMyAddressAction(input: AddressInput) {
     }
     const n1 = assertNoLinkOrImage(input.full_name, "نام");
     if (!n1.ok) return { ok: false as const, error: n1.error };
-    const phoneNormAddr = normalizeIranMobile(input.phone || "");
+    const phoneNormAddr = normalizePhone(input.phone || "");
     if (!phoneNormAddr) {
       return { ok: false as const, error: "شماره موبایل نامعتبر است" };
     }

@@ -359,23 +359,6 @@ useEffect(() => {
   }
 
 
-  if (!authChecked) {
-    return (
-      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
-        <LumaSpin />
-      </div>
-    );
-  }
-
-  if (!authOk) {
-    return (
-      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
-        <LumaSpin />
-      </div>
-    );
-  }
-
-
   useEffect(() => {
     if (tab !== "tickets") return;
     let cancelled = false;
@@ -428,6 +411,23 @@ useEffect(() => {
       if (res.ok) setTicketMsgs(res.items as typeof ticketMsgs);
     });
   }, [activeTicketId]);
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
+        <LumaSpin />
+      </div>
+    );
+  }
+
+  if (!authOk) {
+    return (
+      <div className="flex min-h-[40vh] w-full items-center justify-center" dir="rtl">
+        <LumaSpin />
+      </div>
+    );
+  }
+
 
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">

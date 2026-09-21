@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminCreateProductAction } from "@/app/admin/actions/products";
+import { adminUploadProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -42,6 +43,7 @@ export default function NewProductPage() {
 
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -241,27 +243,74 @@ export default function NewProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">تصویر اصلی</h2>
+                    <h2 className="font-semibold">تصویر اصلی</h2>
           <p className="text-muted-foreground text-xs">
-            فقط ادمین — آدرس کامل تصویر (مثلاً از CDN یا Storage)
+            آپلود مستقیم — تبدیل به WebP، عرض حداکثر ۱۲۰۰، واترمارک بالا-راست
           </p>
-          <label className="block space-y-1 text-sm">
-            <span>آدرس تصویر</span>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50">
+              {uploadingImage ? "در حال آپلود…" : "انتخاب فایل تصویر"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                disabled={uploadingImage || busy}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  setUploadingImage(true);
+                  setErr("");
+                  try {
+                    const fd = new FormData();
+                    fd.set("file", f);
+                    const res = await adminUploadProductImageAction(fd);
+                    if (!res.ok) {
+                      setErr(
+                        res.error === "too_large"
+                          ? "حجم فایل بیش از ۱۲ مگابایت است"
+                          : res.error === "not_image"
+                            ? "فقط فایل تصویری مجاز است"
+                            : "آپلود ناموفق بود",
+                      );
+                      return;
+                    }
+                    setImageUrl(res.url);
+                  } catch {
+                    setErr("آپلود ناموفق بود");
+                  } finally {
+                    setUploadingImage(false);
+                  }
+                }}
+              />
+            </label>
+            {imageUrl ? (
+              <button
+                type="button"
+                className="text-sm text-destructive underline"
+                onClick={() => setImageUrl("")}
+              >
+                حذف تصویر
+              </button>
+            ) : null}
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>آدرس تصویر (اختیاری / خودکار بعد از آپلود)</span>
             <input
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              dir="ltr"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              dir="ltr"
-              placeholder="https://..."
+              placeholder="https://media.pirahanmardane.ir/..."
             />
           </label>
-          <label className="block space-y-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm">
             <span>متن جایگزین (alt)</span>
             <input
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              className="rounded-md border bg-background px-3 py-2 text-sm"
               value={imageAlt}
               onChange={(e) => setImageAlt(e.target.value)}
-              placeholder="نام محصول"
+              placeholder="توضیح کوتاه تصویر"
             />
           </label>
           {imageUrl ? (
@@ -269,80 +318,9 @@ export default function NewProductPage() {
             <img
               src={imageUrl}
               alt={imageAlt || "پیش‌نمایش"}
-              className="border-border h-32 w-32 rounded-xl border object-cover"
+              className="mt-2 max-h-48 rounded-md border object-contain"
             />
           ) : null}
-        </section>
-
-        <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">موجودی و قیمت (واریانت اول)</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1 text-sm">
-              <span>قیمت *</span>
-              <input
-                type="number"
-                min={0}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>قیمت قبل تخفیف</span>
-              <input
-                type="number"
-                min={0}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={originalPrice}
-                onChange={(e) => setOriginalPrice(e.target.value)}
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>موجودی</span>
-              <input
-                type="number"
-                min={0}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>SKU</span>
-              <input
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                dir="ltr"
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>سایز</span>
-              <input
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span>رنگ</span>
-              <input
-                className="border-border bg-background w-full rounded-xl border px-3 py-2"
-                value={colorName}
-                onChange={(e) => setColorName(e.target.value)}
-              />
-            </label>
-          </div>
-        </section>
-
-        <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">برچسب‌ها</h2>
-          {!tags.length ? (
-            <p className="text-muted-foreground text-sm">
-              هنوز برچسبی نیست — از منوی برچسب محصولات بسازید.
-            </p>
-          ) : (
             <div className="flex flex-wrap gap-3">
               {tags.map((tg) => (
                 <label key={tg.id} className="flex items-center gap-2 text-sm">
