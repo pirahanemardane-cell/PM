@@ -7,6 +7,7 @@ import {
   adminGetProductAction,
   adminUpdateProductAction,
 } from "@/app/admin/actions/products";
+import { adminUploadProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -49,6 +50,7 @@ export default function EditProductPage() {
   const [sku, setSku] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -385,20 +387,84 @@ export default function EditProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">تصویر اصلی (URL)</h2>
-          <input
-            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            dir="ltr"
-            placeholder="https://…"
-          />
-          <input
-            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
-            value={imageAlt}
-            onChange={(e) => setImageAlt(e.target.value)}
-            placeholder="alt"
-          />
+          <h2 className="font-semibold">تصویر اصلی</h2>
+          <p className="text-muted-foreground text-xs">
+            آپلود مستقیم — تبدیل به WebP، عرض حداکثر ۱۲۰۰، واترمارک بالا-راست
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+              {uploadingImage ? "در حال آپلود…" : "انتخاب فایل تصویر"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                disabled={uploadingImage || busy}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  setUploadingImage(true);
+                  setErr("");
+                  try {
+                    const fd = new FormData();
+                    fd.set("file", f);
+                    const res = await adminUploadProductImageAction(fd);
+                    if (!res.ok) {
+                      setErr(
+                        res.error === "too_large"
+                          ? "حجم فایل بیش از ۱۲ مگابایت است"
+                          : res.error === "not_image"
+                            ? "فقط فایل تصویری مجاز است"
+                            : "آپلود ناموفق بود",
+                      );
+                      return;
+                    }
+                    setImageUrl(res.url);
+                  } catch {
+                    setErr("آپلود ناموفق بود");
+                  } finally {
+                    setUploadingImage(false);
+                  }
+                }}
+              />
+            </label>
+            {imageUrl ? (
+              <button
+                type="button"
+                className="text-sm text-destructive underline"
+                onClick={() => setImageUrl("")}
+              >
+                حذف تصویر
+              </button>
+            ) : null}
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>آدرس تصویر (اختیاری / خودکار بعد از آپلود)</span>
+            <input
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              dir="ltr"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://media.pirahanmardane.ir/..."
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span>متن جایگزین (alt)</span>
+            <input
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              value={imageAlt}
+              onChange={(e) => setImageAlt(e.target.value)}
+              placeholder="توضیح کوتاه تصویر"
+            />
+          </label>
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt={imageAlt || "پیش‌نمایش"}
+              className="mt-2 max-h-48 rounded-md border object-contain"
+            />
+          ) : null}
         </section>
 
         {tags.length ? (
