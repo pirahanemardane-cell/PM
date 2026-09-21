@@ -7,7 +7,7 @@ import {
   adminGetProductAction,
   adminUpdateProductAction,
 } from "@/app/admin/actions/products";
-import { adminUploadProductImageAction } from "@/app/admin/actions/media";
+import { adminUploadProductImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -50,6 +50,7 @@ export default function EditProductPage() {
   const [sku, setSku] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
+  const [primaryImageId, setPrimaryImageId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
@@ -147,6 +148,7 @@ export default function EditProductPage() {
       if (img) {
         setImageUrl(img.url ?? "");
         setImageAlt(img.alt_text ?? "");
+        setPrimaryImageId((img as { id?: string }).id ?? null);
       }
       setSelectedTags((p.product_tag_map ?? []).map((x) => x.tag_id));
       setLoading(false);
@@ -432,7 +434,18 @@ export default function EditProductPage() {
               <button
                 type="button"
                 className="text-sm text-destructive underline"
-                onClick={() => setImageUrl("")}
+                disabled={uploadingImage || busy}
+                onClick={async () => {
+                  const url = imageUrl;
+                  const imageId = primaryImageId;
+                  setImageUrl("");
+                  setPrimaryImageId(null);
+                  try {
+                    await adminDeleteProductImageAction({ url, imageId });
+                  } catch {
+                    /* best-effort */
+                  }
+                }}
               >
                 حذف تصویر
               </button>

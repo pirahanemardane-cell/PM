@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminCreateProductAction } from "@/app/admin/actions/products";
-import { adminUploadProductImageAction } from "@/app/admin/actions/media";
+import { adminUploadProductImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -288,7 +288,16 @@ export default function NewProductPage() {
               <button
                 type="button"
                 className="text-sm text-destructive underline"
-                onClick={() => setImageUrl("")}
+                disabled={uploadingImage || busy}
+                onClick={async () => {
+                  const url = imageUrl;
+                  setImageUrl("");
+                  try {
+                    await adminDeleteProductImageAction({ url });
+                  } catch {
+                    /* best-effort: UI already cleared */
+                  }
+                }}
               >
                 حذف تصویر
               </button>
