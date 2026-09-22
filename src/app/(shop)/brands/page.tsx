@@ -4,6 +4,7 @@ import { BrandService } from "@/services/brand.service";
 
 export const dynamic = "force-dynamic";
 
+
 export const metadata: Metadata = {
   title: "برندها",
   description: "همه برندهای فروشگاه تخصصی پیراهن مردانه",

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-
-export const dynamic = "force-dynamic";
   ShieldCheck,
   Truck,
   RotateCcw,
@@ -16,6 +14,8 @@ import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
 import { RecentlyViewed } from "@/components/home/recently-viewed";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "فروشگاه تخصصی پیراهن مردانه",
