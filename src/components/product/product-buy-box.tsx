@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";
 import { addToCartAction } from "@/app/(shop)/actions/shop";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
+import { createClient } from "@/lib/supabase/client";
 
 export type VariantOpt = {
   id: string;
@@ -28,36 +31,66 @@ export function ProductBuyBox({
   title,
   image,
   href,
-  variants,
+  variants: variantsProp,
 }: Props) {
   const addToCartStore = useShopStore((s) => s.addToCart);
   const refreshServerCart = useServerCartStore((s) => s.refresh);
+
+  // موجودی زنده — بدون reload صفحه
+  const [variants, setVariants] = useState<VariantOpt[]>(variantsProp);
+
+  useEffect(() => {
+    setVariants(variantsProp);
+  }, [variantsProp]);
+
+  useRtEvent(RT.stock, () => {
+    const ids = variantsProp.map((v) => v.id).filter(Boolean);
+    if (!ids.length) return;
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("product_variants")
+          .select("id, stock_quantity")
+          .in("id", ids);
+        if (error || !data) return;
+        const map = new Map(
+          data.map((r) => [r.id as string, Number(r.stock_quantity ?? 0)]),
+        );
+        setVariants((prev) =>
+          prev.map((v) =>
+            map.has(v.id) ? { ...v, stock: map.get(v.id) } : v,
+          ),
+        );
+      } catch {
+        /* silent — UI قبلی می‌ماند */
+      }
+    })();
+  });
 
   const sizes = useMemo(
     () =>
       [
         ...new Set(
-          variants.map((v) => v.size).filter((s): s is string => Boolean(s))
+          variants.map((v) => v.size).filter((s): s is string => Boolean(s)),
         ),
       ],
-    [variants]
+    [variants],
   );
   const colors = useMemo(
     () =>
       [
         ...new Set(
-          variants.map((v) => v.color).filter((c): c is string => Boolean(c))
+          variants.map((v) => v.color).filter((c): c is string => Boolean(c)),
         ),
       ],
-    [variants]
+    [variants],
   );
 
   const [selectedSize, setSelectedSize] = useState<string | null>(
-    sizes.length === 1 ? sizes[0]! : null
+    sizes.length === 1 ? sizes[0]! : null,
   );
-  const [selectedColor, setSelectedColor] = useState<string>(
-    colors[0] ?? ""
-  );
+  const [selectedColor, setSelectedColor] = useState<string>(colors[0] ?? "");
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -79,6 +112,8 @@ export function ProductBuyBox({
   }, [variants, selectedSize, selectedColor, sizes.length, colors.length]);
 
   const price = match?.price;
+  const stock = Number(match?.stock ?? 0);
+  const outOfStock = stock <= 0;
 
   async function handleAdd() {
     if (sizes.length > 0 && !selectedSize) {
@@ -87,6 +122,10 @@ export function ProductBuyBox({
     }
     if (!match?.id) {
       toast.error("این ترکیب موجود نیست");
+      return;
+    }
+    if (outOfStock) {
+      toast.error("این ترکیب ناموجود است");
       return;
     }
     setLoading(true);
@@ -106,7 +145,7 @@ export function ProductBuyBox({
       });
       if (typeof window !== "undefined") {
         window.dispatchEvent(
-          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } })
+          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
         );
       }
       const res = await addToCartAction(match.id, qty);
@@ -119,54 +158,45 @@ export function ProductBuyBox({
         }
         toast.success("به سبد خرید اضافه شد");
       }
+    } catch {
+      toast.error("خطا در افزودن به سبد");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-5" dir="rtl">
-      {typeof price === "number" && (
-        <p className="text-2xl font-bold">
-          {price.toLocaleString("fa-IR")} تومان
-        </p>
-      )}
-
-      {colors.length > 0 && (
+    <div className="space-y-4" dir="rtl">
+      {colors.length > 0 ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">رنگ</p>
           <div className="flex flex-wrap gap-2">
-            {colors.map((c) => {
-              const bg = c.startsWith("#")
-                ? c
-                : /^[0-9A-Fa-f]{3,8}$/.test(c)
-                  ? `#${c}`
-                  : undefined;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  title={c}
-                  onClick={() => setSelectedColor(c)}
-                  className={cn(
-                    "h-8 w-8 rounded-full border-2",
-                    selectedColor === c
-                      ? "border-primary ring-2 ring-primary/40"
-                      : "border-border opacity-80"
-                  )}
-                  style={{ backgroundColor: bg }}
-                >
-                  {!bg ? (
-                    <span className="text-[10px]">{c.slice(0, 3)}</span>
-                  ) : null}
-                </button>
-              );
-            })}
+            {colors.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setSelectedColor(c)}
+                className={cn(
+                  "border-border h-8 min-w-8 rounded-full border px-2 text-xs",
+                  selectedColor === c && "ring-secondary ring-2 ring-offset-2",
+                )}
+                style={
+                  c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c)
+                    ? {
+                        backgroundColor: c.startsWith("#") ? c : `#${c}`,
+                      }
+                    : undefined
+                }
+                title={c}
+              >
+                {c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c) ? "" : c}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      {sizes.length > 0 && (
+      {sizes.length > 0 ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">سایز</p>
           <div className="flex flex-wrap gap-2">
@@ -176,10 +206,9 @@ export function ProductBuyBox({
                 type="button"
                 onClick={() => setSelectedSize(s)}
                 className={cn(
-                  "min-w-[2.5rem] rounded-lg border px-3 py-1.5 text-sm",
-                  selectedSize === s
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-muted"
+                  "border-border rounded-xl border px-3 py-1.5 text-sm",
+                  selectedSize === s &&
+                    "bg-secondary text-secondary-foreground border-secondary",
                 )}
               >
                 {s}
@@ -187,36 +216,53 @@ export function ProductBuyBox({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="flex items-center gap-3">
-        <p className="text-sm font-medium">تعداد</p>
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            className="border-border h-9 w-9 rounded-lg border text-lg"
+            className="border-border h-9 w-9 rounded-lg border"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
           >
             −
           </button>
-          <span className="w-8 text-center text-sm tabular-nums">{qty}</span>
+          <span className="min-w-[2rem] text-center text-sm">{qty}</span>
           <button
             type="button"
-            className="border-border h-9 w-9 rounded-lg border text-lg"
-            onClick={() => setQty((q) => q + 1)}
+            className="border-border h-9 w-9 rounded-lg border"
+            onClick={() =>
+              setQty((q) => Math.min(outOfStock ? 1 : Math.max(stock, 1), q + 1))
+            }
           >
             +
           </button>
         </div>
+        {price != null ? (
+          <p className="text-sm font-semibold">
+            {Number(price).toLocaleString("fa-IR")} تومان
+          </p>
+        ) : null}
+        <p
+          className={cn(
+            "text-xs",
+            outOfStock ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {outOfStock ? "ناموجود" : `موجودی: ${stock.toLocaleString("fa-IR")}`}
+        </p>
       </div>
 
       <button
         type="button"
-        disabled={loading}
-        onClick={handleAdd}
-        className="bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60 h-12 w-full rounded-xl text-sm font-medium"
+        disabled={loading || outOfStock}
+        onClick={() => void handleAdd()}
+        className={cn(
+          "bg-secondary text-secondary-foreground w-full rounded-xl py-3 text-sm font-medium",
+          (loading || outOfStock) && "opacity-60",
+        )}
       >
-        {loading ? "در حال افزودن…" : "افزودن به سبد"}
+        {outOfStock ? "ناموجود" : loading ? "…" : "افزودن به سبد"}
       </button>
     </div>
   );
