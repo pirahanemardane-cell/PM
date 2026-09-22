@@ -7,11 +7,13 @@ import { useServerCartStore } from "@/lib/server-cart-store";
 
 /**
  * یک نقطه اتصال Realtime برای کل فروشگاه.
- * تغییر DB → همان eventهایی که UI از قبل می‌فهمد.
+ * تغییر DB → eventهای استاندارد UI.
+ * ادمین: همهٔ سفارش‌ها (بدون فیلتر user_id).
  */
 export function RealtimeBridge() {
   const refreshCart = useServerCartStore((s) => s.refresh);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -19,9 +21,26 @@ export function RealtimeBridge() {
       try {
         const supabase = createClient();
         const { data } = await supabase.auth.getUser();
-        if (!cancelled) setUserId(data.user?.id ?? null);
+        const uid = data.user?.id ?? null;
+        if (cancelled) return;
+        setUserId(uid);
+        if (!uid) {
+          setIsAdmin(false);
+          return;
+        }
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", uid)
+          .maybeSingle();
+        if (!cancelled) {
+          setIsAdmin((profile as { role?: string } | null)?.role === "admin");
+        }
       } catch {
-        if (!cancelled) setUserId(null);
+        if (!cancelled) {
+          setUserId(null);
+          setIsAdmin(false);
+        }
       }
     })();
     return () => {
@@ -60,16 +79,28 @@ export function RealtimeBridge() {
     onPayload: bumpCart,
   });
 
-  // سفارش‌ها (فیلتر کاربر وقتی لاگین است)
+  // سفارش مشتری: فقط سفارش‌های خودش
   useRealtimeTable({
     table: "orders",
     filter: userId ? `user_id=eq.${userId}` : undefined,
-    enabled: !!userId,
+    enabled: !!userId && !isAdmin,
     onPayload: bumpOrders,
   });
   useRealtimeTable({
     table: "order_items",
-    enabled: !!userId,
+    enabled: !!userId && !isAdmin,
+    onPayload: bumpOrders,
+  });
+
+  // سفارش ادمین: همه ردیف‌ها (نیاز به SELECT RLS برای admin)
+  useRealtimeTable({
+    table: "orders",
+    enabled: isAdmin,
+    onPayload: bumpOrders,
+  });
+  useRealtimeTable({
+    table: "order_items",
+    enabled: isAdmin,
     onPayload: bumpOrders,
   });
 
