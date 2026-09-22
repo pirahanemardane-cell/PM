@@ -42,11 +42,17 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [q, setQ] = useState("");
+  const [qApplied, setQApplied] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await adminListOrdersAction(50);
+    const res = await adminListOrdersAction(80, {
+      status: statusFilter,
+      q: qApplied || undefined,
+    });
     setLoading(false);
     if (!res.ok) {
       setError(
@@ -60,7 +66,7 @@ export default function AdminOrdersPage() {
       return;
     }
     setItems((res.items as OrderRow[]) ?? []);
-  }, []);
+  }, [statusFilter, qApplied]);
 
   useEffect(() => {
     void load();
@@ -87,13 +93,20 @@ export default function AdminOrdersPage() {
     );
   }
 
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setQApplied(q.trim());
+  }
+
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">سفارش‌ها</h1>
-            <p className="text-muted-foreground text-sm">مدیریت سفارش‌های فروشگاه</p>
+            <p className="text-muted-foreground text-sm">
+              مدیریت سفارش‌های فروشگاه
+            </p>
           </div>
           <div className="flex gap-2">
             <button
@@ -111,6 +124,50 @@ export default function AdminOrdersPage() {
             </Link>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`rounded-full px-3 py-1.5 text-xs ${
+              statusFilter === "all"
+                ? "bg-secondary text-secondary-foreground"
+                : "border-border border"
+            }`}
+          >
+            همه
+          </button>
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={`rounded-full px-3 py-1.5 text-xs ${
+                statusFilter === s
+                  ? "bg-secondary text-secondary-foreground"
+                  : "border-border border"
+              }`}
+            >
+              {STATUS_FA[s]}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={submitSearch} className="flex flex-wrap gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="جستجو نام یا موبایل گیرنده"
+            className="border-input bg-background h-10 min-w-[14rem] flex-1 rounded-xl border px-3 text-sm"
+            dir="rtl"
+          />
+          <button
+            type="submit"
+            className="bg-secondary text-secondary-foreground rounded-xl px-4 py-2 text-sm"
+          >
+            جستجو
+          </button>
+        </form>
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
@@ -139,7 +196,10 @@ export default function AdminOrdersPage() {
                 {items.map((o) => (
                   <tr key={o.id} className="border-border border-t">
                     <td className="p-3 font-mono text-xs">
-                      <Link href={`/admin/orders/${o.id}`} className="text-primary hover:underline">
+                      <Link
+                        href={`/admin/orders/${o.id}`}
+                        className="text-primary hover:underline"
+                      >
                         {o.id.slice(0, 8)}…
                       </Link>
                     </td>
@@ -169,17 +229,19 @@ export default function AdminOrdersPage() {
                         value={o.status}
                         disabled={busyId === o.id}
                         onChange={(e) => void changeStatus(o.id, e.target.value)}
-                        className="border-input bg-background h-9 max-w-[11rem] rounded-lg border px-2 text-xs"
+                        className="border-input bg-background max-w-[9rem] rounded-lg border px-2 py-1 text-xs"
                       >
                         {STATUSES.map((s) => (
                           <option key={s} value={s}>
-                            {STATUS_FA[s] ?? s}
+                            {STATUS_FA[s]}
                           </option>
                         ))}
                       </select>
                     </td>
-                    <td className="text-muted-foreground p-3 whitespace-nowrap text-xs">
-                      {new Date(o.created_at).toLocaleString("fa-IR")}
+                    <td className="p-3 whitespace-nowrap text-xs">
+                      {o.created_at
+                        ? new Date(o.created_at).toLocaleString("fa-IR")
+                        : "—"}
                     </td>
                   </tr>
                 ))}

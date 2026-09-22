@@ -1,16 +1,17 @@
 "use server";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
-
 import { OrderRepository } from "@/repositories/order.repository";
 
-
-export async function adminListOrdersAction(limit = 50) {
+export async function adminListOrdersAction(
+  limit = 50,
+  opts?: { status?: string; q?: string },
+) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
     const repo = new OrderRepository();
-    const items = await repo.listAll(limit);
+    const items = await repo.listAll(limit, opts);
     return { ok: true as const, items };
   } catch (e) {
     console.error("[adminListOrders]", e);
@@ -34,7 +35,6 @@ export async function adminUpdateOrderStatusAction(
   }
 }
 
-
 export async function adminGetOrderAction(orderId: string) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, order: null };
@@ -48,4 +48,3 @@ export async function adminGetOrderAction(orderId: string) {
     return { ok: false as const, error: "server", order: null };
   }
 }
-

@@ -89,13 +89,21 @@ export default function AdminOrderDetailPage() {
   const items = order.order_items ?? [];
 
   return (
-    <div className="bg-background min-h-screen p-6" dir="rtl">
+    <div className="bg-background min-h-screen p-6 print:p-0" dir="rtl">
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold">سفارش</h1>
             <p className="font-mono text-xs text-muted-foreground">{order.id}</p>
           </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="border-border rounded-xl border px-4 py-2 text-sm print:hidden"
+            >
+              چاپ فاکتور
+            </button>
           <Link
             href="/admin/orders"
             className="border-border rounded-xl border px-4 py-2 text-sm"

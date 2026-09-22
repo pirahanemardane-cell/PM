@@ -178,14 +178,16 @@ export class OrderRepository extends BaseRepository {
   }
 
 
-  async listAll(limit = 50) {
+  async listAll(
+    limit = 50,
+    opts?: { status?: string; q?: string },
+  ) {
     const supabase = await this.getClient();
-    const { data, error } = await supabase
+    let q = supabase
       .from("orders")
       .select(
         `
         id,
-        user_id,
         status,
         total_amount,
         discount_code,
@@ -193,12 +195,27 @@ export class OrderRepository extends BaseRepository {
         shipping_name,
         shipping_phone,
         shipping_city,
+        shipping_address,
+        note,
         created_at,
-        order_items(id, title, size_name, color_name, unit_price, quantity, line_total)
-      `
+        order_items(id, title, quantity, line_total)
+      `,
       )
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    if (opts?.status && opts.status !== "all") {
+      q = q.eq("status", opts.status);
+    }
+    if (opts?.q && opts.q.trim()) {
+      const term = opts.q.trim();
+      // جستجوی ساده روی نام/تلفن (ilike)
+      q = q.or(
+        `shipping_name.ilike.%${term}%,shipping_phone.ilike.%${term}%`,
+      );
+    }
+
+    const { data, error } = await q;
     if (error) throw error;
     return data ?? [];
   }
