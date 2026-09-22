@@ -114,7 +114,7 @@ export default function AdminOrderDetailPage() {
         </div>
 
         <div className="border-border bg-card space-y-3 rounded-2xl border p-5 text-sm">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 print:hidden">
             <span className="text-muted-foreground">وضعیت</span>
             <select
               value={order.status}
@@ -129,6 +129,10 @@ export default function AdminOrderDetailPage() {
               ))}
             </select>
           </div>
+          <p>
+            <span className="text-muted-foreground">وضعیت: </span>
+            {STATUS_FA[order.status] ?? order.status}
+          </p>
           <p>
             <span className="text-muted-foreground">گیرنده: </span>
             {order.shipping_name} — {order.shipping_phone}
