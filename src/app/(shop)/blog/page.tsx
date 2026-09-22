@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { listPublishedPostsAction } from "@/app/(shop)/actions/blog-public";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "بلاگ",
   description: "مقالات فروشگاه پیراهن مردانه",
