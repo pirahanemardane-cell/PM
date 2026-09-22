@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 import {
   adminListReturnsAction,
   adminSetReturnStatusAction,
@@ -33,6 +35,10 @@ export default function AdminReturnsPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  useRtEvent(RT.support, () => {
+    void load();
+  });
 
   return (
     <div className="space-y-4 p-6" dir="rtl">
