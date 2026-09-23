@@ -253,9 +253,21 @@ export default async function ProductDetailPage({ params }: Props) {
             </Link>
           </div>
         </div>
+      {/* توضیحات + مشخصات — تمام‌عرض تک‌ستونه */}
+      {product.description ? (
+        <section className="col-span-full mt-10 w-full max-w-none border-t pt-8" aria-label="توضیحات محصول">
+          <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
+          <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
+            {product.description}
+          </div>
+        </section>
+      ) : null}
+
+      <div className="col-span-full mt-8 w-full max-w-none">
+        <ProductSpecs rows={specRows} />
       </div>
       {relatedProducts?.length ? (
-        <div className="mt-12">
+        <div className="mt-12 w-full max-w-none">
           <RelatedStrip
             title="محصولات مرتبط"
             items={relatedProducts.map((p) => ({
@@ -271,24 +283,11 @@ export default async function ProductDetailPage({ params }: Props) {
           />
         </div>
       ) : null}
-      <div className="mt-12">
+
+      <div className="mt-12 w-full max-w-none">
         <ProductReviews productId={product.id} />
-
-      {/* توضیحات + مشخصات — تمام‌عرض تک‌ستونه */}
-      {product.description ? (
-        <section className="col-span-full mt-10 w-full max-w-none border-t pt-8" aria-label="توضیحات محصول">
-          <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
-          <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
-            {product.description}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="col-span-full mt-8 w-full max-w-none">
-        <ProductSpecs rows={specRows} />
-      </div>
-
       </div>
     </main>
+
   );
 }
