@@ -150,6 +150,7 @@ export async function addToCartAction(variantId: string, quantity = 1) {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const { createNotificationForUser } = await import("@/app/(shop)/actions/notifications");
         await createNotificationForUser({
           userId: user.id,
           title: "افزوده شد به سبد",
