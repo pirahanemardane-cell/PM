@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-2 gap-x-3 gap-y-2.5 px-4 pb-16 text-center text-sm font-medium sm:grid-cols-2 md:grid-cols-5 md:gap-y-3 md:pb-20">
+                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-1 gap-y-2.5 px-4 pb-8 text-center text-sm font-medium md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-28">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -90,7 +90,7 @@ export function Footer({
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-2 px-4 md:mt-10 md:flex-row md:items-center md:justify-between md:gap-1 md:px-0">
+          <div className="relative z-20 mt-6 flex flex-col items-center justify-center gap-2 px-4 md:mt-8 md:flex-row md:items-center md:justify-between md:gap-1 md:px-0">
             <p className="text-muted-foreground text-center text-base md:text-start">
               ©{new Date().getFullYear()} {brandName}. تمامی حقوق محفوظ است.
             </p>
@@ -110,7 +110,7 @@ export function Footer({
 
         {/* Large background text */}
         <div
-          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-10 left-1/2 z-0 sm:bottom-12 md:bottom-8 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-28"
+          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-6 left-1/2 z-0 sm:bottom-8 md:bottom-2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-28"
           style={{ fontSize: "clamp(2.75rem, 12vw, 9.5rem)" }}
         >
           {watermarkName}
