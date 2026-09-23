@@ -1,103 +1,258 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   adminListBlogPostsAction,
   adminSetBlogPostStatusAction,
+  adminCreateBlogPostAction,
 } from "@/app/admin/actions/blog";
+import { LumaSpin } from "@/components/ui/luma-spin";
+import { toPersianDigits } from "@/lib/numbers";
 
-type Row = {
+type Post = {
   id: string;
   title: string;
   slug: string;
   status: string;
+  published_at: string | null;
   created_at: string;
   category?: { name: string } | null;
 };
 
-const STATUS_FA: Record<string, string> = {
-  draft: "پیش‌نویس",
-  published: "منتشر",
-  archived: "بایگانی",
-};
+export default function AdminBlogPage() {
+  const [items, setItems] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">("all");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [creating, setCreating] = useState(false);
 
-export default function AdminBlogPostsPage() {
-  const [items, setItems] = useState<Row[]>([]);
-  const [err, setErr] = useState("");
-
-  async function load() {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     const res = await adminListBlogPostsAction();
-    if (!res.ok) setErr("خطا یا نیاز به ورود ادمین");
-    else setItems(res.items as Row[]);
-  }
+    setLoading(false);
+    if (!res.ok) {
+      setError(
+        res.error === "login_required"
+          ? "ورود لازم است"
+          : res.error === "forbidden"
+            ? "دسترسی ادمین ندارید"
+            : "خطا در بارگذاری پست‌ها",
+      );
+      setItems([]);
+      return;
+    }
+    setItems((res.items as Post[]) ?? []);
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    let list = items;
+    if (statusFilter !== "all") {
+      list = list.filter((p) => p.status === statusFilter);
+    }
+    const s = q.trim().toLowerCase();
+    if (!s) return list;
+    return list.filter(
+      (p) =>
+        p.title.toLowerCase().includes(s) ||
+        p.slug.toLowerCase().includes(s),
+    );
+  }, [items, q, statusFilter]);
+
+  async function onCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    setCreating(true);
+    setError(null);
+    const res = await adminCreateBlogPostAction({ title: title.trim(), status: "draft" });
+    setCreating(false);
+    if (!res.ok) {
+      setError(res.error === "title_required" ? "عنوان لازم است" : "ایجاد پست ناموفق");
+      return;
+    }
+    setTitle("");
+    await load();
+  }
+
+  async function setStatus(id: string, status: "draft" | "published" | "archived") {
+    setBusyId(id);
+    const res = await adminSetBlogPostStatusAction(id, status);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("تغییر وضعیت ناموفق بود");
+      return;
+    }
+    setItems((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              status,
+              published_at:
+                status === "published"
+                  ? p.published_at ?? new Date().toISOString()
+                  : p.published_at,
+            }
+          : p,
+      ),
+    );
+  }
 
   return (
-    <div className="space-y-4 p-6" dir="rtl">
+    <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">مقالات بلاگ</h1>
-        <Link
-          href="/admin/blog/new"
-          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm"
+        <div>
+          <h1 className="text-2xl font-bold">بلاگ</h1>
+          <p className="text-muted-foreground text-sm">
+            {toPersianDigits(String(items.length))} پست
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/blog/categories"
+            className="border-border rounded-xl border px-4 py-2 text-sm"
+          >
+            دسته‌ها
+          </Link>
+          <Link
+            href="/admin/dashboard"
+            className="border-border rounded-xl border px-4 py-2 text-sm"
+          >
+            داشبورد
+          </Link>
+        </div>
+      </div>
+
+      <form
+        onSubmit={onCreate}
+        className="border-border flex flex-wrap gap-2 rounded-2xl border p-4"
+      >
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="عنوان پست جدید (پیش‌نویس)"
+          className="border-border bg-background min-w-[200px] flex-1 rounded-xl border px-3 py-2 text-sm"
+          required
+        />
+        <button
+          type="submit"
+          disabled={creating}
+          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm disabled:opacity-50"
         >
-          افزودن مقاله
-        </Link>
+          {creating ? "…" : "افزودن پیش‌نویس"}
+        </button>
+      </form>
+
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="جستجو عنوان یا اسلاگ…"
+          className="border-border bg-background w-full max-w-md rounded-xl border px-3 py-2 text-sm"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) =>
+            setStatusFilter(e.target.value as typeof statusFilter)
+          }
+          className="border-border bg-background rounded-xl border px-3 py-2 text-sm"
+        >
+          <option value="all">همه وضعیت‌ها</option>
+          <option value="draft">پیش‌نویس</option>
+          <option value="published">منتشرشده</option>
+          <option value="archived">بایگانی</option>
+        </select>
       </div>
-      {err ? <p className="text-destructive text-sm">{err}</p> : null}
-      <div className="border-border overflow-x-auto rounded-xl border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="p-3 text-right">عنوان</th>
-              <th className="p-3 text-right">دسته</th>
-              <th className="p-3 text-right">وضعیت</th>
-              <th className="p-3 text-right">تاریخ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="p-3 font-medium">{p.title}</td>
-                <td className="text-muted-foreground p-3">
-                  {p.category?.name ?? "—"}
-                </td>
-                <td className="p-3">
-                  <select
-                    className="border rounded-lg px-2 py-1 text-xs"
-                    value={p.status}
-                    onChange={(e) =>
-                      void adminSetBlogPostStatusAction(
-                        p.id,
-                        e.target.value as "draft" | "published" | "archived",
-                      ).then(load)
-                    }
-                  >
-                    {(["draft", "published", "archived"] as const).map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_FA[s]}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="text-muted-foreground p-3 text-xs">
-                  {new Date(p.created_at).toLocaleDateString("fa-IR")}
-                </td>
-              </tr>
-            ))}
-            {!items.length ? (
+
+      {error ? <p className="text-destructive text-sm">{error}</p> : null}
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <LumaSpin />
+        </div>
+      ) : (
+        <div className="border-border overflow-x-auto rounded-xl border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
               <tr>
-                <td colSpan={4} className="text-muted-foreground p-6 text-center">
-                  مقاله‌ای نیست
-                </td>
+                <th className="p-3 text-right">عنوان</th>
+                <th className="p-3 text-right">اسلاگ</th>
+                <th className="p-3 text-right">وضعیت</th>
+                <th className="p-3 text-right">اقدام</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.map((p) => (
+                <tr key={p.id} className="border-t">
+                  <td className="p-3 font-medium">{p.title}</td>
+                  <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
+                    {p.slug}
+                  </td>
+                  <td className="p-3 text-xs">
+                    {p.status === "published"
+                      ? "منتشر"
+                      : p.status === "archived"
+                        ? "بایگانی"
+                        : "پیش‌نویس"}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex flex-wrap gap-1">
+                      {p.status !== "published" ? (
+                        <button
+                          type="button"
+                          disabled={busyId === p.id}
+                          className="border-border rounded-lg border px-2 py-1 text-xs disabled:opacity-50"
+                          onClick={() => void setStatus(p.id, "published")}
+                        >
+                          انتشار
+                        </button>
+                      ) : null}
+                      {p.status !== "draft" ? (
+                        <button
+                          type="button"
+                          disabled={busyId === p.id}
+                          className="border-border rounded-lg border px-2 py-1 text-xs disabled:opacity-50"
+                          onClick={() => void setStatus(p.id, "draft")}
+                        >
+                          پیش‌نویس
+                        </button>
+                      ) : null}
+                      {p.status !== "archived" ? (
+                        <button
+                          type="button"
+                          disabled={busyId === p.id}
+                          className="border-border rounded-lg border px-2 py-1 text-xs disabled:opacity-50"
+                          onClick={() => void setStatus(p.id, "archived")}
+                        >
+                          بایگانی
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!filtered.length ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="text-muted-foreground p-6 text-center"
+                  >
+                    پستی نیست
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
