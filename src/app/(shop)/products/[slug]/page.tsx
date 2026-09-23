@@ -235,16 +235,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </>
 
 
-          {product.description && (
-            <div className="border-t pt-6">
-              <h2 className="mb-2 font-semibold">توضیحات</h2>
-              <p className="text-muted-foreground leading-7 whitespace-pre-line">
-                {product.description}
-              </p>
-            </div>
-          )}
-
-          <ProductSpecs rows={specRows} />
+          {/* description + specs moved below grid */}
 
           <div className="text-muted-foreground border-t pt-4 text-xs leading-6">
             ارسال سریع · ضمانت اصالت · امکان مرجوعی طبق{" "}
@@ -282,6 +273,21 @@ export default async function ProductDetailPage({ params }: Props) {
       ) : null}
       <div className="mt-12">
         <ProductReviews productId={product.id} />
+
+      {/* توضیحات + مشخصات — تمام‌عرض تک‌ستونه */}
+      {product.description ? (
+        <section className="mt-10 w-full border-t pt-8" aria-label="توضیحات محصول">
+          <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
+          <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
+            {product.description}
+          </div>
+        </section>
+      ) : null}
+
+      <div className="mt-8 w-full">
+        <ProductSpecs rows={specRows} />
+      </div>
+
       </div>
     </main>
   );
