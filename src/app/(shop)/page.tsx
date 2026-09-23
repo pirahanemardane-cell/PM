@@ -179,7 +179,7 @@ export default async function HomePage() {
 
       {/* 5. Deals */}
       <section aria-label="پیشنهاد شگفت‌انگیز">
-        <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=true" />
+        <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=1" />
         {deals.length > 0 || flashEndsAt ? (
           <HorizontalRail>
             <div className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
@@ -198,7 +198,7 @@ export default async function HomePage() {
 
       {/* 6. Bestsellers */}
       <section aria-label="پرفروش‌ترین‌ها">
-        <SectionHeader title="پرفروش‌ترین‌ها" href="/products" />
+        <SectionHeader title="پرفروش‌ترین‌ها" href="/products?sort=popular" />
         {bestsellers.length > 0 ? (
           <HorizontalRail>
             {bestsellers.map((product) => (

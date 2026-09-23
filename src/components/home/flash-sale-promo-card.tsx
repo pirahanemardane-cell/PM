@@ -43,7 +43,7 @@ function useCountdown(endsAt: string | null | undefined) {
 
 export function FlashSalePromoCard({
   endsAt,
-  href = "/products?featured=true",
+  href = "/products?featured=1",
   className,
 }: Props) {
   const cd = useCountdown(endsAt);
