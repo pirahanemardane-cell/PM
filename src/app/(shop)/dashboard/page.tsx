@@ -566,20 +566,6 @@ useEffect(() => {
                   >
                     خواندن همه
                   </button>
-                  <button
-                    type="button"
-                    className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs"
-                    onClick={async () => {
-                      const r = await createTestNotificationAction();
-                      if (!r.ok) toast.error("ثبت اعلان تست ناموفق");
-                      else {
-                        toast.success("اعلان تست ثبت شد");
-                        void notif.refresh();
-                      }
-                    }}
-                  >
-                    اعلان تستی
-                  </button>
                 </div>
               </div>
               {notif.loading ? (
