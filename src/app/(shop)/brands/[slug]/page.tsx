@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { BrandService } from "@/services/brand.service";
 import { ProductService } from "@/services/product.service";
 import { CategoryService } from "@/services/category.service";
 import { AttributeService } from "@/services/attribute.service";
+import { ColorRepository } from "@/repositories/color.repository";
+import { SizeRepository } from "@/repositories/size.repository";
 import { ProductInfiniteList } from "@/components/product/product-infinite-list";
-import { ProductCategoryChips } from "@/components/product/product-category-chips";
-import { ProductSortBar } from "@/components/product/product-sort-bar";
 import { ProductFiltersSidebar } from "@/components/product/product-filters-sidebar";
 import { ProductFiltersMobile } from "@/components/product/product-filters-mobile";
 import { facetSlugsForCategory } from "@/lib/facet-map";
@@ -55,7 +56,6 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
 
   const brandResult = await brandService.getBySlug(slug);
   if (!brandResult.success || !brandResult.data) notFound();
-
   const brand = brandResult.data;
 
   const categorySlug =
@@ -66,6 +66,18 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
       ? (sp.sort as "newest" | "price_asc" | "price_desc" | "popular")
       : "newest";
   const featured = sp.featured === "1" ? true : undefined;
+  const minPrice =
+    typeof sp.minPrice === "string" && sp.minPrice
+      ? Number(sp.minPrice)
+      : undefined;
+  const maxPrice =
+    typeof sp.maxPrice === "string" && sp.maxPrice
+      ? Number(sp.maxPrice)
+      : undefined;
+  const colorSlug =
+    typeof sp.color === "string" && sp.color ? sp.color : undefined;
+  const sizeSlug =
+    typeof sp.size === "string" && sp.size ? sp.size : undefined;
 
   const attrs: Record<string, string> = {};
   for (const key of FACET_KEYS) {
@@ -83,6 +95,28 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
   const allowed = new Set(facetSlugsForCategory(categorySlug));
   const facets = allFacets.filter((f) => allowed.has(f.slug));
 
+  const colorRepo = new ColorRepository();
+  const sizeRepo = new SizeRepository();
+  const [colors, sizes] = await Promise.all([
+    colorRepo
+      .findAllActive()
+      .catch(() => [] as Awaited<ReturnType<ColorRepository["findAllActive"]>>),
+    sizeRepo
+      .findAllActive()
+      .catch(() => [] as Awaited<ReturnType<SizeRepository["findAllActive"]>>),
+  ]);
+
+  let colorId: string | undefined;
+  let sizeId: string | undefined;
+  if (colorSlug) {
+    const c = await colorRepo.findBySlug(colorSlug).catch(() => null);
+    colorId = c?.id;
+  }
+  if (sizeSlug) {
+    const s = await sizeRepo.findBySlug(sizeSlug).catch(() => null);
+    sizeId = s?.id;
+  }
+
   const result = await productService.getPublishedProducts({
     page: 1,
     pageSize: 12,
@@ -92,12 +126,18 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
     sort,
     featured,
     attrs: Object.keys(attrs).length ? attrs : undefined,
+    minPrice: minPrice && !Number.isNaN(minPrice) ? minPrice : undefined,
+    maxPrice: maxPrice && !Number.isNaN(maxPrice) ? maxPrice : undefined,
+    colorId,
+    sizeId,
   });
 
   if (!result.success || !result.data) {
     return (
       <main className="container mx-auto px-4 py-12">
-        <p className="text-destructive text-center">{result.error ?? "خطا"}</p>
+        <p className="text-destructive text-center">
+          {result.error ?? "خطا"}
+        </p>
       </main>
     );
   }
@@ -114,47 +154,50 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
         </p>
       </div>
 
-      <ProductCategoryChips
-        categories={categories}
-        currentCategory={categorySlug}
-        brandSlug={slug}
-        q={q}
-        sort={sort}
-        featured={featured}
-        attrs={attrsProp}
-      />
-
-      <ProductSortBar
-        currentSort={sort}
-        categorySlug={categorySlug}
-        brandSlug={slug}
-        q={q}
-        featured={featured}
-        attrs={attrsProp}
-      />
-
       <ProductFiltersMobile
+        colors={colors}
+        sizes={sizes}
+        colorSlug={colorSlug}
+        sizeSlug={sizeSlug}
         facets={facets}
         current={attrs}
+        categories={categories}
         categorySlug={categorySlug}
         brandSlug={slug}
         q={q}
         sort={sort}
         featured={featured}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
       />
 
       <div className="flex flex-col gap-8 lg:flex-row">
-        <ProductFiltersSidebar
-          facets={facets}
-          current={attrs}
-          categorySlug={categorySlug}
-          brandSlug={slug}
-          q={q}
-          sort={sort}
-          featured={featured}
-        />
+        <Suspense
+          fallback={
+            <aside className="border-border bg-card hidden w-64 shrink-0 rounded-xl border p-4 lg:block" />
+          }
+        >
+          <ProductFiltersSidebar
+            colors={colors}
+            sizes={sizes}
+            colorSlug={colorSlug}
+            sizeSlug={sizeSlug}
+            facets={facets}
+            current={attrs}
+            categories={categories}
+            categorySlug={categorySlug}
+            brandSlug={slug}
+            q={q}
+            sort={sort}
+            featured={featured}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+          />
+        </Suspense>
         <div className="min-w-0 flex-1">
           <ProductInfiniteList
+            colorId={colorId}
+            sizeId={sizeId}
             initialProducts={products}
             initialPage={page}
             initialHasMore={page < totalPages}
@@ -164,6 +207,12 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
             sort={sort}
             featured={featured}
             attrs={attrsProp}
+            minPrice={
+              minPrice && !Number.isNaN(minPrice) ? minPrice : undefined
+            }
+            maxPrice={
+              maxPrice && !Number.isNaN(maxPrice) ? maxPrice : undefined
+            }
           />
         </div>
       </div>
