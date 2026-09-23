@@ -39,9 +39,8 @@ const NAV = [
   { href: "/admin/notifications", label: "اعلان‌ها", icon: Bell },
   { href: "/admin/returns", label: "مرجوعی", icon: Package },
   { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },
-  { href: "/admin/settings",
-  // logs
-, label: "تنظیمات", icon: Settings },
+  { href: "/admin/logs", label: "لاگ‌ها", icon: FileText },
+  { href: "/admin/settings", label: "تنظیمات", icon: Settings },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
