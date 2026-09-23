@@ -123,6 +123,7 @@ type CreateProductInput = {
   tag_ids?: string[];
   image_url?: string;
   image_alt?: string;
+  variants?: AdminVariantInput[];
 };
 
 export type AdminVariantInput = {
@@ -169,21 +170,39 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       .single();
     if (pErr) throw pErr;
 
-    const { error: vErr } = await gate.supabase.from("product_variants").insert({
-      product_id: product.id,
-      sku: input.sku?.trim() || null,
-      size: input.size?.trim() || null,
-      color_name: input.color_name?.trim() || null,
-      color_hex: input.color_hex?.trim() || null,
-      price,
-      original_price:
-        input.original_price != null && Number.isFinite(Number(input.original_price))
-          ? Number(input.original_price)
-          : null,
-      stock_quantity: Math.max(0, Number(input.stock_quantity ?? 0) || 0),
-      is_active: true,
-    });
-    if (vErr) throw vErr;
+    const variantList =
+      input.variants && input.variants.length
+        ? input.variants
+        : [
+            {
+              sku: input.sku,
+              size: input.size,
+              color_name: input.color_name,
+              color_hex: input.color_hex,
+              price,
+              original_price: input.original_price,
+              stock_quantity: input.stock_quantity,
+            },
+          ];
+    for (const vv of variantList) {
+      const vp = Number(vv.price ?? price);
+      if (!Number.isFinite(vp) || vp < 0) continue;
+      const { error: vErr } = await gate.supabase.from("product_variants").insert({
+        product_id: product.id,
+        sku: (vv.sku || "").trim() || null,
+        size: (vv.size || "").trim() || null,
+        color_name: (vv.color_name || "").trim() || null,
+        color_hex: (vv.color_hex || "").trim() || null,
+        price: vp,
+        original_price:
+          vv.original_price != null && Number.isFinite(Number(vv.original_price))
+            ? Number(vv.original_price)
+            : null,
+        stock_quantity: Math.max(0, Number(vv.stock_quantity ?? 0) || 0),
+        is_active: true,
+      });
+      if (vErr) throw vErr;
+    }
 
     const tagIds = (input.tag_ids ?? []).filter(Boolean);
     if (tagIds.length) {

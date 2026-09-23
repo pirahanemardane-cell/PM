@@ -39,6 +39,26 @@ export default function NewProductPage() {
   const [originalPrice, setOriginalPrice] = useState("");
   const [stock, setStock] = useState("0");
   const [size, setSize] = useState("");
+  type VRow = {
+    key: string;
+    size: string;
+    color_name: string;
+    sku: string;
+    price: string;
+    original_price: string;
+    stock: string;
+  };
+  const [variantRows, setVariantRows] = useState<VRow[]>([
+    {
+      key: "n-0",
+      size: "",
+      color_name: "",
+      sku: "",
+      price: "",
+      original_price: "",
+      stock: "0",
+    },
+  ]);
   const [colorName, setColorName] = useState("");
   const [sku, setSku] = useState("");
 
@@ -101,6 +121,18 @@ export default function NewProductPage() {
       color_name: colorName || undefined,
       sku: sku || undefined,
       tag_ids: selectedTags,
+      variants: variantRows.map((r) => ({
+        size: r.size || null,
+        color_name: r.color_name || null,
+        sku: r.sku || null,
+        price: parseLocaleNumber(r.price) ?? parseLocaleNumber(price) ?? 0,
+        original_price: r.original_price
+          ? parseLocaleNumber(r.original_price)
+          : originalPrice
+            ? parseLocaleNumber(originalPrice)
+            : null,
+        stock_quantity: parseLocaleNumber(r.stock) ?? 0,
+      })),
       image_url: imageUrl || undefined,
       image_alt: imageAlt || undefined,
     });
@@ -354,6 +386,143 @@ export default function NewProductPage() {
             ))}
           </div>
         </section>
+
+        
+        <div className="border-border space-y-3 rounded-2xl border p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-semibold">وریانت‌ها (سایز / رنگ / موجودی)</h2>
+            <button
+              type="button"
+              className="border-border rounded-lg border px-3 py-1 text-xs"
+              onClick={() =>
+                setVariantRows((prev) => [
+                  ...prev,
+                  {
+                    key: `n-${Date.now()}`,
+                    size: "",
+                    color_name: "",
+                    sku: "",
+                    price: price || "",
+                    original_price: originalPrice || "",
+                    stock: "0",
+                  },
+                ])
+              }
+            >
+              + وریانت
+            </button>
+          </div>
+          {variantRows.map((row, idx) => (
+            <div
+              key={row.key}
+              className="bg-muted/30 grid gap-2 rounded-xl p-3 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              <label className="block space-y-1 text-xs">
+                <span>سایز</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.size}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx ? { ...r, size: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  placeholder="M"
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span>رنگ</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.color_name}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx ? { ...r, color_name: e.target.value } : r,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span>SKU</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.sku}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx ? { ...r, sku: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  dir="ltr"
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span>قیمت</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.price}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx ? { ...r, price: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  dir="ltr"
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span>قیمت قبلی</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.original_price}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx
+                          ? { ...r, original_price: e.target.value }
+                          : r,
+                      ),
+                    )
+                  }
+                  dir="ltr"
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span>موجودی</span>
+                <input
+                  className="border-border bg-background w-full rounded-lg border px-2 py-1.5"
+                  value={row.stock}
+                  onChange={(e) =>
+                    setVariantRows((prev) =>
+                      prev.map((r, i) =>
+                        i === idx ? { ...r, stock: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  dir="ltr"
+                />
+              </label>
+              <div className="sm:col-span-2 lg:col-span-3">
+                <button
+                  type="button"
+                  className="text-destructive text-xs hover:underline disabled:opacity-40"
+                  disabled={variantRows.length <= 1}
+                  onClick={() =>
+                    setVariantRows((prev) => prev.filter((_, i) => i !== idx))
+                  }
+                >
+                  حذف این وریانت
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
 

@@ -196,7 +196,25 @@ export default function AdminProductTagsPage() {
             <tbody>
               {filtered.map((t) => (
                 <tr key={t.id} className="border-t">
-                  <td className="p-3 font-medium">{t.name}</td>
+                  <td className="p-3 font-medium">{t.name}
+                  <span className="mr-2 inline-flex gap-2">
+                    <button
+                      type="button"
+                      disabled={busyId === t.id}
+                      onClick={() => void renameTag(t.id, t.name)}
+                      className="text-xs text-sky-700 hover:underline"
+                    >
+                      ویرایش
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === t.id}
+                      onClick={() => void removeTag(t.id, t.name)}
+                      className="text-destructive text-xs hover:underline"
+                    >
+                      حذف
+                    </button>
+                  </span></td>
                   <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
                     {t.slug}
                   </td>
