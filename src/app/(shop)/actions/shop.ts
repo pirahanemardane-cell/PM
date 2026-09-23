@@ -1,4 +1,3 @@
-import { createNotificationForUser } from "@/app/(shop)/actions/notifications";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
