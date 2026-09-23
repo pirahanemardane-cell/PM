@@ -517,7 +517,7 @@ export async function createMyAddressAction(input: AddressInput) {
     }
     const n1 = assertNoLinkOrImage(input.full_name, "نام");
     if (!n1.ok) return { ok: false as const, error: n1.error };
-    const phoneNormAddr = normalizePhone(input.phone || "");
+    const phoneNormAddr = normalizeIranMobile(input.phone || "");
     if (!phoneNormAddr) {
       return { ok: false as const, error: "شماره موبایل نامعتبر است" };
     }
