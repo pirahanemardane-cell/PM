@@ -9,14 +9,9 @@ export const phoneSchema = z
 
 export const emailSchema = z.string().email("ایمیل معتبر نیست");
 
-/** page + pageSize؛ limit به‌عنوان alias برای pageSize */
-export const paginationSchema = z
-  .object({
-    page: z.coerce.number().int().min(1).default(1),
-    pageSize: z.coerce.number().int().min(1).max(100).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-  })
-  .transform((v) => ({
-    page: v.page,
-    pageSize: v.pageSize ?? v.limit ?? 12,
-  }));
+/** page / pageSize؛ limit اختیاری (alias) — بدون transform تا .extend() کار کند */
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});

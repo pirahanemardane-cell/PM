@@ -13,7 +13,7 @@ export class ProductRepository extends BaseRepository {
   async findPublished(filters: ProductFilterInput = { page: 1, pageSize: 12 }) {
     const client = await this.getClient();
     const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 12;
+    const pageSize = filters.pageSize ?? filters.limit ?? 12;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
