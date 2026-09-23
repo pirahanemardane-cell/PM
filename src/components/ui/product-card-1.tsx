@@ -465,7 +465,7 @@ if (res.ok === false && res.error === "login_required") {
                   "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
                   selectedSize === size
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 text-foreground hover:bg-muted"
+                    : "bg-muted/70 text-foreground
                 )}
                 onClick={(e) => {
                   e.preventDefault();
@@ -510,7 +510,7 @@ if (res.ok === false && res.error === "login_required") {
 
   if (href) {
     return (
-      <Link href={href} className="block w-full outline-none">
+      <Link href={href} className="block w-full outline-none no-underline hover:no-underline">
         {card}
       </Link>
     );
