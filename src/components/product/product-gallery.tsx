@@ -16,6 +16,10 @@ type VariantLite = {
   color?: string | null;
 };
 
+function colorNorm(c: string | null | undefined) {
+  return (c || "").trim().replace(/^#/, "").toLowerCase();
+}
+
 export function ProductGallery({
   images,
   productName,
@@ -24,14 +28,9 @@ export function ProductGallery({
 }: {
   images: GalleryImage[];
   productName: string;
-  /** برای مپ رنگ → variant_id */
   variants?: VariantLite[];
-  /** رنگ انتخاب‌شده در buy-box */
   activeColor?: string | null;
 }) {
-  const colorNorm = (c: string | null | undefined) =>
-    (c || "").trim().replace(/^#/, "").toLowerCase();
-
   const list = useMemo(() => {
     const all = images.filter((i) => i.url);
     if (!activeColor || !variants.length) return all;
@@ -43,23 +42,36 @@ export function ProductGallery({
         .map((v) => v.id),
     );
 
-    // تصاویر وصل‌شده به وریانت همان رنگ
+    // ۱) تصاویر وصل به وریانت همان رنگ
     const byVariant = all.filter(
       (img) => img.variant_id && variantIds.has(img.variant_id),
     );
     if (byVariant.length) return byVariant;
 
-    // اگر برای این رنگ عکسی نبود → همه (fallback)
+    // ۲) fallback: URL شامل نام رنگ انگلیسی تقریبی
+    const slugHint: Record<string, string[]> = {
+      سفید: ["white"],
+      مشکی: ["black"],
+      آبی: ["blue"],
+      سفيد: ["white"],
+    };
+    const hints = slugHint[activeColor.trim()] ?? [];
+    if (hints.length) {
+      const byUrl = all.filter((img) =>
+        hints.some((h) => img.url.toLowerCase().includes(h)),
+      );
+      if (byUrl.length) return byUrl;
+    }
+
     return all;
   }, [images, variants, activeColor]);
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
 
-  // با عوض شدن رنگ، به اولین تصویر برگرد
   useEffect(() => {
     setIdx(0);
-  }, [activeColor, list.length]);
+  }, [activeColor, list]);
 
   const current = list[Math.min(idx, Math.max(0, list.length - 1))] ?? list[0];
 
@@ -103,6 +115,7 @@ export function ProductGallery({
         aria-label="بزرگ‌نمایی تصویر"
       >
         <Image
+          key={current!.url}
           src={current!.url}
           alt={current!.alt ?? productName}
           fill
@@ -144,7 +157,6 @@ export function ProductGallery({
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="تصویر کامل محصول"
           onClick={close}
         >
           <button
