@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { signInAction, signUpAction, resetPasswordAction, requestOtpAction, verifyOtpAction } from "@/app/(shop)/actions/auth";
-import { isValidIranMobile, onlyDigits} from "@/lib/numbers";
+import { isValidIranMobile, normalizeIranMobile, onlyDigits } from "@/lib/numbers";
 import {
   Mail,
   Lock,

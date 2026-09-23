@@ -1,5 +1,5 @@
-import { normalizeIranMobile, normalizePhone } from "@/lib/numbers";
 "use server";
+import { normalizeIranMobile, normalizePhone } from "@/lib/numbers";
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
