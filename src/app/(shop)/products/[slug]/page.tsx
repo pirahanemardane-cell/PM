@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ProductBuyBox } from "@/components/product/product-buy-box";
 import { TrackRecentlyViewed } from "@/components/product/track-recently-viewed";
 import { ProductReviews } from "@/components/shop/product-reviews";
+import { PriceHistory } from "@/components/product/price-history";
+import { getProductPriceHistory } from "@/lib/price-history";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -119,6 +121,7 @@ export default async function ProductDetailPage({ params }: Props) {
     product.category_id ?? product.category?.id ?? null,
     8,
   );
+  const priceHistory = await getProductPriceHistory(String(product.id), 40);
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
@@ -196,6 +199,27 @@ export default async function ProductDetailPage({ params }: Props) {
             href={`/products/${product.slug}`}
             variants={variantOptions}
           />
+          <div className="flex flex-wrap gap-3 text-sm">
+            <Link
+              href="/size-guide"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              راهنمای سایز
+            </Link>
+            <Link
+              href="/shipping"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+            >
+              شرایط ارسال
+            </Link>
+            <Link
+              href="/returns"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+            >
+              مرجوعی
+            </Link>
+          </div>
+          <PriceHistory points={priceHistory} />
           </>
 
 
@@ -218,6 +242,20 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+      {relatedProducts?.length ? (
+        <div className="mt-12">
+          <RelatedStrip
+            title="محصولات مرتبط"
+            items={relatedProducts.map((p) => ({
+              id: String(p.id),
+              title: String(p.name ?? p.title ?? ""),
+              href: `/products/${p.slug}`,
+              image: p.image_url ?? p.primary_image_url ?? undefined,
+              price: p.price != null ? Number(p.price) : undefined,
+            }))}
+          />
+        </div>
+      ) : null}
       <div className="mt-12">
         <ProductReviews productId={product.id} />
       </div>

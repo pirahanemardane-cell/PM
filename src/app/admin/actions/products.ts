@@ -1,5 +1,7 @@
 "use server";
 
+import { recordProductPrice } from "@/lib/price-history";
+
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
@@ -354,6 +356,25 @@ export async function adminUpdateProductAction(
           sort_order: 0,
         });
       }
+    }
+
+    
+    try {
+      const { data: vrow } = await gate.supabase
+        .from("product_variants")
+        .select("id")
+        .eq("product_id", id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      await recordProductPrice({
+        productId: id,
+        variantId: (vrow as { id?: string } | null)?.id ?? null,
+        price,
+        supabase: gate.supabase,
+      });
+    } catch {
+      /* ignore */
     }
 
     return { ok: true as const };
