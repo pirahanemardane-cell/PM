@@ -125,6 +125,18 @@ type CreateProductInput = {
   image_alt?: string;
 };
 
+export type AdminVariantInput = {
+  id?: string;
+  size?: string | null;
+  color_name?: string | null;
+  color_hex?: string | null;
+  sku?: string | null;
+  price: number;
+  original_price?: number | null;
+  stock_quantity?: number;
+  is_active?: boolean;
+};
+
 export async function adminCreateProductAction(input: CreateProductInput) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -425,5 +437,93 @@ export async function adminSoftDeleteProductAction(id: string) {
   } catch (e) {
     console.error("[adminSoftDeleteProduct]", e);
     return { ok: false as const, error: "server" as const };
+  }
+}
+
+/** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند */
+export async function adminSyncProductVariantsAction(
+  productId: string,
+  variants: AdminVariantInput[],
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!productId) return { ok: false as const, error: "product_required" };
+  try {
+    const cleaned = (variants ?? [])
+      .map((v) => ({
+        id: v.id,
+        size: (v.size || "").trim() || null,
+        color_name: (v.color_name || "").trim() || null,
+        color_hex: (v.color_hex || "").trim() || null,
+        sku: (v.sku || "").trim() || null,
+        price: Number(v.price),
+        original_price:
+          v.original_price != null && Number.isFinite(Number(v.original_price))
+            ? Number(v.original_price)
+            : null,
+        stock_quantity: Math.max(0, Number(v.stock_quantity ?? 0) || 0),
+        is_active: v.is_active !== false,
+      }))
+      .filter((v) => Number.isFinite(v.price) && v.price >= 0);
+
+    if (!cleaned.length) {
+      return { ok: false as const, error: "variants_required" };
+    }
+
+    const { data: existing } = await gate.supabase
+      .from("product_variants")
+      .select("id")
+      .eq("product_id", productId);
+    const keepIds = new Set(
+      cleaned.map((v) => v.id).filter((id): id is string => Boolean(id)),
+    );
+    const toDelete = ((existing as { id: string }[]) ?? []).filter(
+      (e) => !keepIds.has(e.id),
+    );
+    for (const d of toDelete) {
+      await gate.supabase.from("product_variants").delete().eq("id", d.id);
+    }
+
+    for (const v of cleaned) {
+      const row = {
+        product_id: productId,
+        size: v.size,
+        color_name: v.color_name,
+        color_hex: v.color_hex,
+        sku: v.sku,
+        price: v.price,
+        original_price: v.original_price,
+        stock_quantity: v.stock_quantity,
+        is_active: v.is_active,
+      };
+      if (v.id) {
+        const { error } = await gate.supabase
+          .from("product_variants")
+          .update(row)
+          .eq("id", v.id)
+          .eq("product_id", productId);
+        if (error) throw error;
+      } else {
+        const { error } = await gate.supabase.from("product_variants").insert(row);
+        if (error) throw error;
+      }
+    }
+
+    // تاریخچه قیمت از اولین وریانت
+    try {
+      const { recordProductPrice } = await import("@/lib/price-history");
+      await recordProductPrice({
+        productId,
+        price: cleaned[0]!.price,
+        supabase: gate.supabase,
+      });
+    } catch {
+      /* optional */
+    }
+
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSyncProductVariants]", e);
+    return { ok: false as const, error: "server" };
   }
 }
