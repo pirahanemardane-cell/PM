@@ -1,3 +1,6 @@
+import { RelatedStrip } from "@/components/shop/related-strip";
+import { getRelatedProducts } from "@/lib/related-products";
+import { getRelatedPosts } from "@/lib/related-posts";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";

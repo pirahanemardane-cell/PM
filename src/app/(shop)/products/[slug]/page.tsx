@@ -1,3 +1,5 @@
+import { RelatedStrip } from "@/components/shop/related-strip";
+import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -111,6 +113,12 @@ export default async function ProductDetailPage({ params }: Props) {
       stock: Number((v as { stock_quantity?: number }).stock_quantity ?? 0),
     };
   });
+
+    const relatedProducts = await getRelatedProducts(
+    product.id,
+    product.category_id ?? product.category?.id ?? null,
+    8,
+  );
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
