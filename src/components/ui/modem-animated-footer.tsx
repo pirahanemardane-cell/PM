@@ -108,7 +108,7 @@ export function Footer({
           </div>
         </div>
 
-        <div className="via-border absolute bottom-22 left-1/2 h-1 w-full sm:bottom-24 -translate-x-1/2 bg-gradient-to-r from-transparent to-transparent backdrop-blur-sm sm:bottom-34" />
+        <div className="absolute bottom-22 left-1/2 h-1 w-full -translate-x-1/2 bg-gradient-to-r from-transparent via-primary to-transparent sm:bottom-24 md:bottom-34" />
         <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
       </footer>
     </section>
