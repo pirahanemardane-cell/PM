@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-1 gap-y-2.5 px-4 pb-8 text-center text-sm font-medium md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-28">
+                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-1 gap-y-2.5 px-4 pb-10 text-center text-sm font-medium md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-36">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -110,7 +110,7 @@ export function Footer({
 
         {/* Large background text */}
         <div
-          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-6 left-1/2 z-0 sm:bottom-8 md:bottom-2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-28"
+          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-8 left-1/2 z-0 sm:bottom-8 md:bottom-0 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-0"
           style={{ fontSize: "clamp(2.75rem, 12vw, 9.5rem)" }}
         >
           {watermarkName}
