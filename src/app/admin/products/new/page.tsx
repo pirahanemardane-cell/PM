@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminCreateProductAction } from "@/app/admin/actions/products";
+import {
+  adminListAttributesAction,
+  adminSyncProductAttributesAction,
+  type AttrWithOptions,
+} from "@/app/admin/actions/attributes";
 import { adminUploadProductImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
@@ -60,12 +65,19 @@ export default function NewProductPage() {
     },
   ]);
   const [colorName, setColorName] = useState("");
+  const [attrCatalog, setAttrCatalog] = useState<AttrWithOptions[]>([]);
+  const [attrSelections, setAttrSelections] = useState<Record<string, string>>({});
   const [sku, setSku] = useState("");
 
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  useEffect(() => {
+    void adminListAttributesAction().then((r) => {
+      if (r.ok) setAttrCatalog(r.items);
+    });
+  }, []);
   useEffect(() => {
     void (async () => {
       const [c, b, t] = await Promise.all([
@@ -145,6 +157,14 @@ export default function NewProductPage() {
       };
       setErr(map[res.error] || res.error || "خطا");
       return;
+    }
+    if (res.ok && res.id && Object.keys(attrSelections).length) {
+      await adminSyncProductAttributesAction(
+        res.id,
+        Object.entries(attrSelections)
+          .filter(([, oid]) => oid)
+          .map(([attribute_id, option_id]) => ({ attribute_id, option_id })),
+      );
     }
     router.push("/admin/products");
   }
@@ -523,6 +543,37 @@ export default function NewProductPage() {
             </div>
           ))}
         </div>
+
+        
+        {attrCatalog.length > 0 ? (
+          <div className="border-border space-y-3 rounded-2xl border p-4">
+            <h2 className="font-semibold">مشخصات فنی</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {attrCatalog.map((a) => (
+                <label key={a.id} className="block space-y-1 text-sm">
+                  <span className="font-medium">{a.name}</span>
+                  <select
+                    className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+                    value={attrSelections[a.id] ?? ""}
+                    onChange={(e) =>
+                      setAttrSelections((prev) => ({
+                        ...prev,
+                        [a.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">— انتخاب —</option>
+                    {a.options.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
 

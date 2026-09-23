@@ -28,6 +28,7 @@ const NAV = [
   { href: "/admin/products", label: "محصولات", icon: Package },
   { href: "/admin/categories", label: "دسته‌ها", icon: FolderTree },
   { href: "/admin/brands", label: "برندها", icon: Package },
+  { href: "/admin/attributes", label: "مشخصات", icon: Tag },
   { href: "/admin/tags", label: "برچسب‌ها", icon: Tag },
   { href: "/admin/discounts", label: "تخفیف‌ها", icon: Tag },
   { href: "/admin/flash-sale", label: "شگفت‌انگیز", icon: Percent },

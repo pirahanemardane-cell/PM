@@ -152,3 +152,90 @@ export async function adminSyncProductAttributesAction(
     return { ok: false as const, error: "server" };
   }
 }
+
+function slugify(input: string): string {
+  return (
+    input
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\u0600-\u06FFa-z0-9\-]+/gi, "")
+      .replace(/\-+/g, "-")
+      .replace(/^\-|\-$/g, "") || `attr-${Date.now()}`
+  );
+}
+
+export async function adminCreateAttributeAction(input: {
+  name: string;
+  slug?: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const name = (input.name || "").trim();
+  if (!name) return { ok: false as const, error: "name_required" };
+  const slug = (input.slug || "").trim() || slugify(name);
+  try {
+    const { data, error } = await gate.supabase
+      .from("attributes")
+      .insert({
+        name,
+        slug,
+        type: "select",
+        is_filterable: true,
+        is_required: false,
+        sort_order: 100,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { ok: true as const, id: data.id as string };
+  } catch (e) {
+    console.error("[adminCreateAttribute]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+export async function adminCreateAttributeOptionAction(input: {
+  attribute_id: string;
+  value: string;
+  slug?: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const value = (input.value || "").trim();
+  if (!value || !input.attribute_id)
+    return { ok: false as const, error: "validation" };
+  const slug = (input.slug || "").trim() || slugify(value);
+  try {
+    const { data, error } = await gate.supabase
+      .from("attribute_options")
+      .insert({
+        attribute_id: input.attribute_id,
+        value,
+        slug,
+        sort_order: 0,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { ok: true as const, id: data.id as string };
+  } catch (e) {
+    console.error("[adminCreateAttributeOption]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+export async function adminDeleteAttributeOptionAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { error } = await gate.supabase
+      .from("attribute_options")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, error: "server" };
+  }
+}
