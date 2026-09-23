@@ -27,12 +27,12 @@ export default async function BlogIndexPage() {
       <header>
         <h1 className="text-3xl font-bold">بلاگ</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          راهنما و مطالب مرتبط با پوشاک مردانه
+          
         </p>
       </header>
 
       {!items.length ? (
-        <p className="text-muted-foreground text-sm">هنوز مقاله‌ای منتشر نشده.</p>
+        <p className="text-muted-foreground text-sm"></p>
       ) : (
         <ul className="space-y-6">
           {items.map((post) => (

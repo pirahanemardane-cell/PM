@@ -66,7 +66,7 @@ export function OrderTrackBox() {
     <div className="bg-card space-y-4 rounded-2xl border p-5" dir="rtl">
       <h2 className="text-lg font-bold">پیگیری سفارش</h2>
       <p className="text-muted-foreground text-sm leading-7">
-        بدون ثبت‌نام، با شناسه سفارش (حداقل ۸ کاراکتر اول) وضعیت را ببینید.
+        با شناسه سفارش از وضعیت خرید خود مطلع شوید.
       </p>
       <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
         <Input

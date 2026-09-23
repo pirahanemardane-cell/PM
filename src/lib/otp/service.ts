@@ -2,7 +2,6 @@ import { createHash, randomInt } from "crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 import { normalizeIranMobile } from "@/lib/numbers";
 import { meliSendLoginCode } from "@/lib/sms/melipayamak";
-import { rateLimit } from "@/lib/security/rate-limit";
 
 const OTP_TTL_MS = Number(process.env.OTP_TTL_SECONDS || 300) * 1000;
 const MAX_ATTEMPTS = 5;
@@ -25,13 +24,6 @@ export type OtpRequestResult =
 export async function requestLoginOtp(rawPhone: string): Promise<OtpRequestResult> {
   const phone = normalizeIranMobile(rawPhone);
   if (!phone) return { ok: false, error: "invalid_phone" };
-
-  const rl = rateLimit({
-    key: `otp:req:${phone}`,
-    limit: 1,
-    windowMs: 55_000,
-  });
-  if (!rl.ok) return { ok: false, error: "rate_limit" };
 
   try {
     const service = createServiceClient();

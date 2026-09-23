@@ -24,7 +24,7 @@ export function NewsletterSmsBox() {
     <div className="bg-card space-y-4 rounded-2xl border p-5">
       <h2 className="text-lg font-bold">از آخرین تخفیف‌ها باخبر شوید</h2>
       <p className="text-muted-foreground text-sm leading-7">
-        شماره موبایل خود را وارد کنید (اعداد فارسی هم پذیرفته می‌شود).
+        شماره موبایل خود را وارد کنید 
       </p>
       <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
         <Input
