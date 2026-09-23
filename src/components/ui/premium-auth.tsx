@@ -127,7 +127,7 @@ export function AuthForm({
             setIsLoading(false);
             return;
           }
-          const res = await requestOtpAction(formData.phone);
+          const res = await requestOtpAction(normalizeIranMobile(formData.phone) ?? formData.phone);
           if (!res.ok) {
             const map: Record<string, string> = {
               invalid_phone: "شماره موبایل معتبر نیست",
@@ -152,7 +152,7 @@ export function AuthForm({
           setIsLoading(false);
           return;
         }
-        const ver = await verifyOtpAction(formData.phone, formData.otpCode);
+        const ver = await verifyOtpAction(normalizeIranMobile(formData.phone) ?? formData.phone, formData.otpCode);
         if (!ver.ok) {
           const map: Record<string, string> = {
             invalid_phone: "شماره نامعتبر است",

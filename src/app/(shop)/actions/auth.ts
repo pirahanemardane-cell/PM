@@ -4,9 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { requestLoginOtp, verifyLoginOtp } from "@/lib/otp/service";
+import { onlyDigits } from "@/lib/numbers";
 
 function otpEmail(phone: string) {
-  return `${phone.replace(/\D/g, "")}@phone.pirahanmardane.ir`;
+  return `${onlyDigits(phone)}@phone.pirahanmardane.ir`;
 }
 
 export async function signInAction(email: string, password: string) {

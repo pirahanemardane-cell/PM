@@ -1,4 +1,5 @@
 import { BaseRepository } from "./base.repository";
+import { normalizeIranMobile } from "@/lib/numbers";
 
 export type AddressRow = {
   id: string;
@@ -46,7 +47,7 @@ export class AddressRepository extends BaseRepository {
         user_id: userId,
         title: input.title?.trim() || null,
         full_name: input.full_name.trim(),
-        phone: input.phone.trim(),
+        phone: normalizeIranMobile(input.phone) ?? input.phone.trim(),
         province: input.province?.trim() || null,
         city: input.city.trim(),
         address_line: input.address_line.trim(),
@@ -68,7 +69,10 @@ export class AddressRepository extends BaseRepository {
     const patch: Record<string, unknown> = {};
     if (input.title !== undefined) patch.title = input.title?.trim() || null;
     if (input.full_name !== undefined) patch.full_name = input.full_name.trim();
-    if (input.phone !== undefined) patch.phone = input.phone.trim();
+    if (input.phone !== undefined) {
+      const n = normalizeIranMobile(input.phone);
+      patch.phone = n ?? input.phone.trim();
+    }
     if (input.province !== undefined)
       patch.province = input.province?.trim() || null;
     if (input.city !== undefined) patch.city = input.city.trim();

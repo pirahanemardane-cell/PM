@@ -1,3 +1,4 @@
+import { normalizeIranMobile, normalizePhone } from "@/lib/numbers";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -43,7 +44,7 @@ export async function adminSendNotificationAction(input: {
     let userId = target;
     // اگر موبایل است از profiles پیدا کن
     if (!target.includes("-") || target.startsWith("09") || target.startsWith("+98")) {
-      const phone = target.replace(/\s/g, "");
+      const phone = normalizeIranMobile(target) ?? normalizePhone(target).replace(/\s/g, "");
       const { data: prof } = await service
         .from("profiles")
         .select("id")
