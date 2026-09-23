@@ -88,8 +88,8 @@ export default async function HomePage() {
 
   const features = [
     {
-      title: "ضمانت اصالت",
-      desc: "کالای اصل با ضمانت فروشگاه",
+      title: "ضمانت کالا",
+      desc: "کالای با کیفیت",
       icon: ShieldCheck,
     },
     {
