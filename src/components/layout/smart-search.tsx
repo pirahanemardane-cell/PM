@@ -13,6 +13,7 @@ type SuggestProduct = {
   category?: string | null;
 };
 type SuggestItem = { name: string; slug: string };
+type SuggestPost = { title: string; slug: string };
 
 const COLORS = [
   { name: "سفید", value: "white" },
@@ -32,6 +33,7 @@ export function SmartSearch({ className }: { className?: string }) {
   const [products, setProducts] = useState<SuggestProduct[]>([]);
   const [brands, setBrands] = useState<SuggestItem[]>([]);
   const [categories, setCategories] = useState<SuggestItem[]>([]);
+  const [posts, setPosts] = useState<SuggestPost[]>([]);
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [color, setColor] = useState("");
@@ -77,6 +79,7 @@ export function SmartSearch({ className }: { className?: string }) {
       setProducts([]);
       setBrands([]);
       setCategories([]);
+      setPosts([]);
       setSuggestOpen(false);
       return;
     }
@@ -92,6 +95,7 @@ export function SmartSearch({ className }: { className?: string }) {
         setProducts(data.products ?? []);
         setBrands(data.brands ?? []);
         setCategories(data.categories ?? []);
+        setPosts(data.posts ?? []);
         setSuggestOpen(true);
         setFilterOpen(false);
       } catch {
@@ -118,7 +122,7 @@ export function SmartSearch({ className }: { className?: string }) {
   }, []);
 
   const hasSuggest =
-    products.length > 0 || brands.length > 0 || categories.length > 0;
+    products.length > 0 || brands.length > 0 || categories.length > 0 || posts.length > 0;
 
   return (
     <div
@@ -263,7 +267,27 @@ export function SmartSearch({ className }: { className?: string }) {
             </div>
           ) : null}
 
-          <button
+                    {posts.length > 0 ? (
+            <div className="border-border border-t px-3 py-2">
+              <p className="text-muted-foreground mb-1 text-[11px]">مقالات</p>
+              <ul className="space-y-0.5">
+                {posts.map((post) => (
+                  <li key={post.slug}>
+                    <Link
+                      href={"/blog/" + post.slug}
+                      onClick={() => setSuggestOpen(false)}
+                      className="hover:bg-muted/60 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
+                    >
+                      <Tag className="text-muted-foreground h-3.5 w-3.5" />
+                      {post.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+<button
             type="button"
             onClick={() => goResults()}
             className="border-border text-primary hover:bg-muted/50 sticky bottom-0 w-full border-t bg-card px-4 py-3 text-center text-sm font-medium"
