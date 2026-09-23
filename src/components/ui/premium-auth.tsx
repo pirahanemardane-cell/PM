@@ -172,7 +172,10 @@ export function AuthForm({
         }
         setSuccessMessage("ورود موفق");
         onSuccess?.({ phone: formData.phone });
-        setIsLoading(false);
+        // سشن cookie ست شده — hard navigate تا layout ادمین سشن را ببیند
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next") || "/admin/dashboard";
+        window.location.assign(next);
         return;
       }
 
