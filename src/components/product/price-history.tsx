@@ -63,7 +63,9 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
   const first = filtered[0]!;
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const priceSpan = max - min || 1;
-  const delta = last.price - first.price;
+  const prev = filtered.length >= 2 ? filtered[filtered.length - 2]! : first;
+  // رنگ بر اساس نقطهٔ آخر نسبت به نقطهٔ قبلی (نه اول بازه)
+  const delta = last.price - prev.price;
 
   const trendUp = delta > 0.5;
   const trendDown = delta < -0.5;
@@ -241,10 +243,10 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
       <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs">
         <span>
           {Math.abs(delta) < 1
-            ? "در این بازه تغییر محسوسی ثبت نشده است."
+            ? "نقطهٔ آخر نسبت به قبل تغییر محسوسی ندارد."
             : delta < 0
-              ? `کاهش ${fmtPrice(Math.abs(delta))} نسبت به ابتدای بازه`
-              : `افزایش ${fmtPrice(delta)} نسبت به ابتدای بازه`}
+              ? `کاهش ${fmtPrice(Math.abs(delta))} نسبت به نقطهٔ قبلی`
+              : `افزایش ${fmtPrice(delta)} نسبت به نقطهٔ قبلی`}
         </span>
         <span>میانگین: {fmtPrice(avg)}</span>
       </div>
