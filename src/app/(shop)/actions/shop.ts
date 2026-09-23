@@ -145,22 +145,7 @@ export async function addToCartAction(variantId: string, quantity = 1) {
     const cartRepo = new CartRepository();
     const cartId = await resolveCartId(); // user یا session cookie
     await cartRepo.addItem(cartId, variantId, quantity);
-    try {
-      const { createClient } = await import("@/lib/supabase/server");
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { createNotificationForUser } = await import("@/app/(shop)/actions/notifications");
-        await createNotificationForUser({
-          userId: user.id,
-          title: "افزوده شد به سبد",
-          body: "یک محصول به سبد خرید شما اضافه شد.",
-          type: "cart",
-          link: "/dashboard?tab=cart",
-        });
-      }
-    } catch {}
-    return { ok: true as const };
+return { ok: true as const };
   } catch (e) {
     console.error("[addToCart]", e);
     const msg =
@@ -246,9 +231,9 @@ export async function getCartAction(): Promise<{
         title: product?.name ?? "محصول",
         slug: product?.slug ?? "",
         image: sorted[0]?.url,
-        size: v?.size?.name ?? undefined,
-        color: v?.color?.name ?? undefined,
-        colorHex: v?.color?.hex_code ?? undefined,
+        size: typeof v?.size === "string" ? v.size : v?.size?.name ?? undefined,
+        color: v?.color_name ?? (typeof v?.color === "string" ? v.color : v?.color?.name) ?? undefined,
+        colorHex: v?.color_hex ?? v?.color?.hex_code ?? undefined,
       };
     });
 
