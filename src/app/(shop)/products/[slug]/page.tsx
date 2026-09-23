@@ -253,9 +253,14 @@ export default async function ProductDetailPage({ params }: Props) {
             </Link>
           </div>
         </div>
-      {/* توضیحات + مشخصات — تمام‌عرض تک‌ستونه */}
+      
+
+      {/* توضیحات — تمام‌عرض خارج از grid */}
       {product.description ? (
-        <section className="col-span-full mt-10 w-full max-w-none border-t pt-8" aria-label="توضیحات محصول">
+        <section
+          className="mt-10 w-full max-w-none border-t pt-8"
+          aria-label="توضیحات محصول"
+        >
           <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
           <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
             {product.description}
@@ -263,22 +268,30 @@ export default async function ProductDetailPage({ params }: Props) {
         </section>
       ) : null}
 
-      <div className="col-span-full mt-8 w-full max-w-none">
+      <div className="mt-8 w-full max-w-none">
         <ProductSpecs rows={specRows} />
       </div>
+
       {relatedProducts?.length ? (
         <div className="mt-12 w-full max-w-none">
           <RelatedStrip
             title="محصولات مرتبط"
             items={relatedProducts.map((p) => ({
-              title: String((p as { name?: string; title?: string }).name ?? (p as { title?: string }).title ?? ""),
+              title: String(
+                (p as { name?: string; title?: string }).name ??
+                  (p as { title?: string }).title ??
+                  "",
+              ),
               href: `/products/${(p as { slug: string }).slug}`,
-              image: (p as { image_url?: string; primary_image_url?: string }).image_url
-                ?? (p as { primary_image_url?: string }).primary_image_url
-                ?? undefined,
-              subtitle: (p as { price?: number }).price != null
-                ? `${Number((p as { price: number }).price).toLocaleString("fa-IR")} تومان`
-                : null,
+              image:
+                (p as { image_url?: string; primary_image_url?: string })
+                  .image_url ??
+                (p as { primary_image_url?: string }).primary_image_url ??
+                undefined,
+              subtitle:
+                (p as { price?: number }).price != null
+                  ? `${Number((p as { price: number }).price).toLocaleString("fa-IR")} تومان`
+                  : null,
             }))}
           />
         </div>
@@ -288,6 +301,5 @@ export default async function ProductDetailPage({ params }: Props) {
         <ProductReviews productId={product.id} />
       </div>
     </main>
-
   );
 }
