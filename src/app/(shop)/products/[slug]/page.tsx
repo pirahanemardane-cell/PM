@@ -276,7 +276,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
       {/* توضیحات + مشخصات — تمام‌عرض تک‌ستونه */}
       {product.description ? (
-        <section className="mt-10 w-full border-t pt-8" aria-label="توضیحات محصول">
+        <section className="col-span-full mt-10 w-full max-w-none border-t pt-8" aria-label="توضیحات محصول">
           <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
           <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
             {product.description}
@@ -284,7 +284,7 @@ export default async function ProductDetailPage({ params }: Props) {
         </section>
       ) : null}
 
-      <div className="mt-8 w-full">
+      <div className="col-span-full mt-8 w-full max-w-none">
         <ProductSpecs rows={specRows} />
       </div>
 
