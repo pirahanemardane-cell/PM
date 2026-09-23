@@ -18,6 +18,7 @@ import {
   FileText,
   MessageSquare,
   Ticket,
+  Bell,
 } from "lucide-react";
 
 const NAV = [
@@ -33,6 +34,7 @@ const NAV = [
   { href: "/admin/blog", label: "بلاگ", icon: FileText },
   { href: "/admin/reviews", label: "نظرات", icon: MessageSquare },
   { href: "/admin/tickets", label: "تیکت‌ها", icon: Ticket },
+  { href: "/admin/notifications", label: "اعلان‌ها", icon: Bell },
   { href: "/admin/returns", label: "مرجوعی", icon: Package },
   { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },

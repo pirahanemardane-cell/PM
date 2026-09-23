@@ -489,3 +489,21 @@ code {
   }
 }
 /* === PM-OVERFLOW-GUARD-END === */
+
+/* === PM-TOAST-POS === */
+@media (max-width: 640px) {
+  [data-scope="toast"][data-part="group"],
+  [data-part="group"][data-placement],
+  .toast-group,
+  [data-scope="toast"][data-part="viewport"] {
+    top: 0.75rem !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(92vw, 380px) !important;
+  }
+}
+/* === PM-TOAST-POS-END === */
+
+

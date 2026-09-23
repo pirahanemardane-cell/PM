@@ -1,6 +1,7 @@
 "use client";
 
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
@@ -42,6 +43,8 @@ import {
 } from "@/app/(shop)/actions/returns";
 import { ComposerInput } from "@/components/ui/composer-input";
 import { normalizeIranMobile } from "@/lib/numbers";
+import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
+import { useNotifications } from "@/lib/notifications/use-notifications";
 
 const TABS = [
   { id: "shop", label: "فروشگاه" },
@@ -55,6 +58,7 @@ const TABS = [
   { id: "coupons", label: "کد تخفیف" },
   { id: "tickets", label: "پشتیبانی" },
   { id: "returns", label: "بازگشت کالا" },
+  { id: "notifications", label: "اعلان‌ها" },
   { id: "profile", label: "پروفایل" },
 ] as const;
 
@@ -90,6 +94,8 @@ export default function BuyerDashboardPage() {
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [profileEmail, setProfileEmail] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
+  const displayName = profileForm.full_name?.trim() || "حساب من";
+  const notif = useNotifications(authOk);
   const [serverWishlist, setServerWishlist] = useState<
     { productId: string; title: string; slug: string; price: number; image?: string }[]
   >([]);
@@ -431,52 +437,13 @@ useEffect(() => {
 
 
   return (
-    <div className="bg-surface-muted min-h-screen" dir="rtl">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[240px_1fr]">
-        <aside className="border-border bg-card h-fit rounded-2xl border p-4 shadow-sm">
-          <h1 className="mb-4 text-lg font-bold">پنل خریدار</h1>
-          <nav className="space-y-1">
-            {TABS.map((t) => {
-              const c =
-                t.id === "cart"
-                  ? counts.cart
-                  : t.id === "wishlist"
-                    ? counts.wishlist
-                    : t.id === "compare"
-                      ? counts.compare
-                      : t.id === "recent"
-                        ? counts.recent
-                        : 0;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm",
-                    tab === t.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  )}
-                >
-                  <span>{t.label}</span>
-                  {c > 0 ? (
-                    <span
-                      className={cn(
-                        "rounded-full px-2 text-[11px]",
-                        tab === t.id ? "bg-background/20" : "bg-muted"
-                      )}
-                    >
-                      {c}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-
-        <section className="border-border bg-card rounded-2xl border p-5 shadow-sm">
+    <CustomerDashboardShell
+      displayName={displayName}
+      activeTab={tab}
+      onTabChange={(id) => setTab(id as TabId)}
+      title={TABS.find((x) => x.id === tab)?.label ?? "پنل"}
+    >
+        <div className="border-border bg-card rounded-xl border p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold">
               {TABS.find((t) => t.id === tab)?.label}
@@ -583,6 +550,74 @@ useEffect(() => {
                 ))}
               </ul>
             )
+          ) : tab === "notifications" ? (
+            <div className="space-y-4" dir="rtl">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-muted-foreground text-sm">
+                  {notif.unread > 0
+                    ? `${notif.unread} اعلان خوانده‌نشده`
+                    : "همه اعلان‌ها خوانده شده‌اند"}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-xs"
+                    onClick={() => void notif.markAll()}
+                  >
+                    خواندن همه
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs"
+                    onClick={async () => {
+                      const r = await createTestNotificationAction();
+                      if (!r.ok) toast.error("ثبت اعلان تست ناموفق");
+                      else {
+                        toast.success("اعلان تست ثبت شد");
+                        void notif.refresh();
+                      }
+                    }}
+                  >
+                    اعلان تستی
+                  </button>
+                </div>
+              </div>
+              {notif.loading ? (
+                <div className="flex justify-center py-10"><LumaSpin /></div>
+              ) : notif.items.length === 0 ? (
+                <p className="text-muted-foreground text-sm">اعلانی نیست.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {notif.items.map((n) => (
+                    <li
+                      key={n.id}
+                      className={`border-border rounded-xl border p-3 text-right ${
+                        n.read_at ? "opacity-70" : "bg-primary/5"
+                      }`}
+                    >
+                      <div className="mb-1 flex items-start justify-between gap-2">
+                        <span className="text-sm font-medium">{n.title}</span>
+                        <span className="text-muted-foreground shrink-0 text-[11px]">
+                          {new Date(n.created_at).toLocaleString("fa-IR")}
+                        </span>
+                      </div>
+                      {n.body ? (
+                        <p className="text-muted-foreground text-xs">{n.body}</p>
+                      ) : null}
+                      {!n.read_at ? (
+                        <button
+                          type="button"
+                          className="text-primary mt-2 text-xs hover:underline"
+                          onClick={() => void notif.markRead(n.id)}
+                        >
+                          علامت به‌عنوان خوانده‌شده
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ) : tab === "profile" ? (
             profileLoading ? (
               <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
@@ -1444,8 +1479,7 @@ useEffect(() => {
               );
             })()
           )}
-        </section>
-      </div>
-    </div>
+        </div>
+    </CustomerDashboardShell>
   );
 }

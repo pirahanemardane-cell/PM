@@ -1,3 +1,4 @@
+import { NotificationBell } from "@/components/notifications/notification-bell";
 "use client";
 
 import { useState } from "react";
@@ -27,7 +28,9 @@ export function HeaderActions({ className, showTheme = true }: Props) {
 
   return (
     <>
-      <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
+      
+      <NotificationBell />
+<div className={cn("flex flex-wrap items-center gap-1.5", className)}>
         {showTheme ? (
           <ThemeToggle />
         ) : null}
