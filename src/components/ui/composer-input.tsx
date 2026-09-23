@@ -61,27 +61,7 @@ export function ComposerInput({
       />
       <div className="mt-1 flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-40"
-            disabled
-            title="ارسال تصویر غیرفعال است"
-          >
-            <ImageIcon className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-40"
-            disabled
-            title="ارسال لینک غیرفعال است"
-          >
-            <Link2 className="h-4 w-4" />
-          </Button>
-        </div>
+          </div>
         <Button
           type="button"
           size="sm"
