@@ -152,14 +152,14 @@ export default async function ProductDetailPage({ params }: Props) {
               ) : null}
               {product.category?.slug ? (
                 <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
-                  <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">
+                  <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
                     {product.category.name}
                   </Badge>
                 </Link>
               ) : null}
               {product.brand?.slug ? (
                 <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
-                  <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 dark:bg-violet-900/40 dark:text-violet-200">
+                  <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
                     {product.brand.name}
                   </Badge>
                 </Link>
