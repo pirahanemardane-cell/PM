@@ -8,6 +8,12 @@ import {
   adminUpdateProductAction,
   adminSyncProductVariantsAction,
 } from "@/app/admin/actions/products";
+import {
+  adminListAttributesAction,
+  adminGetProductAttributeValuesAction,
+  adminSyncProductAttributesAction,
+  type AttrWithOptions,
+} from "@/app/admin/actions/attributes";
 import { adminUploadProductImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
@@ -61,6 +67,8 @@ export default function EditProductPage() {
   const [variantRows, setVariantRows] = useState<VRow[]>([]);
 
   const [colorName, setColorName] = useState("");
+  const [attrCatalog, setAttrCatalog] = useState<AttrWithOptions[]>([]);
+  const [attrSelections, setAttrSelections] = useState<Record<string, string>>({});
   const [sku, setSku] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
@@ -198,6 +206,18 @@ export default function EditProductPage() {
         setPrimaryImageId((img as { id?: string }).id ?? null);
       }
       setSelectedTags((p.product_tag_map ?? []).map((x) => x.tag_id));
+      const [attrsRes, valsRes] = await Promise.all([
+        adminListAttributesAction(),
+        adminGetProductAttributeValuesAction(id),
+      ]);
+      if (attrsRes.ok) setAttrCatalog(attrsRes.items);
+      if (valsRes.ok) {
+        const map: Record<string, string> = {};
+        for (const v of valsRes.values) {
+          if (v.option_id) map[v.attribute_id] = v.option_id;
+        }
+        setAttrSelections(map);
+      }
       setLoading(false);
     })();
     return () => {
@@ -255,6 +275,17 @@ export default function EditProductPage() {
       );
       if (!sync.ok) {
         setErr("محصول ذخیره شد؛ همگام‌سازی وریانت ناموفق");
+        setBusy(false);
+        return;
+      }
+    }
+    {
+      const attrVals = Object.entries(attrSelections)
+        .filter(([, optionId]) => optionId)
+        .map(([attribute_id, option_id]) => ({ attribute_id, option_id }));
+      const aSync = await adminSyncProductAttributesAction(id, attrVals);
+      if (!aSync.ok) {
+        setErr("محصول ذخیره شد؛ مشخصات همگام نشد");
         setBusy(false);
         return;
       }
@@ -719,6 +750,40 @@ export default function EditProductPage() {
             هر ترکیب سایز/رنگ یک وریانت است. قیمت بالای فرم برای سازگاری نگه‌داشته می‌شود؛ منبع اصلی همین جدول است.
           </p>
         </div>
+
+        
+        {attrCatalog.length > 0 ? (
+          <div className="border-border space-y-3 rounded-2xl border p-4">
+            <h2 className="font-semibold">مشخصات فنی</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {attrCatalog.map((a) => (
+                <label key={a.id} className="block space-y-1 text-sm">
+                  <span className="font-medium">{a.name}</span>
+                  <select
+                    className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+                    value={attrSelections[a.id] ?? ""}
+                    onChange={(e) =>
+                      setAttrSelections((prev) => ({
+                        ...prev,
+                        [a.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">— انتخاب —</option>
+                    {a.options.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <p className="text-muted-foreground text-xs">
+              این مقادیر در جدول مشخصات صفحه محصول نمایش داده می‌شوند.
+            </p>
+          </div>
+        ) : null}
 
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
 

@@ -1,0 +1,154 @@
+"use server";
+
+import { requireAdmin } from "@/lib/admin/require-admin";
+
+export type AttrOption = {
+  id: string;
+  value: string;
+  slug: string;
+};
+
+export type AttrWithOptions = {
+  id: string;
+  name: string;
+  slug: string;
+  type: string | null;
+  is_filterable: boolean | null;
+  options: AttrOption[];
+};
+
+export async function adminListAttributesAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok)
+    return { ok: false as const, error: gate.error, items: [] as AttrWithOptions[] };
+  try {
+    const { data: attrs, error } = await gate.supabase
+      .from("attributes")
+      .select("id, name, slug, type, is_filterable, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    const rows = attrs ?? [];
+    if (!rows.length) return { ok: true as const, items: [] as AttrWithOptions[] };
+
+    const ids = rows.map((a: { id: string }) => a.id);
+    const { data: opts, error: oErr } = await gate.supabase
+      .from("attribute_options")
+      .select("id, attribute_id, value, slug, sort_order")
+      .in("attribute_id", ids)
+      .order("sort_order", { ascending: true });
+    if (oErr) throw oErr;
+
+    const byAttr = new Map<string, AttrOption[]>();
+    for (const o of opts ?? []) {
+      const list = byAttr.get(o.attribute_id as string) ?? [];
+      list.push({
+        id: o.id as string,
+        value: String(o.value ?? ""),
+        slug: String(o.slug ?? ""),
+      });
+      byAttr.set(o.attribute_id as string, list);
+    }
+
+    const items: AttrWithOptions[] = rows.map(
+      (a: {
+        id: string;
+        name: string;
+        slug: string;
+        type?: string | null;
+        is_filterable?: boolean | null;
+      }) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        type: a.type ?? null,
+        is_filterable: a.is_filterable ?? null,
+        options: byAttr.get(a.id) ?? [],
+      }),
+    );
+    return { ok: true as const, items };
+  } catch (e) {
+    console.error("[adminListAttributes]", e);
+    return { ok: false as const, error: "server", items: [] as AttrWithOptions[] };
+  }
+}
+
+export async function adminGetProductAttributeValuesAction(productId: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok)
+    return {
+      ok: false as const,
+      error: gate.error,
+      values: [] as {
+        attribute_id: string;
+        option_id: string | null;
+        value_text: string | null;
+      }[],
+    };
+  try {
+    const { data, error } = await gate.supabase
+      .from("product_attribute_values")
+      .select("attribute_id, option_id, value_text")
+      .eq("product_id", productId);
+    if (error) throw error;
+    return {
+      ok: true as const,
+      values: (data ?? []) as {
+        attribute_id: string;
+        option_id: string | null;
+        value_text: string | null;
+      }[],
+    };
+  } catch (e) {
+    console.error("[adminGetProductAttributeValues]", e);
+    return {
+      ok: false as const,
+      error: "server",
+      values: [] as {
+        attribute_id: string;
+        option_id: string | null;
+        value_text: string | null;
+      }[],
+    };
+  }
+}
+
+export type AttrValueInput = {
+  attribute_id: string;
+  option_id?: string | null;
+  value_text?: string | null;
+};
+
+export async function adminSyncProductAttributesAction(
+  productId: string,
+  values: AttrValueInput[],
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!productId) return { ok: false as const, error: "product_required" };
+  try {
+    await gate.supabase
+      .from("product_attribute_values")
+      .delete()
+      .eq("product_id", productId);
+
+    const rows = (values ?? [])
+      .filter((v) => v.attribute_id && (v.option_id || (v.value_text || "").trim()))
+      .map((v) => ({
+        product_id: productId,
+        attribute_id: v.attribute_id,
+        option_id: v.option_id || null,
+        value_text: (v.value_text || "").trim() || null,
+      }));
+
+    if (rows.length) {
+      const { error } = await gate.supabase
+        .from("product_attribute_values")
+        .insert(rows);
+      if (error) throw error;
+    }
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSyncProductAttributes]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
