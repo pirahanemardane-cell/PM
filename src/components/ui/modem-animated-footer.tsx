@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground mx-auto grid max-w-3xl grid-cols-2 gap-x-4 gap-y-2 px-4 pb-10 text-center text-sm font-medium sm:grid-cols-3 md:grid-cols-5 md:gap-y-3 md:pb-4">
+                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-2 gap-x-3 gap-y-2.5 px-4 pb-16 text-center text-sm font-medium sm:grid-cols-2 md:grid-cols-5 md:gap-y-3 md:pb-20">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -110,14 +110,14 @@ export function Footer({
 
         {/* Large background text */}
         <div
-          className="text-primary/35 pointer-events-none absolute bottom-28 left-1/2 sm:bottom-32 md:bottom-28 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-28"
+          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-10 left-1/2 z-0 sm:bottom-12 md:bottom-8 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-28"
           style={{ fontSize: "clamp(2.75rem, 12vw, 9.5rem)" }}
         >
           {watermarkName}
         </div>
 
         {/* Logo frame: border kept, NO fill background on inner */}
-        <div className="absolute bottom-16 left-1/2 z-10 md:bottom-14 flex -translate-x-1/2 items-center justify-center md:bottom-20">
+        <div className="absolute bottom-12 left-1/2 z-10 md:bottom-10 flex -translate-x-1/2 items-center justify-center md:bottom-20">
           <div
             className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg flex h-14 w-14 items-center justify-center rounded-2xl border-2 p-2 shadow-sm sm:h-20 sm:w-20 md:h-24 md:w-24 duration-300 hover:border-primary transition-colors"
           >
