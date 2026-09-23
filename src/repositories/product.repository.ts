@@ -153,22 +153,64 @@ export class ProductRepository extends BaseRepository {
 
     let items = (data ?? []) as ProductWithRelations[];
 
+    // map UUID → label for text fields on variants (size / color_name)
+    let sizeLabel: string | null = null;
+    let colorName: string | null = null;
+    if (filters.sizeId) {
+      const { data: sz } = await client
+        .from("sizes")
+        .select("name, label, slug")
+        .eq("id", filters.sizeId)
+        .maybeSingle();
+      if (sz) {
+        const row = sz as { name?: string; label?: string; slug?: string };
+        sizeLabel = (row.label || row.name || row.slug || "").trim() || null;
+      }
+    }
+    if (filters.colorId) {
+      const { data: cl } = await client
+        .from("colors")
+        .select("name, slug")
+        .eq("id", filters.colorId)
+        .maybeSingle();
+      if (cl) {
+        const row = cl as { name?: string; slug?: string };
+        colorName = (row.name || row.slug || "").trim() || null;
+      }
+    }
+
+
     // فیلتر سمت اپ برای سایز / رنگ / موجودی / قیمت (روی variants)
     if (filters.sizeId || filters.colorId || filters.inStock || filters.minPrice != null || filters.maxPrice != null) {
       items = items.filter((p) => {
         const variants = (p.variants ?? []).filter((v) => v.is_active);
         return variants.some((v) => {
-          if (filters.sizeId) {
-            const sn = typeof (v as {size?:string}).size === "string" ? (v as {size:string}).size : "";
-            if (sn && sn !== filters.sizeId) return false;
+          if (sizeLabel) {
+            const sn = (typeof (v as { size?: string | null }).size === "string"
+              ? (v as { size: string }).size
+              : ""
+            ).trim();
+            if (!sn || sn.toLowerCase() !== sizeLabel.toLowerCase()) return false;
+          } else if (filters.sizeId) {
+            // size row missing → no match
+            return false;
           }
-          if (filters.colorId && v.color_id !== filters.colorId) return false;
+          if (colorName) {
+            const cn = (typeof (v as { color_name?: string | null }).color_name === "string"
+              ? (v as { color_name: string }).color_name
+              : ""
+            ).trim();
+            if (!cn || cn.toLowerCase() !== colorName.toLowerCase()) return false;
+          } else if (filters.colorId) {
+            return false;
+          }
           if (filters.inStock && v.stock_quantity <= 0) return false;
           if (filters.minPrice != null && Number(v.price) < filters.minPrice) return false;
           if (filters.maxPrice != null && Number(v.price) > filters.maxPrice) return false;
           return true;
         });
       });
+    }
     }
 
     return {
