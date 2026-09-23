@@ -121,16 +121,26 @@ export function ProductCard({ product }: Props) {
         : x.size && typeof x.size === "object"
           ? x.size.name ?? null
           : null;
-    let colorVal: string | null = null;
+    let colorVal: string | null =
+      (v as { color_name?: string | null }).color_name
+      ?? (v as { color_hex?: string | null }).color_hex
+      ?? null;
+    if (!colorVal) {
     if (typeof x.color === "string") colorVal = x.color;
     else if (x.color && typeof x.color === "object") {
       colorVal = x.color.hex_code || x.color.hex || x.color.name || null;
     }
+    const stock = Number(
+      (v as { stock_quantity?: number; stock?: number }).stock_quantity
+        ?? (v as { stock?: number }).stock
+        ?? 0,
+    );
     return {
       id: x.id,
       price: Number(x.price),
       size: sizeName,
       color: colorVal,
+      stock,
     };
   });
 
