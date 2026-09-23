@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { signInAction, signUpAction, resetPasswordAction, requestOtpAction, verifyOtpAction } from "@/app/(shop)/actions/auth";
-import { isValidIranMobile } from "@/lib/numbers";
+import { isValidIranMobile, onlyDigits} from "@/lib/numbers";
 import {
   Mail,
   Lock,
@@ -454,10 +454,10 @@ export function AuthForm({
                   maxLength={6}
                   placeholder="کد ۶ رقمی"
                   value={formData.otpCode}
-                  onChange={(e) =>
+                  onChange={(e) = inputMode="numeric" autoComplete="one-time-code">
                     handleInputChange(
                       "otpCode",
-                      e.target.value.replace(/\D/g, "").slice(0, 6)
+                      onlyDigits(e.target.value, 6).replace(/\D/g, "").slice(0, 6)
                     )
                   }
                   className="border-input bg-muted/50 w-full rounded-xl border py-3 text-center font-mono text-2xl tracking-widest"
@@ -503,7 +503,7 @@ export function AuthForm({
               onChange={(e) =>
                 handleInputChange(
                   "verificationCode",
-                  e.target.value.replace(/\D/g, "").slice(0, 6)
+                  onlyDigits(e.target.value, 6).replace(/\D/g, "").slice(0, 6)
                 )
               }
               className="border-input bg-muted/50 w-full rounded-xl border py-3 text-center font-mono text-2xl tracking-widest"
