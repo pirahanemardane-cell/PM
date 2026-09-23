@@ -171,14 +171,6 @@ export default async function ProductDetailPage({ params }: Props) {
             image={primaryImage?.url}
             href={`/products/${product.slug}`}
           />
-<>
-          <TrackRecentlyViewed
-            id={String(product.id)}
-            title={String(product.name ?? "")}
-            price={Number(product.price ?? 0)}
-            image={primaryImage?.url}
-            href={`/products/${product.slug}`}
-          />
           <ProductBuyBox
             productId={product.id}
             title={product.name}
@@ -186,7 +178,6 @@ export default async function ProductDetailPage({ params }: Props) {
             href={`/products/${product.slug}`}
             variants={variantOptions}
           />
-          </>
           </>
 
 
