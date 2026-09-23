@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { Percent } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
 
@@ -52,48 +52,54 @@ export function FlashSalePromoCard({
     <Link
       href={href}
       className={cn(
-        "group flex h-full min-h-[360px] w-full flex-col overflow-hidden rounded-2xl border border-rose-200/80 bg-gradient-to-br from-rose-600 via-rose-500 to-orange-500 text-white shadow-sm transition-transform hover:-translate-y-0.5 dark:border-rose-900/50",
+        "group bg-card border-border hover:border-primary flex h-full min-h-[360px] w-full flex-col overflow-hidden rounded-2xl border shadow-sm transition-colors",
         className,
       )}
+      dir="rtl"
     >
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-5 text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-          <Zap className="h-3.5 w-3.5 fill-current" />
-          فروش ویژه
-        </span>
+      <div className="from-primary/15 via-secondary/10 to-muted relative flex flex-1 flex-col items-center justify-center gap-4 bg-gradient-to-br p-5 text-center">
+        <div className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-2xl shadow-md ring-4 ring-primary/20 sm:size-20">
+          <Percent className="size-8 sm:size-10" strokeWidth={2.5} />
+        </div>
         <div className="space-y-1">
-          <h3 className="font-iranyekan-heavy text-xl leading-8 sm:text-2xl">
-            پیشنهاد شگفت‌انگیز
+          <h3 className="text-primary text-xl font-black tracking-tight sm:text-2xl">
+            فروش ویژه
           </h3>
-          <p className="text-sm leading-6 text-white/90">
-            تا پایان زمان، تخفیف‌های محدود
+          <p className="text-muted-foreground text-xs font-medium sm:text-sm">
+            پیشنهاد شگفت‌انگیز · تا پایان زمان
           </p>
         </div>
+      </div>
+
+      <div className="border-border space-y-2 border-t px-3 py-3">
+        <p className="text-muted-foreground text-center text-[11px] font-medium">
+          {cd && cd.done ? "پایان یافته" : endsAt ? "زمان باقی‌مانده" : "زمان‌بندی به‌زودی"}
+        </p>
         {cd && !cd.done ? (
-          <div className="grid w-full max-w-[220px] grid-cols-4 gap-1.5" dir="ltr">
+          <div className="grid grid-cols-4 gap-1.5" dir="ltr">
             {[
-              { label: "روز", value: pad(cd.days) },
-              { label: "ساعت", value: pad(cd.hours) },
-              { label: "دقیقه", value: pad(cd.minutes) },
               { label: "ثانیه", value: pad(cd.seconds) },
+              { label: "دقیقه", value: pad(cd.minutes) },
+              { label: "ساعت", value: pad(cd.hours) },
+              { label: "روز", value: pad(cd.days) },
             ].map((u) => (
               <div
                 key={u.label}
-                className="rounded-xl bg-black/20 px-1 py-2 backdrop-blur-sm"
+                className="bg-muted/70 flex flex-col items-center rounded-xl px-1 py-1.5"
               >
-                <div className="font-iranyekan-heavy text-base tabular-nums sm:text-lg">
+                <span className="text-foreground text-sm font-bold tabular-nums sm:text-base">
                   {u.value}
-                </div>
-                <div className="mt-0.5 text-[10px] text-white/80">{u.label}</div>
+                </span>
+                <span className="text-muted-foreground text-[10px]">{u.label}</span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="rounded-xl bg-black/20 px-3 py-2 text-xs text-white/90">
-            {endsAt ? "این فروش به پایان رسیده" : "زمان‌بندی به‌زودی"}
+          <p className="text-muted-foreground text-center text-xs">
+            {endsAt ? "این فروش به پایان رسیده" : "از پنل ادمین زمان پایان را تنظیم کنید"}
           </p>
         )}
-        <span className="mt-1 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm transition group-hover:bg-white/95">
+        <span className="bg-primary text-primary-foreground mt-1 flex h-10 w-full items-center justify-center rounded-xl text-sm font-semibold transition-opacity group-hover:opacity-90">
           مشاهده همه
         </span>
       </div>
