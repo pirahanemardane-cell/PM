@@ -93,10 +93,15 @@ export default async function HomePage() {
           .length
         ? (newest as Array<{ is_bestseller?: boolean }>).filter((p) => p.is_bestseller)
         : newest;
-  const deals = featured.length ? featured : newest;
-
   const flashRes = await getFlashSaleEndsAtAction();
   const flashEndsAt = flashRes.ok ? flashRes.endsAt : null;
+  // فقط وقتی زمان پایان در آینده است، فروش ویژه فعال است
+  const flashActive =
+    Boolean(flashEndsAt) &&
+    !Number.isNaN(new Date(flashEndsAt as string).getTime()) &&
+    new Date(flashEndsAt as string).getTime() > Date.now();
+  // پیشنهاد شگفت‌انگیز = فقط محصولات is_featured (بدون fallback به newest)
+  const deals = flashActive ? featured : [];
 
   const features = [
     {
@@ -192,7 +197,7 @@ export default async function HomePage() {
       {/* 5. Deals */}
       <section aria-label="پیشنهاد شگفت‌انگیز">
         <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=1" />
-        {deals.length > 0 || flashEndsAt ? (
+        {flashActive ? (
           <HorizontalRail>
             <div className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
               <FlashSalePromoCard endsAt={flashEndsAt} />
