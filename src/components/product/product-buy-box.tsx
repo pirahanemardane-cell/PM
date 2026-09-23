@@ -182,7 +182,7 @@ export function ProductBuyBox({
               <button
                 key={c}
                 type="button"
-                onClick={() => setSelectedColor(c); onColorChange?.(c)}
+                onClick={() => { setSelectedColor(c); onColorChange?.(c); }}
                 className={cn(
                   "border-border h-8 min-w-8 rounded-full border px-2 text-xs",
                   selectedColor === c && "ring-secondary ring-2 ring-offset-2",
