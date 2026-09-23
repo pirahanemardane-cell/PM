@@ -142,6 +142,7 @@ export default async function ProductDetailPage({ params }: Props) {
             </h1>
             <div className="flex flex-wrap gap-2">
               <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
               {product.is_new ? (
                 <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">جدید</Badge>
               ) : null}
@@ -166,6 +167,8 @@ export default async function ProductDetailPage({ params }: Props) {
 
           {product.short_description && (
             </div>
+            </div>
+            
             
             <p className="text-muted-foreground leading-7">
               {product.short_description}
