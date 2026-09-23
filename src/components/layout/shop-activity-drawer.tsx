@@ -14,14 +14,16 @@ import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
 import { removeCartItemAction, updateCartQuantityAction } from "@/app/(shop)/actions/shop";
 import { X } from "lucide-react";
+import { NotificationsPanel } from "@/components/notifications/notifications-panel";
 
-export type ActivityTab = "cart" | "wishlist" | "compare" | "recent";
+export type ActivityTab = "cart" | "wishlist" | "compare" | "recent" | "notifications";
 
 const LABELS: Record<ActivityTab, string> = {
   cart: "سبد خرید",
   wishlist: "علاقه‌مندی‌ها",
   compare: "مقایسه",
   recent: "بازدیدهای اخیر",
+  notifications: "اعلان‌ها",
 };
 
 export function ShopActivityDrawer({
@@ -50,13 +52,15 @@ export function ShopActivityDrawer({
     : cart.reduce((sum, x) => sum + (x.price ?? 0) * (x.quantity ?? 1), 0);
 
   const items =
-    tab === "cart"
-      ? (isLoggedIn ? unifiedLines : cart)
-      : tab === "wishlist"
-        ? wishlist
-        : tab === "compare"
-          ? compare
-          : recent;
+    tab === "notifications"
+      ? []
+      : tab === "cart"
+        ? (isLoggedIn ? unifiedLines : cart)
+        : tab === "wishlist"
+          ? wishlist
+          : tab === "compare"
+            ? compare
+            : recent;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} direction="right">
@@ -68,7 +72,9 @@ export function ShopActivityDrawer({
           </DrawerClose>
         </DrawerHeader>
 <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          {items.length === 0 ? (
+          {tab === "notifications" ? (
+            <NotificationsPanel onNavigate={() => onOpenChange(false)} />
+          ) : items.length === 0 ? (
             <p className="text-muted-foreground text-sm">موردی نیست.</p>
           ) : (
             <ul className="space-y-3">
