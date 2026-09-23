@@ -32,12 +32,9 @@ const RANGES: { key: RangeKey; label: string; days: number | null }[] = [
   { key: "all", label: "همه", days: null },
 ];
 
-/**
- * نمودار تغییر قیمت
- * محور X = قیمت  |  محور Y = تاریخ (طبق درخواست)
- */
+/** استاندارد: محور X = تاریخ ، محور Y = قیمت (مشابه ترب) */
 export function PriceHistory({ points }: { points: PricePoint[] }) {
-  const [range, setRange] = useState<RangeKey>("3m");
+  const [range, setRange] = useState<RangeKey>("all");
 
   const filtered = useMemo(() => {
     if (!points.length) return [];
@@ -63,46 +60,35 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
   const first = filtered[0]!;
   const priceRange = max - min || 1;
 
-  const times = filtered.map((p) => new Date(p.recorded_at).getTime());
-  const tMin = Math.min(...times);
-  const tMax = Math.max(...times);
-  const tRange = tMax - tMin || 1;
-
-  // SVG: X = قیمت ، Y = تاریخ (قدیمی‌تر بالا، جدیدتر پایین)
   const w = 320;
-  const h = 160;
-  const padL = 56; // جا برای برچسب تاریخ روی Y
-  const padR = 12;
+  const h = 140;
+  const padL = 8;
+  const padR = 8;
   const padT = 12;
-  const padB = 36; // جا برای برچسب قیمت روی X
+  const padB = 28;
 
-  const coords = filtered.map((p) => {
+  const coords = filtered.map((p, i) => {
     const x =
-      padL + ((p.price - min) / priceRange) * (w - padL - padR);
+      filtered.length === 1
+        ? w / 2
+        : padL + (i / (filtered.length - 1)) * (w - padL - padR);
     const y =
-      padT + ((new Date(p.recorded_at).getTime() - tMin) / tRange) * (h - padT - padB);
+      h - padB - ((p.price - min) / priceRange) * (h - padT - padB);
     return { x, y, ...p };
   });
 
   const linePoints = coords
     .map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`)
     .join(" ");
+  const areaPoints = [
+    `${coords[0]!.x.toFixed(1)},${(h - padB).toFixed(1)}`,
+    ...coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`),
+    `${coords[coords.length - 1]!.x.toFixed(1)},${(h - padB).toFixed(1)}`,
+  ].join(" ");
 
   const delta = last.price - first.price;
   const trendDown = delta < -0.5;
   const trendUp = delta > 0.5;
-
-  // برچسب‌های محور X (قیمت): کمینه، وسط، بیشینه
-  const xTicks = [min, (min + max) / 2, max];
-  // برچسب‌های محور Y (تاریخ): اول، وسط، آخر
-  const yTicks =
-    filtered.length === 1
-      ? [filtered[0]!]
-      : [
-          filtered[0]!,
-          filtered[Math.floor(filtered.length / 2)]!,
-          filtered[filtered.length - 1]!,
-        ];
 
   return (
     <section
@@ -113,7 +99,7 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         <div>
           <h2 className="text-base font-bold">نمودار تغییر قیمت</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            محور افقی: قیمت · محور عمودی: تاریخ
+            محور افقی: تاریخ · محور عمودی: قیمت
           </p>
         </div>
         <div className="bg-muted/60 flex flex-wrap gap-1 rounded-xl p-1">
@@ -153,74 +139,41 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         </div>
       </div>
 
-      <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-transparent px-1 pt-1">
+      <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-transparent">
         <svg
           viewBox={`0 0 ${w} ${h}`}
-          className="h-40 w-full"
+          className="h-36 w-full"
+          preserveAspectRatio="none"
           role="img"
-          aria-label="نمودار قیمت: محور افقی قیمت، محور عمودی تاریخ"
+          aria-label="نمودار قیمت"
         >
-          {/* خطوط راهنما افقی (تاریخ) */}
-          {yTicks.map((pt, i) => {
-            const y =
-              padT +
-              ((new Date(pt.recorded_at).getTime() - tMin) / tRange) *
-                (h - padT - padB);
+          {[0.25, 0.5, 0.75].map((g) => {
+            const y = padT + g * (h - padT - padB);
             return (
-              <g key={`y-${i}`}>
-                <line
-                  x1={padL}
-                  x2={w - padR}
-                  y1={y}
-                  y2={y}
-                  stroke="currentColor"
-                  className="text-border"
-                  strokeWidth="1"
-                  strokeDasharray="4 4"
-                  opacity="0.5"
-                />
-                <text
-                  x={padL - 4}
-                  y={y + 3}
-                  textAnchor="end"
-                  className="fill-muted-foreground"
-                  style={{ fontSize: 9 }}
-                >
-                  {fmtDate(pt.recorded_at)}
-                </text>
-              </g>
+              <line
+                key={g}
+                x1={padL}
+                x2={w - padR}
+                y1={y}
+                y2={y}
+                stroke="currentColor"
+                className="text-border"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+                opacity="0.5"
+              />
             );
           })}
-
-          {/* خطوط راهنما عمودی (قیمت) */}
-          {xTicks.map((price, i) => {
-            const x = padL + ((price - min) / priceRange) * (w - padL - padR);
-            return (
-              <g key={`x-${i}`}>
-                <line
-                  x1={x}
-                  x2={x}
-                  y1={padT}
-                  y2={h - padB}
-                  stroke="currentColor"
-                  className="text-border"
-                  strokeWidth="1"
-                  strokeDasharray="4 4"
-                  opacity="0.35"
-                />
-                <text
-                  x={x}
-                  y={h - 8}
-                  textAnchor="middle"
-                  className="fill-muted-foreground"
-                  style={{ fontSize: 9 }}
-                >
-                  {toPersianDigits(Math.round(price).toLocaleString("en-US"))}
-                </text>
-              </g>
-            );
-          })}
-
+          <polygon
+            points={areaPoints}
+            className={
+              trendDown
+                ? "fill-emerald-500/15"
+                : trendUp
+                  ? "fill-rose-500/15"
+                  : "fill-sky-500/15"
+            }
+          />
           <polyline
             fill="none"
             points={linePoints}
@@ -251,9 +204,9 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
             />
           ))}
         </svg>
-        <div className="text-muted-foreground flex justify-between px-2 pb-1 text-[10px]">
-          <span>قیمت ←</span>
-          <span>تاریخ ↓</span>
+        <div className="text-muted-foreground flex justify-between px-2 pb-2 text-[10px]">
+          <span>{fmtDate(first.recorded_at)}</span>
+          <span>{fmtDate(last.recorded_at)}</span>
         </div>
       </div>
 
