@@ -46,7 +46,7 @@ export function Footer({
             <div className="flex w-full flex-col items-center">
               <div className="flex flex-1 flex-col items-center space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-foreground whitespace-nowrap text-6xl font-black tracking-tight">
+                  <span className="text-primary whitespace-nowrap text-6xl font-black tracking-tight">
                     {brandName}
                   </span>
                 </div>
