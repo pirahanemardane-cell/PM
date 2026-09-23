@@ -510,7 +510,9 @@ if (res.ok === false && res.error === "login_required") {
           className="absolute inset-0 z-[1] rounded-2xl"
           aria-label={name}
         />
-        <div className="relative z-[2]">{card}</div>
+        <div className="pointer-events-none relative z-[2] [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
+          {card}
+        </div>
       </div>
     );
   }
