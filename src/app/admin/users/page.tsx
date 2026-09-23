@@ -29,11 +29,16 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await adminListUsersAction(80);
+    const res = await adminListUsersAction(100, {
+      q: q.trim() || undefined,
+      role: roleFilter || undefined,
+    });
     setLoading(false);
     if (!res.ok) {
       setError(
@@ -47,7 +52,7 @@ export default function AdminUsersPage() {
       return;
     }
     setItems((res.items as Row[]) ?? []);
-  }, []);
+  }, [q, roleFilter]);
 
   useEffect(() => {
     void load();
@@ -77,7 +82,9 @@ export default function AdminUsersPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">کاربران</h1>
-            <p className="text-muted-foreground text-sm">نقش و مشخصات پروفایل</p>
+            <p className="text-muted-foreground text-sm">
+              نقش و مشخصات پروفایل — جستجو و فیلتر
+            </p>
           </div>
           <div className="flex gap-2">
             <button
@@ -94,6 +101,28 @@ export default function AdminUsersPage() {
               داشبورد
             </Link>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="جستجو نام یا موبایل…"
+            className="border-input bg-background h-10 min-w-[200px] flex-1 rounded-xl border px-3 text-sm"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
+          >
+            <option value="">همه نقش‌ها</option>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {ROLE_FA[r]}
+              </option>
+            ))}
+          </select>
         </div>
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
@@ -120,9 +149,9 @@ export default function AdminUsersPage() {
               <tbody>
                 {items.map((u) => (
                   <tr key={u.id} className="border-border border-t">
-                    <td className="p-3">
-                      <div>{u.full_name || "—"}</div>
-                      <div className="text-muted-foreground font-mono text-xs">
+                    <td className="p-3 font-medium">
+                      {u.full_name?.trim() || "—"}
+                      <div className="text-muted-foreground font-mono text-[10px]">
                         {u.id.slice(0, 8)}…
                       </div>
                     </td>
