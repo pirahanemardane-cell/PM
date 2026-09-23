@@ -3,15 +3,20 @@
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 
-export async function adminListTicketsAction() {
+export async function adminListTicketsAction(opts?: {
+  status?: "all" | "open" | "in_progress" | "closed";
+}) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
-    const { data, error } = await gate.supabase
+    let query = gate.supabase
       .from("support_tickets")
       .select("id, subject, status, priority, user_id, created_at, updated_at")
       .order("created_at", { ascending: false })
       .limit(100);
+    const st = opts?.status;
+    if (st && st !== "all") query = query.eq("status", st);
+    const { data, error } = await query;
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
   } catch (e) {
