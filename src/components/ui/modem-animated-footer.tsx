@@ -46,7 +46,7 @@ export function Footer({
             <div className="flex w-full flex-col items-center">
               <div className="flex flex-1 flex-col items-center space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-foreground whitespace-nowrap text-3xl font-bold">
+                  <span className="text-foreground whitespace-nowrap text-6xl font-black tracking-tight">
                     {brandName}
                   </span>
                 </div>
@@ -110,7 +110,7 @@ export function Footer({
 
         {/* Large background text */}
         <div
-          className="from-foreground/20 via-foreground/10 pointer-events-none absolute bottom-40 left-1/2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap bg-gradient-to-b to-transparent bg-clip-text px-4 text-center leading-none font-extrabold tracking-tighter text-transparent select-none md:bottom-32"
+          className="text-primary/35 pointer-events-none absolute bottom-40 left-1/2 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-32"
           style={{ fontSize: "clamp(2rem, 8vw, 7rem)" }}
         >
           {watermarkName}
