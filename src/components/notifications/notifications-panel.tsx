@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useNotifications } from "@/lib/notifications/use-notifications";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { cn } from "@/lib/utils";
@@ -66,16 +65,6 @@ export function NotificationsPanel({ onNavigate }: { onNavigate?: () => void }) 
             ))}
           </ul>
         )}
-      </div>
-
-      <div className="border-border mt-3 border-t pt-3">
-        <Link
-          href="/dashboard?tab=notifications"
-          onClick={() => onNavigate?.()}
-          className="text-primary block text-center text-sm hover:underline"
-        >
-          مشاهده در پنل حساب
-        </Link>
       </div>
     </div>
   );

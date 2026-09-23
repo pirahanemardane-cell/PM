@@ -18,7 +18,7 @@ import {
   listMyOrdersAction,
   reorderOrderAction,
   getMyProfileAction,
-  updateMyProfileAction,
+  updateMyProfileAction, updateMyEmailAction, deleteMyAccountAction,
   listMyAddressesAction,
   listActiveDiscountsAction,
   listShopProductsAction,
@@ -93,6 +93,10 @@ export default function BuyerDashboardPage() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [profileEmail, setProfileEmail] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
   const displayName = profileForm.full_name?.trim() || "حساب من";
   const notif = useNotifications(authOk);
@@ -260,6 +264,7 @@ useEffect(() => {
           phone: res.profile.phone ?? "",
         });
         setProfileEmail(res.email);
+        setEmailDraft(res.email ?? "");
       }
       setProfileLoading(false);
     })();
@@ -623,11 +628,36 @@ useEffect(() => {
                   else setProfileMsg(res.error || "خطا در ذخیره");
                 }}
               >
-                {profileEmail ? (
-                  <p className="text-muted-foreground text-xs">
-                    ایمیل: {profileEmail}
-                  </p>
-                ) : null}
+                <div>
+                  <label className="mb-1 block text-sm">ایمیل</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      className="border-input bg-background h-11 min-w-0 flex-1 rounded-xl border px-3 text-sm"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      placeholder="name@example.com"
+                      dir="ltr"
+                    />
+                    <button
+                      type="button"
+                      disabled={emailSaving}
+                      className="border-border hover:bg-muted h-11 shrink-0 rounded-xl border px-3 text-xs disabled:opacity-50"
+                      onClick={async () => {
+                        setEmailSaving(true);
+                        setProfileMsg(null);
+                        const res = await updateMyEmailAction(emailDraft);
+                        setEmailSaving(false);
+                        if (res.ok) {
+                          setProfileEmail(emailDraft.trim().toLowerCase());
+                          setProfileMsg("ایمیل به‌روز شد (در صورت نیاز ایمیل تأیید بفرستید).");
+                        } else setProfileMsg(res.error || "خطا در ذخیره ایمیل");
+                      }}
+                    >
+                      {emailSaving ? "…" : "ذخیره ایمیل"}
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label className="mb-1 block text-sm">نام و نام خانوادگی</label>
                   <input
@@ -669,6 +699,33 @@ useEffect(() => {
                 >
                   {profileSaving ? "در حال ذخیره…" : "ذخیره پروفایل"}
                 </button>
+                <div className="border-destructive/30 mt-8 space-y-2 rounded-xl border p-4">
+                  <p className="text-destructive text-sm font-medium">حذف حساب کاربری</p>
+                  <p className="text-muted-foreground text-xs">
+                    این عمل خروج از حساب را انجام می‌دهد. برای تأیید عبارت DELETE را وارد کنید.
+                  </p>
+                  <input
+                    className="border-input bg-background h-10 w-full rounded-lg border px-3 text-sm"
+                    value={deleteConfirm}
+                    onChange={(e) => setDeleteConfirm(e.target.value)}
+                    placeholder="DELETE"
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    disabled={deleteBusy || deleteConfirm !== "DELETE"}
+                    className="bg-destructive text-destructive-foreground h-10 w-full rounded-lg text-sm disabled:opacity-40"
+                    onClick={async () => {
+                      setDeleteBusy(true);
+                      const res = await deleteMyAccountAction(deleteConfirm);
+                      setDeleteBusy(false);
+                      if (res.ok) window.location.href = "/";
+                      else setProfileMsg(res.error || "حذف ناموفق");
+                    }}
+                  >
+                    {deleteBusy ? "در حال حذف…" : "حذف حساب"}
+                  </button>
+                </div>
                 <Link href="/ورود" className="text-primary block text-center text-xs hover:underline">
                   مدیریت ورود
                 </Link>
