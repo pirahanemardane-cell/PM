@@ -153,18 +153,18 @@ export class ProductRepository extends BaseRepository {
 
     let items = (data ?? []) as ProductWithRelations[];
 
-    // map UUID → label for text fields on variants (size / color_name)
+    // UUID فیلتر → برچسب متنی واریانت (size / color_name)
     let sizeLabel: string | null = null;
     let colorName: string | null = null;
     if (filters.sizeId) {
       const { data: sz } = await client
         .from("sizes")
-        .select("name, label, slug")
+        .select("name, slug")
         .eq("id", filters.sizeId)
         .maybeSingle();
       if (sz) {
-        const row = sz as { name?: string; label?: string; slug?: string };
-        sizeLabel = (row.label || row.name || row.slug || "").trim() || null;
+        const row = sz as { name?: string; slug?: string };
+        sizeLabel = (row.name || row.slug || "").trim() || null;
       }
     }
     if (filters.colorId) {
@@ -179,38 +179,42 @@ export class ProductRepository extends BaseRepository {
       }
     }
 
-
-    // فیلتر سمت اپ برای سایز / رنگ / موجودی / قیمت (روی variants)
-    if (filters.sizeId || filters.colorId || filters.inStock || filters.minPrice != null || filters.maxPrice != null) {
+    if (
+      filters.sizeId ||
+      filters.colorId ||
+      filters.inStock ||
+      filters.minPrice != null ||
+      filters.maxPrice != null
+    ) {
       items = items.filter((p) => {
         const variants = (p.variants ?? []).filter((v) => v.is_active);
         return variants.some((v) => {
-          if (sizeLabel) {
-            const sn = (typeof (v as { size?: string | null }).size === "string"
-              ? (v as { size: string }).size
-              : ""
+          if (filters.sizeId) {
+            if (!sizeLabel) return false;
+            const sn = (
+              typeof (v as { size?: string | null }).size === "string"
+                ? (v as { size: string }).size
+                : ""
             ).trim();
             if (!sn || sn.toLowerCase() !== sizeLabel.toLowerCase()) return false;
-          } else if (filters.sizeId) {
-            // size row missing → no match
-            return false;
           }
-          if (colorName) {
-            const cn = (typeof (v as { color_name?: string | null }).color_name === "string"
-              ? (v as { color_name: string }).color_name
-              : ""
+          if (filters.colorId) {
+            if (!colorName) return false;
+            const cn = (
+              typeof (v as { color_name?: string | null }).color_name === "string"
+                ? (v as { color_name: string }).color_name
+                : ""
             ).trim();
             if (!cn || cn.toLowerCase() !== colorName.toLowerCase()) return false;
-          } else if (filters.colorId) {
-            return false;
           }
           if (filters.inStock && v.stock_quantity <= 0) return false;
-          if (filters.minPrice != null && Number(v.price) < filters.minPrice) return false;
-          if (filters.maxPrice != null && Number(v.price) > filters.maxPrice) return false;
+          if (filters.minPrice != null && Number(v.price) < filters.minPrice)
+            return false;
+          if (filters.maxPrice != null && Number(v.price) > filters.maxPrice)
+            return false;
           return true;
         });
       });
-    }
     }
 
     return {
