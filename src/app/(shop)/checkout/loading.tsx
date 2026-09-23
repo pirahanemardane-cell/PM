@@ -1,10 +1,9 @@
-export default function CheckoutLoading() {
+import { LumaSpin } from "@/components/ui/luma-spin";
+
+export default function Loading() {
   return (
-    <div
-      className="mx-auto flex min-h-[40vh] max-w-md items-center justify-center p-6"
-      dir="rtl"
-    >
-      <p className="text-muted-foreground text-sm">در حال آماده‌سازی تسویه…</p>
+    <div className="flex min-h-[50vh] items-center justify-center" aria-busy="true" aria-label="در حال بارگذاری">
+      <LumaSpin />
     </div>
   );
 }
