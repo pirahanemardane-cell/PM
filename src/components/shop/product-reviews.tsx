@@ -18,6 +18,7 @@ type Review = {
 
 export function ProductReviews({ productId }: { productId: string }) {
   const [items, setItems] = useState<Review[]>([]);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [msg, setMsg] = useState("");
@@ -84,32 +85,9 @@ export function ProductReviews({ productId }: { productId: string }) {
 
       <div className="space-y-3">
         <h3 className="font-semibold">ثبت نظر</h3>
-        <label className="flex flex-wrap items-center gap-2 text-sm">
-          <span>امتیاز</span>
-          <select
-            className="border-border rounded-lg border px-2 py-1"
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-          >
-            {[5, 4, 3, 2, 1].map((n) => (
-              <option key={n} value={n}>
-                {n} ستاره
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1 text-sm">
-          <span>عنوان (اختیاری)</span>
-          <input
-            className="border-border bg-background w-full rounded-xl border px-3 py-2"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={80}
-          />
-        </label>
         <ComposerInput
           onSend={onSend}
-          placeholder="نظر خود را بنویسید (بدون لینک و تصویر)…"
+          placeholder="نظر خود را بنویسید..."
           sendLabel="ارسال نظر"
           disabled={busy}
         />

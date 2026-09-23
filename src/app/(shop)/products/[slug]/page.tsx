@@ -117,13 +117,13 @@ export default async function ProductDetailPage({ params }: Props) {
       
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted p-0">
           {primaryImage ? (
             <Image
               src={primaryImage.url}
               alt={primaryImage.alt_text ?? product.name}
               fill
-              className="object-contain"
+              className="object-contain object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />
