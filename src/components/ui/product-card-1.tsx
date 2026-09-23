@@ -339,11 +339,11 @@ if (res.ok === false && res.error === "login_required") {
           ) : null}
         </div>
 
-        {/* فروش ویژه — پایین سمت راست تصویر */}
+        {/* شگفت‌انگیز — پایین سمت راست تصویر */}
         {isSpecialSale ? (
           <div className="pointer-events-none absolute bottom-2 right-2 z-20 sm:bottom-3 sm:right-3">
             <Badge className="me-auto w-fit self-start border-0 bg-rose-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-rose-800 dark:bg-rose-900/40 dark:text-rose-200 sm:text-xs">
-              فروش ویژه
+              شگفت‌انگیز
             </Badge>
           </div>
         ) : null}

@@ -145,12 +145,22 @@ export default async function ProductDetailPage({ params }: Props) {
               {product.name}
             </h1>
             <div className="flex flex-wrap gap-2">
-              {product.is_new && (
-                <Badge className="bg-emerald-600">جدید</Badge>
-              )}
-              {product.is_featured && (
-                <Badge variant="secondary">ویژه</Badge>
-              )}
+              {product.is_new ? (
+                <Badge className="border-0 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">جدید</Badge>
+              ) : null}
+              {product.is_featured ? (
+                <Badge className="border-0 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">شگفت‌انگیز</Badge>
+              ) : null}
+              {product.category?.slug ? (
+                <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`}>
+                  <Badge className="border-0 bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 cursor-pointer hover:opacity-90">{product.category.name}</Badge>
+                </Link>
+              ) : null}
+              {product.brand?.slug ? (
+                <Link href={`/brands/${product.brand.slug}`}>
+                  <Badge className="border-0 bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 cursor-pointer hover:opacity-90">{product.brand.name}</Badge>
+                </Link>
+              ) : null}
               {product.is_bestseller && (
                 <Badge variant="outline">پرفروش</Badge>
               )}

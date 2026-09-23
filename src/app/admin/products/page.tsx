@@ -116,7 +116,7 @@ export default function AdminProductsPage() {
                   <th className="p-3 font-medium">نام</th>
                   <th className="p-3 font-medium">دسته / برند</th>
                   <th className="p-3 font-medium">وضعیت</th>
-                  <th className="p-3 font-medium">ویژه</th>
+                  <th className="p-3 font-medium">شگفت‌انگیز</th>
                   <th className="p-3 font-medium">جدید</th>
                   <th className="p-3 font-medium">عملیات</th>
                   <th className="p-3 font-medium">پرفروش</th>
