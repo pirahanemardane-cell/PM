@@ -415,15 +415,14 @@ h4, .h4 { font-weight: 600 !important; }
 }
 
 /* === PM-OVERFLOW-GUARD (auto) === */
+/* overflow-x:hidden روی html/body باعث شکستن position:sticky می‌شود */
 html {
-  overflow-x: hidden;
   max-width: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
-  overflow-x: hidden;
   max-width: 100%;
   min-height: 100dvh;
   margin: 0;

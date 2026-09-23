@@ -75,13 +75,9 @@ export function AppBreadcrumb({
 }) {
   const pathname = usePathname() || "/";
 
-  // داشبورد / سبد / چک‌اوت — بدون breadcrumb
+  // سبد / چک‌اوت — بدون breadcrumb (داشبورد مثل بقیه صفحات نمایش داده می‌شود)
   const path = decodeURIComponent(pathname);
   if (
-    path.startsWith("/dashboard") ||
-    path.includes("dashboard") ||
-    path.startsWith("/داشبورد") ||
-    path.includes("داشبورد") ||
     path === "/cart" ||
     path.startsWith("/سبد") ||
     path.startsWith("/checkout") ||
