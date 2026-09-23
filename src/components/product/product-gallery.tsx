@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { colorNorm, colorKey } from "@/lib/variant-availability";
 
 export type GalleryImage = {
   url: string;
@@ -12,20 +13,6 @@ export type GalleryImage = {
 };
 
 type VariantLite = { id: string; color?: string | null };
-
-function colorNorm(c: string | null | undefined) {
-  return (c || "").trim().replace(/^#/, "").toLowerCase();
-}
-
-const FILE_HINTS: Record<string, string[]> = {
-  سفید: ["white"],
-  سفيد: ["white"],
-  مشکی: ["black"],
-  مشکي: ["black"],
-  سیاه: ["black"],
-  آبی: ["blue"],
-  ابي: ["blue"],
-};
 
 export function ProductGallery({
   images,
@@ -42,10 +29,17 @@ export function ProductGallery({
     const all = images.filter((i) => i.url);
     if (!activeColor) return all;
     const want = colorNorm(activeColor);
+    const key = colorKey(activeColor);
 
+    // 1) variant_id
     if (variants.length) {
       const ids = new Set(
-        variants.filter((v) => colorNorm(v.color) === want).map((v) => v.id),
+        variants
+          .filter((v) => {
+            if (!v.color) return false;
+            return colorNorm(v.color) === want || colorKey(v.color) === key;
+          })
+          .map((v) => v.id),
       );
       const byVar = all.filter(
         (img) => img.variant_id && ids.has(img.variant_id),
@@ -53,20 +47,24 @@ export function ProductGallery({
       if (byVar.length) return byVar;
     }
 
-    const hints = FILE_HINTS[activeColor.trim()] ?? FILE_HINTS[want] ?? [];
-    if (hints.length) {
-      const byUrl = all.filter((img) =>
-        hints.some((h) => img.url.toLowerCase().includes(h)),
+    // 2) url includes white/black/blue
+    const byUrl = all.filter((img) => {
+      const low = img.url.toLowerCase();
+      return (
+        low.includes(key) ||
+        (key === "white" && low.includes("white")) ||
+        (key === "black" && low.includes("black")) ||
+        (key === "blue" && low.includes("blue"))
       );
-      if (byUrl.length) return byUrl;
-    }
+    });
+    if (byUrl.length) return byUrl;
+
     return all;
   }, [images, variants, activeColor]);
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
 
-  // فوری ریست ایندکس وقتی رنگ عوض شد
   useEffect(() => {
     setIdx(0);
   }, [activeColor]);
@@ -111,9 +109,8 @@ export function ProductGallery({
         className="bg-muted relative aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-2xl border-0 p-0 text-left"
         aria-label="بزرگ‌نمایی تصویر"
       >
-        {/* key=url → تعویض فوری بدون crossfade کند */}
         <Image
-          key={current!.url}
+          key={current!.url + String(activeColor)}
           src={current!.url}
           alt={current!.alt ?? productName}
           fill
@@ -138,13 +135,7 @@ export function ProductGallery({
                 i === idx ? "border-secondary" : "border-transparent opacity-80",
               )}
             >
-              <Image
-                src={img.url}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="56px"
-              />
+              <Image src={img.url} alt="" fill className="object-cover" sizes="56px" />
             </button>
           ))}
         </div>
@@ -165,32 +156,6 @@ export function ProductGallery({
           >
             <X className="h-6 w-6" />
           </button>
-          {list.length > 1 ? (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  next();
-                }}
-                className="absolute top-1/2 right-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-                aria-label="بعدی"
-              >
-                <ChevronRight className="h-7 w-7" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  prev();
-                }}
-                className="absolute top-1/2 left-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-                aria-label="قبلی"
-              >
-                <ChevronLeft className="h-7 w-7" />
-              </button>
-            </>
-          ) : null}
           <div
             className="relative flex max-h-[90vh] max-w-[95vw] items-center justify-center"
             onClick={(e) => e.stopPropagation()}
