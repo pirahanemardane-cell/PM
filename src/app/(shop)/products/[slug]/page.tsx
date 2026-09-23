@@ -233,23 +233,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
           <PriceHistory points={priceHistory} />
           </>
-
-          <div className="text-muted-foreground border-t pt-4 text-xs leading-6">
-            ارسال سریع · ضمانت اصالت · امکان مرجوعی طبق{" "}
-            <Link href="/returns" className="underline underline-offset-2">
-              شرایط مرجوعی
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link
-              href="/products"
-              className="rounded-xl border px-5 py-2.5 text-sm font-medium hover:bg-muted"
-            >
-              بازگشت به محصولات
-            </Link>
-          </div>
-        </div>
+</div>
       </div>
 
       {product.description ? (
