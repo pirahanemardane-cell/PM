@@ -312,8 +312,7 @@ if (res.ok === false && res.error === "login_required") {
               }}
             >
               <Badge
-                variant="secondary"
-                className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 sm:text-xs"
+                className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200 sm:text-xs"
               >
                 {category}
               </Badge>
@@ -330,8 +329,7 @@ if (res.ok === false && res.error === "login_required") {
               }}
             >
               <Badge
-                variant="outline"
-                className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 sm:text-xs"
+                className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-200 sm:text-xs"
               >
                 {brand}
               </Badge>
