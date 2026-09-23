@@ -462,6 +462,8 @@ export function AuthForm({
                   }
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  className={inputCls + " text-center font-mono text-lg tracking-widest"}
+                  dir="ltr"
                 />
                 {errors.otpCode ? (
                   <p className="text-destructive text-xs">{errors.otpCode}</p>

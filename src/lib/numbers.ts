@@ -58,3 +58,11 @@ export function parseLocaleNumber(input: string): number | null {
   const num = Number(n);
   return Number.isFinite(num) ? num : null;
 }
+
+/** فقط رقم؛ فارسی هم قبول می‌شود */
+export function onlyDigits(input: string, maxLen?: number): string {
+  let s = toEnglishDigits(input).replace(/\D/g, "");
+  if (maxLen != null) s = s.slice(0, maxLen);
+  return s;
+}
+

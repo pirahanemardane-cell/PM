@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
 import {
-  PREDEFINED_NOTIFICATIONS,
   adminSendNotificationAction,
   adminListRecentNotificationsAction,
 } from "@/app/admin/actions/notifications-admin";
@@ -10,7 +10,7 @@ import { toast } from "@/lib/toaster";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
 export default function AdminNotificationsPage() {
-  const [templateId, setTemplateId] = useState(PREDEFINED_NOTIFICATIONS[0].id);
+  const [templateId, setTemplateId] = useState<string>(PREDEFINED_NOTIFICATIONS[0]?.id ?? "welcome");
   const [mode, setMode] = useState<"user" | "all">("user");
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
