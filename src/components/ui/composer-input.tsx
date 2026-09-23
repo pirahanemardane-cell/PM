@@ -59,9 +59,7 @@ export function ComposerInput({
           }
         }}
       />
-      <div className="mt-1 flex items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-1">
-          </div>
+      <div className="mt-1 flex items-center justify-end gap-2 px-1">
         <Button
           type="button"
           size="sm"
