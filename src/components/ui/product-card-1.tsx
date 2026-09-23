@@ -304,7 +304,11 @@ if (res.ok === false && res.error === "login_required") {
           {category ? (
             <button
               type="button"
-              className="me-auto inline-flex w-fit shrink-0 self-start outline-none ring-0 hover:opacity-100 focus:outline-none focus-visible:outline-none"
+              className="relative z-30 me-auto inline-flex w-fit shrink-0 cursor-pointer self-start outline-none"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -321,7 +325,11 @@ if (res.ok === false && res.error === "login_required") {
           {brand ? (
             <button
               type="button"
-              className="me-auto inline-flex w-fit shrink-0 self-start outline-none ring-0 hover:opacity-100 focus:outline-none focus-visible:outline-none"
+              className="relative z-30 me-auto inline-flex w-fit shrink-0 cursor-pointer self-start outline-none"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
