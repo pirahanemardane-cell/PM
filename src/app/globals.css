@@ -505,4 +505,49 @@ code {
 }
 /* === PM-TOAST-POS-END === */
 
+/* full-width + no horizontal overflow (all devices) */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+img,
+video,
+svg,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+/* flex/grid children that otherwise force page wider */
+.min-w-0-safe {
+  min-width: 0;
+}
+
+/* === FULL WIDTH LAYOUT (site-wide) === */
+html {
+  width: 100%;
+  max-width: 100%;
+}
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip; /* بهتر از hidden برای sticky در مرورگرهای جدید */
+}
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+/* جداول عریض فقط داخل wrapper اسکرول می‌خورند، نه کل صفحه */
+.table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 

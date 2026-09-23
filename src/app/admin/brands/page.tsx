@@ -81,7 +81,7 @@ export default function AdminBrandsPage() {
 
   return (
     <div className="p-6" dir="rtl">
-      <div className="mx-auto max-w-4xl">
+      <div className="w-full max-w-none">
         <AdminPageHeader
           title="برندها"
           description="مدیریت برندهای فروشگاه — ویرایش نام"
@@ -127,7 +127,7 @@ export default function AdminBrandsPage() {
             برندی نیست.
           </p>
         ) : (
-          <div className="border-border overflow-x-auto rounded-2xl border">
+          <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
             <table className="w-full text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>

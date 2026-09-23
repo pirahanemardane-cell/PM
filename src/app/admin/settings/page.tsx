@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="w-full max-w-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">تنظیمات محیط</h1>

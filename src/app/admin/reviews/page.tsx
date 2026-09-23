@@ -115,7 +115,7 @@ export default function AdminReviewsPage() {
           <LumaSpin />
         </div>
       ) : (
-        <div className="border-border overflow-x-auto rounded-xl border">
+        <div className="table-scroll border-border overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-muted/50">
               <tr>

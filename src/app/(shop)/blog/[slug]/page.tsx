@@ -34,7 +34,7 @@ export default async function BlogPostPage({ params }: Props) {
   };
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6 p-6" dir="rtl">
+    <article className="w-full max-w-none space-y-6 p-6" dir="rtl">
       <Link href="/blog" className="text-primary text-sm underline">
         ← بازگشت به بلاگ
       </Link>

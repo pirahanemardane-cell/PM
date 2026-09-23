@@ -82,7 +82,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="p-6" dir="rtl">
-      <div className="mx-auto max-w-4xl">
+      <div className="w-full max-w-none">
         <AdminPageHeader
           title="دسته‌بندی‌ها"
           description="مدیریت دسته‌های فروشگاه — ویرایش نام و ترتیب"
@@ -128,7 +128,7 @@ export default function AdminCategoriesPage() {
             دسته‌ای نیست.
           </p>
         ) : (
-          <div className="border-border overflow-x-auto rounded-2xl border">
+          <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
             <table className="w-full text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>

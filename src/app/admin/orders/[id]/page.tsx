@@ -92,7 +92,7 @@ export default function AdminOrderDetailPage() {
 
   return (
     <div className="bg-background min-h-screen p-6 print:p-0" dir="rtl">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="w-full max-w-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <div>
             <h1 className="text-xl font-bold">سفارش</h1>

@@ -128,7 +128,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const specRows = await getProductSpecRows(String(product.id));
 
   return (
-    <main className="container mx-auto px-4 py-8 md:py-12">
+    <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <nav className="text-muted-foreground mb-6 flex flex-wrap items-center gap-1.5 text-xs" aria-label="breadcrumb">
         <Link href="/" className="hover:text-foreground">خانه</Link>
         <span>/</span>

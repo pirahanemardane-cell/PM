@@ -179,7 +179,7 @@ export default function AdminBlogPage() {
           <LumaSpin />
         </div>
       ) : (
-        <div className="border-border overflow-x-auto rounded-xl border">
+        <div className="table-scroll border-border overflow-x-auto rounded-xl border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>

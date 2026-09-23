@@ -13,7 +13,7 @@ export default function SizeGuidePage() {
         اندازه‌گیری را با متر روی بدن انجام دهید: دور سینه، دور گردن، قد و طول
         آستین. بین دو سایز، معمولاً سایز بزرگ‌تر برای راحتی بیشتر مناسب است.
       </p>
-      <div className="border-border overflow-x-auto rounded-xl border">
+      <div className="table-scroll border-border overflow-x-auto rounded-xl border">
         <table className="w-full min-w-[28rem] text-center text-sm">
           <thead className="bg-muted/50">
             <tr>

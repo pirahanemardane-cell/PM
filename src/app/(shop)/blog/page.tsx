@@ -23,7 +23,7 @@ export default async function BlogIndexPage() {
   }[];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 p-6" dir="rtl">
+    <div className="w-full max-w-none space-y-8 p-6" dir="rtl">
       <header>
         <h1 className="text-3xl font-bold">بلاگ</h1>
         <p className="text-muted-foreground mt-1 text-sm">

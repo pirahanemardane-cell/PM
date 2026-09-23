@@ -122,7 +122,7 @@ export default function EditBlogPostPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6" dir="rtl">
+    <div className="w-full max-w-none space-y-4 p-6" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ویرایش مقاله</h1>
         <Link href="/admin/blog" className="text-sm underline">

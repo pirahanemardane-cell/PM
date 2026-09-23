@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductTagPage({ params }: Props) {
   const { slug } = await params;
   return (
-    <div className="mx-auto max-w-4xl space-y-4 p-6" dir="rtl">
+    <div className="w-full max-w-none space-y-4 p-6" dir="rtl">
       <h1 className="text-2xl font-bold">برچسب: {slug}</h1>
       <p className="text-muted-foreground text-sm">
         لیست محصولات این برچسب به‌زودی — این صفحه برای موتورهای جستجو noindex است.

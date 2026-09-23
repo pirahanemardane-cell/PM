@@ -167,7 +167,7 @@ export default function CheckoutPage() {
 
   if (!items.length && !doneOrder) {
     return (
-      <div className="mx-auto max-w-2xl space-y-4 px-4 py-16 text-center" dir="rtl">
+      <div className="w-full max-w-none space-y-4 px-4 py-16 text-center" dir="rtl">
         <p>سبد خرید خالی است.</p>
         <Link href="/products" className="text-primary underline">
           بازگشت به فروشگاه
@@ -196,7 +196,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="w-full max-w-none px-4 py-8">
         <h1 className="mb-6 text-xl font-bold">تسویه حساب</h1>
 
         {/* progress */}

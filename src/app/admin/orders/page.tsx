@@ -102,7 +102,7 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="w-full max-w-none space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">سفارش‌ها</h1>
@@ -182,7 +182,7 @@ export default function AdminOrdersPage() {
             سفارشی یافت نشد.
           </p>
         ) : (
-          <div className="border-border overflow-x-auto rounded-2xl border">
+          <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
             <table className="w-full min-w-[720px] text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>

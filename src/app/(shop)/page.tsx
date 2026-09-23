@@ -127,7 +127,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <main className="container mx-auto space-y-14 px-4 py-10 md:py-14">
+    <main className="w-full max-w-none mx-auto space-y-14 px-4 py-10 md:py-14">
       {/* 1. Feature */}
       <section aria-label="اعتماد" className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {features.map((f) => (

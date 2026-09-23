@@ -8,7 +8,7 @@ export function StaticPage({
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12" dir="rtl">
+    <main className="w-full max-w-none px-4 py-12" dir="rtl">
       <h1 className="mb-6 text-2xl font-bold tracking-tight md:text-3xl">
         {title}
       </h1>

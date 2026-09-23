@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogTagPage({ params }: Props) {
   const { slug } = await params;
   return (
-    <div className="mx-auto max-w-4xl space-y-4 p-6" dir="rtl">
+    <div className="w-full max-w-none space-y-4 p-6" dir="rtl">
       <h1 className="text-2xl font-bold">برچسب مقاله: {slug}</h1>
       <p className="text-muted-foreground text-sm">
         مقالات این برچسب — همیشه noindex.

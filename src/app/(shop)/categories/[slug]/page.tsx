@@ -52,7 +52,7 @@ export default async function CategoryListingPage({
 
   if (!result.success || !result.data) {
     return (
-      <main className="container mx-auto px-4 py-12">
+      <main className="w-full max-w-none mx-auto px-4 py-12">
         <p className="text-destructive text-center">{result.error ?? "خطا"}</p>
       </main>
     );
@@ -61,7 +61,7 @@ export default async function CategoryListingPage({
   const { data: products, total, page, totalPages } = result.data;
 
   return (
-    <main className="container mx-auto px-4 py-8 md:py-12">
+    <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
         <h1 className="text-2xl font-bold md:text-3xl">{category.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
