@@ -465,7 +465,7 @@ if (res.ok === false && res.error === "login_required") {
                   "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
                   selectedSize === size
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 text-foreground
+                    : "bg-muted/70 text-foreground"
                 )}
                 onClick={(e) => {
                   e.preventDefault();
