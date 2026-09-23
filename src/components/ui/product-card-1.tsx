@@ -300,48 +300,36 @@ if (res.ok === false && res.error === "login_required") {
         </div>
 
         {/* Badges — vertical stack, right-aligned, full text */}
-        <div className="pointer-events-auto absolute top-2 right-2 z-20 flex flex-col items-end gap-1.5 sm:top-3 sm:right-3">
-          {category ? (
-            <button
-              type="button"
-              className="relative z-30 me-auto inline-flex w-fit shrink-0 cursor-pointer self-start outline-none"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (categoryHref) router.push(categoryHref);
-              }}
+        <div className="pointer-events-auto absolute top-2 right-2 z-30 flex flex-col items-end gap-1.5 sm:top-3 sm:right-3">
+          {category && categoryHref ? (
+            <Link
+              href={categoryHref}
+              className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Badge
-                className="pointer-events-none me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200 sm:text-xs"
-              >
+              <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200 sm:text-xs">
                 {category}
               </Badge>
-            </button>
+            </Link>
+          ) : category ? (
+            <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none sm:text-xs">
+              {category}
+            </Badge>
           ) : null}
-          {brand ? (
-            <button
-              type="button"
-              className="relative z-30 me-auto inline-flex w-fit shrink-0 cursor-pointer self-start outline-none"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (brandHref) router.push(brandHref);
-              }}
+          {brand && brandHref ? (
+            <Link
+              href={brandHref}
+              className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Badge
-                className="pointer-events-none me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none transition-none hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-200 sm:text-xs"
-              >
+              <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none transition-none hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-200 sm:text-xs">
                 {brand}
               </Badge>
-            </button>
+            </Link>
+          ) : brand ? (
+            <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none sm:text-xs">
+              {brand}
+            </Badge>
           ) : null}
         </div>
 
@@ -516,9 +504,14 @@ if (res.ok === false && res.error === "login_required") {
 
   if (href) {
     return (
-      <Link href={href} className="block w-full outline-none no-underline hover:no-underline">
-        {card}
-      </Link>
+      <div className="relative block w-full">
+        <Link
+          href={href}
+          className="absolute inset-0 z-[1] rounded-2xl"
+          aria-label={name}
+        />
+        <div className="relative z-[2]">{card}</div>
+      </div>
     );
   }
 

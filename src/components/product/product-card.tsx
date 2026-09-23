@@ -98,9 +98,8 @@ export function ProductCard({ product }: Props) {
     (product as { brand?: { slug?: string } | null }).brand?.slug;
 
   const brandHref = brandSlug
-    ? `/products?brand=${brandSlug}`
-    : brandName
-      ? `/products?brand=${encodeURIComponent(brandName)}`
+    ? `/brands/${brandSlug}`
+    : undefined
       : undefined;
 
   
