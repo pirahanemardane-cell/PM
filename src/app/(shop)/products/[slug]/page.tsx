@@ -125,6 +125,7 @@ export default async function ProductDetailPage({ params }: Props) {
     8,
   );
   const priceHistory = await getProductPriceHistory(String(product.id), 40);
+  const specRows = await getProductSpecRows(String(product.id));
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
@@ -267,11 +268,14 @@ export default async function ProductDetailPage({ params }: Props) {
           <RelatedStrip
             title="محصولات مرتبط"
             items={relatedProducts.map((p) => ({
-              id: String(p.id),
-              title: String(p.name ?? p.title ?? ""),
-              href: `/products/${p.slug}`,
-              image: p.image_url ?? p.primary_image_url ?? undefined,
-              price: p.price != null ? Number(p.price) : undefined,
+              title: String((p as { name?: string; title?: string }).name ?? (p as { title?: string }).title ?? ""),
+              href: `/products/${(p as { slug: string }).slug}`,
+              image: (p as { image_url?: string; primary_image_url?: string }).image_url
+                ?? (p as { primary_image_url?: string }).primary_image_url
+                ?? undefined,
+              subtitle: (p as { price?: number }).price != null
+                ? `${Number((p as { price: number }).price).toLocaleString("fa-IR")} تومان`
+                : null,
             }))}
           />
         </div>
