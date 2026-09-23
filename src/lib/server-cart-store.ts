@@ -42,6 +42,8 @@ function mapItems(items: NonNullable<Awaited<ReturnType<typeof getCartAction>>["
   }));
 }
 
+let inflight: Promise<void> | null = null;
+
 export const useServerCartStore = create<ServerCartState>((set) => ({
   lines: [],
   loading: false,
@@ -49,16 +51,21 @@ export const useServerCartStore = create<ServerCartState>((set) => ({
   setLines: (lines) => set({ lines, hydrated: true }),
   clear: () => set({ lines: [], hydrated: true }),
   refresh: async () => {
+    if (inflight) return inflight;
     set({ loading: true });
-    try {
-      const res = await getCartAction();
-      if (res.ok) set({ lines: mapItems(res.items), hydrated: true });
-      else set({ lines: [], hydrated: true });
-    } catch (e) {
-      console.error("[server-cart refresh]", e);
-      set({ lines: [], hydrated: true });
-    } finally {
-      set({ loading: false });
-    }
+    inflight = (async () => {
+      try {
+        const res = await getCartAction();
+        if (res.ok) set({ lines: mapItems(res.items), hydrated: true });
+        else set({ lines: [], hydrated: true });
+      } catch (e) {
+        console.error("[server-cart refresh]", e);
+        set({ lines: [], hydrated: true });
+      } finally {
+        set({ loading: false });
+        inflight = null;
+      }
+    })();
+    return inflight;
   },
 }));

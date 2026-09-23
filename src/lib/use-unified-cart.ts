@@ -48,11 +48,19 @@ export function useUnifiedCart() {
   }, [userId, refresh, clearServer]);
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     function onChange() {
-      if (userId) void refresh();
+      if (!userId) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void refresh();
+      }, 300);
     }
     window.addEventListener("pm:cart-changed", onChange);
-    return () => window.removeEventListener("pm:cart-changed", onChange);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("pm:cart-changed", onChange);
+    };
   }, [userId, refresh]);
 
   // فقط وقتی سرور واقعاً اقلام دارد local را پاک کن
