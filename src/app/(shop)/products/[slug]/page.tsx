@@ -234,9 +234,6 @@ export default async function ProductDetailPage({ params }: Props) {
           <PriceHistory points={priceHistory} />
           </>
 
-
-          {/* description + specs moved below grid */}
-
           <div className="text-muted-foreground border-t pt-4 text-xs leading-6">
             ارسال سریع · ضمانت اصالت · امکان مرجوعی طبق{" "}
             <Link href="/returns" className="underline underline-offset-2">
@@ -253,9 +250,8 @@ export default async function ProductDetailPage({ params }: Props) {
             </Link>
           </div>
         </div>
-      
+      </div>
 
-      {/* توضیحات — تمام‌عرض خارج از grid */}
       {product.description ? (
         <section
           className="mt-10 w-full max-w-none border-t pt-8"
