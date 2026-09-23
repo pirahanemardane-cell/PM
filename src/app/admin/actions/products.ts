@@ -14,11 +14,14 @@ function slugify(input: string): string {
   );
 }
 
-export async function adminListProductsAction(limit = 100) {
+export async function adminListProductsAction(
+  limit = 100,
+  opts?: { q?: string; status?: string },
+) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
-    const { data, error } = await gate.supabase
+    let query = gate.supabase
       .from("products")
       .select(
         "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, category:categories(name), brand:brands(name)",
@@ -26,6 +29,17 @@ export async function adminListProductsAction(limit = 100) {
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(Math.min(200, Math.max(1, Number(limit) || 100)));
+
+    const status = (opts?.status || "").trim();
+    if (status && ["draft", "published", "archived"].includes(status)) {
+      query = query.eq("status", status);
+    }
+    const q = (opts?.q || "").trim();
+    if (q) {
+      query = query.or(`name.ilike.%${q}%,slug.ilike.%${q}%`);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
   } catch (e) {
@@ -358,4 +372,23 @@ export async function adminUpdateProductFlagsAction(
   }>,
 ) {
   return adminSetProductFlagsAction(id, patch);
+}
+
+/** حذف نرم — فقط deleted_at؛ از لیست ادمین و فروشگاه خارج می‌شود. */
+export async function adminSoftDeleteProductAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!id?.trim()) return { ok: false as const, error: "invalid" as const };
+  try {
+    const { error } = await gate.supabase
+      .from("products")
+      .update({ deleted_at: new Date().toISOString(), status: "archived" })
+      .eq("id", id)
+      .is("deleted_at", null);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSoftDeleteProduct]", e);
+    return { ok: false as const, error: "server" as const };
+  }
 }

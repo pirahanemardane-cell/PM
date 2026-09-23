@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   adminListProductsAction,
   adminUpdateProductFlagsAction,
+  adminSoftDeleteProductAction,
 } from "@/app/admin/actions/products";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
@@ -34,11 +35,16 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await adminListProductsAction(80);
+    const res = await adminListProductsAction(100, {
+      q: q.trim() || undefined,
+      status: statusFilter || undefined,
+    });
     setLoading(false);
     if (!res.ok) {
       setError(
@@ -52,13 +58,16 @@ export default function AdminProductsPage() {
       return;
     }
     setItems((res.items as Row[]) ?? []);
-  }, []);
+  }, [q, statusFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  async function patch(id: string, flags: Parameters<typeof adminUpdateProductFlagsAction>[1]) {
+  async function patch(
+    id: string,
+    flags: Parameters<typeof adminUpdateProductFlagsAction>[1],
+  ) {
     setBusyId(id);
     const res = await adminUpdateProductFlagsAction(id, flags);
     setBusyId(null);
@@ -71,6 +80,20 @@ export default function AdminProductsPage() {
     );
   }
 
+  async function softDelete(id: string, name: string) {
+    if (!confirm(`«${name}» حذف شود؟ (حذف نرم — قابل بازیابی از دیتابیس)`)) {
+      return;
+    }
+    setBusyId(id);
+    const res = await adminSoftDeleteProductAction(id);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("حذف ناموفق بود");
+      return;
+    }
+    setItems((prev) => prev.filter((p) => p.id !== id));
+  }
+
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
       <div className="mx-auto max-w-6xl space-y-4">
@@ -78,10 +101,16 @@ export default function AdminProductsPage() {
           <div>
             <h1 className="text-2xl font-bold">محصولات</h1>
             <p className="text-muted-foreground text-sm">
-              وضعیت و فلگ‌های نمایش — فاز ۱
+              مدیریت کاتالوگ — وضعیت، فلگ‌ها و حذف نرم
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/products/new"
+              className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium"
+            >
+              محصول جدید
+            </Link>
             <button
               type="button"
               onClick={() => void load()}
@@ -98,6 +127,28 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="جستجو نام یا اسلاگ…"
+            className="border-input bg-background h-10 min-w-[200px] flex-1 rounded-xl border px-3 text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
+          >
+            <option value="">همه وضعیت‌ها</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_FA[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
         {loading ? (
@@ -105,12 +156,18 @@ export default function AdminProductsPage() {
             <LumaSpin />
           </div>
         ) : items.length === 0 ? (
-          <p className="text-muted-foreground py-12 text-center text-sm">
-            محصولی یافت نشد.
-          </p>
+          <div className="border-border rounded-2xl border py-16 text-center">
+            <p className="text-muted-foreground text-sm">محصولی یافت نشد.</p>
+            <Link
+              href="/admin/products/new"
+              className="text-primary mt-3 inline-block text-sm hover:underline"
+            >
+              افزودن اولین محصول
+            </Link>
+          </div>
         ) : (
           <div className="border-border overflow-x-auto rounded-2xl border">
-            <table className="w-full min-w-[800px] text-right text-sm">
+            <table className="w-full min-w-[900px] text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>
                   <th className="p-3 font-medium">نام</th>
@@ -118,8 +175,8 @@ export default function AdminProductsPage() {
                   <th className="p-3 font-medium">وضعیت</th>
                   <th className="p-3 font-medium">شگفت‌انگیز</th>
                   <th className="p-3 font-medium">جدید</th>
-                  <th className="p-3 font-medium">عملیات</th>
                   <th className="p-3 font-medium">پرفروش</th>
+                  <th className="p-3 font-medium">عملیات</th>
                 </tr>
               </thead>
               <tbody>
@@ -127,12 +184,6 @@ export default function AdminProductsPage() {
                   <tr key={p.id} className="border-border border-t">
                     <td className="p-3">
                       <div className="font-medium">{p.name}</div>
-                      <Link
-                        href={`/admin/products/${p.id}/edit`}
-                        className="text-primary mt-1 inline-block text-xs hover:underline"
-                      >
-                        ویرایش
-                      </Link>
                       <div className="text-muted-foreground font-mono text-xs">
                         {p.slug}
                       </div>
@@ -145,7 +196,12 @@ export default function AdminProductsPage() {
                         value={p.status}
                         disabled={busyId === p.id}
                         onChange={(e) =>
-                          void patch(p.id, { status: e.target.value })
+                          void patch(p.id, {
+                            status: e.target.value as
+                              | "draft"
+                              | "published"
+                              | "archived",
+                          })
                         }
                         className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
                       >
@@ -175,6 +231,31 @@ export default function AdminProductsPage() {
                         />
                       </td>
                     ))}
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/admin/products/${p.id}/edit`}
+                          className="text-primary text-xs hover:underline"
+                        >
+                          ویرایش
+                        </Link>
+                        <Link
+                          href={`/products/${p.slug}`}
+                          target="_blank"
+                          className="text-muted-foreground text-xs hover:underline"
+                        >
+                          مشاهده
+                        </Link>
+                        <button
+                          type="button"
+                          disabled={busyId === p.id}
+                          onClick={() => void softDelete(p.id, p.name)}
+                          className="text-destructive text-xs hover:underline disabled:opacity-50"
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
