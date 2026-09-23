@@ -777,3 +777,48 @@ export async function mergeGuestCartAction() {
     return { ok: false as const, error: "server" };
   }
 }
+
+
+/** به‌روزرسانی ایمیل کاربر فعلی */
+export async function updateMyEmailAction(email: string) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+    if (authErr || !user) return { ok: false as const, error: "auth" };
+    const cleaned = (email || "").trim().toLowerCase();
+    if (!cleaned || !cleaned.includes("@")) {
+      return { ok: false as const, error: "ایمیل نامعتبر است" };
+    }
+    const { error } = await supabase.auth.updateUser({ email: cleaned });
+    if (error) return { ok: false as const, error: error.message };
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[updateMyEmail]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+/** حذف حساب کاربر فعلی (soft: signOut + حذف profile در صورت وجود) */
+export async function deleteMyAccountAction() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+    if (authErr || !user) return { ok: false as const, error: "auth" };
+    // پروفایل / داده‌های مرتبط — در صورت نبود جدول، خطا را نادیده بگیر
+    try {
+      await supabase.from("profiles").delete().eq("id", user.id);
+    } catch {}
+    // حذف کامل auth فقط با service role ممکن است؛ فعلاً session را ببند
+    await supabase.auth.signOut();
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[deleteMyAccount]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
