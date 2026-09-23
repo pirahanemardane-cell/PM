@@ -454,13 +454,14 @@ export function AuthForm({
                   maxLength={6}
                   placeholder="کد ۶ رقمی"
                   value={formData.otpCode}
-                  onChange={(e) = inputMode="numeric" autoComplete="one-time-code">
+                  onChange={(e) =>
                     handleInputChange(
                       "otpCode",
-                      onlyDigits(e.target.value, 6).replace(/\D/g, "").slice(0, 6)
+                      onlyDigits(e.target.value, 6)
                     )
                   }
-                  className="border-input bg-muted/50 w-full rounded-xl border py-3 text-center font-mono text-2xl tracking-widest"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                 />
                 {errors.otpCode ? (
                   <p className="text-destructive text-xs">{errors.otpCode}</p>
