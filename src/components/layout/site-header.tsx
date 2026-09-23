@@ -9,8 +9,7 @@ import { SmartSearch } from "@/components/layout/smart-search";
 import { CountBadge, useShopCounts } from "@/components/layout/header-badges";
 import { useShopStore } from "@/lib/shop-store";
 import { ShopActivityDrawer, type ActivityTab } from "@/components/layout/shop-activity-drawer";
-import { Heart, GitCompareArrows, ShoppingCart, History, Menu, X, Sun, Moon, UserRound, ChevronDown, Shirt, Sparkles, Tag, Layers,
-, Bell} from "lucide-react";
+import { Heart, GitCompareArrows, ShoppingCart, History, Menu, X, Sun, Moon, UserRound, ChevronDown, Shirt, Sparkles, Tag, Layers, Bell} from "lucide-react";
 import { cn } from "@/lib/utils"; const MAIN_NAV = [ { href: "/", label: "خانه", mega: null as null | "categories" | "brands" | "sale" }, { href: "/products", label: "فروشگاه", mega: null }, { href: "/blog", label: "بلاگ", mega: null }, { href: "/products?view=categories", label: "دسته‌بندی‌ها", mega: "categories" as const }, { href: "/products?view=brands", label: "برندها", mega: "brands" as const }, { href: "/products?sale=1", label: "فروش ویژه", mega: "sale" as const },
 ]; const EXTRA_NAV = [ { href: "/blog", label: "بلاگ" }, { href: "/about", label: "درباره ما" }, { href: "/contact", label: "تماس با ما" },
 ]; const CATEGORY_MEGA = [ { title: "پیراهن رسمی", desc: "اداری و مجلسی", href: "/products", icon: Shirt }, { title: "پیراهن کژوال", desc: "روزمره و راحت", href: "/products", icon: Layers }, { title: "پیراهن جین", desc: "استایل خیابانی", href: "/products", icon: Tag }, { title: "همه محصولات", desc: "مشاهده فروشگاه", href: "/products", icon: Sparkles },
