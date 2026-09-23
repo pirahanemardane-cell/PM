@@ -11,7 +11,7 @@ import { ProductBuyBox } from "@/components/product/product-buy-box";
 import { TrackRecentlyViewed } from "@/components/product/track-recently-viewed";
 import { ProductReviews } from "@/components/shop/product-reviews";
 import { PriceHistory } from "@/components/product/price-history";
-import { ProductGallery } from "@/components/product/product-gallery";
+import { ProductPdpGalleryAndBuy } from "@/components/product/product-pdp-media";
 import { ProductSpecs } from "@/components/product/product-specs";
 import { getProductSpecRows } from "@/lib/product-specs";
 import { getProductPriceHistory } from "@/lib/price-history";
@@ -104,7 +104,7 @@ export default async function ProductDetailPage({ params }: Props) {
       color_hex?: string | null;
       color_name?: string | null;
     });
-    let colorVal: string | null = c.color_hex ?? c.color_name ?? null;
+    let colorVal: string | null = c.color_name ?? c.color_hex ?? null;
     if (!colorVal && c.color && typeof c.color === "object") {
       colorVal = c.color.hex_code ?? c.color.hex ?? c.color.name ?? null;
     } else if (typeof c.color === "string") {
@@ -148,93 +148,81 @@ export default async function ProductDetailPage({ params }: Props) {
         <span className="text-foreground line-clamp-1">{product.name}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <ProductGallery
-          productName={product.name}
-          images={(images ?? []).map((img) => ({
-            url: img.url,
-            alt: img.alt_text ?? product.name,
-          }))}
-        />
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">
-              {product.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {product.is_new ? (
-                <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                  جدید
-                </Badge>
-              ) : null}
-              {product.is_featured ? (
-                <Badge className="inline-flex h-6 items-center border-0 bg-amber-100 px-2.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                  شگفت‌انگیز
-                </Badge>
-              ) : null}
-              {product.category?.slug ? (
-                <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
-                  <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
-                    {product.category.name}
-                  </Badge>
-                </Link>
-              ) : null}
-              {product.brand?.slug ? (
-                <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
-                  <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
-                    {product.brand.name}
-                  </Badge>
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          {product.short_description ? (
-            <p className="text-muted-foreground leading-7">
-              {product.short_description}
-            </p>
-          ) : null}
-
+      <ProductPdpGalleryAndBuy
+        productId={product.id}
+        productName={product.name}
+        href={`/products/${product.slug}`}
+        fallbackImage={primaryImage?.url}
+        images={(images ?? []).map((img) => ({
+          url: img.url,
+          alt: img.alt_text ?? product.name,
+          variant_id: (img as { variant_id?: string | null }).variant_id ?? null,
+        }))}
+        variants={variantOptions}
+        childrenBeforeBuy={
           <>
-          <TrackRecentlyViewed
-            id={String(product.id)}
-            title={String(product.name ?? "")}
-            price={Number(product.price ?? 0)}
-            image={primaryImage?.url}
-            href={`/products/${product.slug}`}
-          />
-          <ProductBuyBox
-            productId={product.id}
-            title={product.name}
-            image={primaryImage?.url}
-            href={`/products/${product.slug}`}
-            variants={variantOptions}
-          />
-          <div className="flex flex-wrap gap-3 text-sm">
-            <Link
-              href="/size-guide"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              راهنمای سایز
-            </Link>
-            <Link
-              href="/shipping"
-              className="text-muted-foreground underline-offset-4 hover:underline"
-            >
-              شرایط ارسال
-            </Link>
-            <Link
-              href="/returns"
-              className="text-muted-foreground underline-offset-4 hover:underline"
-            >
-              مرجوعی
-            </Link>
-          </div>
-          <PriceHistory points={priceHistory} />
+            <div className="space-y-2">
+              <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">
+                {product.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {product.is_new ? (
+                  <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                    جدید
+                  </Badge>
+                ) : null}
+                {product.is_featured ? (
+                  <Badge className="inline-flex h-6 items-center border-0 bg-amber-100 px-2.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                    شگفت‌انگیز
+                  </Badge>
+                ) : null}
+                {product.category?.slug ? (
+                  <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
+                    <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
+                      {product.category.name}
+                    </Badge>
+                  </Link>
+                ) : null}
+                {product.brand?.slug ? (
+                  <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
+                    <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
+                      {product.brand.name}
+                    </Badge>
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+            {product.short_description ? (
+              <p className="text-muted-foreground leading-7">
+                {product.short_description}
+              </p>
+            ) : null}
+            <TrackRecentlyViewed
+              id={String(product.id)}
+              title={String(product.name ?? "")}
+              price={Number((product as { price?: number }).price ?? 0)}
+              image={primaryImage?.url}
+              href={`/products/${product.slug}`}
+            />
           </>
-</div>
-      </div>
+        }
+        childrenAfterBuy={
+          <>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <Link href="/size-guide" className="text-primary underline-offset-4 hover:underline">
+                راهنمای سایز
+              </Link>
+              <Link href="/shipping" className="text-muted-foreground underline-offset-4 hover:underline">
+                شرایط ارسال
+              </Link>
+              <Link href="/returns" className="text-muted-foreground underline-offset-4 hover:underline">
+                مرجوعی
+              </Link>
+            </div>
+            <PriceHistory points={priceHistory} />
+          </>
+        }
+      />
 
       {product.description ? (
         <section

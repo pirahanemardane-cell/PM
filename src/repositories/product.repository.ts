@@ -31,7 +31,7 @@ export class ProductRepository extends BaseRepository {
         created_at,
         brand:brands(id, name, slug),
         category:categories(id, name, slug),
-        images:product_images(id, url, alt_text, is_primary, sort_order),
+        images:product_images(id, url, alt_text, is_primary, sort_order, variant_id),
         variants:product_variants(id, price, original_price, stock_quantity, size, color_name, color_hex, is_active, sku)
       `,
         { count: "exact" }
@@ -245,7 +245,7 @@ export class ProductRepository extends BaseRepository {
         created_at,
         brand:brands(id, name, slug),
         category:categories(id, name, slug),
-        images:product_images(id, url, alt_text, is_primary, sort_order),
+        images:product_images(id, url, alt_text, is_primary, sort_order, variant_id),
         variants:product_variants(id, price, original_price, stock_quantity, size, color_name, color_hex, is_active, sku)
       `
       )

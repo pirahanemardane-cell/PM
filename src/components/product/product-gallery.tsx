@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
@@ -8,19 +8,60 @@ import { X, ChevronRight, ChevronLeft } from "lucide-react";
 export type GalleryImage = {
   url: string;
   alt?: string | null;
+  variant_id?: string | null;
+};
+
+type VariantLite = {
+  id: string;
+  color?: string | null;
 };
 
 export function ProductGallery({
   images,
   productName,
+  variants = [],
+  activeColor = null,
 }: {
   images: GalleryImage[];
   productName: string;
+  /** برای مپ رنگ → variant_id */
+  variants?: VariantLite[];
+  /** رنگ انتخاب‌شده در buy-box */
+  activeColor?: string | null;
 }) {
-  const list = images.filter((i) => i.url);
+  const colorNorm = (c: string | null | undefined) =>
+    (c || "").trim().replace(/^#/, "").toLowerCase();
+
+  const list = useMemo(() => {
+    const all = images.filter((i) => i.url);
+    if (!activeColor || !variants.length) return all;
+
+    const want = colorNorm(activeColor);
+    const variantIds = new Set(
+      variants
+        .filter((v) => colorNorm(v.color) === want)
+        .map((v) => v.id),
+    );
+
+    // تصاویر وصل‌شده به وریانت همان رنگ
+    const byVariant = all.filter(
+      (img) => img.variant_id && variantIds.has(img.variant_id),
+    );
+    if (byVariant.length) return byVariant;
+
+    // اگر برای این رنگ عکسی نبود → همه (fallback)
+    return all;
+  }, [images, variants, activeColor]);
+
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
-  const current = list[idx] ?? list[0];
+
+  // با عوض شدن رنگ، به اولین تصویر برگرد
+  useEffect(() => {
+    setIdx(0);
+  }, [activeColor, list.length]);
+
+  const current = list[Math.min(idx, Math.max(0, list.length - 1))] ?? list[0];
 
   const close = useCallback(() => setOpen(false), []);
   const prev = useCallback(() => {
@@ -34,7 +75,7 @@ export function ProductGallery({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
-      if (e.key === "ArrowRight") prev(); // RTL: راست = قبلی بصری
+      if (e.key === "ArrowRight") prev();
       if (e.key === "ArrowLeft") next();
     };
     document.body.style.overflow = "hidden";
@@ -98,7 +139,6 @@ export function ProductGallery({
         </div>
       ) : null}
 
-      {/* لایت‌باکس تمام‌صفحه */}
       {open ? (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
@@ -115,7 +155,6 @@ export function ProductGallery({
           >
             <X className="h-6 w-6" />
           </button>
-
           {list.length > 1 ? (
             <>
               <button
@@ -125,7 +164,7 @@ export function ProductGallery({
                   next();
                 }}
                 className="absolute top-1/2 right-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 md:right-6"
-                aria-label="تصویر بعدی"
+                aria-label="بعدی"
               >
                 <ChevronRight className="h-7 w-7" />
               </button>
@@ -136,13 +175,12 @@ export function ProductGallery({
                   prev();
                 }}
                 className="absolute top-1/2 left-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 md:left-6"
-                aria-label="تصویر قبلی"
+                aria-label="قبلی"
               >
                 <ChevronLeft className="h-7 w-7" />
               </button>
             </>
           ) : null}
-
           <div
             className="relative flex max-h-[90vh] max-w-[95vw] items-center justify-center"
             onClick={(e) => e.stopPropagation()}
@@ -154,22 +192,8 @@ export function ProductGallery({
               className="max-h-[90vh] max-w-[95vw] object-contain"
             />
           </div>
-
-          {list.length > 1 ? (
-            <p className="text-muted-foreground absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-white/80">
-              {toPersianIndex(idx + 1)} / {toPersianIndex(list.length)}
-            </p>
-          ) : null}
         </div>
       ) : null}
     </div>
   );
-}
-
-function toPersianIndex(n: number) {
-  try {
-    return n.toLocaleString("fa-IR");
-  } catch {
-    return String(n);
-  }
 }

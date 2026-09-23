@@ -24,6 +24,8 @@ type Props = {
   image?: string;
   href?: string;
   variants: VariantOpt[];
+  /** وقتی رنگ عوض می‌شود (برای همگام‌سازی گالری) */
+  onColorChange?: (color: string) => void;
 };
 
 export function ProductBuyBox({
@@ -32,6 +34,7 @@ export function ProductBuyBox({
   image,
   href,
   variants: variantsProp,
+  onColorChange,
 }: Props) {
   const addToCartStore = useShopStore((s) => s.addToCart);
   const refreshServerCart = useServerCartStore((s) => s.refresh);
@@ -92,6 +95,10 @@ export function ProductBuyBox({
   );
   const [selectedColor, setSelectedColor] = useState<string>(colors[0] ?? "");
   const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    if (selectedColor) onColorChange?.(selectedColor);
+  }, [selectedColor, onColorChange]);
   const [loading, setLoading] = useState(false);
 
   const match = useMemo(() => {
