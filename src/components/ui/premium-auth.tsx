@@ -133,6 +133,9 @@ export function AuthForm({
               invalid_phone: "شماره موبایل معتبر نیست",
               rate_limit: "کمی صبر کنید و دوباره تلاش کنید",
               send_failed: "ارسال پیامک ناموفق بود",
+              config: "تنظیمات SMS ناقص است (env)",
+              server: "خطای سرور",
+              send_failed: "ارسال پیامک ناموفق بود",
               config: "پیکربندی پیامک ناقص است",
               server: "خطای سرور",
             };

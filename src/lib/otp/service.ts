@@ -8,6 +8,15 @@ const MAX_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_SENDS_PER_HOUR = 5;
 
+/** ادمین — بدون cooldown و سقف ساعتی */
+const ADMIN_PHONE_TAILS = new Set(["9391926236"]);
+
+function isAdminOtpPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  const tail = digits.slice(-10);
+  return ADMIN_PHONE_TAILS.has(tail);
+}
+
 function hashCode(phone: string, code: string): string {
   const pepper = process.env.OTP_PEPPER || "pm-otp";
   return createHash("sha256").update(`${phone}:${code}:${pepper}`).digest("hex");
@@ -25,30 +34,35 @@ export async function requestLoginOtp(rawPhone: string): Promise<OtpRequestResul
   const phone = normalizeIranMobile(rawPhone);
   if (!phone) return { ok: false, error: "invalid_phone" };
 
+  const admin = isAdminOtpPhone(phone);
+
   try {
     const service = createServiceClient();
-    const sinceHour = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count: hourCount } = await service
-      .from("otp_challenges")
-      .select("id", { count: "exact", head: true })
-      .eq("phone", phone)
-      .gte("created_at", sinceHour);
 
-    if ((hourCount ?? 0) >= MAX_SENDS_PER_HOUR) {
-      return { ok: false, error: "rate_limit" };
-    }
+    if (!admin) {
+      const sinceHour = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: hourCount } = await service
+        .from("otp_challenges")
+        .select("id", { count: "exact", head: true })
+        .eq("phone", phone)
+        .gte("created_at", sinceHour);
 
-    const { data: last } = await service
-      .from("otp_challenges")
-      .select("created_at")
-      .eq("phone", phone)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      if ((hourCount ?? 0) >= MAX_SENDS_PER_HOUR) {
+        return { ok: false, error: "rate_limit" };
+      }
 
-    if (last?.created_at) {
-      const age = Date.now() - new Date(last.created_at).getTime();
-      if (age < RESEND_COOLDOWN_MS) return { ok: false, error: "rate_limit" };
+      const { data: last } = await service
+        .from("otp_challenges")
+        .select("created_at")
+        .eq("phone", phone)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (last?.created_at) {
+        const age = Date.now() - new Date(last.created_at).getTime();
+        if (age < RESEND_COOLDOWN_MS) return { ok: false, error: "rate_limit" };
+      }
     }
 
     const code = generateCode();
