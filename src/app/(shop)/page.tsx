@@ -10,6 +10,8 @@ import { ProductService } from "@/services/product.service";
 import { CategoryService } from "@/services/category.service";
 import { BrandService } from "@/services/brand.service";
 import { ProductCard } from "@/components/product/product-card";
+import { FlashSalePromoCard } from "@/components/home/flash-sale-promo-card";
+import { getFlashSaleEndsAtAction } from "@/app/admin/actions/flash-sale";
 import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
@@ -80,6 +82,9 @@ export default async function HomePage() {
   // تا اضافه شدن فیلتر bestseller / sale واقعی
   const bestsellers = newest;
   const deals = featured.length ? featured : newest;
+
+  const flashRes = await getFlashSaleEndsAtAction();
+  const flashEndsAt = flashRes.ok ? flashRes.endsAt : null;
 
   const features = [
     {
@@ -175,8 +180,11 @@ export default async function HomePage() {
       {/* 5. Deals */}
       <section aria-label="پیشنهاد شگفت‌انگیز">
         <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=true" />
-        {deals.length > 0 ? (
+        {deals.length > 0 || flashEndsAt ? (
           <HorizontalRail>
+            <div className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
+              <FlashSalePromoCard endsAt={flashEndsAt} />
+            </div>
             {deals.map((product) => (
               <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
                 <ProductCard product={product} />
