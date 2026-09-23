@@ -136,29 +136,26 @@ export default async function ProductDetailPage({ params }: Props) {
 
         <div className="space-y-6">
           <div className="space-y-2">
-            {product.brand && (
-              <p className="text-muted-foreground text-sm">
-                {product.brand.name}
-              </p>
-            )}
+            
             <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">
               {product.name}
             </h1>
             <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
               {product.is_new ? (
-                <Badge className="border-0 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">جدید</Badge>
+                <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">جدید</Badge>
               ) : null}
               {product.is_featured ? (
-                <Badge className="border-0 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">شگفت‌انگیز</Badge>
+                <Badge className="inline-flex h-6 items-center border-0 bg-amber-100 px-2.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">شگفت‌انگیز</Badge>
               ) : null}
               {product.category?.slug ? (
                 <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`}>
-                  <Badge className="border-0 bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 cursor-pointer hover:opacity-90">{product.category.name}</Badge>
+                  <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 cursor-pointer hover:opacity-90">{product.category.name}</Badge>
                 </Link>
               ) : null}
               {product.brand?.slug ? (
                 <Link href={`/brands/${product.brand.slug}`}>
-                  <Badge className="border-0 bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 cursor-pointer hover:opacity-90">{product.brand.name}</Badge>
+                  <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 cursor-pointer hover:opacity-90">{product.brand.name}</Badge>
                 </Link>
               ) : null}
               {product.is_bestseller && (
@@ -168,6 +165,8 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
 
           {product.short_description && (
+            </div>
+            
             <p className="text-muted-foreground leading-7">
               {product.short_description}
             </p>
