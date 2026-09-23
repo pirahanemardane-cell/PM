@@ -20,6 +20,17 @@ function colorNorm(c: string | null | undefined) {
   return (c || "").trim().replace(/^#/, "").toLowerCase();
 }
 
+/** نام فارسی رنگ → کلید فایل */
+const COLOR_FILE_HINTS: Record<string, string[]> = {
+  سفید: ["white"],
+  سفيد: ["white"],
+  مشکی: ["black"],
+  مشکي: ["black"],
+  سیاه: ["black"],
+  آبی: ["blue"],
+  ابي: ["blue"],
+};
+
 export function ProductGallery({
   images,
   productName,
@@ -33,29 +44,28 @@ export function ProductGallery({
 }) {
   const list = useMemo(() => {
     const all = images.filter((i) => i.url);
-    if (!activeColor || !variants.length) return all;
+    if (!activeColor) return all;
 
     const want = colorNorm(activeColor);
-    const variantIds = new Set(
-      variants
-        .filter((v) => colorNorm(v.color) === want)
-        .map((v) => v.id),
-    );
 
-    // ۱) تصاویر وصل به وریانت همان رنگ
-    const byVariant = all.filter(
-      (img) => img.variant_id && variantIds.has(img.variant_id),
-    );
-    if (byVariant.length) return byVariant;
+    // ۱) وریانت‌های همان رنگ → تصاویر با variant_id
+    if (variants.length) {
+      const variantIds = new Set(
+        variants
+          .filter((v) => colorNorm(v.color) === want)
+          .map((v) => v.id),
+      );
+      const byVariant = all.filter(
+        (img) => img.variant_id && variantIds.has(img.variant_id),
+      );
+      if (byVariant.length) return byVariant;
+    }
 
-    // ۲) fallback: URL شامل نام رنگ انگلیسی تقریبی
-    const slugHint: Record<string, string[]> = {
-      سفید: ["white"],
-      مشکی: ["black"],
-      آبی: ["blue"],
-      سفيد: ["white"],
-    };
-    const hints = slugHint[activeColor.trim()] ?? [];
+    // ۲) fallback: نام فایل
+    const hints =
+      COLOR_FILE_HINTS[activeColor.trim()] ??
+      COLOR_FILE_HINTS[want] ??
+      [];
     if (hints.length) {
       const byUrl = all.filter((img) =>
         hints.some((h) => img.url.toLowerCase().includes(h)),
@@ -122,6 +132,7 @@ export function ProductGallery({
           className="object-cover object-center transition group-hover:scale-[1.02]"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
+          unoptimized={false}
         />
         <span className="bg-background/80 text-muted-foreground absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm">
           کلیک برای مشاهده کامل
@@ -152,6 +163,7 @@ export function ProductGallery({
         </div>
       ) : null}
 
+      {/* لایت‌باکس: همان URL فعلی، بدون هیچ فیلتر CSS */}
       {open ? (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
@@ -199,9 +211,11 @@ export function ProductGallery({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              key={current!.url}
               src={current!.url}
               alt={current!.alt ?? productName}
               className="max-h-[90vh] max-w-[95vw] object-contain"
+              style={{ filter: "none" }}
             />
           </div>
         </div>

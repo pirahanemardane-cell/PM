@@ -200,10 +200,10 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
             points={area}
             className={
               trendDown
-                ? "fill-emerald-500/15"
+                ? "fill-emerald-400/25"
                 : trendUp
-                  ? "fill-rose-500/15"
-                  : "fill-sky-500/15"
+                  ? "fill-rose-400/25"
+                  : "fill-slate-400/15"
             }
           />
 
@@ -216,10 +216,10 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
             strokeLinecap="round"
             className={
               trendDown
-                ? "stroke-emerald-600 dark:stroke-emerald-400"
+                ? "stroke-[#6ee7b7]"
                 : trendUp
-                  ? "stroke-rose-600 dark:stroke-rose-400"
-                  : "stroke-sky-600 dark:stroke-sky-400"
+                  ? "stroke-[#fda4af]"
+                  : "stroke-slate-400"
             }
           />
 
@@ -231,10 +231,10 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
               r={i === coords.length - 1 ? 4 : 2.5}
               className={
                 trendDown
-                  ? "fill-emerald-600 dark:fill-emerald-400"
+                  ? "fill-[#6ee7b7]"
                   : trendUp
-                    ? "fill-rose-600 dark:fill-rose-400"
-                    : "fill-sky-600 dark:fill-sky-400"
+                    ? "fill-[#fda4af]"
+                    : "fill-slate-400"
               }
             />
           ))}
