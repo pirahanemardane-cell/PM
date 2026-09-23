@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-1 gap-y-2.5 px-4 pb-10 text-center text-sm font-medium md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-36">
+                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-4 gap-x-2 gap-y-2.5 px-4 pb-10 text-center text-xs font-medium sm:text-sm md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-36 md:text-sm">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -88,23 +88,6 @@ export function Footer({
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="relative z-20 mt-6 flex flex-col items-center justify-center gap-2 px-4 md:mt-8 md:flex-row md:items-center md:justify-between md:gap-1 md:px-0">
-            <p className="text-muted-foreground text-center text-base md:text-start">
-              ©{new Date().getFullYear()} {brandName}. تمامی حقوق محفوظ است.
-            </p>
-            {creatorName && creatorUrl && (
-              <nav className="flex gap-4">
-                <Link
-                  href={creatorUrl}
-                  target="_blank"
-                  className="text-muted-foreground hover:text-foreground text-base transition-colors duration-300 hover:font-medium"
-                >
-                  طراحی {creatorName}
-                </Link>
-              </nav>
-            )}
           </div>
         </div>
 
