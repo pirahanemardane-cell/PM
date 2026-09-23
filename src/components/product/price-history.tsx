@@ -32,10 +32,10 @@ const RANGES: { key: RangeKey; label: string; days: number | null }[] = [
   { key: "all", label: "همه", days: null },
 ];
 
-/**
- * نمودار شبیه ترب:
- * محور افقی = تاریخ  |  محور عمودی = قیمت
- */
+const PASTEL_UP = "#fda4af";
+const PASTEL_DOWN = "#6ee7b7";
+const PASTEL_FLAT = "#94a3b8";
+
 export function PriceHistory({ points }: { points: PricePoint[] }) {
   const [range, setRange] = useState<RangeKey>("all");
 
@@ -63,8 +63,17 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
   const first = filtered[0]!;
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const priceSpan = max - min || 1;
+  const delta = last.price - first.price;
 
-  // فضای رسم با padding برای برچسب محور
+  const trendUp = delta > 0.5;
+  const trendDown = delta < -0.5;
+  const stroke = trendUp ? PASTEL_UP : trendDown ? PASTEL_DOWN : PASTEL_FLAT;
+  const fillArea = trendUp
+    ? "rgba(253,164,175,0.28)"
+    : trendDown
+      ? "rgba(110,231,183,0.28)"
+      : "rgba(148,163,184,0.18)";
+
   const W = 400;
   const H = 200;
   const padL = 52;
@@ -91,13 +100,7 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
     `${coords[coords.length - 1]!.x.toFixed(1)},${(H - padB).toFixed(1)}`,
   ].join(" ");
 
-  const delta = last.price - first.price;
-  const trendDown = delta < -0.5;
-  const trendUp = delta > 0.5;
-
-  // برچسب‌های محور Y (۳ سطح)
   const yTicks = [min, (min + max) / 2, max];
-  // برچسب‌های محور X (اول / وسط / آخر)
   const xTicks =
     filtered.length === 1
       ? [filtered[0]!]
@@ -117,6 +120,11 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
           <h2 className="text-base font-bold">نمودار تغییر قیمت</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
             محور افقی: تاریخ · محور عمودی: قیمت
+            {trendUp
+              ? " · روند صعودی (گران‌تر)"
+              : trendDown
+                ? " · روند نزولی (ارزان‌تر)"
+                : ""}
           </p>
         </div>
         <div className="bg-muted/60 flex flex-wrap gap-1 rounded-xl p-1">
@@ -140,13 +148,13 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
         <div className="bg-muted/40 rounded-xl px-2 py-2.5">
           <p className="text-muted-foreground mb-0.5">کمترین</p>
-          <p className="font-semibold text-emerald-700 dark:text-emerald-400">
+          <p className="font-semibold" style={{ color: PASTEL_DOWN }}>
             {fmtPrice(min)}
           </p>
         </div>
         <div className="bg-muted/40 rounded-xl px-2 py-2.5">
           <p className="text-muted-foreground mb-0.5">بیشترین</p>
-          <p className="font-semibold text-rose-700 dark:text-rose-400">
+          <p className="font-semibold" style={{ color: PASTEL_UP }}>
             {fmtPrice(max)}
           </p>
         </div>
@@ -163,7 +171,6 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
           role="img"
           aria-label="نمودار قیمت در زمان"
         >
-          {/* شبکه افقی */}
           {yTicks.map((v, i) => {
             const y =
               padT + (1 - (v - min) / priceSpan) * (H - padT - padB);
@@ -187,59 +194,31 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
                   className="fill-muted-foreground"
                   style={{ fontSize: 9 }}
                 >
-                  {toPersianDigits(
-                    Math.round(v).toLocaleString("en-US"),
-                  )}
+                  {toPersianDigits(Math.round(v).toLocaleString("en-US"))}
                 </text>
               </g>
             );
           })}
 
-          {/* ناحیه زیر خط */}
-          <polygon
-            points={area}
-            className={
-              trendDown
-                ? "fill-[#6ee7b7]/30"
-                : trendUp
-                  ? "fill-[#fda4af]/30"
-                  : "fill-slate-400/15"
-            }
-          />
-
-          {/* خط قیمت */}
+          <polygon points={area} fill={fillArea} />
           <polyline
             fill="none"
             points={line}
+            stroke={stroke}
             strokeWidth="2.5"
             strokeLinejoin="round"
             strokeLinecap="round"
-            className={
-              trendDown
-                ? "stroke-[#6ee7b7]"
-                : trendUp
-                  ? "stroke-[#fda4af]"
-                  : "stroke-slate-400"
-            }
           />
-
           {coords.map((c, i) => (
             <circle
               key={i}
               cx={c.x}
               cy={c.y}
               r={i === coords.length - 1 ? 4 : 2.5}
-              className={
-                trendDown
-                  ? "fill-[#6ee7b7]"
-                  : trendUp
-                    ? "fill-[#fda4af]"
-                    : "fill-slate-400"
-              }
+              fill={stroke}
             />
           ))}
 
-          {/* برچسب تاریخ محور X */}
           {xTicks.map((p, i) => {
             const t = new Date(p.recorded_at).getTime();
             const x = padL + ((t - tMin) / tSpan) * (W - padL - padR);
@@ -269,25 +248,6 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         </span>
         <span>میانگین: {fmtPrice(avg)}</span>
       </div>
-
-      {filtered.length > 1 ? (
-        <ul className="max-h-36 space-y-0 overflow-y-auto rounded-xl border text-xs">
-          {[...filtered]
-            .reverse()
-            .slice(0, 12)
-            .map((p, i) => (
-              <li
-                key={`${p.recorded_at}-${i}`}
-                className="flex items-center justify-between gap-2 border-b px-3 py-2 last:border-0"
-              >
-                <span className="text-muted-foreground">
-                  {fmtDateShort(p.recorded_at)}
-                </span>
-                <span className="font-medium">{fmtPrice(p.price)}</span>
-              </li>
-            ))}
-        </ul>
-      ) : null}
     </section>
   );
 }

@@ -11,17 +11,13 @@ export type GalleryImage = {
   variant_id?: string | null;
 };
 
-type VariantLite = {
-  id: string;
-  color?: string | null;
-};
+type VariantLite = { id: string; color?: string | null };
 
 function colorNorm(c: string | null | undefined) {
   return (c || "").trim().replace(/^#/, "").toLowerCase();
 }
 
-/** نام فارسی رنگ → کلید فایل */
-const COLOR_FILE_HINTS: Record<string, string[]> = {
+const FILE_HINTS: Record<string, string[]> = {
   سفید: ["white"],
   سفيد: ["white"],
   مشکی: ["black"],
@@ -45,46 +41,37 @@ export function ProductGallery({
   const list = useMemo(() => {
     const all = images.filter((i) => i.url);
     if (!activeColor) return all;
-
     const want = colorNorm(activeColor);
 
-    // ۱) وریانت‌های همان رنگ → تصاویر با variant_id
     if (variants.length) {
-      const variantIds = new Set(
-        variants
-          .filter((v) => colorNorm(v.color) === want)
-          .map((v) => v.id),
+      const ids = new Set(
+        variants.filter((v) => colorNorm(v.color) === want).map((v) => v.id),
       );
-      const byVariant = all.filter(
-        (img) => img.variant_id && variantIds.has(img.variant_id),
+      const byVar = all.filter(
+        (img) => img.variant_id && ids.has(img.variant_id),
       );
-      if (byVariant.length) return byVariant;
+      if (byVar.length) return byVar;
     }
 
-    // ۲) fallback: نام فایل
-    const hints =
-      COLOR_FILE_HINTS[activeColor.trim()] ??
-      COLOR_FILE_HINTS[want] ??
-      [];
+    const hints = FILE_HINTS[activeColor.trim()] ?? FILE_HINTS[want] ?? [];
     if (hints.length) {
       const byUrl = all.filter((img) =>
         hints.some((h) => img.url.toLowerCase().includes(h)),
       );
       if (byUrl.length) return byUrl;
     }
-
     return all;
   }, [images, variants, activeColor]);
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
 
+  // فوری ریست ایندکس وقتی رنگ عوض شد
   useEffect(() => {
     setIdx(0);
-  }, [activeColor, list]);
+  }, [activeColor]);
 
   const current = list[Math.min(idx, Math.max(0, list.length - 1))] ?? list[0];
-
   const close = useCallback(() => setOpen(false), []);
   const prev = useCallback(() => {
     setIdx((i) => (list.length ? (i - 1 + list.length) % list.length : 0));
@@ -121,18 +108,18 @@ export function ProductGallery({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-muted group relative aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-2xl border-0 p-0 text-left"
+        className="bg-muted relative aspect-[4/5] w-full cursor-zoom-in overflow-hidden rounded-2xl border-0 p-0 text-left"
         aria-label="بزرگ‌نمایی تصویر"
       >
+        {/* key=url → تعویض فوری بدون crossfade کند */}
         <Image
           key={current!.url}
           src={current!.url}
           alt={current!.alt ?? productName}
           fill
-          className="object-cover object-center transition group-hover:scale-[1.02]"
+          className="object-cover object-center"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
-          unoptimized={false}
         />
         <span className="bg-background/80 text-muted-foreground absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm">
           کلیک برای مشاهده کامل
@@ -153,7 +140,7 @@ export function ProductGallery({
             >
               <Image
                 src={img.url}
-                alt={img.alt ?? `${productName} ${i + 1}`}
+                alt=""
                 fill
                 className="object-cover"
                 sizes="56px"
@@ -163,7 +150,6 @@ export function ProductGallery({
         </div>
       ) : null}
 
-      {/* لایت‌باکس: همان URL فعلی، بدون هیچ فیلتر CSS */}
       {open ? (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
@@ -187,7 +173,7 @@ export function ProductGallery({
                   e.stopPropagation();
                   next();
                 }}
-                className="absolute top-1/2 right-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 md:right-6"
+                className="absolute top-1/2 right-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                 aria-label="بعدی"
               >
                 <ChevronRight className="h-7 w-7" />
@@ -198,7 +184,7 @@ export function ProductGallery({
                   e.stopPropagation();
                   prev();
                 }}
-                className="absolute top-1/2 left-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 md:left-6"
+                className="absolute top-1/2 left-3 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                 aria-label="قبلی"
               >
                 <ChevronLeft className="h-7 w-7" />
