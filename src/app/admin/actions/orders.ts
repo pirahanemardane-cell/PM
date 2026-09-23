@@ -2,6 +2,15 @@
 
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { OrderRepository } from "@/repositories/order.repository";
+import { createServiceClient } from "@/lib/supabase/service";
+import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
+
+const STATUS_TEMPLATE: Record<string, string> = {
+  processing: "order_processing",
+  shipped: "order_shipped",
+  delivered: "order_delivered",
+  cancelled: "order_cancelled",
+};
 
 export async function adminListOrdersAction(
   limit = 50,
@@ -28,6 +37,30 @@ export async function adminUpdateOrderStatusAction(
   try {
     const repo = new OrderRepository();
     await repo.updateStatus(orderId, status);
+
+    // اعلان به مشتری (best-effort؛ شکست اعلان وضعیت را برنمی‌گرداند)
+    try {
+      const order = await repo.getByIdAdmin(orderId);
+      const userId = (order as { user_id?: string | null } | null)?.user_id;
+      const templateId = STATUS_TEMPLATE[status];
+      if (userId && templateId) {
+        const tpl = PREDEFINED_NOTIFICATIONS.find((x) => x.id === templateId);
+        if (tpl) {
+          const service = createServiceClient();
+          const shortId = orderId.slice(0, 8);
+          await service.from("notifications").insert({
+            user_id: userId,
+            title: tpl.title,
+            body: `${tpl.body} (کد: ${shortId}…)`,
+            type: tpl.type,
+            link: "/dashboard?tab=orders",
+          });
+        }
+      }
+    } catch (ne) {
+      console.error("[adminUpdateOrderStatus notify]", ne);
+    }
+
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateOrderStatus]", e);

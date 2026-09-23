@@ -6,9 +6,21 @@ export const PREDEFINED_NOTIFICATIONS = [
     type: "system",
   },
   {
+    id: "order_processing",
+    title: "سفارش در حال آماده‌سازی",
+    body: "سفارش شما ثبت و در حال آماده‌سازی است.",
+    type: "order",
+  },
+  {
     id: "order_shipped",
     title: "سفارش ارسال شد",
     body: "سفارش شما ارسال شده و به‌زودی به دستتان می‌رسد.",
+    type: "order",
+  },
+  {
+    id: "order_cancelled",
+    title: "سفارش لغو شد",
+    body: "سفارش شما لغو شد. در صورت نیاز با پشتیبانی تماس بگیرید.",
     type: "order",
   },
   {
