@@ -1,35 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   adminSendNotificationAction,
-  adminListRecentNotificationsAction,
+  PREDEFINED_NOTIFICATIONS,
 } from "@/app/admin/actions/notifications-admin";
-import { toast } from "@/lib/toaster";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { toPersianDigits } from "@/lib/numbers";
 
 export default function AdminNotificationsPage() {
-  const [templateId, setTemplateId] = useState<string>(PREDEFINED_NOTIFICATIONS[0]?.id ?? "welcome");
+  const templates = useMemo(() => PREDEFINED_NOTIFICATIONS ?? [], []);
+  const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [mode, setMode] = useState<"user" | "all">("user");
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
-  const [recent, setRecent] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
-    const res = await adminListRecentNotificationsAction(40);
-    if (res.ok) setRecent(res.items);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
-
-  async function onSend() {
+  async function onSend(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
+    setMsg(null);
+    setErr(null);
     const res = await adminSendNotificationAction({
       templateId,
       mode,
@@ -37,117 +30,128 @@ export default function AdminNotificationsPage() {
     });
     setBusy(false);
     if (!res.ok) {
-      toast.error("ارسال ناموفق", String((res as any).error ?? ""));
+      const map: Record<string, string> = {
+        auth: "ورود لازم است",
+        forbidden: "دسترسی ادمین ندارید",
+        template: "قالب نامعتبر",
+        target_required: "شماره یا شناسه کاربر لازم است",
+        user_not_found: "کاربر پیدا نشد",
+      };
+      setErr(map[res.error] ?? res.error ?? "ارسال ناموفق");
       return;
     }
-    toast.success("ارسال شد", mode === "all" ? `${(res as any).sent} کاربر` : "۱ کاربر");
-    void load();
+    const sent = "sent" in res ? Number(res.sent) : 1;
+    setMsg(`ارسال شد: ${toPersianDigits(String(sent))} مورد`);
+    if (mode === "user") setTarget("");
   }
 
-  const tpl = PREDEFINED_NOTIFICATIONS.find((x) => x.id === templateId);
+  const selected = templates.find((t) => t.id === templateId);
 
   return (
-    <div className="space-y-6 p-4 md:p-6" dir="rtl">
-      <div>
-        <h1 className="text-xl font-bold">اعلان‌ها</h1>
-        <p className="text-muted-foreground text-sm">
-          ارسال قالب ازپیش‌تعریف‌شده برای یک مشتری یا همه کاربران
-        </p>
+    <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">اعلان‌ها</h1>
+          <p className="text-muted-foreground text-sm">
+            ارسال قالب‌های از پیش‌تعریف‌شده به کاربر یا همه
+          </p>
+        </div>
+        <Link
+          href="/admin/dashboard"
+          className="border-border rounded-xl border px-4 py-2 text-sm"
+        >
+          داشبورد
+        </Link>
       </div>
 
-      <div className="border-border bg-card max-w-xl space-y-4 rounded-xl border p-4 shadow-sm">
-        <label className="block text-sm font-medium">قالب</label>
-        <select
-          className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-          value={templateId}
-          onChange={(e) => setTemplateId(e.target.value as typeof templateId)}
-        >
-          {PREDEFINED_NOTIFICATIONS.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.title}
-            </option>
-          ))}
-        </select>
-        {tpl ? (
-          <p className="text-muted-foreground rounded-lg bg-black/5 p-3 text-xs dark:bg-white/5">
-            {tpl.body}
-          </p>
-        ) : null}
-
-        <div className="flex gap-3 text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={mode === "user"}
-              onChange={() => setMode("user")}
-            />
-            یک مشتری
+      <form
+        onSubmit={onSend}
+        className="border-border space-y-4 rounded-2xl border p-4"
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block space-y-1 text-sm">
+            <span className="text-muted-foreground">قالب</span>
+            <select
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              required
+            >
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
           </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={mode === "all"}
-              onChange={() => setMode("all")}
-            />
-            همه کاربران
+          <label className="block space-y-1 text-sm">
+            <span className="text-muted-foreground">گیرنده</span>
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as "user" | "all")}
+              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+            >
+              <option value="user">یک کاربر (موبایل / id)</option>
+              <option value="all">همه کاربران (حداکثر ۵۰۰۰)</option>
+            </select>
           </label>
         </div>
 
         {mode === "user" ? (
-          <input
-            className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-            placeholder="موبایل مشتری (۰۹...)"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            dir="ltr"
-          />
-        ) : (
-          <p className="text-destructive text-xs">
-            ارسال همگانی برای همه پروفایل‌ها انجام می‌شود — با احتیاط استفاده کنید.
-          </p>
-        )}
+          <label className="block space-y-1 text-sm">
+            <span className="text-muted-foreground">موبایل یا شناسه</span>
+            <input
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
+              placeholder="09xxxxxxxxx"
+              className="border-border bg-background w-full rounded-xl border px-3 py-2"
+              dir="ltr"
+              required
+            />
+          </label>
+        ) : null}
+
+        {selected ? (
+          <div className="bg-muted/40 rounded-xl p-3 text-sm">
+            <p className="font-medium">{selected.title}</p>
+            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
+              {selected.body}
+            </p>
+          </div>
+        ) : null}
 
         <button
-          type="button"
-          disabled={busy}
-          onClick={() => void onSend()}
-          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+          type="submit"
+          disabled={busy || !templateId}
+          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm disabled:opacity-50"
         >
-          {busy ? "در حال ارسال…" : "ارسال اعلان"}
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <LumaSpin /> در حال ارسال…
+            </span>
+          ) : (
+            "ارسال"
+          )}
         </button>
-      </div>
+      </form>
 
-      <div>
-        <h2 className="mb-3 text-sm font-bold">آخرین اعلان‌های ثبت‌شده</h2>
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <LumaSpin />
-          </div>
-        ) : recent.length === 0 ? (
-          <p className="text-muted-foreground text-sm">موردی نیست.</p>
-        ) : (
-          <ul className="space-y-2">
-            {recent.map((n) => (
-              <li
-                key={n.id}
-                className="border-border rounded-lg border p-3 text-right text-sm"
-              >
-                <div className="flex justify-between gap-2">
-                  <span className="font-medium">{n.title}</span>
-                  <span className="text-muted-foreground text-[11px]">
-                    {n.created_at
-                      ? new Date(n.created_at).toLocaleString("fa-IR")
-                      : ""}
-                  </span>
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs">{n.body}</p>
-                <p className="text-muted-foreground mt-1 font-mono text-[10px]" dir="ltr">
-                  user: {n.user_id}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
+      {msg ? <p className="text-sm text-emerald-700 dark:text-emerald-400">{msg}</p> : null}
+      {err ? <p className="text-destructive text-sm">{err}</p> : null}
+
+      <div className="border-border rounded-xl border p-4">
+        <h2 className="mb-2 font-semibold">قالب‌های موجود</h2>
+        <ul className="text-muted-foreground space-y-1 text-sm">
+          {templates.map((t) => (
+            <li key={t.id}>
+              <span className="text-foreground font-medium">{t.title}</span>
+              {" — "}
+              <span className="font-mono text-xs" dir="ltr">
+                {t.id}
+              </span>
+            </li>
+          ))}
+          {!templates.length ? <li>قالبی تعریف نشده</li> : null}
+        </ul>
       </div>
     </div>
   );
