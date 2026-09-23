@@ -127,7 +127,7 @@ export function SmartSearch({ className }: { className?: string }) {
   return (
     <div
       ref={rootRef}
-      className={cn("relative w-full max-w-xl", className)}
+      className={cn("relative w-full max-w-xl xl:max-w-xl", className)}
       dir="rtl"
     >
       <form onSubmit={submit} className="flex h-10 items-center gap-2">
@@ -190,7 +190,7 @@ export function SmartSearch({ className }: { className?: string }) {
 
       {/* پیشنهاد زنده — شبیه دیجی‌کالا */}
       {suggestOpen && q.trim().length >= 2 ? (
-        <div className="border-border bg-card absolute top-[calc(100%+6px)] right-0 left-0 z-[60] max-h-[min(70vh,28rem)] overflow-y-auto rounded-xl border shadow-lg">
+        <div className="border-border bg-card fixed inset-x-0 top-[3.5rem] z-[120] max-h-[min(80vh,32rem)] overflow-y-auto rounded-none border-x-0 border-b border-t shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:left-0 sm:top-[calc(100%+8px)] sm:max-h-[min(70vh,28rem)] sm:rounded-xl sm:border sm:shadow-lg">
           {loading && !hasSuggest ? (
             <p className="text-muted-foreground px-4 py-6 text-center text-sm">
               در حال جستجو…
@@ -299,7 +299,7 @@ export function SmartSearch({ className }: { className?: string }) {
 
       {/* پنل فیلتر قبلی */}
       {filterOpen ? (
-        <div className="border-border bg-card absolute top-[calc(100%+8px)] right-0 left-0 z-50 rounded-xl border p-4 shadow-lg">
+        <div className="border-border bg-card fixed inset-x-0 top-[3.5rem] z-[120] max-h-[min(80vh,32rem)] overflow-y-auto rounded-none border-x-0 border-b border-t shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:left-0 sm:top-[calc(100%+8px)] sm:max-h-[min(70vh,28rem)] sm:rounded-xl sm:border sm:shadow-lg">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium">فیلتر پیشرفته</span>
             <button
