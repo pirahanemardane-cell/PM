@@ -13,7 +13,6 @@ import { ProductCard } from "@/components/product/product-card";
 import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
-import { RecentlyViewed } from "@/components/home/recently-viewed";
 
 export const dynamic = "force-dynamic";
 
@@ -205,8 +204,6 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* 7. Recently viewed */}
-      <RecentlyViewed />
 
       {/* 8 + 9 */}
       <section className="grid gap-6 md:grid-cols-2">

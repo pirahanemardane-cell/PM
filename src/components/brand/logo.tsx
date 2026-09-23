@@ -4,13 +4,14 @@ import Link from "next/link";
 type Props = {
   className?: string;
   priority?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "footer";
 };
 
 const sizes = {
   sm: { width: 120, height: 36, className: "h-8 w-auto" },
   md: { width: 160, height: 48, className: "h-9 w-auto" },
   lg: { width: 200, height: 60, className: "h-9 w-auto max-h-9" },
+  footer: { width: 240, height: 72, className: "h-14 w-auto max-h-14 max-w-[11rem] sm:max-w-[14rem]" },
 };
 
 /**

@@ -50,7 +50,7 @@ export function SiteFooter() {
         { label: "حریم خصوصی", href: "/privacy" },
         { label: "تماس", href: "/contact" },
       ]}
-      brandIcon={<Logo size="lg" className="pointer-events-none" />}
+      brandIcon={<Logo size="footer" className="pointer-events-none" />}
     />
   );
 }

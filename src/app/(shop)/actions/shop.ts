@@ -1,3 +1,4 @@
+import { createNotificationForUser } from "@/app/(shop)/actions/notifications";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -145,6 +146,20 @@ export async function addToCartAction(variantId: string, quantity = 1) {
     const cartRepo = new CartRepository();
     const cartId = await resolveCartId(); // user یا session cookie
     await cartRepo.addItem(cartId, variantId, quantity);
+    try {
+      const { createClient } = await import("@/lib/supabase/server");
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await createNotificationForUser({
+          userId: user.id,
+          title: "افزوده شد به سبد",
+          body: "یک محصول به سبد خرید شما اضافه شد.",
+          type: "cart",
+          link: "/dashboard?tab=cart",
+        });
+      }
+    } catch {}
     return { ok: true as const };
   } catch (e) {
     console.error("[addToCart]", e);
@@ -196,6 +211,7 @@ export type CartLineDTO = {
   image?: string;
   size?: string;
   color?: string;
+  colorHex?: string;
 };
 
 export async function getCartAction(): Promise<{
