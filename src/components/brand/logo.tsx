@@ -10,7 +10,7 @@ type Props = {
 const sizes = {
   sm: { width: 120, height: 36, className: "h-8 w-auto" },
   md: { width: 160, height: 48, className: "h-9 w-auto" },
-  lg: { width: 200, height: 60, className: "h-12 w-auto sm:h-14 md:h-16" },
+  lg: { width: 200, height: 60, className: "h-9 w-auto max-h-9" },
 };
 
 /**

@@ -1,5 +1,6 @@
+"use client";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-"use client"; import Link from "next/link";
+ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { HeaderAuthButton } from "@/components/layout/header-auth-button";
 import { Logo } from "@/components/brand/logo";
