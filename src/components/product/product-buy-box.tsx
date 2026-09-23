@@ -122,6 +122,25 @@ export function ProductBuyBox({
   const stock = Number(match?.stock ?? 0);
   const outOfStock = stock <= 0;
 
+  function sameColor(a?: string | null, b?: string | null) {
+    if (!a || !b) return false;
+    return a.trim().replace(/^#/, "").toLowerCase() === b.trim().replace(/^#/, "").toLowerCase();
+  }
+
+  function sizeAvailable(size: string) {
+    if (!selectedColor) {
+      return variants.some((v) => v.size === size && Number(v.stock ?? 0) > 0);
+    }
+    return variants.some(
+      (v) =>
+        v.size === size &&
+        sameColor(v.color, selectedColor) &&
+        Number(v.stock ?? 0) > 0,
+    );
+  }
+
+
+
   async function handleAdd() {
     if (sizes.length > 0 && !selectedSize) {
       toast.error("سایز را انتخاب کنید");
@@ -150,6 +169,16 @@ export function ProductBuyBox({
         quantity: qty,
         variantId: match.id,
       });
+
+  useEffect(() => {
+    if (!selectedSize) return;
+    if (!sizeAvailable(selectedSize)) {
+      const ok = sizes.filter((s) => sizeAvailable(s));
+      setSelectedSize(ok.length === 1 ? ok[0]! : null);
+    }
+  }, [selectedColor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
@@ -207,20 +236,25 @@ export function ProductBuyBox({
         <div className="space-y-2">
           <p className="text-sm font-medium">سایز</p>
           <div className="flex flex-wrap gap-2">
-            {sizes.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSelectedSize(s)}
-                className={cn(
-                  "border-border rounded-xl border px-3 py-1.5 text-sm",
-                  selectedSize === s &&
-                    "bg-secondary text-secondary-foreground border-secondary",
-                )}
-              >
-                {s}
-              </button>
-            ))}
+            {sizes.map((s) => {
+              const ok = sizeAvailable(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  disabled={!ok}
+                  onClick={() => ok && setSelectedSize(s)}
+                  title={ok ? s : selectedColor ? `سایز ${s} برای رنگ ${selectedColor} موجود نیست` : "ناموجود"}
+                  className={cn(
+                    "border-border rounded-xl border px-3 py-1.5 text-sm",
+                    selectedSize === s && ok && "bg-secondary text-secondary-foreground border-secondary",
+                    !ok && "cursor-not-allowed opacity-35 line-through decoration-muted-foreground/50",
+                  )}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}
