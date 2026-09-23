@@ -1,5 +1,7 @@
 "use server";
 
+import { adminWriteLogAction } from "@/app/admin/actions/logs";
+
 import { requireAdmin } from "@/lib/admin/require-admin";
 
 function slugify(input: string): string {
@@ -386,6 +388,18 @@ export async function adminSoftDeleteProductAction(id: string) {
       .eq("id", id)
       .is("deleted_at", null);
     if (error) throw error;
+    void adminWriteLogAction({
+      action: "product_soft_delete",
+      entity: "product",
+      entity_id: id,
+      meta: null,
+    });
+    void adminWriteLogAction({
+      action: "product_flags_change",
+      entity: "product",
+      entity_id: id,
+      meta: JSON.stringify(patch ?? {}),
+    });
     return { ok: true as const };
   } catch (e) {
     console.error("[adminSoftDeleteProduct]", e);

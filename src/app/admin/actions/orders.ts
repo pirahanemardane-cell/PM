@@ -1,5 +1,7 @@
 "use server";
 
+import { adminWriteLogAction } from "@/app/admin/actions/logs";
+
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { OrderRepository } from "@/repositories/order.repository";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -37,6 +39,12 @@ export async function adminUpdateOrderStatusAction(
   try {
     const repo = new OrderRepository();
     await repo.updateStatus(orderId, status);
+    void adminWriteLogAction({
+      action: "order_status_change",
+      entity: "order",
+      entity_id: orderId,
+      meta: status,
+    });
 
     // اعلان به مشتری (best-effort؛ شکست اعلان وضعیت را برنمی‌گرداند)
     try {
