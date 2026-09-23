@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { adminSettingsStatusAction } from "@/app/admin/actions/settings";
+import { LumaSpin } from "@/components/ui/luma-spin";
 
 type Checks = {
   supabaseUrl: boolean;
@@ -33,17 +34,20 @@ export default function AdminSettingsPage() {
   const [env, setEnv] = useState<string>("—");
   const [checks, setChecks] = useState<Checks | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
+      setLoading(true);
       const res = await adminSettingsStatusAction();
+      setLoading(false);
       if (!res.ok) {
         setError(
           res.error === "login_required"
             ? "ورود لازم است"
             : res.error === "forbidden"
               ? "دسترسی ادمین ندارید"
-              : "خطا",
+              : "خطا در خواندن وضعیت",
         );
         return;
       }
@@ -52,91 +56,137 @@ export default function AdminSettingsPage() {
     })();
   }, []);
 
-  const rows: { label: string; key: keyof Checks }[] = [
+  const supabaseOk = useMemo(() => {
+    if (!checks) return false;
+    return checks.supabaseUrl && checks.supabaseAnon && checks.supabaseService;
+  }, [checks]);
+
+  const r2Ok = useMemo(() => {
+    if (!checks) return false;
+    return (
+      checks.r2Account &&
+      checks.r2Access &&
+      checks.r2Secret &&
+      checks.r2Bucket &&
+      checks.r2Public
+    );
+  }, [checks]);
+
+  const supabaseRows: { label: string; key: keyof Checks }[] = [
     { label: "Supabase URL", key: "supabaseUrl" },
-    { label: "Supabase Anon", key: "supabaseAnon" },
+    { label: "Supabase Anon Key", key: "supabaseAnon" },
     { label: "Supabase Service Role", key: "supabaseService" },
+  ];
+
+  const r2Rows: { label: string; key: keyof Checks }[] = [
     { label: "R2 Account ID", key: "r2Account" },
     { label: "R2 Access Key", key: "r2Access" },
-    { label: "R2 Secret", key: "r2Secret" },
-    { label: "R2 Bucket", key: "r2Bucket" },
+    { label: "R2 Secret Key", key: "r2Secret" },
+    { label: "R2 Bucket Name", key: "r2Bucket" },
     { label: "R2 Public Base URL", key: "r2Public" },
   ];
 
   return (
-    <div className="space-y-6 p-6" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold">تنظیمات</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          وضعیت پیکربندی سرور (بدون نمایش مقادیر محرمانه)
-        </p>
-      </div>
+    <div className="bg-background min-h-screen p-6" dir="rtl">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">تنظیمات محیط</h1>
+            <p className="text-muted-foreground text-sm">
+              وضعیت متغیرهای سرور — مقادیر secret نمایش داده نمی‌شوند
+            </p>
+          </div>
+          <Link
+            href="/admin/dashboard"
+            className="border-border rounded-xl border px-4 py-2 text-sm"
+          >
+            داشبورد
+          </Link>
+        </div>
 
-      {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
-      <div className="border-border rounded-xl border p-4 text-sm">
-        <p>
-          محیط اجرا: <strong>{env}</strong>
-        </p>
-      </div>
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <LumaSpin />
+          </div>
+        ) : checks ? (
+          <>
+            <p className="text-muted-foreground text-sm">
+              محیط اجرا: <span className="text-foreground font-medium">{env}</span>
+            </p>
 
-      <div className="border-border overflow-hidden rounded-xl border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="p-3 text-right">مورد</th>
-              <th className="p-3 text-right">وضعیت</th>
-            </tr>
-          </thead>
-          <tbody>
-            {checks
-              ? rows.map((r) => (
-                  <tr key={r.key} className="border-t">
-                    <td className="p-3">{r.label}</td>
-                    <td className="p-3">
-                      <Badge ok={checks[r.key]} />
-                    </td>
-                  </tr>
-                ))
-              : (
-                <tr>
-                  <td colSpan={2} className="text-muted-foreground p-6 text-center">
-                    در حال بارگذاری…
-                  </td>
-                </tr>
-              )}
-          </tbody>
-        </table>
-      </div>
+            <div
+              className={`rounded-2xl border p-4 text-sm ${
+                supabaseOk
+                  ? "border-emerald-300/60 bg-emerald-500/10"
+                  : "border-amber-300/60 bg-amber-500/10"
+              }`}
+            >
+              <p className="font-medium">
+                Supabase: {supabaseOk ? "آماده" : "ناقص — فروشگاه/ادمین کار نمی‌کند"}
+              </p>
+            </div>
 
-      <div className="border-border rounded-xl border p-4 text-sm">
-        <p className="mb-2 font-medium">لینک‌های سریع</p>
-        <ul className="flex flex-wrap gap-3">
-          <li>
-            <Link className="text-primary underline" href="/admin/dashboard">
-              داشبورد
-            </Link>
-          </li>
-          <li>
-            <Link className="text-primary underline" href="/admin/products">
-              محصولات
-            </Link>
-          </li>
-          <li>
-            <Link className="text-primary underline" href="/admin/media">
-              رسانه
-            </Link>
-          </li>
-        </ul>
-      </div>
+            <div
+              className={`rounded-2xl border p-4 text-sm ${
+                r2Ok
+                  ? "border-emerald-300/60 bg-emerald-500/10"
+                  : "border-amber-300/60 bg-amber-500/10"
+              }`}
+            >
+              <p className="font-medium">
+                Cloudflare R2:{" "}
+                {r2Ok
+                  ? "آماده — آپلود تصویر محصول از ادمین فعال است"
+                  : "ناقص — آپلود تصویر تا پر شدن هر ۵ کلید کار نمی‌کند"}
+              </p>
+              {!r2Ok ? (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  در Vercel → Settings → Environment Variables این کلیدها را پر کنید:
+                  R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
+                  R2_BUCKET_NAME, R2_PUBLIC_BASE_URL
+                </p>
+              ) : null}
+            </div>
 
-      <div className="text-muted-foreground rounded-xl border border-dashed p-4 text-xs leading-relaxed">
-        <p className="mb-1 font-medium text-foreground">یادداشت نقشه راه</p>
-        <p>
-          OTP واقعی پیامک و درگاه پرداخت هنوز deferred هستند. SEO پیشرفته و
-          hero جداگانه برنامه‌ریزی شده‌اند. مقادیر env فقط از `.env.local` /
-          پنل میزبان خوانده می‌شوند.
-        </p>
+            <section className="border-border space-y-2 rounded-2xl border p-4">
+              <h2 className="font-semibold">Supabase</h2>
+              <ul className="space-y-2">
+                {supabaseRows.map((r) => (
+                  <li
+                    key={r.key}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span>{r.label}</span>
+                    <Badge ok={!!checks[r.key]} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="border-border space-y-2 rounded-2xl border p-4">
+              <h2 className="font-semibold">Cloudflare R2 (تصاویر)</h2>
+              <ul className="space-y-2">
+                {r2Rows.map((r) => (
+                  <li
+                    key={r.key}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span>{r.label}</span>
+                    <Badge ok={!!checks[r.key]} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <p className="text-muted-foreground text-xs">
+              تصویر فعلی کاتالوگ ممکن است هنوز مسیر محلی باشد
+              (<code className="mx-1">/products/…</code>).
+              آپلودهای جدید از مسیر ادمین به R2 می‌روند (webp چندسایزه).
+            </p>
+          </>
+        ) : null}
       </div>
     </div>
   );
