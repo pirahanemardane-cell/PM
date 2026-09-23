@@ -222,7 +222,7 @@ export class OrderRepository extends BaseRepository {
 
   async updateStatus(orderId: string, status: string) {
     const supabase = await this.getClient();
-    const allowed = ["pending", "processing", "shipped", "delivered", "cancelled"];
+    const allowed = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
     if (!allowed.includes(status)) throw new Error("bad_status");
     const { error } = await supabase
       .from("orders")

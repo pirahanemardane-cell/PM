@@ -19,6 +19,10 @@ type Props = {
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   featured?: boolean;
   attrs?: Record<string, string>;
+  colorId?: string;
+  sizeId?: string;
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 export function ProductInfiniteList({
@@ -31,6 +35,10 @@ export function ProductInfiniteList({
   sort,
   featured,
   attrs,
+  colorId,
+  sizeId,
+  minPrice,
+  maxPrice,
 }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [page, setPage] = useState(initialPage);
@@ -40,7 +48,6 @@ export function ProductInfiniteList({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
 
-  // وقتی URL/فیلتر عوض شود، لیست از سرور دوباره می‌آید
   useEffect(() => {
     setProducts(initialProducts);
     setPage(initialPage);
@@ -63,6 +70,10 @@ export function ProductInfiniteList({
         sort,
         featured,
         attrs,
+        colorId,
+        sizeId,
+        minPrice,
+        maxPrice,
       });
 
       if (!result.success) {
@@ -84,7 +95,20 @@ export function ProductInfiniteList({
       setError(null);
       loadingRef.current = false;
     });
-  }, [hasMore, page, categorySlug, brandSlug, q, sort, featured, attrs]);
+  }, [
+    hasMore,
+    page,
+    categorySlug,
+    brandSlug,
+    q,
+    sort,
+    featured,
+    attrs,
+    colorId,
+    sizeId,
+    minPrice,
+    maxPrice,
+  ]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -94,7 +118,7 @@ export function ProductInfiniteList({
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(node);
@@ -117,14 +141,21 @@ export function ProductInfiniteList({
         ))}
       </div>
 
-      <div ref={sentinelRef} className="flex min-h-10 items-center justify-center">
-        {isPending && (
-          <div className="flex justify-center py-8" dir="rtl"><LumaSpin /></div>
-        )}
-        {!hasMore && products.length > 0 && (
-          <p className="text-muted-foreground text-sm">همه محصولات نمایش داده شد</p>
-        )}
-        {error && <p className="text-destructive text-sm">{error}</p>}
+      <div
+        ref={sentinelRef}
+        className="flex min-h-10 items-center justify-center"
+      >
+        {isPending ? (
+          <div className="flex justify-center py-8" dir="rtl">
+            <LumaSpin />
+          </div>
+        ) : null}
+        {!hasMore && products.length > 0 ? (
+          <p className="text-muted-foreground text-sm">
+            همه محصولات نمایش داده شد
+          </p>
+        ) : null}
+        {error ? <p className="text-destructive text-sm">{error}</p> : null}
       </div>
     </div>
   );

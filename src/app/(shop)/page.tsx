@@ -61,9 +61,9 @@ export default async function HomePage() {
 
   const [featuredResult, newResult, bestsellerResult, categoriesResult, brandsResult] =
     await Promise.all([
-      productService.getPublishedProducts({ page: 1, limit: 8, featured: true }),
-      productService.getPublishedProducts({ page: 1, limit: 8, sort: "newest" }),
-      productService.getPublishedProducts({ page: 1, limit: 12, bestseller: true }),
+      productService.getPublishedProducts({ page: 1, pageSize: 8, featured: true }),
+      productService.getPublishedProducts({ page: 1, pageSize: 8, sort: "newest" }),
+      productService.getPublishedProducts({ page: 1, pageSize: 12, bestseller: true }),
       categoryService.getRoots(),
       brandService.getActive(),
     ]);

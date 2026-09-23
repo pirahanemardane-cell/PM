@@ -21,6 +21,10 @@ export async function loadProductsPage(input: {
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   featured?: boolean;
   attrs?: Record<string, string>;
+  colorId?: string;
+  sizeId?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }): Promise<LoadProductsResult> {
   const service = new ProductService();
   const pageSize = input.pageSize ?? 12;
@@ -34,6 +38,10 @@ export async function loadProductsPage(input: {
     sort: input.sort ?? "newest",
     featured: input.featured,
     attrs: input.attrs,
+    colorId: input.colorId,
+    sizeId: input.sizeId,
+    minPrice: input.minPrice,
+    maxPrice: input.maxPrice,
   });
 
   if (!result.success) {

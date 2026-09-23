@@ -9,7 +9,14 @@ export const phoneSchema = z
 
 export const emailSchema = z.string().email("ایمیل معتبر نیست");
 
-export const paginationSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  pageSize: z.coerce.number().min(1).max(100).default(12),
-});
+/** page + pageSize؛ limit به‌عنوان alias برای pageSize */
+export const paginationSchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  })
+  .transform((v) => ({
+    page: v.page,
+    pageSize: v.pageSize ?? v.limit ?? 12,
+  }));

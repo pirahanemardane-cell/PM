@@ -11,6 +11,7 @@ import { LumaSpin } from "@/components/ui/luma-spin";
 
 const STATUSES = [
   "pending",
+  "paid",
   "processing",
   "shipped",
   "delivered",
@@ -19,7 +20,8 @@ const STATUSES = [
 
 const STATUS_FA: Record<string, string> = {
   pending: "در انتظار",
-  processing: "آماده‌سازی",
+  paid: "پرداخت‌شده",
+  processing: "در حال آماده‌سازی",
   shipped: "ارسال‌شده",
   delivered: "تحویل‌شده",
   cancelled: "لغو",
