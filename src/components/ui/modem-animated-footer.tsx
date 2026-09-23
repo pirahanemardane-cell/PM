@@ -119,7 +119,7 @@ export function Footer({
         {/* Logo frame: border kept, NO fill background on inner */}
         <div className="absolute bottom-24 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center md:bottom-20">
           <div
-            className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg flex h-14 w-14 items-center justify-center rounded-3xl border-2 p-2 shadow-sm sm:h-20 sm:w-20 md:h-28 md:w-28 duration-300 hover:border-foreground"
+            className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/50 backdrop-blur-lg flex h-14 w-14 items-center justify-center rounded-3xl border-2 p-2 shadow-sm sm:h-20 sm:w-20 md:h-28 md:w-28 duration-300 hover:border-primary transition-colors"
           >
             {brandIcon}
           </div>
