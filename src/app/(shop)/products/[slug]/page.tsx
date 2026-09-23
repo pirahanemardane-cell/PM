@@ -11,6 +11,9 @@ import { ProductBuyBox } from "@/components/product/product-buy-box";
 import { TrackRecentlyViewed } from "@/components/product/track-recently-viewed";
 import { ProductReviews } from "@/components/shop/product-reviews";
 import { PriceHistory } from "@/components/product/price-history";
+import { ProductGallery } from "@/components/product/product-gallery";
+import { ProductSpecs } from "@/components/product/product-specs";
+import { getProductSpecRows } from "@/lib/product-specs";
 import { getProductPriceHistory } from "@/lib/price-history";
 
 type Props = {
@@ -125,25 +128,33 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <main className="container mx-auto px-4 py-8 md:py-12">
-      
+      <nav className="text-muted-foreground mb-6 flex flex-wrap items-center gap-1.5 text-xs" aria-label="breadcrumb">
+        <Link href="/" className="hover:text-foreground">خانه</Link>
+        <span>/</span>
+        <Link href="/products" className="hover:text-foreground">محصولات</Link>
+        {product.category?.slug ? (
+          <>
+            <span>/</span>
+            <Link
+              href={`/products?category=${encodeURIComponent(product.category.slug)}`}
+              className="hover:text-foreground"
+            >
+              {product.category.name}
+            </Link>
+          </>
+        ) : null}
+        <span>/</span>
+        <span className="text-foreground line-clamp-1">{product.name}</span>
+      </nav>
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted p-0">
-          {primaryImage ? (
-            <Image
-              src={primaryImage.url}
-              alt={primaryImage.alt_text ?? product.name}
-              fill
-              className="object-cover object-cover object-center"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          ) : (
-            <div className="text-muted-foreground flex h-full items-center justify-center">
-              بدون تصویر
-            </div>
-          )}
-        </div>
+        <ProductGallery
+          productName={product.name}
+          images={(images ?? []).map((img) => ({
+            url: img.url,
+            alt: img.alt_text ?? product.name,
+          }))}
+        />
 
         <div className="space-y-6">
           <div className="space-y-2">
@@ -231,6 +242,15 @@ export default async function ProductDetailPage({ params }: Props) {
               </p>
             </div>
           )}
+
+          <ProductSpecs rows={specRows} />
+
+          <div className="text-muted-foreground border-t pt-4 text-xs leading-6">
+            ارسال سریع · ضمانت اصالت · امکان مرجوعی طبق{" "}
+            <Link href="/returns" className="underline underline-offset-2">
+              شرایط مرجوعی
+            </Link>
+          </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Link
