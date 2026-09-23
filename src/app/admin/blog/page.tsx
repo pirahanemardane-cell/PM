@@ -192,7 +192,7 @@ export default function AdminBlogPage() {
             <tbody>
               {filtered.map((p) => (
                 <tr key={p.id} className="border-t">
-                  <td className="p-3 font-medium">{p.title}</td>
+                  <td className="p-3 font-medium"><Link href={`/admin/blog/${p.id}/edit`} className="hover:underline">{p.title}</Link></td>
                   <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
                     {p.slug}
                   </td>

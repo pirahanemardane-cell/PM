@@ -168,3 +168,100 @@ export async function adminSetBlogPostStatusAction(
     return { ok: false as const, error: "server" };
   }
 }
+
+export async function adminGetBlogPostAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, post: null };
+  try {
+    const { data, error } = await gate.supabase
+      .from("blog_posts")
+      .select(
+        `
+        id, title, slug, status, excerpt, body, cover_url,
+        category_id, published_at, created_at,
+        category:blog_categories(id, name),
+        blog_tag_map(tag_id)
+      `,
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return { ok: false as const, error: "not_found", post: null };
+    return { ok: true as const, post: data };
+  } catch (e) {
+    console.error("[adminGetBlogPost]", e);
+    return { ok: false as const, error: "server", post: null };
+  }
+}
+
+export async function adminUpdateBlogPostAction(
+  id: string,
+  input: {
+    title: string;
+    slug?: string;
+    category_id?: string | null;
+    excerpt?: string | null;
+    body?: string | null;
+    cover_url?: string | null;
+    status?: "draft" | "published" | "archived";
+    tag_ids?: string[];
+  },
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const title = (input.title || "").trim();
+  if (!title) return { ok: false as const, error: "title_required" };
+  const slug =
+    (input.slug || "").trim() ||
+    title
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\u0600-\u06FFa-z0-9\-]+/gi, "")
+      .replace(/\-+/g, "-")
+      .replace(/^\-|\-$/g, "") ||
+    `post-${Date.now()}`;
+  const status = input.status ?? "draft";
+  try {
+    const patch: Record<string, unknown> = {
+      title,
+      slug,
+      category_id: input.category_id || null,
+      excerpt: input.excerpt?.trim() || null,
+      body: input.body?.trim() || null,
+      cover_url: input.cover_url?.trim() || null,
+      status,
+    };
+    if (status === "published") {
+      const { data: existing } = await gate.supabase
+        .from("blog_posts")
+        .select("published_at")
+        .eq("id", id)
+        .maybeSingle();
+      if (!(existing as { published_at?: string | null } | null)?.published_at) {
+        patch.published_at = new Date().toISOString();
+      }
+    }
+    const { error } = await gate.supabase.from("blog_posts").update(patch).eq("id", id);
+    if (error) throw error;
+
+    if (input.tag_ids) {
+      await gate.supabase.from("blog_tag_map").delete().eq("post_id", id);
+      const tagIds = input.tag_ids.filter(Boolean);
+      if (tagIds.length) {
+        const { error: tErr } = await gate.supabase.from("blog_tag_map").insert(
+          tagIds.map((tag_id) => ({ post_id: id, tag_id })),
+        );
+        if (tErr) console.error("[blog_tag_map update]", tErr);
+      }
+    }
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminUpdateBlogPost]", e);
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message: string }).message)
+        : "server";
+    return { ok: false as const, error: msg };
+  }
+}
