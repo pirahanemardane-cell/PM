@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Ticket,
   Bell,
+  Percent,
 } from "lucide-react";
 
 const NAV = [
@@ -29,6 +30,7 @@ const NAV = [
   { href: "/admin/brands", label: "برندها", icon: Package },
   { href: "/admin/tags", label: "برچسب‌ها", icon: Tag },
   { href: "/admin/discounts", label: "تخفیف‌ها", icon: Tag },
+  { href: "/admin/flash-sale", label: "شگفت‌انگیز", icon: Percent },
   { href: "/admin/users", label: "کاربران", icon: Users },
   { href: "/admin/media", label: "رسانه", icon: ImageIcon },
   { href: "/admin/blog", label: "بلاگ", icon: FileText },
