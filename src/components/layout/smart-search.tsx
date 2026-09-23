@@ -135,7 +135,7 @@ export function SmartSearch({ className }: { className?: string }) {
             onFocus={() => {
               if (q.trim().length >= 2) setSuggestOpen(true);
             }}
-            placeholder="جستجوی محصول، برند، دسته…"
+            placeholder="جستجو"
             className="font-iranyekan placeholder:text-muted-foreground h-10 min-w-0 flex-1 bg-transparent py-0 text-sm outline-none"
             dir="rtl"
             autoComplete="off"
