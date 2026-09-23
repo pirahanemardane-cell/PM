@@ -54,23 +54,28 @@ export default function AdminBrandsPage() {
     const res = await adminCreateBrandAction({ name });
     setCreating(false);
     if (!res.ok) {
-      setError(res.error === "bad_name" ? "نام نامعتبر" : "ایجاد ناموفق");
+      setError(
+        res.error === "bad_name" ? "نام نامعتبر" : "ایجاد ناموفق (slug تکراری؟)",
+      );
       return;
     }
     setName("");
     void load();
   }
 
-  async function toggle(id: string, is_active: boolean) {
+  async function save(
+    id: string,
+    patch: { name?: string; is_active?: boolean },
+  ) {
     setBusyId(id);
-    const res = await adminUpdateBrandAction(id, { is_active });
+    const res = await adminUpdateBrandAction(id, patch);
     setBusyId(null);
     if (!res.ok) {
       setError("ذخیره ناموفق");
       return;
     }
     setItems((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, is_active } : r)),
+      prev.map((r) => (r.id === id ? { ...r, ...patch } : r)),
     );
   }
 
@@ -79,7 +84,7 @@ export default function AdminBrandsPage() {
       <div className="mx-auto max-w-4xl">
         <AdminPageHeader
           title="برندها"
-          description="مدیریت برندهای فروشگاه"
+          description="مدیریت برندهای فروشگاه — ویرایش نام"
           actions={
             <button
               type="button"
@@ -134,7 +139,17 @@ export default function AdminBrandsPage() {
               <tbody>
                 {items.map((r) => (
                   <tr key={r.id} className="border-border border-t">
-                    <td className="p-3 font-medium">{r.name}</td>
+                    <td className="p-3">
+                      <input
+                        defaultValue={r.name}
+                        disabled={busyId === r.id}
+                        className="border-input bg-background h-9 w-full min-w-[8rem] rounded-lg border px-2 text-sm font-medium"
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          if (v && v !== r.name) void save(r.id, { name: v });
+                        }}
+                      />
+                    </td>
                     <td className="text-muted-foreground p-3 font-mono text-xs">
                       {r.slug}
                     </td>
@@ -143,7 +158,9 @@ export default function AdminBrandsPage() {
                         type="checkbox"
                         checked={!!r.is_active}
                         disabled={busyId === r.id}
-                        onChange={(e) => void toggle(r.id, e.target.checked)}
+                        onChange={(e) =>
+                          void save(r.id, { is_active: e.target.checked })
+                        }
                         className="h-4 w-4"
                       />
                     </td>
