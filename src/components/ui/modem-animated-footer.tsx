@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-4 gap-x-2 gap-y-2.5 px-4 pb-10 text-center text-xs font-medium sm:text-sm md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-36 md:text-sm">
+                <div className="text-muted-foreground relative z-20 mx-auto grid max-w-3xl grid-cols-3 gap-x-2 gap-y-2.5 px-4 pb-10 text-center text-xs font-medium sm:text-sm md:grid-cols-5 md:gap-x-4 md:gap-y-3 md:pb-36 md:text-sm">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
