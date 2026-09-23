@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  sizeAvailable as sizeAvailableShared,
+  sameColor,
+  imageIndexForColor,
+  colorNorm,
+} from "@/lib/variant-availability";
+
 import Link from "next/link";
 
 import {
@@ -37,7 +44,7 @@ import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
 
 export interface ProductCard1Props {
-  variantOptions?: { id: string; size?: string | null; color?: string | null; price?: number }[];
+  variantOptions?: { id: string; size?: string | null; color?: string | null; price?: number; stock?: number }[];
   productId?: string;
   href?: string;
   name?: string;
@@ -142,6 +149,15 @@ export function ProductCard1({
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
       const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+
+  
+  function sameColor(a?: string | null, b?: string | null) {
+    if (!a || !b) return false;
+    return (a || "").trim().replace(/^#/, "").toLowerCase() === (b || "").trim().replace(/^#/, "").toLowerCase();
+  }
+  function sizeAvailable(size: string) {
+    return sizeAvailableShared(size, variantOptions ?? [], selectedColor);
+  }
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();

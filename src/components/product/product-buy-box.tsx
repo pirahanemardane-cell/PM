@@ -1,5 +1,7 @@
 "use client";
 
+import { sizeAvailable, sameColor, stockOf, findVariant } from "@/lib/variant-availability";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";

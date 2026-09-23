@@ -1,5 +1,6 @@
 "use client";
 import { toast } from "@/lib/toaster";
+import { sizeAvailable, sameColor } from "@/lib/variant-availability";
 
 import Link from "next/link";
 import {
