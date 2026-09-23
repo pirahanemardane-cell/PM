@@ -41,7 +41,9 @@ export function ProductReviews({ productId }: { productId: string }) {
       rating,
       title: title || undefined,
       body,
+      parentId: replyTo || undefined,
     });
+    setReplyTo(null);
     setBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
@@ -76,6 +78,13 @@ export function ProductReviews({ productId }: { productId: string }) {
             </div>
             {r.title ? <p className="font-medium">{r.title}</p> : null}
             <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{r.body}</p>
+            <button
+              type="button"
+              className="text-primary mt-2 text-xs font-medium hover:underline"
+              onClick={() => setReplyTo(r.id)}
+            >
+              پاسخ
+            </button>
           </article>
         ))}
         {!items.length ? (
@@ -85,10 +94,18 @@ export function ProductReviews({ productId }: { productId: string }) {
 
       <div className="space-y-3">
         <h3 className="font-semibold">ثبت نظر</h3>
+        {replyTo ? (
+          <p className="text-muted-foreground text-xs">
+            در حال پاسخ به نظر{" "}
+            <button type="button" className="text-primary underline" onClick={() => setReplyTo(null)}>
+              انصراف
+            </button>
+          </p>
+        ) : null}
         <ComposerInput
           onSend={onSend}
-          placeholder="نظر خود را بنویسید..."
-          sendLabel="ارسال نظر"
+          placeholder={replyTo ? "پاسخ خود را بنویسید..." : "نظر خود را بنویسید..."}
+          sendLabel={replyTo ? "ارسال پاسخ" : "ارسال نظر"}
           disabled={busy}
         />
         {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}

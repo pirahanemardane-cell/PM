@@ -258,7 +258,7 @@ export function ProductBuyBox({
         disabled={loading || outOfStock}
         onClick={() => void handleAdd()}
         className={cn(
-          "bg-secondary text-secondary-foreground w-full rounded-xl py-3 text-sm font-medium",
+          "bg-primary text-primary-foreground w-full rounded-xl py-3 text-sm font-medium hover:bg-primary/90",
           (loading || outOfStock) && "opacity-60",
         )}
       >
