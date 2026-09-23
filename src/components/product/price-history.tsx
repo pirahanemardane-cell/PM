@@ -9,7 +9,7 @@ function fmtPrice(n: number) {
   return toPersianDigits(Math.round(n).toLocaleString("en-US")) + " تومان";
 }
 
-function fmtDate(iso: string) {
+function fmtDateShort(iso: string) {
   try {
     return toPersianDigits(
       new Date(iso).toLocaleDateString("fa-IR", {
@@ -32,7 +32,10 @@ const RANGES: { key: RangeKey; label: string; days: number | null }[] = [
   { key: "all", label: "همه", days: null },
 ];
 
-/** استاندارد: محور X = تاریخ ، محور Y = قیمت (مشابه ترب) */
+/**
+ * نمودار شبیه ترب:
+ * محور افقی = تاریخ  |  محور عمودی = قیمت
+ */
 export function PriceHistory({ points }: { points: PricePoint[] }) {
   const [range, setRange] = useState<RangeKey>("all");
 
@@ -58,37 +61,51 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
   const max = Math.max(...prices);
   const last = filtered[filtered.length - 1]!;
   const first = filtered[0]!;
-  const priceRange = max - min || 1;
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const priceSpan = max - min || 1;
 
-  const w = 320;
-  const h = 140;
-  const padL = 8;
-  const padR = 8;
-  const padT = 12;
-  const padB = 28;
+  // فضای رسم با padding برای برچسب محور
+  const W = 400;
+  const H = 200;
+  const padL = 52;
+  const padR = 12;
+  const padT = 16;
+  const padB = 36;
 
-  const coords = filtered.map((p, i) => {
-    const x =
-      filtered.length === 1
-        ? w / 2
-        : padL + (i / (filtered.length - 1)) * (w - padL - padR);
-    const y =
-      h - padB - ((p.price - min) / priceRange) * (h - padT - padB);
+  const times = filtered.map((p) => new Date(p.recorded_at).getTime());
+  const tMin = times[0]!;
+  const tMax = times[times.length - 1]!;
+  const tSpan = tMax - tMin || 1;
+
+  const coords = filtered.map((p) => {
+    const t = new Date(p.recorded_at).getTime();
+    const x = padL + ((t - tMin) / tSpan) * (W - padL - padR);
+    const y = padT + (1 - (p.price - min) / priceSpan) * (H - padT - padB);
     return { x, y, ...p };
   });
 
-  const linePoints = coords
-    .map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`)
-    .join(" ");
-  const areaPoints = [
-    `${coords[0]!.x.toFixed(1)},${(h - padB).toFixed(1)}`,
+  const line = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  const area = [
+    `${coords[0]!.x.toFixed(1)},${(H - padB).toFixed(1)}`,
     ...coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`),
-    `${coords[coords.length - 1]!.x.toFixed(1)},${(h - padB).toFixed(1)}`,
+    `${coords[coords.length - 1]!.x.toFixed(1)},${(H - padB).toFixed(1)}`,
   ].join(" ");
 
   const delta = last.price - first.price;
   const trendDown = delta < -0.5;
   const trendUp = delta > 0.5;
+
+  // برچسب‌های محور Y (۳ سطح)
+  const yTicks = [min, (min + max) / 2, max];
+  // برچسب‌های محور X (اول / وسط / آخر)
+  const xTicks =
+    filtered.length === 1
+      ? [filtered[0]!]
+      : [
+          filtered[0]!,
+          filtered[Math.floor(filtered.length / 2)]!,
+          filtered[filtered.length - 1]!,
+        ];
 
   return (
     <section
@@ -139,33 +156,48 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         </div>
       </div>
 
-      <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-transparent">
+      <div className="bg-muted/20 relative w-full overflow-hidden rounded-xl">
         <svg
-          viewBox={`0 0 ${w} ${h}`}
-          className="h-36 w-full"
-          preserveAspectRatio="none"
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-48 w-full"
           role="img"
-          aria-label="نمودار قیمت"
+          aria-label="نمودار قیمت در زمان"
         >
-          {[0.25, 0.5, 0.75].map((g) => {
-            const y = padT + g * (h - padT - padB);
+          {/* شبکه افقی */}
+          {yTicks.map((v, i) => {
+            const y =
+              padT + (1 - (v - min) / priceSpan) * (H - padT - padB);
             return (
-              <line
-                key={g}
-                x1={padL}
-                x2={w - padR}
-                y1={y}
-                y2={y}
-                stroke="currentColor"
-                className="text-border"
-                strokeWidth="1"
-                strokeDasharray="4 4"
-                opacity="0.5"
-              />
+              <g key={i}>
+                <line
+                  x1={padL}
+                  x2={W - padR}
+                  y1={y}
+                  y2={y}
+                  stroke="currentColor"
+                  className="text-border"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                  opacity="0.55"
+                />
+                <text
+                  x={padL - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  className="fill-muted-foreground"
+                  style={{ fontSize: 9 }}
+                >
+                  {toPersianDigits(
+                    Math.round(v).toLocaleString("en-US"),
+                  )}
+                </text>
+              </g>
             );
           })}
+
+          {/* ناحیه زیر خط */}
           <polygon
-            points={areaPoints}
+            points={area}
             className={
               trendDown
                 ? "fill-emerald-500/15"
@@ -174,9 +206,11 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
                   : "fill-sky-500/15"
             }
           />
+
+          {/* خط قیمت */}
           <polyline
             fill="none"
-            points={linePoints}
+            points={line}
             strokeWidth="2.5"
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -188,6 +222,7 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
                   : "stroke-sky-600 dark:stroke-sky-400"
             }
           />
+
           {coords.map((c, i) => (
             <circle
               key={i}
@@ -203,32 +238,51 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
               }
             />
           ))}
+
+          {/* برچسب تاریخ محور X */}
+          {xTicks.map((p, i) => {
+            const t = new Date(p.recorded_at).getTime();
+            const x = padL + ((t - tMin) / tSpan) * (W - padL - padR);
+            return (
+              <text
+                key={i}
+                x={x}
+                y={H - 10}
+                textAnchor="middle"
+                className="fill-muted-foreground"
+                style={{ fontSize: 9 }}
+              >
+                {fmtDateShort(p.recorded_at)}
+              </text>
+            );
+          })}
         </svg>
-        <div className="text-muted-foreground flex justify-between px-2 pb-2 text-[10px]">
-          <span>{fmtDate(first.recorded_at)}</span>
-          <span>{fmtDate(last.recorded_at)}</span>
-        </div>
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        {Math.abs(delta) < 1
-          ? "در این بازه تغییر محسوسی ثبت نشده است."
-          : delta < 0
-            ? `کاهش ${fmtPrice(Math.abs(delta))} نسبت به ابتدای بازه`
-            : `افزایش ${fmtPrice(delta)} نسبت به ابتدای بازه`}
-      </p>
+      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span>
+          {Math.abs(delta) < 1
+            ? "در این بازه تغییر محسوسی ثبت نشده است."
+            : delta < 0
+              ? `کاهش ${fmtPrice(Math.abs(delta))} نسبت به ابتدای بازه`
+              : `افزایش ${fmtPrice(delta)} نسبت به ابتدای بازه`}
+        </span>
+        <span>میانگین: {fmtPrice(avg)}</span>
+      </div>
 
       {filtered.length > 1 ? (
         <ul className="max-h-36 space-y-0 overflow-y-auto rounded-xl border text-xs">
           {[...filtered]
             .reverse()
-            .slice(0, 10)
+            .slice(0, 12)
             .map((p, i) => (
               <li
                 key={`${p.recorded_at}-${i}`}
                 className="flex items-center justify-between gap-2 border-b px-3 py-2 last:border-0"
               >
-                <span className="text-muted-foreground">{fmtDate(p.recorded_at)}</span>
+                <span className="text-muted-foreground">
+                  {fmtDateShort(p.recorded_at)}
+                </span>
                 <span className="font-medium">{fmtPrice(p.price)}</span>
               </li>
             ))}
