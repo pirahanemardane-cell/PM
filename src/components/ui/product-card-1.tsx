@@ -216,7 +216,7 @@ export function ProductCard1({
             size="icon"
             className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isWishlisted ? "text-rose-500" : ""
-            } text-foreground hover:!bg-primary hover:!text-primary-foreground`}
+            } text-inherit`}
             onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -272,7 +272,7 @@ if (res.ok === false && res.error === "login_required") {
             size="icon"
             className={`h-8 w-8 shrink-0 rounded-full border-0 bg-background/90 p-0 shadow-sm backdrop-blur-sm ${
               isCompared ? "text-primary" : ""
-            } text-foreground hover:!bg-primary hover:!text-primary-foreground`}
+            } text-inherit`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
