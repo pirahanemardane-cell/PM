@@ -129,26 +129,8 @@ export default async function ProductDetailPage({ params }: Props) {
 
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
-      <nav className="text-muted-foreground mb-6 flex flex-wrap items-center gap-1.5 text-xs" aria-label="breadcrumb">
-        <Link href="/" className="hover:text-foreground">خانه</Link>
-        <span>/</span>
-        <Link href="/products" className="hover:text-foreground">محصولات</Link>
-        {product.category?.slug ? (
-          <>
-            <span>/</span>
-            <Link
-              href={`/products?category=${encodeURIComponent(product.category.slug)}`}
-              className="hover:text-foreground"
-            >
-              {product.category.name}
-            </Link>
-          </>
-        ) : null}
-        <span>/</span>
-        <span className="text-foreground line-clamp-1">{product.name}</span>
-      </nav>
 
-      <ProductPdpGalleryAndBuy
+<ProductPdpGalleryAndBuy
         productId={product.id}
         productName={product.name}
         href={`/products/${product.slug}`}
