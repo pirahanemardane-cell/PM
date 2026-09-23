@@ -200,9 +200,9 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
             points={area}
             className={
               trendDown
-                ? "fill-emerald-400/25"
+                ? "fill-[#6ee7b7]/30"
                 : trendUp
-                  ? "fill-rose-400/25"
+                  ? "fill-[#fda4af]/30"
                   : "fill-slate-400/15"
             }
           />
