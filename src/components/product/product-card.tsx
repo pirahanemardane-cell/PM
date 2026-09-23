@@ -99,8 +99,7 @@ export function ProductCard({ product }: Props) {
 
   const brandHref = brandSlug
     ? `/brands/${brandSlug}`
-    : undefined
-      : undefined;
+    : undefined;
 
   
   const isSpecialSale = Boolean(
