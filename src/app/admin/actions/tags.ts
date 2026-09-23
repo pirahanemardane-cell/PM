@@ -70,6 +70,48 @@ export async function adminToggleProductTagAction(id: string, is_active: boolean
   }
 }
 
+
+export async function adminUpdateProductTagAction(
+  id: string,
+  patch: { name?: string; slug?: string },
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const body: Record<string, unknown> = {};
+    if (patch.name !== undefined) {
+      const name = patch.name.trim();
+      if (!name) return { ok: false as const, error: "name_required" };
+      body.name = name;
+    }
+    if (patch.slug !== undefined) {
+      const slug = patch.slug.trim();
+      if (slug) body.slug = slug;
+    }
+    if (!Object.keys(body).length) return { ok: true as const };
+    const { error } = await gate.supabase.from("product_tags").update(body).eq("id", id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminUpdateProductTag]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+export async function adminDeleteProductTagAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    await gate.supabase.from("product_tag_map").delete().eq("tag_id", id);
+    const { error } = await gate.supabase.from("product_tags").delete().eq("id", id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminDeleteProductTag]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
 /* ── blog tags ── */
 
 export async function adminListBlogTagsAction() {

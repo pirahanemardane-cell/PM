@@ -6,6 +6,8 @@ import {
   adminListProductTagsAction,
   adminCreateProductTagAction,
   adminToggleProductTagAction,
+  adminUpdateProductTagAction,
+  adminDeleteProductTagAction,
 } from "@/app/admin/actions/tags";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
@@ -95,6 +97,33 @@ export default function AdminProductTagsPage() {
     setItems((prev) =>
       prev.map((t) => (t.id === id ? { ...t, is_active: next } : t)),
     );
+  }
+
+  async function renameTag(id: string, current: string) {
+    const next = window.prompt("نام جدید برچسب", current);
+    if (next == null || !next.trim() || next.trim() === current) return;
+    setBusyId(id);
+    const res = await adminUpdateProductTagAction(id, { name: next.trim() });
+    setBusyId(null);
+    if (!res.ok) {
+      setError("ویرایش نام ناموفق بود");
+      return;
+    }
+    setItems((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, name: next.trim() } : t)),
+    );
+  }
+
+  async function removeTag(id: string, name: string) {
+    if (!window.confirm(`حذف برچسب «${name}»؟`)) return;
+    setBusyId(id);
+    const res = await adminDeleteProductTagAction(id);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("حذف ناموفق بود");
+      return;
+    }
+    setItems((prev) => prev.filter((t) => t.id !== id));
   }
 
   return (

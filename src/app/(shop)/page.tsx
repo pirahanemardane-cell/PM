@@ -79,8 +79,31 @@ export default async function HomePage() {
   const brands =
     brandsResult.success && brandsResult.data ? brandsResult.data : [];
 
-  // تا اضافه شدن فیلتر bestseller / sale واقعی
-  const bestsellers = newest;
+  // پرفروش‌ها از فلگ is_bestseller — اگر خالی بود newest
+  let bestsellers = newest;
+  try {
+    const { ProductService } = await import("@/services/product.service");
+    const ps = new ProductService();
+    // اگر سرویس فیلتر bestseller دارد
+    const br = await (ps as unknown as {
+      listProducts?: (o: Record<string, unknown>) => Promise<{ success?: boolean; data?: unknown[] }>;
+      getProducts?: (o: Record<string, unknown>) => Promise<{ success?: boolean; data?: unknown[] }>;
+    }).listProducts?.({ is_bestseller: true, limit: 12 })
+      ?? await (ps as unknown as {
+          getProducts?: (o: Record<string, unknown>) => Promise<{ success?: boolean; data?: unknown[] }>;
+        }).getProducts?.({ is_bestseller: true, limit: 12 });
+    if (br && (br as { data?: unknown[] }).data?.length) {
+      bestsellers = (br as { data: typeof newest }).data;
+    } else {
+      // fallback: از newest آن‌هایی که is_bestseller دارند
+      const flagged = (newest as Array<{ is_bestseller?: boolean }>).filter(
+        (p) => p.is_bestseller,
+      );
+      if (flagged.length) bestsellers = flagged as typeof newest;
+    }
+  } catch {
+    /* keep newest */
+  }
   const deals = featured.length ? featured : newest;
 
   const flashRes = await getFlashSaleEndsAtAction();
