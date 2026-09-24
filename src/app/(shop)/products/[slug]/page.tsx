@@ -206,16 +206,31 @@ export default async function ProductDetailPage({ params }: Props) {
         }
         childrenAfterBuy={
           <>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <Link href="/size-guide" className="text-primary underline-offset-4 hover:underline">
-                راهنمای سایز
-              </Link>
-              <Link href="/shipping" className="text-muted-foreground underline-offset-4 hover:underline">
-                شرایط ارسال
-              </Link>
-              <Link href="/returns" className="text-muted-foreground underline-offset-4 hover:underline">
-                مرجوعی
-              </Link>
+            <div className="grid gap-3 text-sm sm:grid-cols-3">
+              <div>
+                <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
+                  راهنمای سایز
+                </Link>
+                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                  جدول اندازه‌ها برای انتخاب سایز دقیق
+                </p>
+              </div>
+              <div>
+                <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                  شرایط ارسال
+                </Link>
+                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                  هزینه و زمان ارسال به شهر شما
+                </p>
+              </div>
+              <div>
+                <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                  مرجوعی
+                </Link>
+                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                  تعویض و بازگشت تا ۷ روز کاری
+                </p>
+              </div>
             </div>
             
           </>

@@ -1,7 +1,7 @@
 "use client";
 import { toast } from "@/lib/toaster";
 import { resolveColorHex } from "@/lib/colors";
-import { sizeAvailable, sameColor, isVariantAvailable } from "@/lib/variant-availability";
+import { sizeAvailable, sameColor, colorAvailable, isVariantAvailable } from "@/lib/variant-availability";
 
 import Link from "next/link";
 import {
@@ -89,11 +89,14 @@ export function ShopActivityDrawer({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image}
-                      alt={p.title || ""}
-                      className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted object-cover p-0"
+                      alt=""
+                      width={56}
+                      height={56}
+                      className="h-14 w-14 shrink-0 rounded-md object-cover"
+                      style={{ aspectRatio: "1 / 1", objectFit: "cover" }}
                     />
                   ) : (
-                    <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted object-cover p-0" />
+                    <div className="h-14 w-14 shrink-0 rounded-md bg-muted" style={{ aspectRatio: "1 / 1" }} />
                   )}
                   <div className="min-w-0 flex-1 text-right">
                     <p className="truncate text-sm font-medium">
