@@ -357,12 +357,12 @@ if (res.ok === false && res.error === "login_required") {
               className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
               onClick={(e) => e.stopPropagation()}
             >
-              <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:hover:bg-violet-900/40 dark:hover:text-violet-200 sm:text-xs text-violet-900 dark:bg-violet-900/55 dark:text-violet-100">
+              <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:hover:bg-violet-900/40 dark:hover:text-violet-200 sm:text-xs text-violet-900 text-violet-900 dark:bg-violet-900/55 dark:text-violet-100">
                 {category}
               </Badge>
             </Link>
           ) : category ? (
-            <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none sm:text-xs text-violet-900 dark:bg-violet-900/55 dark:text-violet-100">
+            <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-800 shadow-none sm:text-xs text-violet-900 text-violet-900 dark:bg-violet-900/55 dark:text-violet-100">
               {category}
             </Badge>
           ) : null}
@@ -372,12 +372,12 @@ if (res.ok === false && res.error === "login_required") {
               className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
               onClick={(e) => e.stopPropagation()}
             >
-              <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none transition-none hover:bg-emerald-100 hover:text-emerald-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-200 sm:text-xs text-emerald-900 dark:bg-emerald-900/55 dark:text-emerald-100">
+              <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none transition-none hover:bg-emerald-100 hover:text-emerald-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-200 sm:text-xs text-emerald-900 text-emerald-900 dark:bg-emerald-900/55 dark:text-emerald-100">
                 {brand}
               </Badge>
             </Link>
           ) : brand ? (
-            <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none sm:text-xs text-emerald-900 dark:bg-emerald-900/55 dark:text-emerald-100">
+            <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-800 shadow-none sm:text-xs text-emerald-900 text-emerald-900 dark:bg-emerald-900/55 dark:text-emerald-100">
               {brand}
             </Badge>
           ) : null}
