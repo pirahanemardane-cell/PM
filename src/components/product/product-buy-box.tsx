@@ -175,13 +175,7 @@ export function ProductBuyBox({
         variantId: match.id,
       });
 
-  useEffect(() => {
-    if (!selectedSize) return;
-    if (!sizeAvailable(selectedSize)) {
-      const ok = sizes.filter((s) => sizeAvailable(s));
-      setSelectedSize(ok.length === 1 ? ok[0]! : null);
-    }
-  }, [selectedColor]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-line react-hooks/exhaustive-deps
 
 
       if (typeof window !== "undefined") {
@@ -189,17 +183,28 @@ export function ProductBuyBox({
           new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
         );
       }
-      const res = await addToCartAction(match.id, qty);
-      if (!res.ok && res.error !== "login_required") {
-        toast.error(res.error ? `سبد: ${res.error}` : "خطا در افزودن به سبد");
-      } else {
+      // لوکال همین الان در استور است → UI درست است
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
+        );
+        window.dispatchEvent(new CustomEvent("pm:cart-changed"));
+      }
+      try {
+        const res = await addToCartAction(match.id, qty);
         if (res.ok) {
           void refreshServerCart();
           window.dispatchEvent(new CustomEvent("pm:cart-changed"));
+        } else if (res.error && res.error !== "login_required") {
+          // سرور fail ولی لوکال OK — فقط هشدار خفیف، نه خطای کلی
+          console.warn("[addToCart server]", res.error);
         }
-        toast.success("به سبد خرید اضافه شد");
+      } catch (e) {
+        console.warn("[addToCart server exception]", e);
       }
-    } catch {
+      toast.success("به سبد خرید اضافه شد");
+    } catch (e) {
+      console.error("[addToCart]", e);
       toast.error("خطا در افزودن به سبد");
     } finally {
       setLoading(false);
