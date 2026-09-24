@@ -578,6 +578,7 @@ export async function adminSoftDeleteProductAction(id: string) {
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند */
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند + تصویر واریانت */
 /** همگام‌سازی وریانت‌ها — بدون حذف کور؛ فقط upsert + لینک تصویر */
+/** همگام‌سازی وریانت‌ها — match با id یا size+color؛ بدون duplicate */
 export async function adminSyncProductVariantsAction(
   productId: string,
   variants: AdminVariantInput[],
@@ -605,40 +606,50 @@ export async function adminSyncProductVariantsAction(
       }))
       .filter((v) => Number.isFinite(v.price) && v.price >= 0);
 
-    // SKU خالی = null؛ SKU تکراری در همین لیست → فقط اولی نگه داشته می‌شود
-    {
-      const seen = new Set<string>();
-      for (const v of cleaned) {
-        if (!v.sku) {
-          v.sku = null;
-          continue;
-        }
-        if (seen.has(v.sku)) {
-          console.warn("[sync] duplicate sku in payload, nulling", v.sku);
-          v.sku = null;
-        } else {
-          seen.add(v.sku);
-        }
-      }
-    }
-
-
     if (!cleaned.length) {
       return { ok: false as const, error: "variants_required" };
     }
 
+    // SKU تکراری در payload → null
+    {
+      const seen = new Set<string>();
+      for (const v of cleaned) {
+        if (!v.sku) continue;
+        if (seen.has(v.sku)) v.sku = null;
+        else seen.add(v.sku);
+      }
+    }
+
+    // ترکیب size+color تکراری در payload → ادغام (اولی می‌ماند)
+    {
+      const seenKey = new Set<string>();
+      const deduped: typeof cleaned = [];
+      for (const v of cleaned) {
+        const key = `${v.size ?? ""}||${v.color_name ?? ""}`;
+        if (seenKey.has(key)) {
+          console.warn("[sync] duplicate size+color in form, skip", key);
+          continue;
+        }
+        seenKey.add(key);
+        deduped.push(v);
+      }
+      cleaned.length = 0;
+      cleaned.push(...deduped);
+    }
+
     const { data: existingRows, error: listErr } = await gate.supabase
       .from("product_variants")
-      .select("id, size, color_name")
+      .select("id, size, color_name, sku")
       .eq("product_id", productId);
     if (listErr) {
       console.error("[sync list]", listErr);
-      return { ok: false as const, error: "server" as const };
+      return { ok: false as const, error: "server" as const, detail: listErr.message };
     }
     const existing = (existingRows ?? []) as {
       id: string;
       size: string | null;
       color_name: string | null;
+      sku: string | null;
     }[];
 
     const resolved: {
@@ -663,7 +674,7 @@ export async function adminSyncProductVariantsAction(
 
       // 1) با id
       let targetId = v.id;
-      // 2) fallback: همان size+color
+      // 2) همان size+color
       if (!targetId) {
         const hit = existing.find(
           (e) =>
@@ -671,6 +682,26 @@ export async function adminSyncProductVariantsAction(
             (e.color_name || null) === v.color_name,
         );
         targetId = hit?.id;
+      }
+      // 3) اگر id داده شده ولی size+color با دیگری تداخل دارد → همان ردیف size+color
+      if (targetId) {
+        const clash = existing.find(
+          (e) =>
+            e.id !== targetId &&
+            (e.size || null) === v.size &&
+            (e.color_name || null) === v.color_name,
+        );
+        if (clash) {
+          targetId = clash.id;
+        }
+      }
+
+      // SKU تداخل با وریانت دیگر
+      if (row.sku) {
+        const skuClash = existing.find(
+          (e) => e.sku === row.sku && e.id !== targetId,
+        );
+        if (skuClash) row.sku = null;
       }
 
       if (targetId) {
@@ -683,7 +714,8 @@ export async function adminSyncProductVariantsAction(
           console.error("[sync update]", error);
           return {
             ok: false as const,
-            error: (error as { message?: string }).message || "server",
+            error: "server" as const,
+            detail: error.message,
           };
         }
         resolved.push({
@@ -699,10 +731,57 @@ export async function adminSyncProductVariantsAction(
           .select("id")
           .single();
         if (error) {
+          // اگر unique خورد، دوباره با size+color پیدا کن و update کن
+          if (String(error.message || "").includes("product_variants_product_id_size_color_name")) {
+            const { data: again } = await gate.supabase
+              .from("product_variants")
+              .select("id")
+              .eq("product_id", productId)
+              .is("size", v.size)
+              .is("color_name", v.color_name);
+            // .is با null؛ برای مقدار غیر null از eq
+            let foundId: string | undefined;
+            if (v.size == null && v.color_name == null) {
+              foundId = (again as { id: string }[] | null)?.[0]?.id;
+            } else {
+              let q = gate.supabase
+                .from("product_variants")
+                .select("id")
+                .eq("product_id", productId);
+              q = v.size == null ? q.is("size", null) : q.eq("size", v.size);
+              q =
+                v.color_name == null
+                  ? q.is("color_name", null)
+                  : q.eq("color_name", v.color_name);
+              const { data: hit2 } = await q.limit(1);
+              foundId = (hit2 as { id: string }[] | null)?.[0]?.id;
+            }
+            if (foundId) {
+              const { error: u2 } = await gate.supabase
+                .from("product_variants")
+                .update(row)
+                .eq("id", foundId);
+              if (u2) {
+                return {
+                  ok: false as const,
+                  error: "server" as const,
+                  detail: u2.message,
+                };
+              }
+              resolved.push({
+                id: foundId,
+                size: v.size,
+                color_name: v.color_name,
+                image_url: v.image_url,
+              });
+              continue;
+            }
+          }
           console.error("[sync insert]", error);
           return {
             ok: false as const,
-            error: (error as { message?: string }).message || "server",
+            error: "server" as const,
+            detail: error.message,
           };
         }
         resolved.push({
@@ -711,18 +790,23 @@ export async function adminSyncProductVariantsAction(
           color_name: v.color_name,
           image_url: v.image_url,
         });
+        existing.push({
+          id: inserted.id as string,
+          size: v.size,
+          color_name: v.color_name,
+          sku: row.sku,
+        });
       }
     }
 
-    // غیرفعال کردن واریانت‌هایی که در فرم نیستند (حذف فیزیکی نمی‌کنیم)
+    // وریانت‌های خارج از فرم را غیرفعال کن (حذف فیزیکی نکن)
     const keep = new Set(resolved.map((r) => r.id));
     for (const e of existing) {
       if (!keep.has(e.id)) {
-        const { error } = await gate.supabase
+        await gate.supabase
           .from("product_variants")
           .update({ is_active: false })
           .eq("id", e.id);
-        if (error) console.error("[sync deactivate]", error);
       }
     }
 
@@ -744,6 +828,16 @@ export async function adminSyncProductVariantsAction(
     return { ok: true as const };
   } catch (e) {
     console.error("[adminSyncProductVariants]", e);
-    return { ok: false as const, error: "server" as const };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message || "")
+        : e instanceof Error
+          ? e.message
+          : "";
+    return {
+      ok: false as const,
+      error: "server" as const,
+      detail: msg.slice(0, 200) || undefined,
+    };
   }
 }
