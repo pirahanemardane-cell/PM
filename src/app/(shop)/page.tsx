@@ -15,6 +15,7 @@ import { getFlashSaleEndsAtAction } from "@/app/admin/actions/flash-sale";
 import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
+import { HeroScroll } from "@/components/home/hero-scroll";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,8 @@ export default async function HomePage() {
 
   return (
     <main className="w-full max-w-none mx-auto space-y-14 px-4 py-10 md:py-14">
+      <HeroScroll />
+
       {/* 1. Feature */}
       <section aria-label="اعتماد" className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {features.map((f) => (
