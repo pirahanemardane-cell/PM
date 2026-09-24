@@ -75,7 +75,9 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
         title={label}
         className={userClass}
       >
-        <UserRound className="h-4 w-4 shrink-0" />
+        <span className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold">
+          {(label || "ک").trim().charAt(0)}
+        </span>
         <span className="truncate">{label}</span>
       </Link>
     );
