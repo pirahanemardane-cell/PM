@@ -99,7 +99,7 @@ export async function listWishlistAction(): Promise<{
         name,
         slug,
         product_variants(price),
-        product_images(url, is_primary, sort_order)
+        product_images(url, is_primary, sort_order, variant_id)
       `
       )
       .in("id", ids);
@@ -277,8 +277,12 @@ export async function getCartAction(): Promise<{
       const v = row.product_variants;
       const product = v?.products;
       const images = product?.product_images as
-        | { url: string; is_primary?: boolean; sort_order?: number }[]
+        | { url: string; is_primary?: boolean; sort_order?: number; variant_id?: string | null }[]
         | undefined;
+      const vid = String(row.variant_id ?? v?.id ?? "");
+      const byVariant = (images ?? []).find(
+        (im) => im.variant_id && vid && String(im.variant_id) === vid,
+      );
       const sorted = (images ?? [])
         .slice()
         .sort(
@@ -286,6 +290,8 @@ export async function getCartAction(): Promise<{
             Number(b.is_primary) - Number(a.is_primary) ||
             (a.sort_order ?? 0) - (b.sort_order ?? 0)
         );
+      // بدون variant_id = گالری/شاخص؛ با variant_id = عکس همان واریانت
+      const image = byVariant?.url ?? sorted.find((im) => !im.variant_id)?.url ?? sorted[0]?.url;
       return {
         itemId: row.id,
         variantId: row.variant_id,
@@ -294,7 +300,7 @@ export async function getCartAction(): Promise<{
         productId: product?.id ?? v?.product_id ?? "",
         title: product?.name ?? "محصول",
         slug: product?.slug ?? "",
-        image: sorted[0]?.url,
+        image,
         size: typeof v?.size === "string" ? v.size : v?.size?.name ?? undefined,
         color: v?.color_name ?? (typeof v?.color === "string" ? v.color : v?.color?.name) ?? undefined,
         colorHex: v?.color_hex ?? v?.color?.hex_code ?? undefined,

@@ -92,7 +92,7 @@ export function ShopActivityDrawer({
                       alt=""
                       width={56}
                       height={56}
-                      className="h-14 w-14 shrink-0 rounded-md object-cover"
+                      className="h-14 w-14 shrink-0 rounded-md object-cover aspect-square"
                       style={{ aspectRatio: "1 / 1", objectFit: "cover" }}
                     />
                   ) : (
@@ -222,7 +222,15 @@ export function ShopActivityDrawer({
                                           return;
                                         }
                                         const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                        updateCartItem(key, { color: c });
+                                        (() => {
+                                        const vo = Array.isArray((line as any).variantOptions) ? (line as any).variantOptions : [];
+                                        const hit = vo.find((x: any) => {
+                                          const a = String(x.colorHex || x.color || "").replace(/^#/, "").toLowerCase();
+                                          const b = String(c || "").replace(/^#/, "").toLowerCase();
+                                          return a && b && a === b;
+                                        });
+                                        updateCartItem(key, { color: c, colorHex: c, ...(hit?.image ? { image: hit.image } : {}) });
+                                      })();
                                       }}
                                     />
                                   ))}
