@@ -293,35 +293,49 @@ export async function getCartAction(): Promise<{
       try {
         const { createClient } = await import("@/lib/supabase/server");
         const supabase = await createClient();
-        const { data: vars } = await supabase
+        const { data: vars, error: vErr } = await supabase
           .from("product_variants")
-          .select("product_id, color_name, color_hex, size, stock")
-          .in("product_id", productIds);
+          .select("product_id, color_name, color_hex, size, stock_quantity, is_active")
+          .in("product_id", productIds)
+          .eq("is_active", true);
+        if (vErr) console.error("[getCart variants]", vErr);
         const byProd = new Map<string, { colors: string[]; sizes: string[] }>();
         for (const v of vars ?? []) {
           const pid = (v as { product_id: string }).product_id;
           if (!pid) continue;
           const entry = byProd.get(pid) ?? { colors: [], sizes: [] };
-          const hex =
-            (v as { color_hex?: string }).color_hex ||
-            (v as { color_name?: string }).color_name ||
-            "";
-          if (hex && !entry.colors.includes(hex)) entry.colors.push(hex);
+          const hexRaw = ((v as { color_hex?: string }).color_hex || "").trim();
+          const nameRaw = ((v as { color_name?: string }).color_name || "").trim();
+          // اولویت با hex؛ نام فقط اگر hex نبود
+          let colorKey = hexRaw;
+          if (!colorKey && nameRaw) colorKey = nameRaw;
+          if (colorKey) {
+            const exists = entry.colors.some(
+              (c) => c.replace(/^#/, "").toLowerCase() === colorKey.replace(/^#/, "").toLowerCase()
+                || c === colorKey,
+            );
+            if (!exists) entry.colors.push(colorKey.startsWith("#") || !hexRaw ? colorKey : colorKey);
+            // اگر hex داریم همیشه با # نگه دار
+            if (hexRaw && !entry.colors.includes(hexRaw)) {
+              entry.colors = entry.colors.filter((c) => c !== nameRaw);
+              if (!entry.colors.includes(hexRaw)) entry.colors.push(hexRaw);
+            }
+          }
           const szRaw = (v as { size?: string | { name?: string } }).size;
           const sz =
             typeof szRaw === "string"
-              ? szRaw
+              ? szRaw.trim()
               : szRaw && typeof szRaw === "object"
-                ? szRaw.name
-                : undefined;
+                ? String(szRaw.name || "").trim()
+                : "";
           if (sz && !entry.sizes.includes(sz)) entry.sizes.push(sz);
           byProd.set(pid, entry);
         }
         for (const it of items) {
           const opt = byProd.get(it.productId);
           if (opt) {
-            it.colors = opt.colors;
-            it.sizes = opt.sizes;
+            it.colors = opt.colors.length ? opt.colors : it.colorHex || it.color ? [it.colorHex || it.color!] : [];
+            it.sizes = opt.sizes.length ? opt.sizes : it.size ? [it.size] : [];
           }
         }
       } catch (e) {

@@ -402,7 +402,7 @@ if (res.ok === false && res.error === "login_required") {
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="z-0 absolute inset-0 h-full w-full object-cover object-top"
+            className="z-0 absolute inset-0 h-full w-full object-contain object-top"
             
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

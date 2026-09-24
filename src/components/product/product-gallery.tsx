@@ -114,7 +114,7 @@ export function ProductGallery({
           src={current!.url}
           alt={current!.alt ?? productName}
           fill
-          className="object-cover object-center"
+          className="object-contain object-center"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
         />
@@ -135,7 +135,7 @@ export function ProductGallery({
                 i === idx ? "border-secondary" : "border-transparent opacity-80",
               )}
             >
-              <Image src={img.url} alt="" fill className="object-cover" sizes="56px" />
+              <Image src={img.url} alt="" fill className="object-contain" sizes="56px" />
             </button>
           ))}
         </div>

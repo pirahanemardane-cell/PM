@@ -90,7 +90,7 @@ export function ShopActivityDrawer({
                     <img
                       src={p.image}
                       alt={p.title || ""}
-                      className="h-16 w-16 shrink-0 rounded-lg object-cover bg-muted"
+                      className="h-16 w-16 shrink-0 rounded-lg object-contain bg-muted"
                     />
                   ) : (
                     <div className="bg-muted h-16 w-16 shrink-0 rounded-lg" />
