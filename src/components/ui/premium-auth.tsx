@@ -175,8 +175,10 @@ export function AuthForm({
           return;
         }
                 
-        const tokenHash = (ver as { token_hash?: string }).token_hash;
-        if (!tokenHash) {
+        
+        const email = (ver as { email?: string }).email;
+        const tempPass = (ver as { temp_password?: string }).temp_password;
+        if (!email || !tempPass) {
           setErrors({ otpCode: "سشن ساخته نشد؛ دوباره تلاش کنید" });
           setIsLoading(false);
           return;
@@ -187,19 +189,13 @@ export function AuthForm({
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           );
-          const { error: sessErr } = await browser.auth.verifyOtp({
-            type: "email",
-            token_hash: tokenHash,
+          const { data: sign, error: signErr } = await browser.auth.signInWithPassword({
+            email,
+            password: tempPass,
           });
-          if (sessErr) {
-            console.error("[otp client verifyOtp]", sessErr);
+          if (signErr || !sign.session) {
+            console.error("[otp signIn]", signErr);
             setErrors({ otpCode: "خطا در ایجاد نشست ورود" });
-            setIsLoading(false);
-            return;
-          }
-          const { data: u } = await browser.auth.getUser();
-          if (!u.user) {
-            setErrors({ otpCode: "نشست ثبت نشد" });
             setIsLoading(false);
             return;
           }
@@ -226,6 +222,7 @@ export function AuthForm({
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
         window.location.replace(dest);
         return;
+
 
 
       }

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -110,36 +111,34 @@ export async function verifyOtpAction(phone: string, code: string) {
     }
   }
 
-  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-  });
-  if (linkError || !linkData?.properties?.hashed_token) {
-    console.error("[otp generateLink]", linkError);
+  // پسورد یک‌بارمصرف برای signIn سمت کلاینت (HTTPS)
+  const tempPass = randomBytes(24).toString("base64url") + "Aa1!";
+  if (!userId) {
+    // اگر هنوز id نداریم از ایمیل پیدا کن
+    const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const found = list?.users?.find((u) => u.email === email);
+    userId = found?.id;
+  }
+  if (!userId) {
+    console.error("[otp] no userId for session");
     return { ok: false as const, error: "server" as const };
   }
-
-  
-
-  // نقش از profiles
-  let role = "customer";
-  try {
-    const { data: prof } = await admin
-      .from("profiles")
-      .select("role")
-      .eq("phone", normalized)
-      .maybeSingle();
-    if (prof && (prof as { role?: string }).role) {
-      role = String((prof as { role: string }).role);
-    }
-  } catch (e) {
-    console.warn("[otp role]", e);
+  const { error: passErr } = await admin.auth.admin.updateUserById(userId, {
+    password: tempPass,
+    email_confirm: true,
+  });
+  if (passErr) {
+    console.error("[otp set password]", passErr);
+    return { ok: false as const, error: "server" as const };
   }
 
   return {
     ok: true as const,
     role,
-    token_hash: linkData.properties.hashed_token as string,
+    email,
+    temp_password: tempPass,
   };
+}
+
 }
 
