@@ -268,8 +268,18 @@ export function AuthForm({
           setIsLoading(false);
           return;
         }
-        onSuccess?.({ email: id });
+        try {
+          void onSuccess?.({ email: id });
+        } catch {}
+        setSuccessMessage("ورود موفق");
+        const qNext = new URLSearchParams(window.location.search).get("next");
+        let dest =
+          qNext && qNext.startsWith("/") && !qNext.startsWith("//")
+            ? qNext
+            : defaultNext || "/admin/dashboard";
+        if (!dest.startsWith("/")) dest = "/dashboard";
         setIsLoading(false);
+        window.location.assign(dest);
         return;
       }
 
