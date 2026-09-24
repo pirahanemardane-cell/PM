@@ -82,13 +82,39 @@ function isValidLoginId(value: string) {
   return isValidIranPhone(v);
 }
 
+
+function resolvePostLoginDest(opts: {
+  role?: string;
+  defaultNext?: string;
+}): string {
+  const params =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+  const qNext = params.get("next") || "";
+  const role = (opts.role || "").toLowerCase();
+  const isAdmin = role === "admin";
+  let dest =
+    qNext ||
+    opts.defaultNext ||
+    (isAdmin ? "/admin/dashboard" : "/dashboard");
+  if (!dest.startsWith("/")) dest = "/dashboard";
+  // مشتری حق /admin ندارد
+  if (dest.startsWith("/admin") && !isAdmin) {
+    dest = opts.defaultNext?.startsWith("/admin")
+      ? "/dashboard"
+      : opts.defaultNext || "/dashboard";
+  }
+  return dest;
+}
+
 export function AuthForm({
-  hideRegister = false,
-  defaultNext,
   onSuccess,
   onClose,
   initialMode = "login",
   className,
+  hideRegister = false,
+  defaultNext,
 }: AuthFormProps) {
   const [authMode, setAuthMode] = useState<AuthMode>(
     hideRegister ? "login" : initialMode,
@@ -227,7 +253,10 @@ export function AuthForm({
           setIsLoading(false);
           return;
         }
-        onSuccess?.({ email: id });
+        try { void onSuccess?.({ email: id }); } catch { /* */ }
+        window.location.replace(
+          resolvePostLoginDest({ role: (res as { role?: string }).role, defaultNext }),
+        );
         setIsLoading(false);
         return;
       }
@@ -355,7 +384,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={() => {
-              if (!hideRegister) setAuthMode("signup");
+              if (!hideRegister) if (!hideRegister) setAuthMode("signup");
               setRegistrationStep("details");
             }}
             className={cn(
