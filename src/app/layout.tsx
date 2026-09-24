@@ -67,6 +67,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning className="max-w-full">
+      <head>
+        <link rel="preload" as="image" href="/hero/hero-poster.webp" type="image/webp" />
+        <link rel="preload" as="image" href="/hero/frames/frame-001.webp" type="image/webp" />
+        <link
+          rel="preload"
+          as="font"
+          href="/fonts/iranyekan/IRANYekanX-Regular.woff2"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          href="/fonts/iranyekan/IRANYekanX-Bold.woff2"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="min-h-screen font-sans antialiased max-w-full" suppressHydrationWarning>
         
         <ThemeProvider

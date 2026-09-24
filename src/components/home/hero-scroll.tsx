@@ -7,7 +7,7 @@ const FRAME_COUNT = 70;
 const POSTER = "/hero/hero-poster.webp";
 
 function frameSrc(i: number) {
-  return `/hero/frames/frame-${String(i).padStart(3, "0")}.jpg`;
+  return `/hero/frames/frame-${String(i).padStart(3, "0")}.webp`;
 }
 
 export function HeroScroll() {

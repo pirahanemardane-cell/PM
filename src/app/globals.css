@@ -299,17 +299,12 @@ h4, .h4 {
 
 
 /* ========== IRANYekanX ONLY ========== */
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Thin.woff2") format("woff2"); font-weight: 100; font-style: normal; font-display: swap; }
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-UltraLight.woff2") format("woff2"); font-weight: 200; font-style: normal; font-display: swap; }
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Light.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
 @font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-DemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
 @font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-ExtraBold.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
 @font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Heavy.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-Black.woff2") format("woff2"); font-weight: 950; font-style: normal; font-display: swap; }
-@font-face { font-family: "IRANYekanX"; src: url("/fonts/iranyekan/IRANYekanX-ExtraBlack.woff2") format("woff2"); font-weight: 1000; font-style: normal; font-display: swap; }
+
 
 html, body {
   font-family: "IRANYekanX", Tahoma, sans-serif !important;
