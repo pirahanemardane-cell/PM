@@ -15,6 +15,7 @@ import { ProductPdpGalleryAndBuy } from "@/components/product/product-pdp-media"
 import { ProductSpecs } from "@/components/product/product-specs";
 import { getProductSpecRows } from "@/lib/product-specs";
 import { getProductPriceHistory } from "@/lib/price-history";
+import { resolveColorHex } from "@/lib/colors";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -104,7 +105,17 @@ export default async function ProductDetailPage({ params }: Props) {
       color_hex?: string | null;
       color_name?: string | null;
     });
-    let colorVal: string | null = c.color_name ?? c.color_hex ?? null;
+    const nameHint =
+      (c.color_name || "").trim() ||
+      (typeof c.color === "string" ? c.color : c.color?.name || "") ||
+      "";
+    let colorVal: string | null = resolveColorHex(
+      nameHint || c.color_hex,
+      c.color_hex ||
+        (c.color && typeof c.color === "object"
+          ? c.color.hex_code ?? c.color.hex
+          : null),
+    );
     if (!colorVal && c.color && typeof c.color === "object") {
       colorVal = c.color.hex_code ?? c.color.hex ?? c.color.name ?? null;
     } else if (typeof c.color === "string") {

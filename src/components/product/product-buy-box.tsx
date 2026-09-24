@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
 import { createClient } from "@/lib/supabase/client";
+import { resolveColorHex } from "@/lib/colors";
 
 export type VariantOpt = {
   id: string;
@@ -82,15 +83,17 @@ export function ProductBuyBox({
       ],
     [variants],
   );
-  const colors = useMemo(
-    () =>
-      [
-        ...new Set(
-          variants.map((v) => v.color).filter((c): c is string => Boolean(c)),
-        ),
-      ],
-    [variants],
-  );
+  const colors = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const v of variants) {
+      const hex = resolveColorHex(v.color, null);
+      if (!hex || seen.has(hex.toLowerCase())) continue;
+      seen.add(hex.toLowerCase());
+      out.push(hex);
+    }
+    return out;
+  }, [variants]);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(
     sizes.length === 1 ? sizes[0]! : null,
@@ -215,13 +218,13 @@ export function ProductBuyBox({
                 type="button"
                 onClick={() => { setSelectedColor(c); onColorChange?.(c); }}
                 className={cn(
-                  "border-border h-8 min-w-8 rounded-full border px-2 text-xs",
+                  "border-border h-8 min-w-8 rounded-full border border-black/20 px-2 text-xs shadow-sm",
                   selectedColor === c && "ring-secondary ring-2 ring-offset-2",
                 )}
                 style={
                   c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c)
                     ? {
-                        backgroundColor: c.startsWith("#") ? c : `#${c}`,
+                        backgroundColor: resolveColorHex(c),
                       }
                     : undefined
                 }
