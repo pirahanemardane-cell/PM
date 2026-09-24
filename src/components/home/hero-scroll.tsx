@@ -23,18 +23,44 @@ export function HeroScroll() {
   useEffect(() => {
     const imgs: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
     imagesRef.current = imgs;
-    for (let i = 0; i < FRAME_COUNT; i++) {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = frameSrc(i + 1);
-      img.onload = () => {
-        imgs[i] = img;
-        if (i === 0) {
-          setFirstReady(true);
-          setFrameUrl(frameSrc(1));
+
+    const loadOne = (i: number) =>
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => {
+          imgs[i] = img;
+          if (i === 0) {
+            setFirstReady(true);
+            setFrameUrl(frameSrc(1));
+          }
+          resolve();
+        };
+        img.onerror = () => resolve();
+        img.src = frameSrc(i + 1);
+      });
+
+    // فریم اول فوری؛ بقیه در idle تا TTI خراب نشود
+    (async () => {
+      await loadOne(0);
+      const rest = async () => {
+        const batch = 4;
+        for (let i = 1; i < FRAME_COUNT; i += batch) {
+          const slice: Promise<void>[] = [];
+          for (let j = i; j < Math.min(FRAME_COUNT, i + batch); j++) {
+            slice.push(loadOne(j));
+          }
+          await Promise.all(slice);
         }
       };
-    }
+      if ("requestIdleCallback" in window) {
+        (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(
+          () => { void rest(); }
+        );
+      } else {
+        setTimeout(() => { void rest(); }, 50);
+      }
+    })();
   }, []);
 
   const drawIndex = useCallback((idx: number, force = false) => {
