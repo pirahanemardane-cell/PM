@@ -139,6 +139,3 @@ export async function verifyOtpAction(phone: string, code: string) {
     temp_password: tempPass,
   };
 }
-
-}
-
