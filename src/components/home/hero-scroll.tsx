@@ -7,6 +7,7 @@ const FRAME_COUNT = 70;
 const POSTER = "/hero/hero-poster.webp";
 
 function frameSrc(i: number) {
+  // i از ۱ تا ۷۰ — همان فایل‌های فولدر
   return `/hero/frames/frame-${String(i).padStart(3, "0")}.jpg`;
 }
 
@@ -14,45 +15,50 @@ export function HeroScroll() {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
-  const [readyCount, setReadyCount] = useState(0);
+  const [firstReady, setFirstReady] = useState(false);
   const lastIdxRef = useRef(-1);
 
-  // پیش‌بارگذاری همه فریم‌ها
   useEffect(() => {
     const imgs: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
-    let loaded = 0;
+    imagesRef.current = imgs;
+
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.decoding = "async";
       img.src = frameSrc(i + 1);
       img.onload = () => {
         imgs[i] = img;
-        loaded += 1;
-        setReadyCount(loaded);
-      };
-      img.onerror = () => {
-        loaded += 1;
-        setReadyCount(loaded);
+        if (i === 0) setFirstReady(true);
       };
     }
-    imagesRef.current = imgs;
   }, []);
 
-  const draw = useCallback((progress: number) => {
+  const drawIndex = useCallback((idx: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const idx = Math.min(
-      FRAME_COUNT - 1,
-      Math.max(0, Math.round(progress * (FRAME_COUNT - 1)))
-    );
+    // نزدیک‌ترین فریم لود‌شده را پیدا کن (نه سیاه)
+    let img = imagesRef.current[idx];
+    if (!img?.complete || !img.naturalWidth) {
+      for (let d = 1; d < FRAME_COUNT; d++) {
+        const a = imagesRef.current[Math.min(FRAME_COUNT - 1, idx + d)];
+        const b = imagesRef.current[Math.max(0, idx - d)];
+        if (a?.complete && a.naturalWidth) {
+          img = a;
+          break;
+        }
+        if (b?.complete && b.naturalWidth) {
+          img = b;
+          break;
+        }
+      }
+    }
+    if (!img?.complete || !img.naturalWidth) return;
+
     if (idx === lastIdxRef.current && canvas.width > 0) return;
     lastIdxRef.current = idx;
-
-    const img = imagesRef.current[idx];
-    if (!img?.complete || !img.naturalWidth) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth;
@@ -67,6 +73,7 @@ export function HeroScroll() {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // cover — بدون clear سیاه؛ مستقیم رسم
     const ir = img.naturalWidth / img.naturalHeight;
     const cr = w / h;
     let dw: number, dh: number, dx: number, dy: number;
@@ -81,7 +88,6 @@ export function HeroScroll() {
       dx = 0;
       dy = (h - dh) / 2;
     }
-    ctx.clearRect(0, 0, w, h);
     ctx.drawImage(img, dx, dy, dw, dh);
   }, []);
 
@@ -95,7 +101,11 @@ export function HeroScroll() {
       const total = Math.max(1, section.offsetHeight - window.innerHeight);
       const scrolled = Math.min(Math.max(-rect.top, 0), total);
       const progress = scrolled / total;
-      draw(progress);
+      const idx = Math.min(
+        FRAME_COUNT - 1,
+        Math.max(0, Math.round(progress * (FRAME_COUNT - 1)))
+      );
+      drawIndex(idx);
     };
 
     const onScroll = () => {
@@ -111,9 +121,15 @@ export function HeroScroll() {
       window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(raf);
     };
-  }, [draw, readyCount]);
+  }, [drawIndex, firstReady]);
 
-  const showPoster = readyCount < 1;
+  // فریم اول را بلافاصله بعد از لود بکش
+  useEffect(() => {
+    if (firstReady) {
+      lastIdxRef.current = -1;
+      drawIndex(0);
+    }
+  }, [firstReady, drawIndex]);
 
   return (
     <section
@@ -126,22 +142,22 @@ export function HeroScroll() {
       aria-label="هیرو"
       dir="rtl"
     >
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden bg-black">
-        {showPoster ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={POSTER}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : null}
+      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden bg-[#111]">
+        {/* پوستر تا فریم ۱ آماده شود — نه صفحه سیاه */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={POSTER}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ opacity: firstReady ? 0 : 1, transition: "opacity 0.2s" }}
+        />
         <canvas
           ref={canvasRef}
           className="absolute inset-0 h-full w-full"
           aria-hidden
         />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/15" />
 
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4 px-4 text-center text-white">
           <p className="text-sm font-medium text-white/80">پیراهن مردانه</p>
