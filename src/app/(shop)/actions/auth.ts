@@ -119,7 +119,7 @@ export async function verifyOtpAction(phone: string, code: string) {
     return { ok: false as const, error: "server" as const };
   }
 
-  const { error: sessionErr } = await supabase.auth.verifyOtp({
+  const { data: sessionData, error: sessionErr } = await supabase.auth.verifyOtp({
     type: "email",
     token_hash: linkData.properties.hashed_token,
   });
@@ -143,6 +143,11 @@ export async function verifyOtpAction(phone: string, code: string) {
     console.warn("[otp role]", e);
   }
 
-  return { ok: true as const, role };
+  return {
+    ok: true as const,
+    role,
+    access_token: sessionData.session?.access_token ?? null,
+    refresh_token: sessionData.session?.refresh_token ?? null,
+  };
 }
 

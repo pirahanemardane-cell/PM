@@ -174,12 +174,37 @@ export function AuthForm({
           setIsLoading(false);
           return;
         }
+                // ست سشن روی مرورگر تا requireAdmin کاربر را ببیند
+        const atok = (ver as { access_token?: string | null }).access_token;
+        const rtok = (ver as { refresh_token?: string | null }).refresh_token;
+        if (atok && rtok) {
+          try {
+            const { createBrowserClient } = await import("@supabase/ssr");
+            const browser = createBrowserClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            );
+            await browser.auth.setSession({
+              access_token: atok,
+              refresh_token: rtok,
+            });
+          } catch (e) {
+            console.error("[otp setSession]", e);
+          }
+        }
+
         setSuccessMessage("ورود موفق");
-        try { void onSuccess?.({ phone: formData.phone }); } catch {}
+        try {
+          void onSuccess?.({ phone: formData.phone });
+        } catch {}
+
         const role = String((ver as { role?: string }).role || "").toLowerCase();
         const isAdmin = role === "admin";
         const qNext = new URLSearchParams(window.location.search).get("next");
-        let dest = qNext || defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
+        let dest =
+          qNext ||
+          defaultNext ||
+          (isAdmin ? "/admin/dashboard" : "/dashboard");
         if (!dest.startsWith("/")) dest = "/dashboard";
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
         window.location.replace(dest);

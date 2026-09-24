@@ -18,8 +18,8 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
-          } catch {
-            // Ignored in Server Components
+          } catch (e) {
+            console.error("[supabase setAll]", e);
           }
         },
       },
