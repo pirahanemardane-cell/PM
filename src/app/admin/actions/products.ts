@@ -24,19 +24,29 @@ async function linkVariantImages(
   productId: string,
   variants: { size?: string | null; color_name?: string | null; image_url?: string | null }[],
 ) {
+  const { data: allVars, error: listErr } = await supabase
+    .from("product_variants")
+    .select("id, size, color_name")
+    .eq("product_id", productId);
+  if (listErr) {
+    console.error("[linkVariantImages list]", listErr);
+    return;
+  }
+  const rows = (allVars ?? []) as { id: string; size: string | null; color_name: string | null }[];
+
   for (const vv of variants) {
     const url = (vv.image_url || "").trim();
     if (!url) continue;
-    const { data: rows } = await supabase
-      .from("product_variants")
-      .select("id")
-      .eq("product_id", productId)
-      .eq("size", vv.size ?? null)
-      .eq("color_name", vv.color_name ?? null)
-      .limit(1);
-    const vid = rows?.[0]?.id;
-    if (!vid) continue;
-    // یک تصویر برای این واریانت: upsert ساده
+    const size = (vv.size || "").trim() || null;
+    const color = (vv.color_name || "").trim() || null;
+    const match = rows.find(
+      (r) => (r.size || null) === size && (r.color_name || null) === color,
+    );
+    if (!match?.id) {
+      console.warn("[linkVariantImages] no variant for", size, color);
+      continue;
+    }
+    const vid = match.id;
     const { data: existing } = await supabase
       .from("product_images")
       .select("id")
@@ -44,21 +54,24 @@ async function linkVariantImages(
       .eq("variant_id", vid)
       .limit(1);
     if (existing?.[0]?.id) {
-      await supabase
+      const { error } = await supabase
         .from("product_images")
         .update({ url, is_primary: false })
         .eq("id", existing[0].id);
+      if (error) console.error("[linkVariantImages update]", error);
     } else {
-      await supabase.from("product_images").insert({
+      const { error } = await supabase.from("product_images").insert({
         product_id: productId,
         variant_id: vid,
         url,
         is_primary: false,
         sort_order: 10,
       });
+      if (error) console.error("[linkVariantImages insert]", error);
     }
   }
 }
+
 
 
 export async function adminListProductsAction(
@@ -180,7 +193,6 @@ export type AdminVariantInput = {
   stock_quantity?: number;
   is_active?: boolean;
   image_url?: string | null;
-  image_url?: string | null;
 };
 
 export async function adminCreateProductAction(input: CreateProductInput) {
@@ -229,6 +241,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
               stock_quantity: input.stock_quantity,
             },
           ];
+
     for (const vv of variantList) {
       const vp = Number(vv.price ?? price);
       if (!Number.isFinite(vp) || vp < 0) continue;
@@ -249,6 +262,14 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       if (vErr) throw vErr;
     }
 
+    if (input.variants?.length) {
+      try {
+        await linkVariantImages(gate.supabase, product.id, input.variants);
+      } catch (e) {
+        console.error("[linkVariantImages create]", e);
+      }
+    }
+
     const tagIds = (input.tag_ids ?? []).filter(Boolean);
     if (tagIds.length) {
       const rows = tagIds.map((tag_id) => ({
@@ -259,16 +280,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       if (tErr) console.error("[product_tag_map]", tErr);
     }
 
-    
-    if (input.variants?.length) {
-      try {
-        await linkVariantImages(gate.supabase, product.id, input.variants);
-      } catch (e) {
-        console.error("[linkVariantImages create]", e);
-      }
-    }
-
-const imageUrl = (input.image_url || "").trim();
+    const imageUrl = (input.image_url || "").trim();
     if (imageUrl) {
       const { error: imgErr } = await gate.supabase.from("product_images").insert({
         product_id: product.id,
@@ -283,11 +295,7 @@ const imageUrl = (input.image_url || "").trim();
     return { ok: true as const, id: product.id as string };
   } catch (e) {
     console.error("[adminCreateProduct]", e);
-    const msg =
-      e && typeof e === "object" && "message" in e
-        ? String((e as { message: string }).message)
-        : "server";
-    return { ok: false as const, error: msg };
+    return { ok: false as const, error: "server" };
   }
 }
 
@@ -499,12 +507,6 @@ export async function adminSoftDeleteProductAction(id: string) {
       entity: "product",
       entity_id: id,
       meta: null,
-    });
-    void adminWriteLogAction({
-      action: "product_flags_change",
-      entity: "product",
-      entity_id: id,
-      meta: JSON.stringify(patch ?? {}),
     });
     return { ok: true as const };
   } catch (e) {
