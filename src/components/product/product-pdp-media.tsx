@@ -66,13 +66,15 @@ export function ProductPdpGalleryAndBuy({
   }, [activeColor, variants, images, fallbackImage]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-      <ProductGallery
+    <div className="grid gap-6 lg:grid-cols-2 lg:gap-10 lg:items-start">
+      <div className="mx-auto w-full max-w-[min(100%,22rem)] lg:max-w-[min(100%,26rem)] lg:mr-0">
+        <ProductGallery
         productName={productName}
         images={images}
         variants={variants}
         activeColor={activeColor}
       />
+        </div>
       <div className="space-y-6">
         {childrenBeforeBuy}
         <ProductBuyBox

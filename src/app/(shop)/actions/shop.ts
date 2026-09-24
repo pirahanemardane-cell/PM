@@ -198,7 +198,7 @@ export async function swapCartVariantAction(input: {
     const supabase = await createClient();
     const { data: vars, error } = await supabase
       .from("product_variants")
-      .select("id, color_name, color_hex, size, stock_quantity, is_active")
+      .select("id, color_name, color_hex, size, is_active")
       .eq("product_id", input.productId)
       .eq("is_active", true);
     if (error) throw error;
@@ -229,10 +229,7 @@ export async function swapCartVariantAction(input: {
 
     if (!match?.id) return { ok: false, error: "variant_not_found" };
 
-    const stock = match.stock_quantity;
-    if (stock !== null && stock !== undefined && Number(stock) <= 0) {
-      return { ok: false, error: "out_of_stock" };
-    }
+    // stock optional — skip strict check
     if (match.id === input.oldVariantId) {
       return { ok: true, variantId: match.id as string };
     }
@@ -312,7 +309,7 @@ export async function getCartAction(): Promise<{
         const supabase = await createClient();
         const { data: vars, error: vErr } = await supabase
           .from("product_variants")
-          .select("product_id, color_name, color_hex, size, stock_quantity, is_active")
+          .select("id, product_id, color_name, color_hex, size, is_active")
           .in("product_id", productIds)
           .eq("is_active", true);
         if (vErr) console.error("[getCart variants]", vErr);

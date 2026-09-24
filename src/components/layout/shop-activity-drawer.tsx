@@ -93,7 +93,7 @@ export function ShopActivityDrawer({
                       className="h-16 w-16 shrink-0 rounded-md object-contain bg-muted overflow-hidden"
                     />
                   ) : (
-                    <div className="box-border h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted p-0" />
+                    <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted" />
                   )}
                   <div className="min-w-0 flex-1 text-right">
                     <p className="truncate text-sm font-medium">
