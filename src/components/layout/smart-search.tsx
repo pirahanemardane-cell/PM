@@ -177,10 +177,10 @@ export function SmartSearch({ className }: { className?: string }) {
     );
 
   return (
-    <div ref={rootRef} className={cn("relative w-full", className)}>
+    <div ref={rootRef} className={cn("relative flex h-10 w-full items-center", className)}>
       <form
         onSubmit={submit}
-        className="border-border bg-background flex h-11 items-center gap-1 rounded-xl border px-1 shadow-sm"
+        className="border-border bg-background flex h-10 w-full items-center gap-0.5 rounded-xl border px-1"
       >
         <div className="flex min-w-0 flex-1 items-center">
           <Search className="text-muted-foreground mr-2 ml-2 h-4 w-4 shrink-0" />
@@ -219,7 +219,7 @@ export function SmartSearch({ className }: { className?: string }) {
               setSuggestOpen(false);
             }}
             className={cn(
-              "flex h-9 shrink-0 items-center gap-1 border-r border-border px-2.5 text-xs",
+              "flex h-8 shrink-0 items-center gap-1 border-r border-border px-2 text-xs",
               filterOpen || activeFilters
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
@@ -237,7 +237,7 @@ export function SmartSearch({ className }: { className?: string }) {
         </div>
         <button
           type="submit"
-          className="bg-primary text-primary-foreground hidden h-9 shrink-0 items-center justify-center rounded-lg px-3 text-sm font-medium sm:inline-flex"
+          className="bg-primary text-primary-foreground hidden h-8 shrink-0 items-center justify-center rounded-lg px-3 text-sm font-medium sm:inline-flex"
         >
           جستجو
         </button>
