@@ -175,12 +175,16 @@ export function AuthForm({
           return;
         }
         setSuccessMessage("ورود موفق");
-        onSuccess?.({ phone: formData.phone });
-        // سشن cookie ست شده — hard navigate تا layout ادمین سشن را ببیند
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || "/admin/dashboard";
-        window.location.assign(next);
+        try { void onSuccess?.({ phone: formData.phone }); } catch {}
+        const role = String((ver as { role?: string }).role || "").toLowerCase();
+        const isAdmin = role === "admin";
+        const qNext = new URLSearchParams(window.location.search).get("next");
+        let dest = qNext || defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
+        if (!dest.startsWith("/")) dest = "/dashboard";
+        if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
+        window.location.replace(dest);
         return;
+
       }
 
       // ——— ورود با رمز (موبایل یا ایمیل) ———
