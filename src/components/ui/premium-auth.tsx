@@ -223,19 +223,15 @@ export function AuthForm({
         const isAdmin = role === "admin";
         const qNext = new URLSearchParams(window.location.search).get("next");
         let dest =
-          (qNext && qNext.startsWith("/") && !qNext.startsWith("//") ? qNext : null) ||
-          defaultNext ||
-          (isAdmin ? "/admin/dashboard" : "/dashboard");
+          qNext && qNext.startsWith("/") && !qNext.startsWith("//")
+            ? qNext
+            : defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
         if (!dest.startsWith("/")) dest = "/dashboard";
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
         setIsLoading(false);
         window.location.assign(dest);
         return;
 
-
-
-
-      }
 
       // ——— ورود با رمز (موبایل یا ایمیل) ———
       if (authMode === "login" && loginMethod === "password") {
