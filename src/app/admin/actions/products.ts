@@ -537,6 +537,7 @@ export async function adminSoftDeleteProductAction(id: string) {
 
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند */
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند + تصویر واریانت */
+/** همگام‌سازی وریانت‌ها — بدون حذف کور؛ فقط upsert + لینک تصویر */
 export async function adminSyncProductVariantsAction(
   productId: string,
   variants: AdminVariantInput[],
@@ -548,7 +549,7 @@ export async function adminSyncProductVariantsAction(
   try {
     const cleaned = (variants ?? [])
       .map((v) => ({
-        id: v.id,
+        id: (v.id || "").trim() || undefined,
         size: (v.size || "").trim() || null,
         color_name: (v.color_name || "").trim() || null,
         color_hex: (v.color_hex || "").trim() || null,
@@ -568,26 +569,19 @@ export async function adminSyncProductVariantsAction(
       return { ok: false as const, error: "variants_required" };
     }
 
-    const { data: existing, error: exErr } = await gate.supabase
+    const { data: existingRows, error: listErr } = await gate.supabase
       .from("product_variants")
-      .select("id")
+      .select("id, size, color_name")
       .eq("product_id", productId);
-    if (exErr) throw exErr;
-
-    const keepIds = new Set(
-      cleaned.map((v) => v.id).filter((id): id is string => Boolean(id)),
-    );
-    const toDelete = ((existing as { id: string }[]) ?? []).filter(
-      (e) => !keepIds.has(e.id),
-    );
-    for (const d of toDelete) {
-      // تصاویر واریانت با ON DELETE SET NULL می‌مانند؛ خود واریانت حذف می‌شود
-      const { error } = await gate.supabase
-        .from("product_variants")
-        .delete()
-        .eq("id", d.id);
-      if (error) console.error("[sync delete variant]", error);
+    if (listErr) {
+      console.error("[sync list]", listErr);
+      return { ok: false as const, error: "server" as const };
     }
+    const existing = (existingRows ?? []) as {
+      id: string;
+      size: string | null;
+      color_name: string | null;
+    }[];
 
     const resolved: {
       id: string;
@@ -609,15 +603,33 @@ export async function adminSyncProductVariantsAction(
         is_active: v.is_active,
       };
 
-      if (v.id) {
+      // 1) با id
+      let targetId = v.id;
+      // 2) fallback: همان size+color
+      if (!targetId) {
+        const hit = existing.find(
+          (e) =>
+            (e.size || null) === v.size &&
+            (e.color_name || null) === v.color_name,
+        );
+        targetId = hit?.id;
+      }
+
+      if (targetId) {
         const { error } = await gate.supabase
           .from("product_variants")
           .update(row)
-          .eq("id", v.id)
+          .eq("id", targetId)
           .eq("product_id", productId);
-        if (error) throw error;
+        if (error) {
+          console.error("[sync update]", error);
+          return {
+            ok: false as const,
+            error: (error as { message?: string }).message || "server",
+          };
+        }
         resolved.push({
-          id: v.id,
+          id: targetId,
           size: v.size,
           color_name: v.color_name,
           image_url: v.image_url,
@@ -628,13 +640,31 @@ export async function adminSyncProductVariantsAction(
           .insert(row)
           .select("id")
           .single();
-        if (error) throw error;
+        if (error) {
+          console.error("[sync insert]", error);
+          return {
+            ok: false as const,
+            error: (error as { message?: string }).message || "server",
+          };
+        }
         resolved.push({
           id: inserted.id as string,
           size: v.size,
           color_name: v.color_name,
           image_url: v.image_url,
         });
+      }
+    }
+
+    // غیرفعال کردن واریانت‌هایی که در فرم نیستند (حذف فیزیکی نمی‌کنیم)
+    const keep = new Set(resolved.map((r) => r.id));
+    for (const e of existing) {
+      if (!keep.has(e.id)) {
+        const { error } = await gate.supabase
+          .from("product_variants")
+          .update({ is_active: false })
+          .eq("id", e.id);
+        if (error) console.error("[sync deactivate]", error);
       }
     }
 
