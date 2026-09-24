@@ -236,7 +236,14 @@ export function ShopActivityDrawer({
                                         (selectedSize === s
                                           ? "border-primary bg-primary text-primary-foreground"
                                           : "border-border bg-muted/50") +
-                                        (/* ناموجود */ false ? " opacity-40 cursor-not-allowed line-through" : ""))
+                                        (voForAvail.length > 0 &&
+                                        !sizeAvailable(s, voForAvail, selectedHex || null)
+                                          ? " opacity-40 cursor-not-allowed line-through"
+                                          : "")
+                                      }
+                                      disabled={
+                                        voForAvail.length > 0 &&
+                                        !sizeAvailable(s, voForAvail, selectedHex || null)
                                       }
                                       onClick={async () => {
                                         if (selectedSize === s) return;
