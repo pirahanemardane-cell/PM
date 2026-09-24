@@ -232,6 +232,14 @@ export default async function ProductDetailPage({ params }: Props) {
                 </p>
               </div>
             </div>
+            {product.short_description ? (
+              <div className="border-border mt-4 rounded-xl border bg-muted/30 p-4">
+                <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
+                <p className="text-muted-foreground text-sm leading-7">
+                  {product.short_description}
+                </p>
+              </div>
+            ) : null}
             
           </>
         }
