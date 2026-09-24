@@ -95,7 +95,7 @@ export function ProductGallery({
 
   if (!list.length) {
     return (
-      <div className="bg-muted text-muted-foreground relative flex aspect-[4/5] w-full max-w-full items-center justify-center overflow-hidden rounded-xl">
+      <div className="bg-muted text-muted-foreground relative flex aspect-[4/5] w-full max-w-full items-center justify-center overflow-hidden rounded-xl lg:aspect-auto lg:max-h-[min(68vh,520px)]">
         بدون تصویر
       </div>
     );
@@ -106,7 +106,7 @@ export function ProductGallery({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-muted relative aspect-[4/5] w-full max-w-full cursor-zoom-in overflow-hidden rounded-xl border-0 p-0 text-left"
+        className="bg-muted relative aspect-[4/5] w-full max-w-full cursor-zoom-in overflow-hidden rounded-xl border-0 p-0 text-left lg:aspect-auto lg:max-h-[min(68vh,520px)]"
         aria-label="بزرگ‌نمایی تصویر"
       >
         <Image
