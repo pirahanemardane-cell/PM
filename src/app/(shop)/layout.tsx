@@ -1,6 +1,7 @@
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SiteLoader } from "@/components/layout/site-loader";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { AppBreadcrumb } from "@/components/ui/app-breadcrumb";
 
@@ -11,12 +12,17 @@ export default function ShopLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
+      <SiteLoader />
       <SiteHeader />
-      <div className="flex-1"><div className="w-full max-w-none">
-        
-        <AppBreadcrumb />
-        <NotificationsProvider><ScrollToTop />
-        {children}</NotificationsProvider></div></div>
+      <div className="flex-1">
+        <div className="w-full max-w-none">
+          <AppBreadcrumb />
+          <NotificationsProvider>
+            <ScrollToTop />
+            {children}
+          </NotificationsProvider>
+        </div>
+      </div>
       <SiteFooter />
     </div>
   );
