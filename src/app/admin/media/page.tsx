@@ -89,7 +89,7 @@ export default function AdminMediaPage() {
       </div>
 
       <div className="border-border flex flex-wrap items-center gap-3 rounded-xl border p-4">
-        <label className="bg-secondary text-secondary-foreground inline-flex cursor-pointer items-center rounded-xl px-4 py-2 text-sm font-medium">
+        <label className="bg-primary text-primary-foreground hover:bg-primary/90 bg-secondary text-secondary-foreground inline-flex cursor-pointer items-center rounded-xl px-4 py-2 text-sm font-medium">
           {uploading ? "در حال آپلود…" : "آپلود تصویر جدید"}
           <input
             type="file"

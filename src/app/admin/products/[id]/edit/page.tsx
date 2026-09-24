@@ -632,48 +632,53 @@ export default function EditProductPage() {
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
-              {uploadingGallery ? "در حال آپلود…" : "افزودن به گالری"}
+              {uploadingGallery ? "در حال آپلود…" : "افزودن چند تصویر به گالری"}
               <input
                 type="file"
+                multiple
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 disabled={uploadingGallery || busy || !id}
                 onChange={async (e) => {
-                  const f = e.target.files?.[0];
+                  const files = Array.from(e.target.files ?? []);
                   e.target.value = "";
-                  if (!f || !id) return;
+                  if (!files.length || !id) return;
                   setUploadingGallery(true);
                   setErr("");
+                  const added: { id: string; url: string; alt_text?: string | null }[] = [];
+                  let failMsg = "";
                   try {
-                    const fd = new FormData();
-                    fd.set("file", f);
-                    const res = await adminUploadProductImageAction(fd);
-                    if (!res.ok) {
-                      setErr(
-                        res.error === "too_large"
-                          ? "حجم فایل بیش از ۱۲ مگابایت است"
-                          : res.error === "not_image"
-                            ? "فقط فایل تصویری مجاز است"
-                            : "آپلود ناموفق بود",
-                      );
-                      return;
-                    }
-                    const add = await adminAddProductGalleryImageAction({
-                      productId: id,
-                      url: res.url,
-                    });
-                    if (!add.ok || !add.image) {
-                      setErr("ثبت در گالری ناموفق بود");
-                      return;
-                    }
-                    setGalleryImages((prev) => [
-                      ...prev,
-                      {
+                    for (const f of files) {
+                      const fd = new FormData();
+                      fd.set("file", f);
+                      const res = await adminUploadProductImageAction(fd);
+                      if (!res.ok) {
+                        failMsg =
+                          res.error === "too_large"
+                            ? "حجم یکی از فایل‌ها بیش از ۱۲ مگابایت است"
+                            : res.error === "not_image"
+                              ? "فقط فایل تصویری مجاز است"
+                              : "آپلود یکی از تصاویر ناموفق بود";
+                        continue;
+                      }
+                      const add = await adminAddProductGalleryImageAction({
+                        productId: id,
+                        url: res.url,
+                      });
+                      if (!add.ok || !add.image) {
+                        failMsg = "ثبت یکی از تصاویر در گالری ناموفق بود";
+                        continue;
+                      }
+                      added.push({
                         id: add.image.id,
                         url: add.image.url,
                         alt_text: add.image.alt_text,
-                      },
-                    ]);
+                      });
+                    }
+                    if (added.length) {
+                      setGalleryImages((prev) => [...prev, ...added]);
+                    }
+                    if (failMsg) setErr(failMsg);
                   } catch {
                     setErr("آپلود گالری ناموفق بود");
                   } finally {
