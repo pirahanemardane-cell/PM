@@ -401,9 +401,10 @@ export function AuthForm({
         </h2>
         <p className="text-muted-foreground text-sm">
           {authMode === "login"
-            ? "ورود با موبایل/ایمیل یا کد یکبارمصرف"
+            ? "ورود با موبایل یا کد یکبارمصرف"
             : authMode === "reset"
               ? "بازیابی دسترسی"
+              : "عضویت با شماره موبایل"}
         </p>
       </div>
 
