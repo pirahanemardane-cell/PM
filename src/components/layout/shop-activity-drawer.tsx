@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/drawer";
 import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
-import { removeCartItemAction, updateCartQuantityAction } from "@/app/(shop)/actions/shop";
+import { removeCartItemAction, updateCartQuantityAction, swapCartVariantAction } from "@/app/(shop)/actions/shop";
 import { X } from "lucide-react";
 import { NotificationsPanel } from "@/components/notifications/notifications-panel";
 
@@ -175,16 +175,32 @@ export function ShopActivityDrawer({
                                           : "border-black/20 opacity-80")
                                       }
                                       style={{ backgroundColor: c }}
-                                      onClick={() => {
+                                      onClick={async () => {
                                         if (
                                           selectedHex.toLowerCase() ===
                                           c.toLowerCase()
                                         )
                                           return;
                                         if (isServer) {
-                                          toast.error(
-                                            "برای تغییر رنگ از صفحه محصول استفاده کنید",
-                                          );
+                                          const vid = (p as { variantId?: string }).variantId;
+                                          if (!vid || !pid) return;
+                                          const res = await swapCartVariantAction({
+                                            oldVariantId: vid,
+                                            productId: pid,
+                                            colorHex: c,
+                                            size: selectedSize || null,
+                                            quantity: p.quantity ?? 1,
+                                          });
+                                          if (!res.ok) {
+                                            toast.error(
+                                              res.error === "out_of_stock"
+                                                ? "این ترکیب موجود نیست"
+                                                : "تغییر رنگ ناموفق بود",
+                                            );
+                                            return;
+                                          }
+                                          window.dispatchEvent(new Event("pm:cart-changed"));
+                                          toast.success("رنگ به‌روز شد");
                                           return;
                                         }
                                         const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
@@ -206,12 +222,28 @@ export function ShopActivityDrawer({
                                           ? "border-primary bg-primary text-primary-foreground"
                                           : "border-border bg-muted/50")
                                       }
-                                      onClick={() => {
+                                      onClick={async () => {
                                         if (selectedSize === s) return;
                                         if (isServer) {
-                                          toast.error(
-                                            "برای تغییر سایز از صفحه محصول استفاده کنید",
-                                          );
+                                          const vid = (p as { variantId?: string }).variantId;
+                                          if (!vid || !pid) return;
+                                          const res = await swapCartVariantAction({
+                                            oldVariantId: vid,
+                                            productId: pid,
+                                            colorHex: selectedHex || null,
+                                            size: s,
+                                            quantity: p.quantity ?? 1,
+                                          });
+                                          if (!res.ok) {
+                                            toast.error(
+                                              res.error === "out_of_stock"
+                                                ? "این ترکیب موجود نیست"
+                                                : "تغییر سایز ناموفق بود",
+                                            );
+                                            return;
+                                          }
+                                          window.dispatchEvent(new Event("pm:cart-changed"));
+                                          toast.success("سایز به‌روز شد");
                                           return;
                                         }
                                         const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;

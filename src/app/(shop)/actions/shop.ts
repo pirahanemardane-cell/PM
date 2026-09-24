@@ -185,6 +185,54 @@ export async function removeCartItemAction(variantId: string) {
   }
 }
 
+export async function swapCartVariantAction(input: {
+  oldVariantId: string;
+  productId: string;
+  colorHex?: string | null;
+  size?: string | null;
+  quantity?: number;
+}): Promise<{ ok: boolean; error?: string; variantId?: string }> {
+  try {
+    const qty = Math.max(1, Number(input.quantity) || 1);
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const { data: vars, error } = await supabase
+      .from("product_variants")
+      .select("id, color_name, color_hex, size, stock, price")
+      .eq("product_id", input.productId);
+    if (error) throw error;
+    const norm = (s?: string | null) =>
+      (s || "").trim().replace(/^#/, "").toLowerCase();
+    const wantHex = norm(input.colorHex);
+    const wantSize = (input.size || "").trim();
+    const match = (vars ?? []).find((v: any) => {
+      const hex = norm(v.color_hex || v.color_name);
+      const sz =
+        typeof v.size === "string"
+          ? v.size
+          : v.size?.name
+            ? String(v.size.name)
+            : "";
+      const colorOk = !wantHex || hex === wantHex || norm(v.color_name) === wantHex;
+      const sizeOk = !wantSize || sz === wantSize;
+      return colorOk && sizeOk;
+    });
+    if (!match?.id) return { ok: false, error: "variant_not_found" };
+    if (Number(match.stock ?? 0) <= 0) return { ok: false, error: "out_of_stock" };
+    if (match.id === input.oldVariantId) return { ok: true, variantId: match.id };
+
+    const cartId = await resolveCartId();
+    const cartRepo = new CartRepository();
+    await cartRepo.removeItem(cartId, input.oldVariantId);
+    await cartRepo.addItem(cartId, match.id, qty);
+    return { ok: true, variantId: match.id as string };
+  } catch (e) {
+    console.error("[swapCartVariant]", e);
+    return { ok: false, error: "server" };
+  }
+}
+
+
 export type CartLineDTO = {
   itemId: string;
   variantId: string;
@@ -197,6 +245,8 @@ export type CartLineDTO = {
   size?: string;
   color?: string;
   colorHex?: string;
+  colors?: string[];
+  sizes?: string[];
 };
 
 export async function getCartAction(): Promise<{
@@ -236,6 +286,48 @@ export async function getCartAction(): Promise<{
         colorHex: v?.color_hex ?? v?.color?.hex_code ?? undefined,
       };
     });
+
+    // گزینه‌های رنگ/سایز همه وریانت‌های همان محصول
+    const productIds = [...new Set(items.map((i) => i.productId).filter(Boolean))];
+    if (productIds.length) {
+      try {
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabase = await createClient();
+        const { data: vars } = await supabase
+          .from("product_variants")
+          .select("product_id, color_name, color_hex, size, stock")
+          .in("product_id", productIds);
+        const byProd = new Map<string, { colors: string[]; sizes: string[] }>();
+        for (const v of vars ?? []) {
+          const pid = (v as { product_id: string }).product_id;
+          if (!pid) continue;
+          const entry = byProd.get(pid) ?? { colors: [], sizes: [] };
+          const hex =
+            (v as { color_hex?: string }).color_hex ||
+            (v as { color_name?: string }).color_name ||
+            "";
+          if (hex && !entry.colors.includes(hex)) entry.colors.push(hex);
+          const szRaw = (v as { size?: string | { name?: string } }).size;
+          const sz =
+            typeof szRaw === "string"
+              ? szRaw
+              : szRaw && typeof szRaw === "object"
+                ? szRaw.name
+                : undefined;
+          if (sz && !entry.sizes.includes(sz)) entry.sizes.push(sz);
+          byProd.set(pid, entry);
+        }
+        for (const it of items) {
+          const opt = byProd.get(it.productId);
+          if (opt) {
+            it.colors = opt.colors;
+            it.sizes = opt.sizes;
+          }
+        }
+      } catch (e) {
+        console.error("[getCart options]", e);
+      }
+    }
 
     return { ok: true, items };
   } catch (e) {
