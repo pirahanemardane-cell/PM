@@ -19,12 +19,6 @@ export function HomeAfterHero({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pm:hero-intro-done", onDone);
   }, []);
 
-  if (!ready) {
-    return (
-      <div className="pointer-events-none h-0 overflow-hidden opacity-0" aria-hidden>
-        {children}
-      </div>
-    );
-  }
+  if (!ready) return null;
   return <>{children}</>;
 }

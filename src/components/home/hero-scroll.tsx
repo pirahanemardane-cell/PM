@@ -68,7 +68,7 @@ export function HeroScroll() {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const scale = 1.06;
+    const scale = 1.08;
     const ir = img.naturalWidth / img.naturalHeight;
     const cr = w / h;
     let dw: number, dh: number;
@@ -79,26 +79,27 @@ export function HeroScroll() {
       dw = w * scale;
       dh = dw / ir;
     }
-    const dx = (w - dw) / 2;
-    const dy = (h - dh) / 2;
-    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
   }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
     let raf = 0;
+
     const tick = () => {
       const rect = section.getBoundingClientRect();
       const total = Math.max(1, section.offsetHeight - window.innerHeight);
       const scrolled = Math.min(Math.max(-rect.top, 0), total);
       const progress = scrolled / total;
+
       const idx = Math.min(
         FRAME_COUNT - 1,
         Math.max(0, Math.round(progress * (FRAME_COUNT - 1)))
       );
       drawIndex(idx);
-      if (progress >= 0.98 && !introFiredRef.current) {
+
+      if (progress >= 1 && !introFiredRef.current) {
         introFiredRef.current = true;
         try {
           sessionStorage.setItem("pm-hero-intro-done", "1");
@@ -106,6 +107,7 @@ export function HeroScroll() {
         window.dispatchEvent(new Event("pm:hero-intro-done"));
       }
     };
+
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
@@ -114,6 +116,7 @@ export function HeroScroll() {
       lastIdxRef.current = -1;
       onScroll();
     };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
     window.visualViewport?.addEventListener("resize", onResize);
@@ -127,10 +130,9 @@ export function HeroScroll() {
   }, [drawIndex, firstReady]);
 
   useEffect(() => {
-    if (firstReady) {
-      lastIdxRef.current = -1;
-      drawIndex(0, true);
-    }
+    if (!firstReady) return;
+    lastIdxRef.current = -1;
+    drawIndex(0, true);
   }, [firstReady, drawIndex]);
 
   return (
@@ -146,7 +148,7 @@ export function HeroScroll() {
       dir="rtl"
     >
       <div
-        className="sticky top-0 left-0 w-full overflow-hidden bg-neutral-900"
+        className="sticky top-0 left-0 w-full overflow-hidden"
         style={{ height: "100dvh", minHeight: "100vh" }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -161,7 +163,7 @@ export function HeroScroll() {
           className="pointer-events-none absolute inset-0 block h-full w-full"
           aria-hidden
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/5" />
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4 px-4 text-center text-white">
           <p className="text-sm font-medium text-white/85 drop-shadow">پیراهن مردانه</p>
           <h1 className="max-w-3xl text-3xl font-black leading-tight drop-shadow-md sm:text-4xl md:text-5xl lg:text-6xl">
