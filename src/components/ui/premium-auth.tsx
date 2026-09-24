@@ -216,15 +216,20 @@ export function AuthForm({
         }
 
         setSuccessMessage("ورود موفق");
-        try { void onSuccess?.({ phone: formData.phone }); } catch {}
-
+        try {
+          void onSuccess?.({ phone: formData.phone });
+        } catch {}
         const role = String((ver as { role?: string }).role || "").toLowerCase();
         const isAdmin = role === "admin";
         const qNext = new URLSearchParams(window.location.search).get("next");
-        let dest = qNext || defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
+        let dest =
+          (qNext && qNext.startsWith("/") && !qNext.startsWith("//") ? qNext : null) ||
+          defaultNext ||
+          (isAdmin ? "/admin/dashboard" : "/dashboard");
         if (!dest.startsWith("/")) dest = "/dashboard";
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
-        window.location.replace(dest);
+        setIsLoading(false);
+        window.location.assign(dest);
         return;
 
 
