@@ -77,7 +77,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
-          <Toaster theme="light" theme="light" position="top-left" richColors closeButton />
+          <Toaster theme="light" position="top-left" richColors closeButton />
                   <RealtimeBridge />
           <AppToaster />
         </ThemeProvider>
