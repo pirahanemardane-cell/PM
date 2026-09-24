@@ -131,11 +131,11 @@ export function ProductGallery({
               type="button"
               onClick={() => setIdx(i)}
               className={cn(
-                "relative h-16 w-14 shrink-0 overflow-hidden rounded-lg border-2",
+                "relative aspect-square h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 p-0",
                 i === idx ? "border-secondary" : "border-transparent opacity-80",
               )}
             >
-              <Image src={img.url} alt="" fill className="object-contain" sizes="56px" />
+              <Image src={img.url} alt="" fill className="object-cover p-0" sizes="56px" />
             </button>
           ))}
         </div>
@@ -165,7 +165,7 @@ export function ProductGallery({
               key={current!.url}
               src={current!.url}
               alt={current!.alt ?? productName}
-              className="max-h-[90vh] max-w-[95vw] object-contain"
+              className="max-h-[90vh] max-w-[95vw] object-cover"
               style={{ filter: "none" }}
             />
           </div>

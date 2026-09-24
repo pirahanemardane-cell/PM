@@ -142,6 +142,11 @@ export default async function ProductDetailPage({ params }: Props) {
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
 
 <ProductPdpGalleryAndBuy
+        childrenBelowGallery={
+          <div className="mt-4">
+            <PriceHistory points={priceHistory} />
+          </div>
+        }
         productId={product.id}
         productName={product.name}
         href={`/products/${product.slug}`}
@@ -212,7 +217,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 مرجوعی
               </Link>
             </div>
-            <PriceHistory points={priceHistory} />
+            
           </>
         }
       />

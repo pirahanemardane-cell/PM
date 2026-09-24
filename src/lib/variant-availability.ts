@@ -127,3 +127,42 @@ export function imageIndexForColor(
   if (ci >= 0 && ci < imgs.length) return ci;
   return 0;
 }
+
+
+/** موجود بودن ترکیب رنگ+سایز — یک منبع برای PDP / دراور / کارت */
+export function isVariantAvailable(
+  variants: Array<{
+    color?: string | null;
+    color_hex?: string | null;
+    colorHex?: string | null;
+    size?: string | null | { name?: string };
+    stock?: number | null;
+    stock_quantity?: number | null;
+    is_active?: boolean | null;
+  }>,
+  colorHex?: string | null,
+  size?: string | null,
+): boolean {
+  const norm = (s?: string | null) =>
+    (s || "").trim().replace(/^#/, "").toLowerCase();
+  const wantHex = norm(colorHex);
+  const wantSize = (size || "").trim().toUpperCase();
+  const match = variants.find((v) => {
+    const hex = norm(v.color_hex || v.colorHex || v.color);
+    const szRaw = v.size;
+    const sz =
+      typeof szRaw === "string"
+        ? szRaw.trim().toUpperCase()
+        : szRaw && typeof szRaw === "object"
+          ? String(szRaw.name || "").trim().toUpperCase()
+          : "";
+    const colorOk = !wantHex || hex === wantHex;
+    const sizeOk = !wantSize || sz === wantSize;
+    return colorOk && sizeOk;
+  });
+  if (!match) return false;
+  if (match.is_active === false) return false;
+  const stock = match.stock_quantity ?? match.stock;
+  if (stock !== null && stock !== undefined && Number(stock) <= 0) return false;
+  return true;
+}

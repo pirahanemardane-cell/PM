@@ -309,7 +309,7 @@ export async function getCartAction(): Promise<{
         const supabase = await createClient();
         const { data: vars, error: vErr } = await supabase
           .from("product_variants")
-          .select("id, product_id, color_name, color_hex, size, is_active")
+          .select("id, product_id, color_name, color_hex, size, is_active, stock_quantity")
           .in("product_id", productIds)
           .eq("is_active", true);
         if (vErr) console.error("[getCart variants]", vErr);
@@ -345,12 +345,35 @@ export async function getCartAction(): Promise<{
           if (sz && !entry.sizes.includes(sz)) entry.sizes.push(sz);
           byProd.set(pid, entry);
         }
+        // گزینه‌های کامل با موجودی برای دراور/کارت
+        const optsByProd = new Map<string, { color?: string; colorHex?: string; size?: string; stock: number }[]>();
+        for (const v of vars ?? []) {
+          const pid = (v as { product_id: string }).product_id;
+          if (!pid) continue;
+          const list = optsByProd.get(pid) ?? [];
+          const szRaw = (v as { size?: string | { name?: string } }).size;
+          const sz =
+            typeof szRaw === "string"
+              ? szRaw.trim()
+              : szRaw && typeof szRaw === "object"
+                ? String(szRaw.name || "").trim()
+                : "";
+          list.push({
+            color: ((v as { color_name?: string }).color_name || "").trim() || undefined,
+            colorHex: ((v as { color_hex?: string }).color_hex || "").trim() || undefined,
+            size: sz || undefined,
+            stock: Number((v as { stock_quantity?: number }).stock_quantity ?? 0),
+          });
+          optsByProd.set(pid, list);
+        }
         for (const it of items) {
           const opt = byProd.get(it.productId);
           if (opt) {
             it.colors = opt.colors.length ? opt.colors : it.colorHex || it.color ? [it.colorHex || it.color!] : [];
             it.sizes = opt.sizes.length ? opt.sizes : it.size ? [it.size] : [];
           }
+          const vo = optsByProd.get(it.productId);
+          if (vo) (it as { variantOptions?: unknown }).variantOptions = vo;
         }
       } catch (e) {
         console.error("[getCart options]", e);

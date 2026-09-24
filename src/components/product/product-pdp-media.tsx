@@ -23,6 +23,7 @@ type Props = {
   variants: BuyVariant[];
   childrenBeforeBuy?: ReactNode;
   childrenAfterBuy?: ReactNode;
+  childrenBelowGallery?: ReactNode;
 };
 
 export function ProductPdpGalleryAndBuy({
@@ -34,6 +35,7 @@ export function ProductPdpGalleryAndBuy({
   variants,
   childrenBeforeBuy,
   childrenAfterBuy,
+  childrenBelowGallery,
 }: Props) {
   const firstColor =
     variants.find((v) => v.color)?.color?.trim() || null;
@@ -75,6 +77,7 @@ export function ProductPdpGalleryAndBuy({
         variants={variants}
         activeColor={activeColor}
       />
+        {childrenBelowGallery}
         </div>
         </div>
       <div className="space-y-6 w-full max-w-xl lg:justify-self-start lg:max-w-none">

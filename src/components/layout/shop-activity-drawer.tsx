@@ -1,7 +1,7 @@
 "use client";
 import { toast } from "@/lib/toaster";
 import { resolveColorHex } from "@/lib/colors";
-import { sizeAvailable, sameColor } from "@/lib/variant-availability";
+import { sizeAvailable, sameColor, isVariantAvailable } from "@/lib/variant-availability";
 
 import Link from "next/link";
 import {
@@ -90,10 +90,10 @@ export function ShopActivityDrawer({
                     <img
                       src={p.image}
                       alt={p.title || ""}
-                      className="h-16 w-16 shrink-0 rounded-md object-contain bg-muted overflow-hidden"
+                      className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted object-cover p-0"
                     />
                   ) : (
-                    <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted" />
+                    <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted object-cover p-0" />
                   )}
                   <div className="min-w-0 flex-1 text-right">
                     <p className="truncate text-sm font-medium">
@@ -131,6 +131,17 @@ export function ShopActivityDrawer({
                             productId?: string;
                             source?: string;
                           };
+                          
+                          const variantOptions = Array.isArray((line as { variantOptions?: unknown }).variantOptions)
+                            ? ((line as { variantOptions: { color?: string; colorHex?: string; size?: string; stock: number }[] }).variantOptions)
+                            : [];
+                          const voForAvail = variantOptions.map((v) => ({
+                            id: "",
+                            color: v.colorHex || v.color,
+                            size: v.size,
+                            stock: v.stock,
+                          }));
+
                           const rawColors = Array.isArray(line.colors) ? line.colors : [];
                           const current =
                             line.colorHex ||
@@ -172,8 +183,12 @@ export function ShopActivityDrawer({
                                         (selectedHex.toLowerCase() ===
                                         c.toLowerCase()
                                           ? "border-primary ring-1 ring-primary ring-offset-1"
-                                          : "border-black/20 opacity-80")
+                                          : "border-black/20 opacity-80") +
+                                        (voForAvail.length && !colorAvailable(c, voForAvail, selectedSize || null)
+                                          ? " opacity-30 cursor-not-allowed"
+                                          : "")
                                       }
+                                      disabled={voForAvail.length > 0 && !colorAvailable(c, voForAvail, selectedSize || null)}
                                       style={{ backgroundColor: c }}
                                       onClick={async () => {
                                         if (
@@ -220,7 +235,8 @@ export function ShopActivityDrawer({
                                         "min-w-[1.75rem] rounded-md border px-1.5 py-0.5 text-[11px] " +
                                         (selectedSize === s
                                           ? "border-primary bg-primary text-primary-foreground"
-                                          : "border-border bg-muted/50")
+                                          : "border-border bg-muted/50") +
+                                        (/* ناموجود */ false ? " opacity-40 cursor-not-allowed line-through" : ""))
                                       }
                                       onClick={async () => {
                                         if (selectedSize === s) return;

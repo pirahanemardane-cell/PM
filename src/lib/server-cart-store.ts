@@ -16,6 +16,7 @@ export type ServerCartLine = {
   colorHex?: string;
   colors?: string[];
   sizes?: string[];
+  variantOptions?: { color?: string; colorHex?: string; size?: string; stock: number }[];
   slug?: string;
 };
 
@@ -42,6 +43,7 @@ function mapItems(items: NonNullable<Awaited<ReturnType<typeof getCartAction>>["
     colorHex: (l as { colorHex?: string }).colorHex,
     colors: (l as { colors?: string[] }).colors,
     sizes: (l as { sizes?: string[] }).sizes,
+    variantOptions: (l as { variantOptions?: unknown }).variantOptions as any,
     slug: l.slug,
   }));
 }
