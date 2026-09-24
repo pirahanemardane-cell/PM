@@ -17,6 +17,7 @@ export function HeroScroll() {
   const [firstReady, setFirstReady] = useState(false);
   const lastIdxRef = useRef(-1);
   const introFiredRef = useRef(false);
+  const progressRef = useRef(0);
 
   useEffect(() => {
     const imgs: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
@@ -32,7 +33,7 @@ export function HeroScroll() {
     }
   }, []);
 
-  const drawIndex = useCallback((idx: number) => {
+  const drawIndex = useCallback((idx: number, force = false) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -54,13 +55,14 @@ export function HeroScroll() {
       }
     }
     if (!img?.complete || !img.naturalWidth) return;
-    if (idx === lastIdxRef.current && canvas.width > 0) return;
+    if (!force && idx === lastIdxRef.current && canvas.width > 0) return;
     lastIdxRef.current = idx;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
     if (w < 2 || h < 2) return;
+
     const tw = Math.floor(w * dpr);
     const th = Math.floor(h * dpr);
     if (canvas.width !== tw || canvas.height !== th) {
@@ -68,6 +70,8 @@ export function HeroScroll() {
       canvas.height = th;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // cover کامل — بدون نوار خالی
     const ir = img.naturalWidth / img.naturalHeight;
     const cr = w / h;
     let dw: number, dh: number, dx: number, dy: number;
@@ -94,6 +98,7 @@ export function HeroScroll() {
       const total = Math.max(1, section.offsetHeight - window.innerHeight);
       const scrolled = Math.min(Math.max(-rect.top, 0), total);
       const progress = scrolled / total;
+      progressRef.current = progress;
       const idx = Math.min(
         FRAME_COUNT - 1,
         Math.max(0, Math.round(progress * (FRAME_COUNT - 1)))
@@ -113,12 +118,18 @@ export function HeroScroll() {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(tick);
     };
+    const onResize = () => {
+      lastIdxRef.current = -1;
+      onScroll();
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", onResize);
     tick();
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
       cancelAnimationFrame(raf);
     };
   }, [drawIndex, firstReady]);
@@ -126,27 +137,36 @@ export function HeroScroll() {
   useEffect(() => {
     if (firstReady) {
       lastIdxRef.current = -1;
-      drawIndex(0);
+      drawIndex(0, true);
     }
   }, [firstReady, drawIndex]);
 
   return (
     <section
       ref={sectionRef}
-      className="relative h-[300vh] w-screen max-w-[100vw]"
+      className="relative w-screen max-w-[100vw]"
       style={{
+        height: "300vh",
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
       }}
       aria-label="هیرو"
       dir="rtl"
     >
-      <div className="sticky top-0 h-[100dvh] w-full overflow-hidden bg-[#111]">
+      {/* 100svh = ارتفاع واقعی موبایل بدون نوار مرورگر؛ dvh به‌عنوان پشتیبان */}
+      <div
+        className="sticky top-0 w-full overflow-hidden"
+        style={{
+          height: "100svh",
+          minHeight: "100dvh",
+          maxHeight: "100dvh",
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={POSTER}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover object-center"
           style={{ opacity: firstReady ? 0 : 1, transition: "opacity 0.2s" }}
         />
         <canvas
@@ -154,13 +174,15 @@ export function HeroScroll() {
           className="absolute inset-0 h-full w-full"
           aria-hidden
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-black/15" />
+        {/* گرادیان ملایم‌تر — بدون باند سیاه ضخیم */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent" />
+
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4 px-4 text-center text-white">
-          <p className="text-sm font-medium text-white/80">پیراهن مردانه</p>
-          <h1 className="max-w-3xl text-3xl font-black leading-tight sm:text-4xl md:text-5xl lg:text-6xl">
+          <p className="text-sm font-medium text-white/80 drop-shadow">پیراهن مردانه</p>
+          <h1 className="max-w-3xl text-3xl font-black leading-tight drop-shadow sm:text-4xl md:text-5xl lg:text-6xl">
             استایل رسمی، حس اطمینان
           </h1>
-          <p className="max-w-lg text-sm text-white/85 sm:text-base">
+          <p className="max-w-lg text-sm text-white/90 drop-shadow sm:text-base">
             مجموعه‌ای از پیراهن‌های رسمی و کژوال با کیفیت دوخت و پارچه منتخب
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
@@ -177,7 +199,7 @@ export function HeroScroll() {
               شگفت‌انگیز
             </Link>
           </div>
-          <p className="mt-6 text-xs text-white/50">اسکرول کنید</p>
+          <p className="mt-6 text-xs text-white/60">اسکرول کنید</p>
         </div>
       </div>
     </section>
