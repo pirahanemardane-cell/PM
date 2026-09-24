@@ -109,7 +109,7 @@ export function HeroScroll() {
       );
       drawIndex(idx);
 
-      if (progress >= 1 && !introFiredRef.current) {
+      if (idx >= FRAME_COUNT - 1 && progress >= 0.99 && !introFiredRef.current) {
         introFiredRef.current = true;
         try {
           sessionStorage.setItem("pm-hero-intro-done", "1");
