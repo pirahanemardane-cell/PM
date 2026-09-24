@@ -565,3 +565,16 @@ img, video, canvas, svg {
   animation-delay: -1.25s;
 }
 
+/* Site loader — brand colors only */
+:root {
+  --pm-loader-bg: #023047;
+  --pm-loader-spin: #F8F9FA;
+}
+.dark {
+  --pm-loader-bg: #13ABC4;
+  --pm-loader-spin: #212529;
+}
+.pm-site-loader {
+  background-color: var(--pm-loader-bg);
+}
+

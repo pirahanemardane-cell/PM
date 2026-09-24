@@ -1,42 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
+type Ctx = { loading: boolean };
+const LoaderCtx = createContext<Ctx>({ loading: true });
+
+export function useSiteLoading() {
+  return useContext(LoaderCtx);
+}
+
 /**
- * لودینگ تمام‌صفحه در سراسر فروشگاه:
- * — بک‌گراند = secondary
- * — اسپین = primary
- * تا وقتی روشن است، روی همه‌چیز (هدر/فوتر/محتوا) می‌نشیند.
+ * فقط لودینگ تمام‌صفحه — بدون هدر/فوتر/محتوا.
+ * بک‌گراند = secondary برند | اسپین = primary برند
  */
-export function SiteLoader() {
+export function SiteLoaderProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [show, setShow] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // ورود اول
   useEffect(() => {
-    const t = window.setTimeout(() => setShow(false), 700);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  // هر تغییر مسیر
-  useEffect(() => {
-    setShow(true);
-    const t = window.setTimeout(() => setShow(false), 500);
+    setLoading(true);
+    const t = window.setTimeout(() => setLoading(false), 600);
     return () => window.clearTimeout(t);
   }, [pathname]);
 
-  if (!show) return null;
+  if (loading) {
+    return (
+      <div
+        className="pm-site-loader fixed inset-0 z-[9999] flex items-center justify-center"
+        role="status"
+        aria-live="polite"
+        aria-label="در حال بارگذاری"
+      >
+        <LumaSpin />
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="bg-secondary fixed inset-0 z-[9999] flex items-center justify-center"
-      role="status"
-      aria-live="polite"
-      aria-label="در حال بارگذاری"
-    >
-      <LumaSpin />
-    </div>
+    <LoaderCtx.Provider value={{ loading: false }}>{children}</LoaderCtx.Provider>
   );
 }
