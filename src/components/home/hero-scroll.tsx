@@ -101,31 +101,17 @@ export function HeroScroll() {
 
     (async () => {
       await loadOne(0);
-      const rest = async () => {
-        const concurrency = 8;
-        let next = 1;
-        await Promise.all(
-          Array.from({ length: concurrency }, async () => {
-            while (next < FRAME_COUNT) {
-              const i = next++;
-              await loadOne(i);
-            }
-          }),
-        );
-      };
-      if ("requestIdleCallback" in window) {
-        (
-          window as Window & {
-            requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number;
+      // همه فریم‌ها فوری و موازی (بدون idle) تا اسکراب گیر نکند
+      const concurrency = 16;
+      let next = 1;
+      await Promise.all(
+        Array.from({ length: concurrency }, async () => {
+          while (next < FRAME_COUNT) {
+            const i = next++;
+            await loadOne(i);
           }
-        ).requestIdleCallback(() => {
-          void rest();
-        }, { timeout: 400 });
-      } else {
-        setTimeout(() => {
-          void rest();
-        }, 40);
-      }
+        }),
+      );
     })();
 
     return () => {
