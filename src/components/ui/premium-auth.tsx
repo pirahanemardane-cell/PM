@@ -185,26 +185,42 @@ export function AuthForm({
                 
         
         
+        const tokenHash = (ver as { token_hash?: string }).token_hash;
         const email = (ver as { email?: string }).email;
         const tempPass = (ver as { temp_password?: string }).temp_password;
-        if (!email || !tempPass) {
-          setErrors({ otpCode: "خطا در ساخت نشست؛ دوباره تلاش کنید" });
-          setIsLoading(false);
-          return;
-        }
         try {
           const { createBrowserClient } = await import("@supabase/ssr");
           const browser = createBrowserClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           );
-          const { data: signed, error: signErr } = await browser.auth.signInWithPassword({
-            email,
-            password: tempPass,
-          });
-          if (signErr || !signed.session) {
-            console.error("[otp signIn]", signErr);
-            setErrors({ otpCode: "ورود ناموفق؛ دوباره کد بگیرید" });
+          let sessionOk = false;
+          if (tokenHash) {
+            const { data: verified, error: vErr } = await browser.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: "email",
+            });
+            if (vErr || !verified.session) {
+              console.error("[otp verifyOtp]", vErr);
+            } else {
+              sessionOk = true;
+            }
+          }
+          if (!sessionOk && email && tempPass) {
+            const { data: signed, error: signErr } = await browser.auth.signInWithPassword({
+              email,
+              password: tempPass,
+            });
+            if (signErr || !signed.session) {
+              console.error("[otp signIn]", signErr);
+              setErrors({ otpCode: "ورود ناموفق؛ دوباره کد بگیرید" });
+              setIsLoading(false);
+              return;
+            }
+            sessionOk = true;
+          }
+          if (!sessionOk) {
+            setErrors({ otpCode: "خطا در ساخت نشست؛ دوباره تلاش کنید" });
             setIsLoading(false);
             return;
           }
@@ -246,11 +262,6 @@ export function AuthForm({
           return;
         }
         const id = formData.loginId.trim();
-        if (!id.includes("@")) {
-          setErrors({ loginId: "فعلاً فقط ورود با ایمیل فعال است" });
-          setIsLoading(false);
-          return;
-        }
         const res = await signInAction(id, formData.password);
         if (!res.ok) {
           setErrors({ general: res.error || "ورود ناموفق" });
