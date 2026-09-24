@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ProductCard1 as ProductCardUI } from "@/components/ui/product-card-1";
 import type { ProductWithRelations } from "@/repositories/product.repository";
+import { resolveColorHex } from "@/lib/colors";
 
 type Props = {
   product: ProductWithRelations;
@@ -54,25 +55,34 @@ export function ProductCard({ product }: Props) {
     ),
   ];
 
-  const colors = [
-    ...new Set(
-      variants
-        .map((v) => {
-          const x = v as {
-            color_hex?: string | null;
-            color?: string | { name?: string | null; hex?: string | null; hex_code?: string | null } | null;
-            color_name?: string | null;
-          };
-          if (x.color_hex) return x.color_hex;
-          if (typeof x.color === "string" && x.color) return x.color;
-          if (x.color && typeof x.color === "object") {
-            return x.color.hex_code || x.color.hex || x.color.name || null;
-          }
-          return x.color_name || null;
-        })
-        .filter((c): c is string => Boolean(c))
-    ),
-  ];
+  // لیست یکتای رنگ: hex واقعی برای سواچ
+  const colorEntries: { name: string; hex: string }[] = [];
+  {
+    const seen = new Set<string>();
+    for (const v of variants) {
+      const x = v as {
+        color_hex?: string | null;
+        color?: string | { name?: string | null; hex?: string | null; hex_code?: string | null } | null;
+        color_name?: string | null;
+      };
+      const name =
+        (x.color_name || "").trim() ||
+        (typeof x.color === "string" ? x.color : x.color?.name || "") ||
+        "";
+      const hex = resolveColorHex(
+        name || x.color_hex,
+        x.color_hex ||
+          (x.color && typeof x.color === "object"
+            ? x.color.hex_code || x.color.hex
+            : null),
+      );
+      const key = name || hex;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      colorEntries.push({ name: name || hex, hex });
+    }
+  }
+  const colors = colorEntries.map((c) => c.hex);
 
   
   const categoryName =
@@ -125,14 +135,17 @@ export function ProductCard({ product }: Props) {
         : x.size && typeof x.size === "object"
           ? x.size.name ?? null
           : null;
-    let colorVal: string | null =
-      x.color_name ?? x.color_hex ?? null;
-    if (!colorVal) {
-      if (typeof x.color === "string") colorVal = x.color;
-      else if (x.color && typeof x.color === "object") {
-        colorVal = x.color.hex_code || x.color.hex || x.color.name || null;
-      }
-    }
+    const name =
+      (x.color_name || "").trim() ||
+      (typeof x.color === "string" ? x.color : x.color?.name || "") ||
+      "";
+    const colorVal = resolveColorHex(
+      name || x.color_hex,
+      x.color_hex ||
+        (x.color && typeof x.color === "object"
+          ? x.color.hex_code || x.color.hex
+          : null),
+    );
     return {
       id: x.id,
       price: Number(x.price),

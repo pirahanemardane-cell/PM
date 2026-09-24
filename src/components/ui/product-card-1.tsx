@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
+import { resolveColorHex } from "@/lib/colors";
 
 export interface ProductCard1Props {
   variantOptions?: { id: string; size?: string | null; color?: string | null; price?: number; stock?: number }[];
@@ -481,7 +482,7 @@ if (res.ok === false && res.error === "login_required") {
                 key={color}
                 type="button"
                 className={cn(
-                  "h-5 w-5 rounded-full border border-black/5 transition-all",
+                  "h-5 w-5 rounded-full border border-black/20 shadow-sm transition-all",
                   selectedColor === color
                     ? "ring-primary ring-2 ring-offset-1"
                     : ""
