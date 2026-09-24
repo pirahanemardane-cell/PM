@@ -392,6 +392,14 @@ export default function NewProductPage() {
           ) : null}
         </section>
 
+        <section className="border-border space-y-2 rounded-xl border border-dashed p-4">
+          <h2 className="font-semibold text-primary">گالری تصاویر</h2>
+          <p className="text-muted-foreground text-xs">
+            پس از ذخیرهٔ محصول، از صفحهٔ ویرایش می‌توانید تصاویر گالری (تامبنیل PDP) را اضافه کنید.
+          </p>
+        </section>
+
+
         <section className="border-border space-y-3 rounded-xl border p-4">
           <h2 className="font-semibold text-primary">برچسب‌ها</h2>
           <div className="flex flex-wrap gap-3">

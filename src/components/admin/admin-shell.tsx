@@ -44,6 +44,64 @@ const NAV = [
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },
 ];
 
+
+function AdminBreadcrumb() {
+  const pathname = usePathname();
+  const parts = (pathname || "").split("/").filter(Boolean);
+  // admin / section / ...
+  if (parts[0] !== "admin") return null;
+  const labels: Record<string, string> = {
+    admin: "مدیریت",
+    dashboard: "داشبورد",
+    products: "محصولات",
+    categories: "دسته‌ها",
+    brands: "برندها",
+    orders: "سفارش‌ها",
+    users: "کاربران",
+    media: "رسانه",
+    blog: "بلاگ",
+    settings: "تنظیمات",
+    tags: "برچسب‌ها",
+    discounts: "تخفیف‌ها",
+    "flash-sale": "شگفت‌انگیز",
+    reviews: "نظرات",
+    tickets: "تیکت‌ها",
+    notifications: "اعلان‌ها",
+    returns: "مرجوعی",
+    analytics: "آمار",
+    attributes: "مشخصات",
+    logs: "لاگ",
+    new: "جدید",
+    edit: "ویرایش",
+  };
+  const crumbs: { href: string; label: string }[] = [];
+  let acc = "";
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    acc += "/" + p;
+    // uuid-like skip label raw
+    const isId = /^[0-9a-f-]{8,}$/i.test(p);
+    const label = isId ? "جزئیات" : labels[p] || p;
+    crumbs.push({ href: acc, label });
+  }
+  return (
+    <nav aria-label="مسیر" className="text-muted-foreground mb-4 flex flex-wrap items-center gap-1.5 text-xs">
+      {crumbs.map((c, i) => (
+        <span key={c.href} className="inline-flex items-center gap-1.5">
+          {i > 0 ? <span className="opacity-50">/</span> : null}
+          {i === crumbs.length - 1 ? (
+            <span className="text-foreground font-medium">{c.label}</span>
+          ) : (
+            <Link href={c.href} className="hover:text-primary transition-colors">
+              {c.label}
+            </Link>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(true);
@@ -100,7 +158,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto"><>
+          <AdminBreadcrumb />
+          <div className="min-h-[60vh]">{children}</div>
+          <footer className="text-muted-foreground mt-10 border-t pt-4 text-center text-xs">
+            پنل مدیریت · پیراهن مردانه
+          </footer>
+        </></main>
     </div>
   );
 }

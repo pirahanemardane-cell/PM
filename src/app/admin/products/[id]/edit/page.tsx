@@ -1,3 +1,4 @@
+import { adminAddProductGalleryImageAction } from "@/app/admin/actions/products";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,7 +15,8 @@ import {
   adminSyncProductAttributesAction,
   type AttrWithOptions,
 } from "@/app/admin/actions/attributes";
-import { adminUploadProductImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
+import { adminUploadProductImageAction,
+  adminAddProductGalleryImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -72,6 +74,10 @@ export default function EditProductPage() {
   const [attrSelections, setAttrSelections] = useState<Record<string, string>>({});
   const [sku, setSku] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [galleryImages, setGalleryImages] = useState<
+    { id: string; url: string; alt_text?: string | null }[]
+  >([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [imageAlt, setImageAlt] = useState("");
   const [primaryImageId, setPrimaryImageId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -565,6 +571,18 @@ export default function EditProductPage() {
                   const imageId = primaryImageId;
                   setImageUrl("");
                   setPrimaryImageId(null);
+      const gallery = (p.product_images ?? []).filter(
+        (i: { is_primary?: boolean; variant_id?: string | null; url?: string }) =>
+          !i.is_primary && !i.variant_id && i.url,
+      );
+      setGalleryImages(
+        gallery.map((i: { id: string; url: string; alt_text?: string | null }) => ({
+          id: i.id,
+          url: i.url,
+          alt_text: i.alt_text ?? null,
+        })),
+      );
+
                   try {
                     await adminDeleteProductImageAction({ url, imageId });
                   } catch {
@@ -604,6 +622,102 @@ export default function EditProductPage() {
             />
           ) : null}
         </section>
+
+
+        <section className="border-border space-y-3 rounded-xl border p-4">
+          <h2 className="font-semibold text-primary">گالری تصاویر</h2>
+          <p className="text-muted-foreground text-xs">
+            این تصاویر زیر تصویر اصلی در صفحه محصول (تامبنیل) نمایش داده می‌شوند — وابسته به وریانت نیستند.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">
+              {uploadingGallery ? "در حال آپلود…" : "افزودن به گالری"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                disabled={uploadingGallery || busy || !id}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f || !id) return;
+                  setUploadingGallery(true);
+                  setErr("");
+                  try {
+                    const fd = new FormData();
+                    fd.set("file", f);
+                    const res = await adminUploadProductImageAction(fd);
+                    if (!res.ok) {
+                      setErr(
+                        res.error === "too_large"
+                          ? "حجم فایل بیش از ۱۲ مگابایت است"
+                          : res.error === "not_image"
+                            ? "فقط فایل تصویری مجاز است"
+                            : "آپلود ناموفق بود",
+                      );
+                      return;
+                    }
+                    const add = await adminAddProductGalleryImageAction({
+                      productId: id,
+                      url: res.url,
+                    });
+                    if (!add.ok || !add.image) {
+                      setErr("ثبت در گالری ناموفق بود");
+                      return;
+                    }
+                    setGalleryImages((prev) => [
+                      ...prev,
+                      {
+                        id: add.image.id,
+                        url: add.image.url,
+                        alt_text: add.image.alt_text,
+                      },
+                    ]);
+                  } catch {
+                    setErr("آپلود گالری ناموفق بود");
+                  } finally {
+                    setUploadingGallery(false);
+                  }
+                }}
+              />
+            </label>
+          </div>
+          {galleryImages.length ? (
+            <div className="flex flex-wrap gap-3">
+              {galleryImages.map((g) => (
+                <div key={g.id} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={g.url}
+                    alt={g.alt_text || ""}
+                    className="h-24 w-24 rounded-lg border object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="bg-destructive text-destructive-foreground absolute -top-2 -left-2 rounded-full px-1.5 text-xs"
+                    disabled={busy}
+                    onClick={async () => {
+                      setGalleryImages((prev) => prev.filter((x) => x.id !== g.id));
+                      try {
+                        await adminDeleteProductImageAction({
+                          url: g.url,
+                          imageId: g.id,
+                        });
+                      } catch {
+                        /* best-effort */
+                      }
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-xs">هنوز تصویری در گالری نیست.</p>
+          )}
+        </section>
+
 
         {tags.length ? (
           <section className="border-border space-y-2 rounded-xl border p-4">

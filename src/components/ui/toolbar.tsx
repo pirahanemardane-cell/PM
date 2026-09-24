@@ -42,8 +42,8 @@ const ToolbarButton = ({
   >
     <button
       type="button"
-      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200 hover:bg-primary/10 focus:outline-none ${
-        isActive ? "bg-primary/10" : ""
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-200 hover:bg-primary-foreground/15 focus:outline-none ${
+        isActive ? "bg-primary-foreground/20" : ""
       }`}
       aria-label={label}
       onClick={onClick}
@@ -84,7 +84,7 @@ const Toolbar = () => {
         <motion.div
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="bg-secondary border-primary/10 absolute z-50 flex items-center gap-1 rounded-lg border p-1 shadow-lg"
+          className="bg-primary text-primary-foreground border-primary/20 absolute z-50 flex items-center gap-1 rounded-lg border p-1 shadow-lg"
         >
           <ToolbarButton
             label="پررنگ"

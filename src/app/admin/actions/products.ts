@@ -854,3 +854,51 @@ export async function adminSyncProductVariantsAction(
     };
   }
 }
+
+
+/** تصویر گالری محصول — بدون variant_id، is_primary=false */
+export async function adminAddProductGalleryImageAction(input: {
+  productId: string;
+  url: string;
+  alt_text?: string | null;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const productId = (input.productId || "").trim();
+  const url = (input.url || "").trim();
+  if (!productId || !url) {
+    return { ok: false as const, error: "invalid" as const };
+  }
+
+  const { data: maxRow } = await gate.supabase
+    .from("product_images")
+    .select("sort_order")
+    .eq("product_id", productId)
+    .is("variant_id", null)
+    .eq("is_primary", false)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const sort_order = (maxRow?.sort_order ?? 0) + 1;
+
+  const { data, error } = await gate.supabase
+    .from("product_images")
+    .insert({
+      product_id: productId,
+      url,
+      alt_text: (input.alt_text || "").trim() || null,
+      is_primary: false,
+      variant_id: null,
+      sort_order,
+    })
+    .select("id, url, alt_text, sort_order")
+    .single();
+
+  if (error) {
+    console.error("[adminAddProductGalleryImage]", error);
+    return { ok: false as const, error: "server" as const, detail: error.message };
+  }
+  return { ok: true as const, image: data };
+}
