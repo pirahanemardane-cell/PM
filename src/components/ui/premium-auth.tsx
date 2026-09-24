@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { signInAction, signUpAction, resetPasswordAction, requestOtpAction, verifyOtpAction } from "@/app/(shop)/actions/auth";
 import { isValidIranMobile, normalizeIranMobile, onlyDigits } from "@/lib/numbers";
@@ -89,6 +89,13 @@ export function AuthForm({
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
   const [otpStep, setOtpStep] = useState<OtpStep>("phone");
+  const [otpCooldown, setOtpCooldown] = useState(0);
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const id = setInterval(() => setOtpCooldown((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [otpCooldown]);
   const [registrationStep, setRegistrationStep] =
     useState<RegistrationStep>("details");
   const [showPassword, setShowPassword] = useState(false);
@@ -151,6 +158,7 @@ export function AuthForm({
           }
           setOtpStep("code");
           setSuccessMessage("کد تأیید به موبایل شما ارسال شد");
+          setOtpCooldown(60);
           setIsLoading(false);
           return;
         }
@@ -293,14 +301,15 @@ export function AuthForm({
           }
           setRegistrationStep("verification");
           setSuccessMessage("کد تأیید به موبایل شما ارسال شد");
+          setOtpCooldown(60);
           setIsLoading(false);
           return;
         }
 
         // مرحله 2: تأیید کد + ساخت نشست (مثل ورود)
         if (registrationStep === "verification") {
-          const code = (formData.verificationCode || formData.otpCode || "").replace(/\\D/g, "");
-          if (!/^\\d{6}$/.test(code)) {
+          const code = (formData.verificationCode || formData.otpCode || "").replace(/\D/g, "");
+          if (!/^\d{6}$/.test(code)) {
             setErrors({ verificationCode: "کد ۶ رقمی وارد کنید" });
             setIsLoading(false);
             return;
@@ -358,9 +367,14 @@ export function AuthForm({
 
 
       setIsLoading(false);
+    } catch (err) {
+      console.error("[auth submit]", err);
+      setErrors({ phone: "خطای غیرمنتظره؛ دوباره تلاش کنید" });
+      setIsLoading(false);
+    }
   };
 
-const inputCls =
+  const inputCls =
     "border-input bg-muted/50 w-full rounded-xl border py-3 pr-4 pl-10 text-right focus:outline-none focus:ring-2 focus:ring-primary/20";
 
   return (
@@ -538,6 +552,41 @@ const inputCls =
               <>
                 <p className="text-muted-foreground text-center text-sm">
                   کد به <strong>{formData.phone}</strong> ارسال شد
+              <div className="mt-3 text-center text-sm">
+                {otpCooldown > 0 ? (
+                  <span className="text-muted-foreground">ارسال مجدد تا {otpCooldown} ثانیه دیگر</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-primary underline underline-offset-2"
+                    disabled={isLoading}
+                    onClick={async () => {
+                      setIsLoading(true);
+                      setErrors({});
+                      try {
+                        const res = await requestOtpAction(
+                          normalizeIranMobile(formData.phone) ?? formData.phone,
+                        );
+                        if (!res.ok) {
+                          setErrors({
+                            otpCode:
+                              res.error === "rate_limit"
+                                ? "کمی صبر کنید و دوباره تلاش کنید"
+                                : "ارسال مجدد ناموفق بود",
+                          });
+                        } else {
+                          setSuccessMessage("کد دوباره ارسال شد");
+                          setOtpCooldown(60);
+                        }
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                  >
+                    ارسال مجدد کد
+                  </button>
+                )}
+              </div>
                 </p>
                 <input
                   type="text"
@@ -587,6 +636,41 @@ const inputCls =
           <>
             <p className="text-muted-foreground text-center text-sm">
               کد به موبایل <strong>{formData.phone}</strong> ارسال شد
+              <div className="mt-3 text-center text-sm">
+                {otpCooldown > 0 ? (
+                  <span className="text-muted-foreground">ارسال مجدد تا {otpCooldown} ثانیه دیگر</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-primary underline underline-offset-2"
+                    disabled={isLoading}
+                    onClick={async () => {
+                      setIsLoading(true);
+                      setErrors({});
+                      try {
+                        const res = await requestOtpAction(
+                          normalizeIranMobile(formData.phone) ?? formData.phone,
+                        );
+                        if (!res.ok) {
+                          setErrors({
+                            otpCode:
+                              res.error === "rate_limit"
+                                ? "کمی صبر کنید و دوباره تلاش کنید"
+                                : "ارسال مجدد ناموفق بود",
+                          });
+                        } else {
+                          setSuccessMessage("کد دوباره ارسال شد");
+                          setOtpCooldown(60);
+                        }
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                  >
+                    ارسال مجدد کد
+                  </button>
+                )}
+              </div>
             </p>
             <input
               type="text"
