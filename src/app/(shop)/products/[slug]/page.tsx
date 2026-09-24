@@ -190,11 +190,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 ) : null}
               </div>
             </div>
-            {product.short_description ? (
-              <p className="text-muted-foreground leading-7">
-                {product.short_description}
-              </p>
-            ) : null}
+            
             <TrackRecentlyViewed
               id={String(product.id)}
               title={String(product.name ?? "")}
