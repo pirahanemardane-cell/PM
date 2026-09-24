@@ -358,10 +358,9 @@ export function AuthForm({
 
 
       setIsLoading(false);
-    }
   };
 
-  const inputCls =
+const inputCls =
     "border-input bg-muted/50 w-full rounded-xl border py-3 pr-4 pl-10 text-right focus:outline-none focus:ring-2 focus:ring-primary/20";
 
   return (
