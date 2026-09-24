@@ -266,10 +266,16 @@ export default function EditProductPage() {
     });
     setBusy(false);
     if (!res.ok) {
+      const detail =
+        "detail" in res && res.detail ? ` (${String(res.detail)})` : "";
       setErr(
         res.error === "validation"
           ? "نام و دسته الزامی است"
-          : res.error || "خطا",
+          : res.error === "price"
+            ? "قیمت نامعتبر"
+            : res.error === "server"
+              ? `خطای سرور${detail}`
+              : (res.error || "خطا") + detail,
       );
       return;
     }

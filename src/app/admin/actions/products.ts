@@ -315,7 +315,13 @@ export async function adminCreateProductAction(input: CreateProductInput) {
     return { ok: true as const, id: product.id as string };
   } catch (e) {
     console.error("[adminCreateProduct]", e);
-    return { ok: false as const, error: "server" };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message || "")
+        : e instanceof Error
+          ? e.message
+          : "";
+    return { ok: false as const, error: "server" as const, detail: msg.slice(0, 200) || undefined };
   }
 }
 
@@ -497,7 +503,17 @@ export async function adminUpdateProductAction(
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateProduct]", e);
-    return { ok: false as const, error: "server" };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message || "")
+        : e instanceof Error
+          ? e.message
+          : "";
+    return {
+      ok: false as const,
+      error: "server" as const,
+      detail: msg.slice(0, 200) || undefined,
+    };
   }
 }
 

@@ -1,37 +1,35 @@
-"use server";
-
 import { createClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase/service";
 
-export type AdminGate =
-  | { ok: true; supabase: SupabaseClient; userId: string }
-  | { ok: false; error: "login_required" | "forbidden"; supabase?: SupabaseClient };
-
-/**
- * تنها نقطهٔ ورود دسترسی CMS.
- * نقش: profiles.role === "admin"
- * staff بعداً می‌تواند با permission جدا گسترش یابد.
- */
-export async function requireAdmin(): Promise<AdminGate> {
+export async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) {
-    return { ok: false, error: "login_required", supabase };
+    return { ok: false as const, error: "login_required" as const };
   }
 
-  const { data: profile } = await supabase
+  // نقش از profiles (با service تا RLS مانع نشود)
+  const admin = createServiceClient();
+  const { data: profile, error } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = (profile as { role?: string } | null)?.role;
+  if (error) {
+    console.error("[requireAdmin profile]", error);
+    return { ok: false as const, error: "server" as const };
+  }
+  const role = String((profile as { role?: string } | null)?.role || "").toLowerCase();
   if (role !== "admin") {
-    return { ok: false, error: "forbidden", supabase };
+    return { ok: false as const, error: "forbidden" as const };
   }
 
-  return { ok: true, supabase, userId: user.id };
+  return {
+    ok: true as const,
+    userId: user.id,
+    supabase: admin, // service role — عبور از RLS برای CMS
+  };
 }
