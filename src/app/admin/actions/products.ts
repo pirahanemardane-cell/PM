@@ -262,12 +262,19 @@ export async function adminCreateProductAction(input: CreateProductInput) {
             },
           ];
 
+    
+    const seenSkuCreate = new Set<string>();
     for (const vv of variantList) {
       const vp = Number(vv.price ?? price);
       if (!Number.isFinite(vp) || vp < 0) continue;
+      let skuVal = (vv.sku || "").trim() || null;
+      if (skuVal) {
+        if (seenSkuCreate.has(skuVal)) skuVal = null;
+        else seenSkuCreate.add(skuVal);
+      }
       const { error: vErr } = await gate.supabase.from("product_variants").insert({
         product_id: product.id,
-        sku: (vv.sku || "").trim() || null,
+        sku: skuVal,
         size: (vv.size || "").trim() || null,
         color_name: (vv.color_name || "").trim() || null,
         color_hex: (vv.color_hex || "").trim() || null,
@@ -414,7 +421,7 @@ export async function adminUpdateProductAction(
       .limit(1);
 
     const variantPatch = {
-      sku: input.sku?.trim() || null,
+      sku: (input.sku || "").trim() || null,
       price,
       original_price:
         input.original_price != null && Number.isFinite(Number(input.original_price))
@@ -428,6 +435,19 @@ export async function adminUpdateProductAction(
     };
 
     if (variants?.[0]?.id) {
+      // اگر SKU با وریانت دیگری تداخل دارد، SKU را null کن
+      if (variantPatch.sku) {
+        const { data: clash } = await gate.supabase
+          .from("product_variants")
+          .select("id")
+          .eq("sku", variantPatch.sku)
+          .neq("id", variants[0].id)
+          .limit(1);
+        if (clash?.[0]?.id) {
+          console.warn("[update] sku clash, nulling", variantPatch.sku);
+          variantPatch.sku = null;
+        }
+      }
       const { error: vErr } = await gate.supabase
         .from("product_variants")
         .update(variantPatch)
@@ -584,6 +604,24 @@ export async function adminSyncProductVariantsAction(
         image_url: (v.image_url || "").trim() || null,
       }))
       .filter((v) => Number.isFinite(v.price) && v.price >= 0);
+
+    // SKU خالی = null؛ SKU تکراری در همین لیست → فقط اولی نگه داشته می‌شود
+    {
+      const seen = new Set<string>();
+      for (const v of cleaned) {
+        if (!v.sku) {
+          v.sku = null;
+          continue;
+        }
+        if (seen.has(v.sku)) {
+          console.warn("[sync] duplicate sku in payload, nulling", v.sku);
+          v.sku = null;
+        } else {
+          seen.add(v.sku);
+        }
+      }
+    }
+
 
     if (!cleaned.length) {
       return { ok: false as const, error: "variants_required" };
