@@ -66,14 +66,16 @@ export function ProductPdpGalleryAndBuy({
   }, [activeColor, variants, images, fallbackImage]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] lg:gap-8 lg:items-start">
-      <div className="w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] lg:gap-8 lg:items-start">
+      <div className="min-w-0 w-full overflow-hidden w-full">
+        <div className="min-w-0 w-full overflow-hidden">
         <ProductGallery
         productName={productName}
         images={images}
         variants={variants}
         activeColor={activeColor}
       />
+        </div>
         </div>
       <div className="space-y-6 w-full max-w-xl lg:justify-self-start lg:max-w-none">
         {childrenBeforeBuy}
