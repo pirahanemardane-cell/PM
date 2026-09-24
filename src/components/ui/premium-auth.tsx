@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 
 import * as React from "react";
 import { useState, useCallback } from "react";
@@ -82,12 +83,19 @@ function isValidLoginId(value: string) {
 }
 
 export function AuthForm({
+  hideRegister = false,
+  defaultNext,
   onSuccess,
   onClose,
   initialMode = "login",
   className,
 }: AuthFormProps) {
-  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
+  const [authMode, setAuthMode] = useState<AuthMode>(
+    hideRegister ? "login" : initialMode,
+  );
+  useEffect(() => {
+    if (hideRegister) setAuthMode("login");
+  }, [hideRegister]);
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
   const [otpStep, setOtpStep] = useState<OtpStep>("phone");
   const [registrationStep, setRegistrationStep] =
@@ -347,7 +355,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={() => {
-              setAuthMode("signup");
+              if (!hideRegister) setAuthMode("signup");
               setRegistrationStep("details");
             }}
             className={cn(
