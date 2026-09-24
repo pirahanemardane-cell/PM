@@ -16,28 +16,28 @@ const toastTypes = [
     type: "success" as const,
     icon: CheckCircle,
     colors:
-      "bg-green-50 border-l-4 border-green-500 text-green-800 dark:bg-green-950/80 dark:text-green-100 dark:border-green-400",
+      "bg-green-50 border-l-4 border-green-500 text-green-800 dark:bg-green-50 dark:text-green-800 dark:border-green-500",
     iconColor: "text-green-500",
   },
   {
     type: "error" as const,
     icon: AlertCircle,
     colors:
-      "bg-red-50 border-l-4 border-red-500 text-red-800 dark:bg-red-950/80 dark:text-red-100 dark:border-red-400",
+      "bg-red-50 border-l-4 border-red-500 text-red-800 dark:bg-red-50 dark:text-red-800 dark:border-red-500",
     iconColor: "text-red-500",
   },
   {
     type: "warning" as const,
     icon: AlertTriangle,
     colors:
-      "bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 dark:bg-yellow-950/80 dark:text-yellow-100 dark:border-yellow-400",
+      "bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 dark:bg-yellow-50 dark:text-yellow-800 dark:border-yellow-500",
     iconColor: "text-yellow-500",
   },
   {
     type: "info" as const,
     icon: Info,
     colors:
-      "bg-blue-50 border-l-4 border-blue-500 text-blue-800 dark:bg-blue-950/80 dark:text-blue-100 dark:border-blue-400",
+      "bg-blue-50 border-l-4 border-blue-500 text-blue-800 dark:bg-blue-50 dark:text-blue-800 dark:border-blue-500",
     iconColor: "text-blue-500",
   },
 ];
@@ -52,7 +52,7 @@ export function AppToaster() {
           return (
             <Toast.Root
               className={`relative min-w-80 rounded-lg p-4 shadow-lg transition-all duration-300 will-change-transform h-(--height) opacity-(--opacity) translate-x-(--x) translate-y-(--y) scale-(--scale) z-(--z-index) ${
-                cfg?.colors || "border border-gray-100 bg-white dark:bg-gray-900"
+                cfg?.colors || "border border-gray-100 bg-white dark:bg-white dark:border-gray-100 dark:text-green-800"
               }`}
             >
               <div className="flex items-start gap-3">
