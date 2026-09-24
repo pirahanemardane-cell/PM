@@ -69,7 +69,7 @@ export function ProductPdpGalleryAndBuy({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-8 lg:items-start">
-      {/* موبایل order-2 | دسکتاپ ستون تصویر */}
+      {/* تصویر — موبایل order-2 | دسکتاپ: تصویر + نمودار زیرش */}
       <div className="max-lg:order-2 min-w-0 w-full overflow-hidden">
         <ProductGallery
           productName={productName}
@@ -77,10 +77,10 @@ export function ProductPdpGalleryAndBuy({
           variants={variants}
           activeColor={activeColor}
         />
-        {childrenBelowGallery}
+        <div className="mt-4 hidden lg:block">{childrenBelowGallery}</div>
       </div>
 
-      {/* موبایل: contents تا order روی فرزندان | دسکتاپ: ستون محتوا */}
+      {/* موبایل: contents | دسکتاپ: ستون محتوا */}
       <div className="max-lg:contents w-full max-w-xl space-y-6 lg:justify-self-start lg:max-w-none">
         <div className="max-lg:order-1 space-y-6">{childrenBeforeBuy}</div>
         <div className="max-lg:order-3">
@@ -93,7 +93,9 @@ export function ProductPdpGalleryAndBuy({
             onColorChange={onColorChange}
           />
         </div>
-        <div className="max-lg:order-4">{childrenAfterBuy}</div>
+        {/* موبایل: نمودار بعد از افزودن — دسکتاپ مخفی */}
+        <div className="max-lg:order-4 mt-4 lg:hidden">{childrenBelowGallery}</div>
+        <div className="max-lg:order-5">{childrenAfterBuy}</div>
       </div>
     </div>
   );
