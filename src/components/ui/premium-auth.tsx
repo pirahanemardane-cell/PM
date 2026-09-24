@@ -262,9 +262,34 @@ export function AuthForm({
           return;
         }
         const id = formData.loginId.trim();
-        const res = await signInAction(id, formData.password);
-        if (!res.ok) {
-          setErrors({ general: res.error || "ورود ناموفق" });
+        try {
+          const { createBrowserClient } = await import("@supabase/ssr");
+          const browser = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          );
+          if (id.includes("@")) {
+            const { data, error } = await browser.auth.signInWithPassword({
+              email: id.toLowerCase(),
+              password: formData.password,
+            });
+            if (error || !data.session) {
+              console.error("[password login]", error);
+              setErrors({ general: "ایمیل یا رمز عبور نادرست است" });
+              setIsLoading(false);
+              return;
+            }
+          } else {
+            const res = await signInAction(id, formData.password);
+            if (!res.ok) {
+              setErrors({ general: res.error || "ورود ناموفق" });
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("[password login]", e);
+          setErrors({ general: "خطا در ورود" });
           setIsLoading(false);
           return;
         }
@@ -279,7 +304,7 @@ export function AuthForm({
             : defaultNext || "/admin/dashboard";
         if (!dest.startsWith("/")) dest = "/dashboard";
         setIsLoading(false);
-        window.location.assign(dest);
+        window.location.href = dest;
         return;
       }
 
