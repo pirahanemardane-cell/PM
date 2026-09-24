@@ -239,13 +239,17 @@ export default function NewProductPage() {
             </label>
           </div>
           <label className="block space-y-1 text-sm">
-            <span>خلاصه</span>
+            <span>خلاصه محصول</span>
             <textarea
               className="border-border bg-background w-full rounded-xl border px-3 py-2"
-              rows={2}
+              rows={3}
               value={shortDesc}
               onChange={(e) => setShortDesc(e.target.value)}
+              placeholder="یک پاراگراف کوتاه برای نمایش در صفحه محصول (زیر لینک‌های راهنما)"
             />
+            <p className="text-muted-foreground text-xs">
+              در صفحه محصول زیر راهنمای سایز / ارسال / مرجوعی نشان داده می‌شود.
+            </p>
           </label>
           <div className="space-y-1 text-sm">
             <span>توضیحات</span>
