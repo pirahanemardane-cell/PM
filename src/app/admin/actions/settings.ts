@@ -26,3 +26,49 @@ export async function adminSettingsStatusAction() {
     },
   };
 }
+
+export async function adminChangePasswordAction(
+  currentPassword: string,
+  newPassword: string,
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const cur = (currentPassword || "").trim();
+  const next = (newPassword || "").trim();
+  if (next.length < 8) {
+    return { ok: false as const, error: "weak" as const };
+  }
+
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user?.email) {
+      return { ok: false as const, error: "login_required" as const };
+    }
+
+    // تأیید رمز فعلی
+    const { error: checkErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: cur,
+    });
+    if (checkErr) {
+      return { ok: false as const, error: "bad_current" as const };
+    }
+
+    const { error: updErr } = await supabase.auth.updateUser({
+      password: next,
+    });
+    if (updErr) {
+      console.error("[adminChangePassword]", updErr);
+      return { ok: false as const, error: "server" as const };
+    }
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminChangePassword]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}

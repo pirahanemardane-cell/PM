@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { adminSettingsStatusAction } from "@/app/admin/actions/settings";
+import { adminSettingsStatusAction, adminChangePasswordAction } from "@/app/admin/actions/settings";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
 type Checks = {
@@ -29,6 +29,99 @@ function Badge({ ok }: { ok: boolean }) {
     </span>
   );
 }
+
+
+function AdminPasswordForm() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
+    setErr(null);
+    if (next.length < 8) {
+      setErr("رمز جدید حداقل ۸ کاراکتر باشد");
+      return;
+    }
+    if (next !== confirm) {
+      setErr("تکرار رمز با رمز جدید یکی نیست");
+      return;
+    }
+    setBusy(true);
+    const res = await adminChangePasswordAction(current, next);
+    setBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        bad_current: "رمز فعلی نادرست است",
+        weak: "رمز جدید ضعیف است",
+        login_required: "نشست منقضی شده؛ دوباره وارد شوید",
+        forbidden: "دسترسی ندارید",
+        server: "خطای سرور",
+      };
+      setErr(map[res.error] || "تغییر رمز ناموفق");
+      return;
+    }
+    setMsg("رمز با موفقیت تغییر کرد");
+    setCurrent("");
+    setNext("");
+    setConfirm("");
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="border-border space-y-3 rounded-2xl border p-4">
+      <h2 className="font-semibold">تغییر رمز عبور</h2>
+      <label className="block space-y-1 text-sm">
+        <span>رمز فعلی</span>
+        <input
+          type="password"
+          className="border-border bg-background w-full rounded-lg border px-3 py-2"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+      </label>
+      <label className="block space-y-1 text-sm">
+        <span>رمز جدید</span>
+        <input
+          type="password"
+          className="border-border bg-background w-full rounded-lg border px-3 py-2"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
+      </label>
+      <label className="block space-y-1 text-sm">
+        <span>تکرار رمز جدید</span>
+        <input
+          type="password"
+          className="border-border bg-background w-full rounded-lg border px-3 py-2"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
+      </label>
+      {err ? <p className="text-destructive text-sm">{err}</p> : null}
+      {msg ? <p className="text-sm text-emerald-600">{msg}</p> : null}
+      <button
+        type="submit"
+        disabled={busy}
+        className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+      >
+        {busy ? "در حال ذخیره…" : "ذخیره رمز جدید"}
+      </button>
+    </form>
+  );
+}
+
 
 export default function AdminSettingsPage() {
   const [env, setEnv] = useState<string>("—");
@@ -189,5 +282,8 @@ export default function AdminSettingsPage() {
         ) : null}
       </div>
     </div>
+
+      <AdminPasswordForm />
+
   );
 }
