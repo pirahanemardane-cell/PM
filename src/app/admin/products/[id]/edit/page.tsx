@@ -1,5 +1,6 @@
-import { adminAddProductGalleryImageAction } from "@/app/admin/actions/products";
 "use client";
+
+import { adminAddProductGalleryImageAction } from "@/app/admin/actions/products";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -16,7 +17,7 @@ import {
   type AttrWithOptions,
 } from "@/app/admin/actions/attributes";
 import { adminUploadProductImageAction,
-  adminAddProductGalleryImageAction, adminDeleteProductImageAction } from "@/app/admin/actions/media";
+  adminDeleteProductImageAction } from "@/app/admin/actions/media";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
