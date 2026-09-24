@@ -123,175 +123,29 @@ export function ShopActivityDrawer({
                     ) : null}
                     {tab === "cart" && (
                       <div className="mt-2 space-y-2">
-                        {(() => {
-                          const line = p as {
-                            colors?: string[];
-                            color?: string;
-                            colorHex?: string;
-                            sizes?: string[];
-                            size?: string;
-                            id?: string;
-                            productId?: string;
-                            source?: string;
-                          };
-                          
-                          const variantOptions = Array.isArray((line as { variantOptions?: unknown }).variantOptions)
-                            ? ((line as { variantOptions: { color?: string; colorHex?: string; size?: string; stock: number }[] }).variantOptions)
-                            : [];
-                          const voForAvail = variantOptions.map((v) => ({
-                            id: "",
-                            color: v.colorHex || v.color,
-                            size: v.size,
-                            stock: v.stock,
-                          }));
-
-                          const rawColors = Array.isArray(line.colors) ? line.colors : [];
-                          const current =
-                            line.colorHex ||
-                            (line.color?.startsWith("#") ? line.color : line.color) ||
-                            "";
-                          const colorList = [
-                            ...new Set(
-                              [...rawColors, current]
-                                .filter(Boolean)
-                                .map((c) => resolveColorHex(String(c))),
-                            ),
-                          ];
-                          const sizeList: string[] = Array.isArray(line.sizes)
-                            ? line.sizes
-                            : line.size
-                              ? [line.size]
-                              : [];
-                          const selectedHex = resolveColorHex(
-                            line.colorHex || line.color,
-                          );
-                          const selectedSize = line.size || "";
-                          const pid = line.productId || line.id || "";
-                          const isServer =
-                            Boolean(isLoggedIn) &&
-                            (line.source === "server" ||
-                              Boolean((p as { variantId?: string }).variantId));
-
-                          return (
-                            <>
-                              {colorList.length > 0 ? (
-                                <div className="flex flex-wrap justify-end gap-1.5">
-                                  {colorList.map((c) => (
-                                    <button
-                                      key={c}
-                                      type="button"
-                                      title={c}
-                                      className={
-                                        "h-5 w-5 rounded-full border-2 shadow-sm " +
-                                        (selectedHex.toLowerCase() ===
-                                        c.toLowerCase()
-                                          ? "border-primary ring-1 ring-primary ring-offset-1"
-                                          : "border-black/20 opacity-80") +
-                                        (voForAvail.length && !colorAvailable(c, voForAvail, selectedSize || null)
-                                          ? " opacity-30 cursor-not-allowed"
-                                          : "")
-                                      }
-                                      disabled={voForAvail.length > 0 && !colorAvailable(c, voForAvail, selectedSize || null)}
-                                      style={{ backgroundColor: c }}
-                                      onClick={async () => {
-                                        if (
-                                          selectedHex.toLowerCase() ===
-                                          c.toLowerCase()
-                                        )
-                                          return;
-                                        if (isServer) {
-                                          const vid = (p as { variantId?: string }).variantId;
-                                          if (!vid || !pid) return;
-                                          const res = await swapCartVariantAction({
-                                            oldVariantId: vid,
-                                            productId: pid,
-                                            colorHex: c,
-                                            size: selectedSize || null,
-                                            quantity: p.quantity ?? 1,
-                                          });
-                                          if (!res.ok) {
-                                            toast.error(
-                                              res.error === "out_of_stock"
-                                                ? "این ترکیب موجود نیست"
-                                                : "تغییر رنگ ناموفق بود",
-                                            );
-                                            return;
-                                          }
-                                          window.dispatchEvent(new Event("pm:cart-changed"));
-                                          toast.success("رنگ به‌روز شد");
-                                          return;
-                                        }
-                                        const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                        (() => {
-                                        const vo = Array.isArray((line as any).variantOptions) ? (line as any).variantOptions : [];
-                                        const hit = vo.find((x: any) => {
-                                          const a = String(x.colorHex || x.color || "").replace(/^#/, "").toLowerCase();
-                                          const b = String(c || "").replace(/^#/, "").toLowerCase();
-                                          return a && b && a === b;
-                                        });
-                                        updateCartItem(key, { color: c, colorHex: c, ...(hit?.image ? { image: hit.image } : {}) });
-                                      })();
-                                      }}
-                                    />
-                                  ))}
-                                </div>
+                        {(p.colorHex || p.color || p.size) ? (
+                            <div className="mt-1.5 flex flex-wrap items-center justify-end gap-2 text-[11px] text-muted-foreground">
+                              {(p.colorHex || p.color) ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <span
+                                    className="inline-block h-4 w-4 rounded-full border border-black/20 shadow-sm"
+                                    style={{
+                                      backgroundColor: resolveColorHex(
+                                        p.colorHex || p.color,
+                                      ),
+                                    }}
+                                    title={String(p.colorHex || p.color)}
+                                  />
+                                  <span>رنگ انتخاب‌شده</span>
+                                </span>
                               ) : null}
-                              {sizeList.length > 0 ? (
-                                <div className="flex flex-wrap justify-end gap-1">
-                                  {sizeList.map((s) => (
-                                    <button
-                                      key={s}
-                                      type="button"
-                                      className={
-                                        "min-w-[1.75rem] rounded-md border px-1.5 py-0.5 text-[11px] " +
-                                        (selectedSize === s
-                                          ? "border-primary bg-primary text-primary-foreground"
-                                          : "border-border bg-muted/50") +
-                                        (voForAvail.length > 0 &&
-                                        !sizeAvailable(s, voForAvail, selectedHex || null)
-                                          ? " opacity-40 cursor-not-allowed line-through"
-                                          : "")
-                                      }
-                                      disabled={
-                                        voForAvail.length > 0 &&
-                                        !sizeAvailable(s, voForAvail, selectedHex || null)
-                                      }
-                                      onClick={async () => {
-                                        if (selectedSize === s) return;
-                                        if (isServer) {
-                                          const vid = (p as { variantId?: string }).variantId;
-                                          if (!vid || !pid) return;
-                                          const res = await swapCartVariantAction({
-                                            oldVariantId: vid,
-                                            productId: pid,
-                                            colorHex: selectedHex || null,
-                                            size: s,
-                                            quantity: p.quantity ?? 1,
-                                          });
-                                          if (!res.ok) {
-                                            toast.error(
-                                              res.error === "out_of_stock"
-                                                ? "این ترکیب موجود نیست"
-                                                : "تغییر سایز ناموفق بود",
-                                            );
-                                            return;
-                                          }
-                                          window.dispatchEvent(new Event("pm:cart-changed"));
-                                          toast.success("سایز به‌روز شد");
-                                          return;
-                                        }
-                                        const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                        updateCartItem(key, { size: s });
-                                      }}
-                                    >
-                                      {s}
-                                    </button>
-                                  ))}
-                                </div>
+                              {p.size ? (
+                                <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 font-medium text-foreground">
+                                  سایز: {p.size}
+                                </span>
                               ) : null}
-                            </>
-                          );
-                        })()}
+                            </div>
+                          ) : null}
                         <div className="flex items-center justify-between gap-2">
                           <button
                             type="button"
