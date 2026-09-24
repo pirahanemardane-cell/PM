@@ -66,8 +66,8 @@ export function ProductPdpGalleryAndBuy({
   }, [activeColor, variants, images, fallbackImage]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start lg:justify-items-stretch">
-      <div className="w-full max-w-[min(100%,24rem)] lg:max-w-[min(100%,26rem)] lg:justify-self-end">
+    <div className="grid grid-cols-1 lg:grid-cols-[30%_70%] lg:gap-8 lg:items-start">
+      <div className="w-full">
         <ProductGallery
         productName={productName}
         images={images}
