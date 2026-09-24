@@ -1,5 +1,6 @@
 "use client";
 import { toast } from "@/lib/toaster";
+import { resolveColorHex } from "@/lib/colors";
 import { sizeAvailable, sameColor } from "@/lib/variant-availability";
 
 import Link from "next/link";
@@ -119,76 +120,112 @@ export function ShopActivityDrawer({
                     ) : null}
                     {tab === "cart" && (
                       <div className="mt-2 space-y-2">
-                        {(p as { source?: string }).source === "server" ? (
-                          <div className="flex flex-wrap items-center justify-end gap-2">
-                            {(p as { colorHex?: string }).colorHex || (p.color && String(p.color).startsWith("#")) ? (
-                              <span
-                                className="border-border inline-block h-4 w-4 rounded-full border"
-                                style={{
-                                  backgroundColor:
-                                    (p as { colorHex?: string }).colorHex ||
-                                    (p.color?.startsWith("#") ? p.color : undefined),
-                                }}
-                              />
-                            ) : null}
-                            {p.size ? (
-                              <span className="border-border rounded-md border px-1.5 py-0.5 text-[11px] font-medium">
-                                {p.size}
-                              </span>
-                            ) : null}
-                            {p.color && !String(p.color).startsWith("#") ? (
-                              <span className="text-muted-foreground text-[11px]">{p.color}</span>
-                            ) : null}
-                          </div>
-                        ) : null}
-                        {(p as { source?: string }).source !== "server" && p.colors && (p as { colors?: string[] }).colors && (p as { colors: string[] }).colors.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 justify-end">
-                            {p.colors.map((c: string) => (
-                              <button
-                                key={c}
-                                type="button"
-                                title={c}
-                                className={
-                                  "h-5 w-5 rounded-full border-2 " +
-                                  (p.color === c
-                                    ? "border-primary ring-1 ring-primary"
-                                    : "border-transparent opacity-70")
-                                }
-                                style={{ backgroundColor: c.startsWith("#") ? c : c.match(/^[0-9A-Fa-f]{3,8}$/) ? `#${c}` : undefined }}
-                                onClick={() => {
-                                  const key = `${p.id}|${p.color ?? ""}|${p.size ?? ""}`;
-                                  updateCartItem(key, { color: c });
-                                }}
-                              >
-                                {!c.startsWith("#") ? (
-                                  <span className="text-[9px]">{c}</span>
-                                ) : null}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {p.sizes && p.sizes.length > 0 && (
-                          <div className="flex flex-wrap gap-1 justify-end">
-                            {p.sizes.map((s: string) => (
-                              <button
-                                key={s}
-                                type="button"
-                                className={
-                                  "min-w-[1.75rem] rounded-md border px-1.5 py-0.5 text-[11px] " +
-                                  (p.size === s
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border bg-muted/50")
-                                }
-                                onClick={() => {
-                                  const key = `${p.id}|${p.color ?? ""}|${p.size ?? ""}`;
-                                  updateCartItem(key, { size: s });
-                                }}
-                              >
-                                {s}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {(() => {
+                          const line = p as {
+                            colors?: string[];
+                            color?: string;
+                            colorHex?: string;
+                            sizes?: string[];
+                            size?: string;
+                            id?: string;
+                            productId?: string;
+                            source?: string;
+                          };
+                          const rawColors = Array.isArray(line.colors) ? line.colors : [];
+                          const current =
+                            line.colorHex ||
+                            (line.color?.startsWith("#") ? line.color : line.color) ||
+                            "";
+                          const colorList = [
+                            ...new Set(
+                              [...rawColors, current]
+                                .filter(Boolean)
+                                .map((c) => resolveColorHex(String(c))),
+                            ),
+                          ];
+                          const sizeList: string[] = Array.isArray(line.sizes)
+                            ? line.sizes
+                            : line.size
+                              ? [line.size]
+                              : [];
+                          const selectedHex = resolveColorHex(
+                            line.colorHex || line.color,
+                          );
+                          const selectedSize = line.size || "";
+                          const pid = line.productId || line.id || "";
+                          const isServer =
+                            Boolean(isLoggedIn) &&
+                            (line.source === "server" ||
+                              Boolean((p as { variantId?: string }).variantId));
+
+                          return (
+                            <>
+                              {colorList.length > 0 ? (
+                                <div className="flex flex-wrap justify-end gap-1.5">
+                                  {colorList.map((c) => (
+                                    <button
+                                      key={c}
+                                      type="button"
+                                      title={c}
+                                      className={
+                                        "h-5 w-5 rounded-full border-2 shadow-sm " +
+                                        (selectedHex.toLowerCase() ===
+                                        c.toLowerCase()
+                                          ? "border-primary ring-1 ring-primary ring-offset-1"
+                                          : "border-black/20 opacity-80")
+                                      }
+                                      style={{ backgroundColor: c }}
+                                      onClick={() => {
+                                        if (
+                                          selectedHex.toLowerCase() ===
+                                          c.toLowerCase()
+                                        )
+                                          return;
+                                        if (isServer) {
+                                          toast.error(
+                                            "برای تغییر رنگ از صفحه محصول استفاده کنید",
+                                          );
+                                          return;
+                                        }
+                                        const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
+                                        updateCartItem(key, { color: c });
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              ) : null}
+                              {sizeList.length > 0 ? (
+                                <div className="flex flex-wrap justify-end gap-1">
+                                  {sizeList.map((s) => (
+                                    <button
+                                      key={s}
+                                      type="button"
+                                      className={
+                                        "min-w-[1.75rem] rounded-md border px-1.5 py-0.5 text-[11px] " +
+                                        (selectedSize === s
+                                          ? "border-primary bg-primary text-primary-foreground"
+                                          : "border-border bg-muted/50")
+                                      }
+                                      onClick={() => {
+                                        if (selectedSize === s) return;
+                                        if (isServer) {
+                                          toast.error(
+                                            "برای تغییر سایز از صفحه محصول استفاده کنید",
+                                          );
+                                          return;
+                                        }
+                                        const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
+                                        updateCartItem(key, { size: s });
+                                      }}
+                                    >
+                                      {s}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </>
+                          );
+                        })()}
                         <div className="flex items-center justify-between gap-2">
                           <button
                             type="button"
