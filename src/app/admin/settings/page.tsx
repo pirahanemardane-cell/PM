@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { adminSettingsStatusAction, adminChangePasswordAction } from "@/app/admin/actions/settings";
+import {
+  adminSettingsStatusAction,
+  adminChangePasswordAction,
+} from "@/app/admin/actions/settings";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
 type Checks = {
@@ -29,7 +32,6 @@ function Badge({ ok }: { ok: boolean }) {
     </span>
   );
 }
-
 
 function AdminPasswordForm() {
   const [current, setCurrent] = useState("");
@@ -72,7 +74,10 @@ function AdminPasswordForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="border-border space-y-3 rounded-2xl border p-4">
+    <form
+      onSubmit={onSubmit}
+      className="border-border space-y-3 rounded-2xl border p-4"
+    >
       <h2 className="font-semibold">تغییر رمز عبور</h2>
       <label className="block space-y-1 text-sm">
         <span>رمز فعلی</span>
@@ -121,7 +126,6 @@ function AdminPasswordForm() {
     </form>
   );
 }
-
 
 export default function AdminSettingsPage() {
   const [env, setEnv] = useState<string>("—");
@@ -180,110 +184,66 @@ export default function AdminSettingsPage() {
   ];
 
   return (
-    <div className="bg-background min-h-screen p-6" dir="rtl">
-      <div className="w-full max-w-none space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">تنظیمات محیط</h1>
-            <p className="text-muted-foreground text-sm">
-              وضعیت متغیرهای سرور — مقادیر secret نمایش داده نمی‌شوند
-            </p>
-          </div>
-          <Link
-            href="/admin/dashboard"
-            className="border-border rounded-xl border px-4 py-2 text-sm"
-          >
-            داشبورد
-          </Link>
+    <div className="space-y-6 p-4 md:p-6" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold">تنظیمات</h1>
+          <p className="text-muted-foreground text-sm">
+            محیط: <span className="font-mono">{env}</span>
+          </p>
         </div>
+        <Link
+          href="/admin/dashboard"
+          className="border-border rounded-lg border px-3 py-1.5 text-sm"
+        >
+          بازگشت
+        </Link>
+      </div>
 
-        {error ? <p className="text-destructive text-sm">{error}</p> : null}
-
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <LumaSpin />
-          </div>
-        ) : checks ? (
-          <>
-            <p className="text-muted-foreground text-sm">
-              محیط اجرا: <span className="text-foreground font-medium">{env}</span>
-            </p>
-
-            <div
-              className={`rounded-2xl border p-4 text-sm ${
-                supabaseOk
-                  ? "border-emerald-300/60 bg-emerald-500/10"
-                  : "border-amber-300/60 bg-amber-500/10"
-              }`}
-            >
-              <p className="font-medium">
-                Supabase: {supabaseOk ? "آماده" : "ناقص — فروشگاه/ادمین کار نمی‌کند"}
-              </p>
-            </div>
-
-            <div
-              className={`rounded-2xl border p-4 text-sm ${
-                r2Ok
-                  ? "border-emerald-300/60 bg-emerald-500/10"
-                  : "border-amber-300/60 bg-amber-500/10"
-              }`}
-            >
-              <p className="font-medium">
-                Cloudflare R2:{" "}
-                {r2Ok
-                  ? "آماده — آپلود تصویر محصول از ادمین فعال است"
-                  : "ناقص — آپلود تصویر تا پر شدن هر ۵ کلید کار نمی‌کند"}
-              </p>
-              {!r2Ok ? (
-                <p className="text-muted-foreground mt-1 text-xs">
-                  در Vercel → Settings → Environment Variables این کلیدها را پر کنید:
-                  R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
-                  R2_BUCKET_NAME, R2_PUBLIC_BASE_URL
-                </p>
-              ) : null}
-            </div>
-
-            <section className="border-border space-y-2 rounded-2xl border p-4">
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <LumaSpin />
+        </div>
+      ) : error ? (
+        <p className="text-destructive text-sm">{error}</p>
+      ) : (
+        <>
+          <div className="border-border space-y-3 rounded-2xl border p-4">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold">Supabase</h2>
-              <ul className="space-y-2">
-                {supabaseRows.map((r) => (
-                  <li
-                    key={r.key}
-                    className="flex items-center justify-between gap-2 text-sm"
-                  >
-                    <span>{r.label}</span>
-                    <Badge ok={!!checks[r.key]} />
-                  </li>
-                ))}
-              </ul>
-            </section>
+              <Badge ok={supabaseOk} />
+            </div>
+            <ul className="space-y-2 text-sm">
+              {supabaseRows.map((r) => (
+                <li key={r.key} className="flex items-center justify-between gap-2">
+                  <span>{r.label}</span>
+                  <Badge ok={!!checks?.[r.key]} />
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            <section className="border-border space-y-2 rounded-2xl border p-4">
+          <div className="border-border space-y-3 rounded-2xl border p-4">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold">Cloudflare R2 (تصاویر)</h2>
-              <ul className="space-y-2">
-                {r2Rows.map((r) => (
-                  <li
-                    key={r.key}
-                    className="flex items-center justify-between gap-2 text-sm"
-                  >
-                    <span>{r.label}</span>
-                    <Badge ok={!!checks[r.key]} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-
+              <Badge ok={r2Ok} />
+            </div>
+            <ul className="space-y-2 text-sm">
+              {r2Rows.map((r) => (
+                <li key={r.key} className="flex items-center justify-between gap-2">
+                  <span>{r.label}</span>
+                  <Badge ok={!!checks?.[r.key]} />
+                </li>
+              ))}
+            </ul>
             <p className="text-muted-foreground text-xs">
-              تصویر فعلی کاتالوگ ممکن است هنوز مسیر محلی باشد
-              (<code className="mx-1">/products/…</code>).
               آپلودهای جدید از مسیر ادمین به R2 می‌روند (webp چندسایزه).
             </p>
-          </>
-        ) : null}
-      </div>
+          </div>
+
+          <AdminPasswordForm />
+        </>
+      )}
     </div>
-
-      <AdminPasswordForm />
-
   );
 }
