@@ -25,13 +25,20 @@ export function ProductGallery({
   variants?: VariantLite[];
   activeColor?: string | null;
 }) {
-  const list = useMemo(() => {
+  // تامب‌نیل: فقط گالری محصول (بدون تصویر واریانت) — همیشه ثابت
+  const thumbs = useMemo(() => {
     const all = images.filter((i) => i.url);
-    if (!activeColor) return all;
+    const galleryOnly = all.filter((i) => !i.variant_id);
+    return galleryOnly.length ? galleryOnly : all;
+  }, [images]);
+
+  // تصویر بزرگ: عکس واریانت رنگ فعال → وگرنه تامب انتخاب‌شده / اول گالری
+  const variantMain = useMemo(() => {
+    if (!activeColor) return null;
     const want = colorNorm(activeColor);
     const key = colorKey(activeColor);
+    const all = images.filter((i) => i.url);
 
-    // 1) variant_id
     if (variants.length) {
       const ids = new Set(
         variants
@@ -41,14 +48,12 @@ export function ProductGallery({
           })
           .map((v) => v.id),
       );
-      const byVar = all.filter(
-        (img) => img.variant_id && ids.has(img.variant_id),
-      );
-      if (byVar.length) return byVar;
+      const byVar = all.find((img) => img.variant_id && ids.has(img.variant_id));
+      if (byVar) return byVar;
     }
 
-    // 2) url includes white/black/blue
-    const byUrl = all.filter((img) => {
+    const byUrl = all.find((img) => {
+      if (!img.variant_id) return false;
       const low = img.url.toLowerCase();
       return (
         low.includes(key) ||
@@ -57,19 +62,24 @@ export function ProductGallery({
         (key === "blue" && low.includes("blue"))
       );
     });
-    if (byUrl.length) return byUrl;
-
-    return all;
+    return byUrl ?? null;
   }, [images, variants, activeColor]);
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
+  const [userPickedThumb, setUserPickedThumb] = useState(false);
 
+  // با تغییر رنگ: تصویر واریانت اولویت دارد؛ تامب‌ها ثابت می‌مانند
   useEffect(() => {
-    setIdx(0);
+    setUserPickedThumb(false);
   }, [activeColor]);
 
-  const current = list[Math.min(idx, Math.max(0, list.length - 1))] ?? list[0];
+  const list = thumbs; // lightbox و prev/next روی گالری
+  const current =
+    (!userPickedThumb && variantMain) ||
+    list[Math.min(idx, Math.max(0, list.length - 1))] ||
+    list[0] ||
+    variantMain;
   const close = useCallback(() => setOpen(false), []);
   const prev = useCallback(() => {
     setIdx((i) => (list.length ? (i - 1 + list.length) % list.length : 0));
@@ -123,13 +133,13 @@ export function ProductGallery({
         </span>
       </button>
 
-      {list.length > 1 ? (
+      {thumbs.length > 1 ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {list.map((img, i) => (
+          {thumbs.map((img, i) => (
             <button
               key={`${img.url}-${i}`}
               type="button"
-              onClick={() => setIdx(i)}
+              onClick={() => { setIdx(i); setUserPickedThumb(true); }}
               className={cn(
                 "relative aspect-square h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 p-0",
                 i === idx ? "border-secondary" : "border-transparent opacity-80",
