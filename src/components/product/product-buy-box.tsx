@@ -218,8 +218,8 @@ export function ProductBuyBox({
                 type="button"
                 onClick={() => { setSelectedColor(c); onColorChange?.(c); }}
                 className={cn(
-                  "border-border h-8 min-w-8 rounded-full border border-black/20 px-2 text-xs shadow-sm",
-                  selectedColor === c && "ring-secondary ring-2 ring-offset-2",
+                  "border-border h-8 min-w-8 rounded-full border border-border px-2 text-xs shadow-sm",
+                  selectedColor === c && "border-primary ring-primary ring-2 ring-offset-2",
                 )}
                 style={
                   c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c)
@@ -252,7 +252,7 @@ export function ProductBuyBox({
                   title={ok ? s : selectedColor ? `سایز ${s} برای رنگ ${selectedColor} موجود نیست` : "ناموجود"}
                   className={cn(
                     "border-border rounded-xl border px-3 py-1.5 text-sm",
-                    selectedSize === s && ok && "bg-secondary text-secondary-foreground border-secondary",
+                    selectedSize === s && ok && "bg-primary text-primary-foreground border-primary",
                     !ok && "cursor-not-allowed opacity-35 line-through decoration-muted-foreground/50",
                   )}
                 >
