@@ -231,7 +231,7 @@ export function AuthForm({
         setIsLoading(false);
         window.location.assign(dest);
         return;
-
+      }
 
       // ——— ورود با رمز (موبایل یا ایمیل) ———
       if (authMode === "login" && loginMethod === "password") {
