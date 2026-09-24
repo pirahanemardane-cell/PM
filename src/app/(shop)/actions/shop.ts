@@ -198,39 +198,56 @@ export async function swapCartVariantAction(input: {
     const supabase = await createClient();
     const { data: vars, error } = await supabase
       .from("product_variants")
-      .select("id, color_name, color_hex, size, stock, price")
-      .eq("product_id", input.productId);
+      .select("id, color_name, color_hex, size, stock_quantity, is_active")
+      .eq("product_id", input.productId)
+      .eq("is_active", true);
     if (error) throw error;
+
     const norm = (s?: string | null) =>
       (s || "").trim().replace(/^#/, "").toLowerCase();
     const wantHex = norm(input.colorHex);
-    const wantSize = (input.size || "").trim();
+    const wantSize = (input.size || "").trim().toUpperCase();
+
     const match = (vars ?? []).find((v: any) => {
-      const hex = norm(v.color_hex || v.color_name);
+      const hex = norm(v.color_hex);
+      const name = norm(v.color_name);
+      const szRaw = v.size;
       const sz =
-        typeof v.size === "string"
-          ? v.size
-          : v.size?.name
-            ? String(v.size.name)
+        typeof szRaw === "string"
+          ? szRaw.trim().toUpperCase()
+          : szRaw && typeof szRaw === "object"
+            ? String(szRaw.name || "").trim().toUpperCase()
             : "";
-      const colorOk = !wantHex || hex === wantHex || norm(v.color_name) === wantHex;
+      const colorOk =
+        !wantHex ||
+        hex === wantHex ||
+        name === wantHex ||
+        norm(v.color_hex || v.color_name) === wantHex;
       const sizeOk = !wantSize || sz === wantSize;
       return colorOk && sizeOk;
     });
+
     if (!match?.id) return { ok: false, error: "variant_not_found" };
-    if (Number(match.stock ?? 0) <= 0) return { ok: false, error: "out_of_stock" };
-    if (match.id === input.oldVariantId) return { ok: true, variantId: match.id };
+
+    const stock = match.stock_quantity;
+    if (stock !== null && stock !== undefined && Number(stock) <= 0) {
+      return { ok: false, error: "out_of_stock" };
+    }
+    if (match.id === input.oldVariantId) {
+      return { ok: true, variantId: match.id as string };
+    }
 
     const cartId = await resolveCartId();
     const cartRepo = new CartRepository();
     await cartRepo.removeItem(cartId, input.oldVariantId);
-    await cartRepo.addItem(cartId, match.id, qty);
+    await cartRepo.addItem(cartId, match.id as string, qty);
     return { ok: true, variantId: match.id as string };
   } catch (e) {
     console.error("[swapCartVariant]", e);
     return { ok: false, error: "server" };
   }
 }
+
 
 
 export type CartLineDTO = {
