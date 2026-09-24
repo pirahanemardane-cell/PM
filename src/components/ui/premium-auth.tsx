@@ -24,6 +24,8 @@ type RegistrationStep = "details" | "verification" | "complete";
 type OtpStep = "phone" | "code";
 
 interface AuthFormProps {
+  hideRegister?: boolean;
+  defaultNext?: string;
   onSuccess?: (userData: {
     email?: string;
     phone?: string;
@@ -81,6 +83,8 @@ export function AuthForm({
   onClose,
   initialMode = "login",
   className,
+  hideRegister = false,
+  defaultNext,
 }: AuthFormProps) {
   const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
   const [loginMethod, setLoginMethod] = useState<LoginMethod>("password");
@@ -331,7 +335,7 @@ export function AuthForm({
           <button
             type="button"
             onClick={() => {
-              setAuthMode("signup");
+              if (!hideRegister) setAuthMode("signup");
               setRegistrationStep("details");
             }}
             className={cn(
