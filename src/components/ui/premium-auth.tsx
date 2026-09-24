@@ -174,23 +174,40 @@ export function AuthForm({
           setIsLoading(false);
           return;
         }
-                // ست سشن روی مرورگر تا requireAdmin کاربر را ببیند
-        const atok = (ver as { access_token?: string | null }).access_token;
-        const rtok = (ver as { refresh_token?: string | null }).refresh_token;
-        if (atok && rtok) {
-          try {
-            const { createBrowserClient } = await import("@supabase/ssr");
-            const browser = createBrowserClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            );
-            await browser.auth.setSession({
-              access_token: atok,
-              refresh_token: rtok,
-            });
-          } catch (e) {
-            console.error("[otp setSession]", e);
+                
+        const tokenHash = (ver as { token_hash?: string }).token_hash;
+        if (!tokenHash) {
+          setErrors({ otpCode: "سشن ساخته نشد؛ دوباره تلاش کنید" });
+          setIsLoading(false);
+          return;
+        }
+        try {
+          const { createBrowserClient } = await import("@supabase/ssr");
+          const browser = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          );
+          const { error: sessErr } = await browser.auth.verifyOtp({
+            type: "email",
+            token_hash: tokenHash,
+          });
+          if (sessErr) {
+            console.error("[otp client verifyOtp]", sessErr);
+            setErrors({ otpCode: "خطا در ایجاد نشست ورود" });
+            setIsLoading(false);
+            return;
           }
+          const { data: u } = await browser.auth.getUser();
+          if (!u.user) {
+            setErrors({ otpCode: "نشست ثبت نشد" });
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("[otp client session]", e);
+          setErrors({ otpCode: "خطا در ورود" });
+          setIsLoading(false);
+          return;
         }
 
         setSuccessMessage("ورود موفق");
@@ -209,6 +226,7 @@ export function AuthForm({
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
         window.location.replace(dest);
         return;
+
 
       }
 

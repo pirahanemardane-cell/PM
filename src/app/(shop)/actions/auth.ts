@@ -119,14 +119,7 @@ export async function verifyOtpAction(phone: string, code: string) {
     return { ok: false as const, error: "server" as const };
   }
 
-  const { data: sessionData, error: sessionErr } = await supabase.auth.verifyOtp({
-    type: "email",
-    token_hash: linkData.properties.hashed_token,
-  });
-  if (sessionErr) {
-    console.error("[otp session]", sessionErr);
-    return { ok: false as const, error: "server" as const };
-  }
+  
 
   // نقش از profiles
   let role = "customer";
@@ -146,8 +139,7 @@ export async function verifyOtpAction(phone: string, code: string) {
   return {
     ok: true as const,
     role,
-    access_token: sessionData.session?.access_token ?? null,
-    refresh_token: sessionData.session?.refresh_token ?? null,
+    token_hash: linkData.properties.hashed_token as string,
   };
 }
 
