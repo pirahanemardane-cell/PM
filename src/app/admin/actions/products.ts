@@ -399,6 +399,7 @@ export async function adminUpdateProductAction(
       .eq("id", id);
     if (pErr) throw pErr;
 
+    // فقط واریانت اول را از فیلدهای بالای فرم همگام کن (جدول واریانت‌ها با sync جداست)
     const { data: variants } = await gate.supabase
       .from("product_variants")
       .select("id")
@@ -438,9 +439,10 @@ export async function adminUpdateProductAction(
       await gate.supabase.from("product_tag_map").delete().eq("product_id", id);
       const tagIds = input.tag_ids.filter(Boolean);
       if (tagIds.length) {
-        await gate.supabase.from("product_tag_map").insert(
+        const { error: tErr } = await gate.supabase.from("product_tag_map").insert(
           tagIds.map((tag_id) => ({ product_id: id, tag_id })),
         );
+        if (tErr) console.error("[product_tag_map update]", tErr);
       }
     }
 
@@ -453,25 +455,26 @@ export async function adminUpdateProductAction(
         .eq("is_primary", true)
         .limit(1);
       if (imgs?.[0]?.id) {
-        await gate.supabase
+        const { error: imgErr } = await gate.supabase
           .from("product_images")
           .update({
             url: imageUrl,
             alt_text: (input.image_alt || name).trim() || null,
           })
           .eq("id", imgs[0].id);
+        if (imgErr) console.error("[product_images update]", imgErr);
       } else {
-        await gate.supabase.from("product_images").insert({
+        const { error: imgErr } = await gate.supabase.from("product_images").insert({
           product_id: id,
           url: imageUrl,
           alt_text: (input.image_alt || name).trim() || null,
           is_primary: true,
           sort_order: 0,
         });
+        if (imgErr) console.error("[product_images insert]", imgErr);
       }
     }
 
-    
     try {
       const { data: vrow } = await gate.supabase
         .from("product_variants")
@@ -480,6 +483,7 @@ export async function adminUpdateProductAction(
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+      const { recordProductPrice } = await import("@/lib/price-history");
       await recordProductPrice({
         productId: id,
         variantId: (vrow as { id?: string } | null)?.id ?? null,
@@ -487,7 +491,7 @@ export async function adminUpdateProductAction(
         supabase: gate.supabase,
       });
     } catch {
-      /* ignore */
+      /* optional */
     }
 
     return { ok: true as const };
