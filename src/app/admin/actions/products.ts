@@ -410,9 +410,16 @@ export async function adminUpdateProductAction(
         is_bestseller: !!input.is_bestseller,
       })
       .eq("id", id);
-    if (pErr) throw pErr;
+    if (pErr) {
+      console.error("[adminUpdateProduct products]", pErr);
+      return {
+        ok: false as const,
+        error: "server" as const,
+        detail: pErr.message,
+      };
+    }
 
-    // فقط واریانت اول را از فیلدهای بالای فرم همگام کن (جدول واریانت‌ها با sync جداست)
+    // فقط قیمت/موجودی وریانت اول — بدون size/color/sku (جلوگیری از unique)
     const { data: variants } = await gate.supabase
       .from("product_variants")
       .select("id")
@@ -420,45 +427,28 @@ export async function adminUpdateProductAction(
       .order("created_at", { ascending: true })
       .limit(1);
 
-    const variantPatch = {
-      sku: (input.sku || "").trim() || null,
-      price,
-      original_price:
-        input.original_price != null && Number.isFinite(Number(input.original_price))
-          ? Number(input.original_price)
-          : null,
-      stock_quantity: Math.max(0, Number(input.stock_quantity ?? 0) || 0),
-      size: (input.size || "").trim() || null,
-      color_name: (input.color_name || "").trim() || null,
-      color_hex: (input.color_hex || "").trim() || null,
-      is_active: true,
-    };
-
     if (variants?.[0]?.id) {
-      // اگر SKU با وریانت دیگری تداخل دارد، SKU را null کن
-      if (variantPatch.sku) {
-        const { data: clash } = await gate.supabase
-          .from("product_variants")
-          .select("id")
-          .eq("sku", variantPatch.sku)
-          .neq("id", variants[0].id)
-          .limit(1);
-        if (clash?.[0]?.id) {
-          console.warn("[update] sku clash, nulling", variantPatch.sku);
-          variantPatch.sku = null;
-        }
-      }
       const { error: vErr } = await gate.supabase
         .from("product_variants")
-        .update(variantPatch)
+        .update({
+          price,
+          original_price:
+            input.original_price != null &&
+            Number.isFinite(Number(input.original_price))
+              ? Number(input.original_price)
+              : null,
+          stock_quantity: Math.max(0, Number(input.stock_quantity ?? 0) || 0),
+          is_active: true,
+        })
         .eq("id", variants[0].id);
-      if (vErr) throw vErr;
-    } else {
-      const { error: vErr } = await gate.supabase.from("product_variants").insert({
-        product_id: id,
-        ...variantPatch,
-      });
-      if (vErr) throw vErr;
+      if (vErr) {
+        console.error("[adminUpdateProduct variant]", vErr);
+        return {
+          ok: false as const,
+          error: "server" as const,
+          detail: vErr.message,
+        };
+      }
     }
 
     if (input.tag_ids) {
@@ -472,14 +462,23 @@ export async function adminUpdateProductAction(
       }
     }
 
+    // تصویر شاخص
     const imageUrl = (input.image_url || "").trim();
     if (imageUrl) {
-      const { data: imgs } = await gate.supabase
+      const { data: imgs, error: listImgErr } = await gate.supabase
         .from("product_images")
         .select("id")
         .eq("product_id", id)
         .eq("is_primary", true)
         .limit(1);
+      if (listImgErr) {
+        console.error("[product_images list]", listImgErr);
+        return {
+          ok: false as const,
+          error: "server" as const,
+          detail: listImgErr.message,
+        };
+      }
       if (imgs?.[0]?.id) {
         const { error: imgErr } = await gate.supabase
           .from("product_images")
@@ -488,7 +487,14 @@ export async function adminUpdateProductAction(
             alt_text: (input.image_alt || name).trim() || null,
           })
           .eq("id", imgs[0].id);
-        if (imgErr) console.error("[product_images update]", imgErr);
+        if (imgErr) {
+          console.error("[product_images update]", imgErr);
+          return {
+            ok: false as const,
+            error: "server" as const,
+            detail: imgErr.message,
+          };
+        }
       } else {
         const { error: imgErr } = await gate.supabase.from("product_images").insert({
           product_id: id,
@@ -497,7 +503,14 @@ export async function adminUpdateProductAction(
           is_primary: true,
           sort_order: 0,
         });
-        if (imgErr) console.error("[product_images insert]", imgErr);
+        if (imgErr) {
+          console.error("[product_images insert]", imgErr);
+          return {
+            ok: false as const,
+            error: "server" as const,
+            detail: imgErr.message,
+          };
+        }
       }
     }
 
