@@ -18,6 +18,49 @@ function slugify(input: string): string {
   );
 }
 
+
+async function linkVariantImages(
+  supabase: any,
+  productId: string,
+  variants: { size?: string | null; color_name?: string | null; image_url?: string | null }[],
+) {
+  for (const vv of variants) {
+    const url = (vv.image_url || "").trim();
+    if (!url) continue;
+    const { data: rows } = await supabase
+      .from("product_variants")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("size", vv.size ?? null)
+      .eq("color_name", vv.color_name ?? null)
+      .limit(1);
+    const vid = rows?.[0]?.id;
+    if (!vid) continue;
+    // یک تصویر برای این واریانت: upsert ساده
+    const { data: existing } = await supabase
+      .from("product_images")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("variant_id", vid)
+      .limit(1);
+    if (existing?.[0]?.id) {
+      await supabase
+        .from("product_images")
+        .update({ url, is_primary: false })
+        .eq("id", existing[0].id);
+    } else {
+      await supabase.from("product_images").insert({
+        product_id: productId,
+        variant_id: vid,
+        url,
+        is_primary: false,
+        sort_order: 10,
+      });
+    }
+  }
+}
+
+
 export async function adminListProductsAction(
   limit = 100,
   opts?: { q?: string; status?: string },
@@ -136,6 +179,8 @@ export type AdminVariantInput = {
   original_price?: number | null;
   stock_quantity?: number;
   is_active?: boolean;
+  image_url?: string | null;
+  image_url?: string | null;
 };
 
 export async function adminCreateProductAction(input: CreateProductInput) {
@@ -214,7 +259,16 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       if (tErr) console.error("[product_tag_map]", tErr);
     }
 
-    const imageUrl = (input.image_url || "").trim();
+    
+    if (input.variants?.length) {
+      try {
+        await linkVariantImages(gate.supabase, product.id, input.variants);
+      } catch (e) {
+        console.error("[linkVariantImages create]", e);
+      }
+    }
+
+const imageUrl = (input.image_url || "").trim();
     if (imageUrl) {
       const { error: imgErr } = await gate.supabase.from("product_images").insert({
         product_id: product.id,
@@ -250,7 +304,7 @@ export async function adminGetProductAction(id: string) {
         short_description, description, status,
         is_featured, is_new, is_bestseller,
         product_variants ( id, sku, price, original_price, stock_quantity, size, color_name, color_hex, is_active ),
-        product_images ( id, url, alt_text, is_primary, sort_order ),
+        product_images ( id, url, alt_text, is_primary, sort_order, variant_id ),
         product_tag_map ( tag_id )
       `,
       )
@@ -482,6 +536,7 @@ export async function adminSyncProductVariantsAction(
             : null,
         stock_quantity: Math.max(0, Number(v.stock_quantity ?? 0) || 0),
         is_active: v.is_active !== false,
+        image_url: (v.image_url || "").trim() || null,
       }))
       .filter((v) => Number.isFinite(v.price) && v.price >= 0);
 
@@ -538,6 +593,20 @@ export async function adminSyncProductVariantsAction(
       });
     } catch {
       /* optional */
+    }
+
+    try {
+      await linkVariantImages(
+        gate.supabase,
+        productId,
+        cleaned.map((v) => ({
+          size: v.size,
+          color_name: v.color_name,
+          image_url: v.image_url,
+        })),
+      );
+    } catch (e) {
+      console.error("[linkVariantImages sync]", e);
     }
 
     return { ok: true as const };

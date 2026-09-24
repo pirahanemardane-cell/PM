@@ -63,6 +63,7 @@ export default function EditProductPage() {
     price: string;
     original_price: string;
     stock: string;
+    image_url: string;
   };
   const [variantRows, setVariantRows] = useState<VRow[]>([]);
 
@@ -140,9 +141,11 @@ export default function EditProductPage() {
           color_name?: string | null;
         }[];
         product_images?: {
+          id?: string;
           url?: string;
           alt_text?: string | null;
           is_primary?: boolean;
+          variant_id?: string | null;
         }[];
         product_tag_map?: { tag_id: string }[];
       };
@@ -185,6 +188,7 @@ export default function EditProductPage() {
               price: String(x.price ?? ""),
               original_price: x.original_price != null ? String(x.original_price) : "",
               stock: String(x.stock_quantity ?? 0),
+              image_url: "",
             }))
           : [
               {
@@ -198,6 +202,16 @@ export default function EditProductPage() {
               },
             ],
       );
+
+      const imgs = p.product_images ?? [];
+      setVariantRows((rows) =>
+        rows.map((r) => {
+          if (!r.id) return r;
+          const hit = imgs.find((im) => im.variant_id && im.variant_id === r.id);
+          return hit?.url ? { ...r, image_url: hit.url } : r;
+        }),
+      );
+
       const img =
         p.product_images?.find((i) => i.is_primary) ?? p.product_images?.[0];
       if (img) {
@@ -271,6 +285,7 @@ export default function EditProductPage() {
             ? parseLocaleNumber(r.original_price)
             : null,
           stock_quantity: parseLocaleNumber(r.stock) ?? 0,
+          image_url: r.image_url || null,
         })),
       );
       if (!sync.ok) {
@@ -626,6 +641,7 @@ export default function EditProductPage() {
                     price: price || "",
                     original_price: originalPrice || "",
                     stock: "0",
+                    image_url: "",
                   },
                 ])
               }
@@ -731,6 +747,60 @@ export default function EditProductPage() {
                     dir="ltr"
                   />
                 </label>
+
+                <div className="sm:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3">
+                  {row.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={row.image_url} alt="" className="h-14 w-14 rounded-lg border object-cover" />
+                  ) : null}
+                  <label className="inline-flex cursor-pointer items-center rounded-lg border px-3 py-1.5 text-xs hover:bg-muted">
+                    {row.image_url ? "تعویض تصویر وریانت" : "تصویر وریانت"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      disabled={uploadingImage || busy}
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!f) return;
+                        setUploadingImage(true);
+                        try {
+                          const fd = new FormData();
+                          fd.set("file", f);
+                          const res = await adminUploadProductImageAction(fd);
+                          if (res.ok) {
+                            setVariantRows((prev) =>
+                              prev.map((r, i) =>
+                                i === idx ? { ...r, image_url: res.url } : r,
+                              ),
+                            );
+                          } else {
+                            setErr("آپلود تصویر وریانت ناموفق بود");
+                          }
+                        } finally {
+                          setUploadingImage(false);
+                        }
+                      }}
+                    />
+                  </label>
+                  {row.image_url ? (
+                    <button
+                      type="button"
+                      className="text-destructive text-xs underline"
+                      onClick={() =>
+                        setVariantRows((prev) =>
+                          prev.map((r, i) =>
+                            i === idx ? { ...r, image_url: "" } : r,
+                          ),
+                        )
+                      }
+                    >
+                      حذف تصویر
+                    </button>
+                  ) : null}
+                </div>
+
                 <div className="flex items-end sm:col-span-2 lg:col-span-3">
                   <button
                     type="button"
