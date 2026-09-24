@@ -69,7 +69,7 @@ export function ProductPdpGalleryAndBuy({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-8 lg:items-start">
-      <div className="min-w-0 w-full overflow-hidden w-full">
+      <div className="max-lg:order-2 min-w-0 w-full overflow-hidden">
         <div className="min-w-0 w-full overflow-hidden">
         <ProductGallery
         productName={productName}
@@ -80,7 +80,7 @@ export function ProductPdpGalleryAndBuy({
         {childrenBelowGallery}
         </div>
         </div>
-      <div className="space-y-6 w-full max-w-xl lg:justify-self-start lg:max-w-none">
+      <div className="max-lg:order-1 space-y-6 w-full max-w-xl lg:justify-self-start lg:max-w-none">
         {childrenBeforeBuy}
         <ProductBuyBox
           productId={productId}

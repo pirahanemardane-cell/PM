@@ -202,45 +202,84 @@ export default async function ProductDetailPage({ params }: Props) {
         }
         childrenAfterBuy={
           <>
-            <div className="grid gap-3 text-sm sm:grid-cols-3">
-              <div>
-                <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
-                  راهنمای سایز
-                </Link>
-                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                  جدول اندازه‌ها برای انتخاب سایز دقیق
-                </p>
+            <div className="pdp-desktop-after-buy hidden lg:block space-y-4">
+              <div className="grid gap-3 text-sm sm:grid-cols-3">
+                <div>
+                  <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
+                    راهنمای سایز
+                  </Link>
+                  <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                    جدول اندازه‌ها برای انتخاب سایز دقیق
+                  </p>
+                </div>
+                <div>
+                  <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                    شرایط ارسال
+                  </Link>
+                  <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                    هزینه و زمان ارسال به شهر شما
+                  </p>
+                </div>
+                <div>
+                  <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                    مرجوعی
+                  </Link>
+                  <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+                    تعویض و بازگشت تا ۷ روز کاری
+                  </p>
+                </div>
               </div>
-              <div>
-                <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
-                  شرایط ارسال
-                </Link>
-                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                  هزینه و زمان ارسال به شهر شما
-                </p>
-              </div>
-              <div>
-                <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
-                  مرجوعی
-                </Link>
-                <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                  تعویض و بازگشت تا ۷ روز کاری
-                </p>
-              </div>
+              {product.short_description ? (
+                <div className="border-border rounded-xl border bg-muted/30 p-4">
+                  <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
+                  <p className="text-muted-foreground text-sm leading-7">
+                    {product.short_description}
+                  </p>
+                </div>
+              ) : null}
             </div>
-            {product.short_description ? (
-              <div className="border-border mt-4 rounded-xl border bg-muted/30 p-4">
-                <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
-                <p className="text-muted-foreground text-sm leading-7">
-                  {product.short_description}
-                </p>
-              </div>
-            ) : null}
-            
-            
           </>
         }
       />
+
+
+      {/* موبایل/تبلت: خلاصه + لینک‌ها بعد از نمودار — دسکتاپ مخفی */}
+      <div className="mt-6 space-y-4 lg:hidden">
+        {product.short_description ? (
+          <div className="border-border rounded-xl border bg-muted/30 p-4">
+            <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
+            <p className="text-muted-foreground text-sm leading-7">
+              {product.short_description}
+            </p>
+          </div>
+        ) : null}
+        <div className="grid gap-3 text-sm sm:grid-cols-3">
+          <div>
+            <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
+              راهنمای سایز
+            </Link>
+            <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+              جدول اندازه‌ها برای انتخاب سایز دقیق
+            </p>
+          </div>
+          <div>
+            <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+              شرایط ارسال
+            </Link>
+            <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+              هزینه و زمان ارسال به شهر شما
+            </p>
+          </div>
+          <div>
+            <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+              مرجوعی
+            </Link>
+            <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
+              تعویض و بازگشت تا ۷ روز کاری
+            </p>
+          </div>
+        </div>
+      </div>
 
       {product.description ? (
         <section
