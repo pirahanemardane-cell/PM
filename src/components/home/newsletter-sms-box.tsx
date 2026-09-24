@@ -22,7 +22,7 @@ export function NewsletterSmsBox() {
 
   return (
     <div className="bg-card space-y-4 rounded-2xl border p-5">
-      <h2 className="text-lg font-bold">از آخرین تخفیف‌ها باخبر شوید</h2>
+      <h2 className="text-lg font-bold text-primary">از آخرین تخفیف‌ها باخبر شوید</h2>
       <p className="text-muted-foreground text-sm leading-7">
         شماره موبایل خود را وارد کنید 
       </p>

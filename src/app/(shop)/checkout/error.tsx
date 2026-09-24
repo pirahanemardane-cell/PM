@@ -14,7 +14,7 @@ export default function CheckoutError({
       className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center gap-4 p-6 text-center"
       dir="rtl"
     >
-      <h2 className="text-lg font-semibold">خطا در تسویه‌حساب</h2>
+      <h2 className="text-lg font-semibold text-primary">خطا در تسویه‌حساب</h2>
       <p className="text-muted-foreground text-sm">
         ثبت سفارش موقتاً کامل نشد. سبد خرید حفظ شده است؛ می‌توانید دوباره تلاش
         کنید یا به فروشگاه برگردید.

@@ -69,7 +69,7 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-6 p-6" dir="rtl">
       <div>
-        <h1 className="text-2xl font-bold">گزارش‌ها</h1>
+        <h1 className="text-2xl font-bold text-primary">گزارش‌ها</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           خلاصهٔ آمار فروشگاه (نسخهٔ سبک؛ نمودار پیشرفته بعداً)
         </p>

@@ -63,7 +63,7 @@ export default async function CategoryListingPage({
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold md:text-3xl">{category.name}</h1>
+        <h1 className="text-2xl font-bold md:text-3xl text-primary">{category.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {toPersianDigits(String(total))} محصول
         </p>
@@ -79,7 +79,7 @@ export default async function CategoryListingPage({
 
       {category.description ? (
         <section className="border-border mt-12 border-t pt-8">
-          <h2 className="mb-3 text-lg font-semibold">درباره {category.name}</h2>
+          <h2 className="mb-3 text-lg font-semibold text-primary">درباره {category.name}</h2>
           <div className="text-muted-foreground prose prose-sm max-w-none leading-7 whitespace-pre-line">
             {category.description}
           </div>

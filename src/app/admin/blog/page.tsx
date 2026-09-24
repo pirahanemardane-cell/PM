@@ -110,7 +110,7 @@ export default function AdminBlogPage() {
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">بلاگ</h1>
+          <h1 className="text-2xl font-bold text-primary">بلاگ</h1>
           <p className="text-muted-foreground text-sm">
             {toPersianDigits(String(items.length))} پست
           </p>

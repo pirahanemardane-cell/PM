@@ -64,7 +64,7 @@ export function OrderTrackBox() {
 
   return (
     <div className="bg-card space-y-4 rounded-2xl border p-5" dir="rtl">
-      <h2 className="text-lg font-bold">پیگیری سفارش</h2>
+      <h2 className="text-lg font-bold text-primary">پیگیری سفارش</h2>
       <p className="text-muted-foreground text-sm leading-7">
         با شناسه سفارش از وضعیت خرید خود مطلع شوید.
       </p>

@@ -10,7 +10,7 @@ export default function GlobalError({
     <html lang="fa" dir="rtl">
       <body className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md space-y-4 text-center">
-          <h1 className="text-xl font-bold">خطای غیرمنتظره</h1>
+          <h1 className="text-xl font-bold text-primary">خطای غیرمنتظره</h1>
           <p className="text-sm opacity-80">لطفاً صفحه را دوباره بارگذاری کنید.</p>
           <button
             type="button"

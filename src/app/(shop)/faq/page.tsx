@@ -31,7 +31,7 @@ export default function FaqPage() {
       <div className="space-y-6">
         {FAQS.map((item) => (
           <div key={item.q} className="border-border rounded-xl border p-4">
-            <h2 className="text-foreground mb-2 font-semibold">{item.q}</h2>
+            <h2 className="mb-2 font-semibold text-primary">{item.q}</h2>
             <p>{item.a}</p>
           </div>
         ))}

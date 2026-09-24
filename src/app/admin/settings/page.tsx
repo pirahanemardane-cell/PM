@@ -78,7 +78,7 @@ function AdminPasswordForm() {
       onSubmit={onSubmit}
       className="border-border space-y-3 rounded-2xl border p-4"
     >
-      <h2 className="font-semibold">تغییر رمز عبور</h2>
+      <h2 className="font-semibold text-primary">تغییر رمز عبور</h2>
       <label className="block space-y-1 text-sm">
         <span>رمز فعلی</span>
         <input
@@ -187,7 +187,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-6 p-4 md:p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">تنظیمات</h1>
+          <h1 className="text-xl font-bold text-primary">تنظیمات</h1>
           <p className="text-muted-foreground text-sm">
             محیط: <span className="font-mono">{env}</span>
           </p>
@@ -210,7 +210,7 @@ export default function AdminSettingsPage() {
         <>
           <div className="border-border space-y-3 rounded-2xl border p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold">Supabase</h2>
+              <h2 className="font-semibold text-primary">Supabase</h2>
               <Badge ok={supabaseOk} />
             </div>
             <ul className="space-y-2 text-sm">
@@ -225,7 +225,7 @@ export default function AdminSettingsPage() {
 
           <div className="border-border space-y-3 rounded-2xl border p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold">Cloudflare R2 (تصاویر)</h2>
+              <h2 className="font-semibold text-primary">Cloudflare R2 (تصاویر)</h2>
               <Badge ok={r2Ok} />
             </div>
             <ul className="space-y-2 text-sm">

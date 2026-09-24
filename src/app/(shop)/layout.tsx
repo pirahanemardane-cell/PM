@@ -1,3 +1,4 @@
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -14,7 +15,8 @@ export default function ShopLayout({
       <div className="flex-1"><div className="w-full max-w-none">
         
         <AppBreadcrumb />
-        <NotificationsProvider>{children}</NotificationsProvider></div></div>
+        <NotificationsProvider><ScrollToTop />
+        {children}</NotificationsProvider></div></div>
       <SiteFooter />
     </div>
   );

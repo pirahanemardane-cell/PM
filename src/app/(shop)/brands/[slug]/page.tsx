@@ -148,7 +148,7 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold md:text-3xl">{brand.name}</h1>
+        <h1 className="text-2xl font-bold md:text-3xl text-primary">{brand.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {toPersianDigits(String(total))} محصول
         </p>
@@ -219,7 +219,7 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
 
       {brand.description ? (
         <section className="border-border mt-12 border-t pt-8">
-          <h2 className="mb-3 text-lg font-semibold">درباره {brand.name}</h2>
+          <h2 className="mb-3 text-lg font-semibold text-primary">درباره {brand.name}</h2>
           <div className="text-muted-foreground prose prose-sm max-w-none leading-7 whitespace-pre-line">
             {brand.description}
           </div>

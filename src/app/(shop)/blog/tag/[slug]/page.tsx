@@ -18,7 +18,7 @@ export default async function BlogTagPage({ params }: Props) {
   const { slug } = await params;
   return (
     <div className="w-full max-w-none space-y-4 p-6" dir="rtl">
-      <h1 className="text-2xl font-bold">برچسب مقاله: {slug}</h1>
+      <h1 className="text-2xl font-bold text-primary">برچسب مقاله: {slug}</h1>
       <p className="text-muted-foreground text-sm">
         مقالات این برچسب — همیشه noindex.
       </p>

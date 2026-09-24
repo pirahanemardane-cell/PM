@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
     <div className="p-6" dir="rtl">
       <div className="w-full max-w-none space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">داشبورد مدیریت</h1>
+          <h1 className="text-2xl font-bold text-primary">داشبورد مدیریت</h1>
           <p className="text-muted-foreground text-sm">
             نمای کلی فروشگاه — CMS
           </p>
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
         )}
 
         <div className="border-border bg-card rounded-2xl border p-5">
-          <h2 className="mb-3 text-sm font-semibold">دسترسی سریع</h2>
+          <h2 className="mb-3 text-sm font-semibold text-primary">دسترسی سریع</h2>
           <div className="flex flex-wrap gap-2">
             {(
               [

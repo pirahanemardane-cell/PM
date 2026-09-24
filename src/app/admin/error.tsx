@@ -12,7 +12,7 @@ export default function AdminError({
       className="mx-auto flex min-h-[40vh] max-w-md flex-col items-center justify-center gap-4 p-6 text-center"
       dir="rtl"
     >
-      <h2 className="text-lg font-semibold">خطا در پنل ادمین</h2>
+      <h2 className="text-lg font-semibold text-primary">خطا در پنل ادمین</h2>
       <p className="text-muted-foreground text-sm">
         این بخش موقتاً در دسترس نیست.
       </p>

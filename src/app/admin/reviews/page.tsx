@@ -79,7 +79,7 @@ export default function AdminReviewsPage() {
     <div className="space-y-4 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">نظرات محصولات</h1>
+          <h1 className="text-2xl font-bold text-primary">نظرات محصولات</h1>
           <p className="text-muted-foreground text-sm">تأیید یا رد نظرات خریداران</p>
         </div>
         <div className="flex flex-wrap gap-2">

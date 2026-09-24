@@ -55,7 +55,7 @@ export function CarouselCards({
     <section className={cn("w-full", className)}>
       {title && (
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight md:text-2xl">
+          <h2 className="text-xl font-bold tracking-tight md:text-2xl text-primary">
             {title}
           </h2>
         </div>
@@ -114,7 +114,7 @@ export function CarouselCards({
                         {item.brand}
                       </p>
                     )}
-                    <h3 className="line-clamp-2 text-sm font-medium leading-snug">
+                    <h3 className="line-clamp-2 text-sm font-medium leading-snug text-primary">
                       {item.title}
                     </h3>
 

@@ -12,7 +12,7 @@ export default function ShopError({
       className="mx-auto flex min-h-[40vh] max-w-md flex-col items-center justify-center gap-4 p-6 text-center"
       dir="rtl"
     >
-      <h2 className="text-lg font-semibold">خطا در این بخش</h2>
+      <h2 className="text-lg font-semibold text-primary">خطا در این بخش</h2>
       <p className="text-muted-foreground text-sm">
         مشکلی پیش آمد. بقیهٔ سایت در دسترس است.
       </p>

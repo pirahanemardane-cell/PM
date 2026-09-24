@@ -51,7 +51,7 @@ export default function AdminNotificationsPage() {
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">اعلان‌ها</h1>
+          <h1 className="text-2xl font-bold text-primary">اعلان‌ها</h1>
           <p className="text-muted-foreground text-sm">
             ارسال قالب‌های از پیش‌تعریف‌شده به کاربر یا همه
           </p>
@@ -139,7 +139,7 @@ export default function AdminNotificationsPage() {
       {err ? <p className="text-destructive text-sm">{err}</p> : null}
 
       <div className="border-border rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold">قالب‌های موجود</h2>
+        <h2 className="mb-2 font-semibold text-primary">قالب‌های موجود</h2>
         <ul className="text-muted-foreground space-y-1 text-sm">
           {templates.map((t) => (
             <li key={t.id}>

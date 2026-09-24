@@ -17,7 +17,7 @@ export function RelatedStrip({
   if (!items.length) return null;
   return (
     <section className="mt-12 space-y-4" dir="rtl">
-      <h2 className="text-xl font-bold">{title}</h2>
+      <h2 className="text-xl font-bold text-primary">{title}</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {items.map((it) => (
           <Link

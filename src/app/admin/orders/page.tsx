@@ -105,7 +105,7 @@ export default function AdminOrdersPage() {
       <div className="w-full max-w-none space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">سفارش‌ها</h1>
+            <h1 className="text-2xl font-bold text-primary">سفارش‌ها</h1>
             <p className="text-muted-foreground text-sm">
               مدیریت سفارش‌های فروشگاه
             </p>

@@ -102,7 +102,7 @@ export default function AdminTicketsPage() {
     <div className="space-y-4 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">تیکت‌های پشتیبانی</h1>
+          <h1 className="text-2xl font-bold text-primary">تیکت‌های پشتیبانی</h1>
           <p className="text-muted-foreground text-sm">پاسخ و تغییر وضعیت</p>
         </div>
         <div className="flex flex-wrap gap-2">

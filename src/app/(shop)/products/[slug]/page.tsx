@@ -160,7 +160,7 @@ export default async function ProductDetailPage({ params }: Props) {
         childrenBeforeBuy={
           <>
             <div className="space-y-2">
-              <h1 className="text-2xl md:text-3xl font-iranyekan-heavy">
+              <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
                 {product.name}
               </h1>
               <div className="flex flex-wrap items-center gap-1.5">
@@ -286,7 +286,7 @@ export default async function ProductDetailPage({ params }: Props) {
           className="mt-10 w-full max-w-none border-t pt-8"
           aria-label="توضیحات محصول"
         >
-          <h2 className="mb-4 text-lg font-semibold md:text-xl">توضیحات</h2>
+          <h2 className="mb-4 text-lg font-semibold md:text-xl text-primary">توضیحات</h2>
           <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
             {product.description}
           </div>

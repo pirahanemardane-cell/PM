@@ -41,7 +41,7 @@ export default async function BlogPostPage({ params }: Props) {
       {post.category?.name ? (
         <p className="text-muted-foreground text-xs">{post.category.name}</p>
       ) : null}
-      <h1 className="text-3xl font-bold leading-snug">{post.title}</h1>
+      <h1 className="text-3xl font-bold leading-snug text-primary">{post.title}</h1>
       {post.published_at ? (
         <time className="text-muted-foreground text-sm">
           {new Date(post.published_at).toLocaleDateString("fa-IR")}

@@ -95,7 +95,7 @@ export default function AdminOrderDetailPage() {
       <div className="w-full max-w-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <div>
-            <h1 className="text-xl font-bold">سفارش</h1>
+            <h1 className="text-xl font-bold text-primary">سفارش</h1>
             <p className="font-mono text-xs text-muted-foreground">{order.id}</p>
           </div>
           <div className="flex gap-2">

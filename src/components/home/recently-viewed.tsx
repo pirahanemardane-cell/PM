@@ -20,7 +20,7 @@ export function RecentlyViewed() {
   if (items.length === 0) {
     return (
       <section aria-label="آخرین بازدیدها" className="space-y-3">
-        <h2 className="text-xl font-bold md:text-2xl">آخرین بازدیدها</h2>
+        <h2 className="text-xl font-bold md:text-2xl text-primary">آخرین بازدیدها</h2>
         <p className="text-muted-foreground text-sm">
           هنوز محصولی ندیده‌اید. از فروشگاه شروع کنید.
         </p>
@@ -30,7 +30,7 @@ export function RecentlyViewed() {
 
   return (
     <section aria-label="آخرین بازدیدها" className="space-y-5">
-      <h2 className="text-xl font-bold md:text-2xl">آخرین بازدیدها</h2>
+      <h2 className="text-xl font-bold md:text-2xl text-primary">آخرین بازدیدها</h2>
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => (
           <Link

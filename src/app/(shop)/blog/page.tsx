@@ -25,7 +25,7 @@ export default async function BlogIndexPage() {
   return (
     <div className="w-full max-w-none space-y-8 p-6" dir="rtl">
       <header>
-        <h1 className="text-3xl font-bold">بلاگ</h1>
+        <h1 className="text-3xl font-bold text-primary">بلاگ</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           
         </p>
@@ -56,7 +56,7 @@ export default async function BlogIndexPage() {
                         {post.category.name}
                       </span>
                     ) : null}
-                    <h2 className="text-lg font-semibold">{post.title}</h2>
+                    <h2 className="text-lg font-semibold text-primary">{post.title}</h2>
                     {post.excerpt ? (
                       <p className="text-muted-foreground line-clamp-2 text-sm">
                         {post.excerpt}

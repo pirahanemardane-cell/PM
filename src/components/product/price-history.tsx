@@ -119,7 +119,7 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-base font-bold">نمودار تغییر قیمت</h2>
+          <h2 className="text-base font-bold text-primary">نمودار تغییر قیمت</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
             محور افقی: تاریخ · محور عمودی: قیمت
             {trendUp

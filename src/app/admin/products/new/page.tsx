@@ -175,7 +175,7 @@ export default function NewProductPage() {
   return (
     <div className="w-full max-w-none space-y-6 p-6" dir="rtl">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">افزودن محصول</h1>
+        <h1 className="text-2xl font-bold text-primary">افزودن محصول</h1>
         <Link
           href="/admin/products"
           className="text-muted-foreground text-sm underline"
@@ -186,7 +186,7 @@ export default function NewProductPage() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">اطلاعات پایه</h2>
+          <h2 className="font-semibold text-primary">اطلاعات پایه</h2>
           <label className="block space-y-1 text-sm">
             <span>نام *</span>
             <input
@@ -303,7 +303,7 @@ export default function NewProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">تصویر اصلی</h2>
+          <h2 className="font-semibold text-primary">تصویر اصلی</h2>
           <p className="text-muted-foreground text-xs">
             آپلود مستقیم — تبدیل به WebP، عرض حداکثر ۱۲۰۰، واترمارک بالا-راست
           </p>
@@ -393,7 +393,7 @@ export default function NewProductPage() {
         </section>
 
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="font-semibold">برچسب‌ها</h2>
+          <h2 className="font-semibold text-primary">برچسب‌ها</h2>
           <div className="flex flex-wrap gap-3">
             {tags.map((tg) => (
               <label key={tg.id} className="flex items-center gap-2 text-sm">
@@ -417,7 +417,7 @@ export default function NewProductPage() {
         
         <div className="border-border space-y-3 rounded-2xl border p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="font-semibold">وریانت‌ها (سایز / رنگ / موجودی)</h2>
+            <h2 className="font-semibold text-primary">وریانت‌ها (سایز / رنگ / موجودی)</h2>
             <button
               type="button"
               className="border-border rounded-lg border px-3 py-1 text-xs"
@@ -608,7 +608,7 @@ export default function NewProductPage() {
         
         {attrCatalog.length > 0 ? (
           <div className="border-border space-y-3 rounded-2xl border p-4">
-            <h2 className="font-semibold">مشخصات فنی</h2>
+            <h2 className="font-semibold text-primary">مشخصات فنی</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {attrCatalog.map((a) => (
                 <label key={a.id} className="block space-y-1 text-sm">

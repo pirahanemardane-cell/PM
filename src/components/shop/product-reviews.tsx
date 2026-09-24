@@ -62,7 +62,7 @@ export function ProductReviews({ productId }: { productId: string }) {
 
   return (
     <section className="space-y-6 border-t pt-8" dir="rtl">
-      <h2 className="text-xl font-bold">نظرات خریداران</h2>
+      <h2 className="text-xl font-bold text-primary">نظرات خریداران</h2>
 
       <div className="space-y-3">
         {items.map((r) => (
@@ -93,7 +93,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold">ثبت نظر</h3>
+        <h3 className="font-semibold text-primary">ثبت نظر</h3>
         {replyTo ? (
           <p className="text-muted-foreground text-xs">
             در حال پاسخ به نظر{" "}

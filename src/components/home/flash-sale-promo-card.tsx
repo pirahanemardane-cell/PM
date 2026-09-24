@@ -63,7 +63,7 @@ export function FlashSalePromoCard({
         </span>
 
         <div className="space-y-1">
-          <h3 className="font-iranyekan-heavy text-xl leading-8 sm:text-2xl">
+          <h3 className="font-iranyekan-heavy text-xl leading-8 sm:text-2xl text-primary">
             پیشنهاد شگفت‌انگیز
           </h3>
           <p className="text-sm leading-6 text-primary-foreground/90">

@@ -261,7 +261,7 @@ export function ProductFiltersSidebar(props: Props) {
       )}
     >
       <div className="mb-4 flex items-center justify-between border-b pb-3">
-        <h2 className="text-sm font-semibold">
+        <h2 className="text-sm font-semibold text-primary">
           فیلترها
           {isPending ? (
             <span className="text-muted-foreground ms-2 text-[10px] font-normal">

@@ -9,7 +9,7 @@ export function StaticPage({
 }) {
   return (
     <main className="w-full max-w-none px-4 py-12" dir="rtl">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight md:text-3xl">
+      <h1 className="mb-6 text-2xl font-bold tracking-tight md:text-3xl text-primary">
         {title}
       </h1>
       <div className="text-muted-foreground prose-p:leading-7 space-y-4 text-sm md:text-base">

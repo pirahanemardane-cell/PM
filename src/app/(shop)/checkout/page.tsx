@@ -197,7 +197,7 @@ export default function CheckoutPage() {
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
       <div className="w-full max-w-none px-4 py-8">
-        <h1 className="mb-6 text-xl font-bold">تسویه حساب</h1>
+        <h1 className="mb-6 text-xl font-bold text-primary">تسویه حساب</h1>
 
         {/* progress */}
         <div className="mb-8 flex items-center justify-center gap-2">
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
 
             {step === 1 ? (
               <>
-                <h2 className="font-semibold">آدرس تحویل</h2>
+                <h2 className="font-semibold text-primary">آدرس تحویل</h2>
                 {savedAddresses.length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-muted-foreground text-xs">آدرس‌های ذخیره‌شده</p>
@@ -293,7 +293,7 @@ export default function CheckoutPage() {
 
             {step === 2 ? (
               <>
-                <h2 className="font-semibold">روش پرداخت</h2>
+                <h2 className="font-semibold text-primary">روش پرداخت</h2>
                 <div className="space-y-2">
                   {(
                     [
@@ -336,7 +336,7 @@ export default function CheckoutPage() {
 
             {step === 3 ? (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h2 className="font-semibold">مرور و ثبت</h2>
+                <h2 className="font-semibold text-primary">مرور و ثبت</h2>
                 <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
                   <p>
                     <span className="text-muted-foreground">گیرنده: </span>
@@ -427,7 +427,7 @@ export default function CheckoutPage() {
 
           {/* خلاصه سبد */}
           <aside className="border-border bg-card h-fit rounded-2xl border p-6 shadow-sm">
-            <h2 className="mb-4 font-semibold">سبد خرید</h2>
+            <h2 className="mb-4 font-semibold text-primary">سبد خرید</h2>
             <ul className="space-y-3">
               {items.map((it) => (
                 <li key={it.itemId || it.variantId} className="flex justify-between gap-3 text-sm">

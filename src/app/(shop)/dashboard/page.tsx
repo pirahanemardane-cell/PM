@@ -450,7 +450,7 @@ useEffect(() => {
     >
         <div className="border-border bg-card rounded-xl border p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold">
+            <h2 className="text-xl font-bold text-primary">
               {TABS.find((t) => t.id === tab)?.label}
             </h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -1093,7 +1093,7 @@ useEffect(() => {
           ) : tab === "tickets" ? (
             <div className="space-y-6" dir="rtl">
               <div className="border-border space-y-3 rounded-xl border p-4">
-                <h3 className="font-semibold">تیکت جدید</h3>
+                <h3 className="font-semibold text-primary">تیکت جدید</h3>
                 <input
                   className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
                   placeholder="موضوع"
@@ -1186,7 +1186,7 @@ useEffect(() => {
           ) : tab === "returns" ? (
             <div className="space-y-6" dir="rtl">
               <div className="border-border space-y-3 rounded-xl border p-4">
-                <h3 className="font-semibold">درخواست مرجوعی</h3>
+                <h3 className="font-semibold text-primary">درخواست مرجوعی</h3>
                 <select
                   className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
                   value={returnOrderId}

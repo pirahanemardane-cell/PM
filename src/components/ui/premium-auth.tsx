@@ -439,7 +439,7 @@ export function AuthForm({
       ) : null}
 
       <div className="mb-6 text-center">
-        <h2 className="mb-2 text-2xl font-bold">
+        <h2 className="mb-2 text-2xl font-bold text-primary">
           {authMode === "login"
             ? "ورود"
             : authMode === "reset"

@@ -33,7 +33,7 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-5 flex items-end justify-between gap-4">
-      <h2 className="text-xl font-bold md:text-2xl">{title}</h2>
+      <h2 className="text-xl font-bold md:text-2xl text-primary">{title}</h2>
       {href ? (
         <Link
           href={href}
@@ -136,7 +136,7 @@ export default async function HomePage() {
             className="bg-card flex flex-col gap-2 rounded-2xl border p-4"
           >
             <f.icon className="text-primary size-6" />
-            <h3 className="text-sm font-semibold">{f.title}</h3>
+            <h3 className="text-sm font-semibold text-primary">{f.title}</h3>
             <p className="text-muted-foreground text-xs leading-6">{f.desc}</p>
           </div>
         ))}

@@ -17,7 +17,7 @@ export default async function BrandsIndexPage() {
 
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
-      <h1 className="mb-2 text-2xl font-bold md:text-3xl">برندها</h1>
+      <h1 className="mb-2 text-2xl font-bold md:text-3xl text-primary">برندها</h1>
       <p className="text-muted-foreground mb-8 text-sm">
         انتخاب برند برای مشاهده محصولات
       </p>

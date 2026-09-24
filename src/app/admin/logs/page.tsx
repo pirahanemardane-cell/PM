@@ -39,7 +39,7 @@ export default function AdminLogsPage() {
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">لاگ فعالیت ادمین</h1>
+          <h1 className="text-2xl font-bold text-primary">لاگ فعالیت ادمین</h1>
           <p className="text-muted-foreground text-sm">
             آخرین اقدامات ثبت‌شده در سیستم
           </p>

@@ -26,7 +26,7 @@ export default function NewBlogTagPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4 p-6" dir="rtl">
-      <h1 className="text-2xl font-bold">افزودن برچسب مقاله</h1>
+      <h1 className="text-2xl font-bold text-primary">افزودن برچسب مقاله</h1>
       <form onSubmit={onSubmit} className="space-y-3">
         <label className="block space-y-1 text-sm">
           <span>نام *</span>

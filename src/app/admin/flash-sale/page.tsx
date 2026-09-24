@@ -118,7 +118,7 @@ export default function AdminFlashSalePage() {
       <div className="w-full max-w-none space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">پیشنهاد شگفت‌انگیز</h1>
+            <h1 className="text-2xl font-bold text-primary">پیشنهاد شگفت‌انگیز</h1>
             <p className="text-muted-foreground text-sm">
               زمان پایان تایمر + انتخاب محصولات (فلگ ویژه)
             </p>
@@ -152,7 +152,7 @@ export default function AdminFlashSalePage() {
           onSubmit={(e) => void saveEnds(e)}
           className="border-border space-y-3 rounded-2xl border p-4"
         >
-          <h2 className="font-semibold">زمان پایان فروش</h2>
+          <h2 className="font-semibold text-primary">زمان پایان فروش</h2>
           <div className="flex flex-wrap items-end gap-3">
             <label className="block text-sm">
               <span className="text-muted-foreground mb-1 block text-xs">
@@ -184,7 +184,7 @@ export default function AdminFlashSalePage() {
 
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-semibold">
+            <h2 className="font-semibold text-primary">
               محصولات در پیشنهاد ({toPersianDigits(String(featuredCount))} فعال)
             </h2>
             <input

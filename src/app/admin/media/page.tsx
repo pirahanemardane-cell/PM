@@ -82,7 +82,7 @@ export default function AdminMediaPage() {
   return (
     <div className="space-y-6 p-4 md:p-6" dir="rtl">
       <div>
-        <h1 className="text-2xl font-bold">رسانه</h1>
+        <h1 className="text-2xl font-bold text-primary">رسانه</h1>
         <p className="text-muted-foreground text-sm">
           تصاویر محصولات روی Cloudflare R2 (webp چندسایز)
         </p>

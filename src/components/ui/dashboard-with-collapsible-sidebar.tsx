@@ -42,7 +42,7 @@ export default function DashboardWithSidebar({ isAdmin = false }: Props) {
         </nav>
       </aside>
       <main className="flex-1 overflow-auto p-6">
-        <h1 className="font-iranyekan-heavy mb-2 text-3xl">{isAdmin ? "داشبورد مدیریت" : "داشبورد کاربری"}</h1>
+        <h1 className="font-iranyekan-heavy mb-2 text-3xl text-primary">{isAdmin ? "داشبورد مدیریت" : "داشبورد کاربری"}</h1>
         <p className="text-muted-foreground text-sm">پنل آماده است. بخش‌های بعدی را می‌توانید اضافه کنید.</p>
       </main>
     </div>

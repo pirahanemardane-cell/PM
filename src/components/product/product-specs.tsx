@@ -5,7 +5,7 @@ export function ProductSpecs({ rows }: { rows: SpecRow[] }) {
   if (!rows.length) return null;
   return (
     <div className="border-t pt-6" dir="rtl">
-      <h2 className="mb-3 font-semibold">مشخصات</h2>
+      <h2 className="mb-3 font-semibold text-primary">مشخصات</h2>
       <dl className="divide-border divide-y rounded-2xl border text-sm">
         {rows.map((r) => (
           <div

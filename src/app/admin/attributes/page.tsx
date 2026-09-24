@@ -89,7 +89,7 @@ export default function AdminAttributesPage() {
   return (
     <div className="space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">مشخصات محصول</h1>
+        <h1 className="text-2xl font-bold text-primary">مشخصات محصول</h1>
         <Link href="/admin/products" className="text-muted-foreground text-sm hover:underline">
           محصولات
         </Link>
@@ -131,7 +131,7 @@ export default function AdminAttributesPage() {
               className="border-border space-y-3 rounded-2xl border p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-semibold">{a.name}</h2>
+                <h2 className="font-semibold text-primary">{a.name}</h2>
                 <span className="text-muted-foreground font-mono text-xs">
                   {a.slug}
                 </span>
