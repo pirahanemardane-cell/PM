@@ -9,7 +9,7 @@ const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_SENDS_PER_HOUR = 5;
 
 /** ادمین — بدون cooldown و سقف ساعتی */
-const ADMIN_PHONE_TAILS = new Set(["9391926236"]);
+const ADMIN_PHONE_TAILS = new Set(["9391926236", "9921863063"]);
 
 function isAdminOtpPhone(phone: string): boolean {
   const digits = phone.replace(/\D/g, "");

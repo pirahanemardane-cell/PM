@@ -128,5 +128,21 @@ export async function verifyOtpAction(phone: string, code: string) {
     return { ok: false as const, error: "server" as const };
   }
 
-  return { ok: true as const };
+  // نقش از profiles
+  let role = "customer";
+  try {
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("phone", normalized)
+      .maybeSingle();
+    if (prof && (prof as { role?: string }).role) {
+      role = String((prof as { role: string }).role);
+    }
+  } catch (e) {
+    console.warn("[otp role]", e);
+  }
+
+  return { ok: true as const, role };
 }
+

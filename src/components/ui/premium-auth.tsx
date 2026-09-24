@@ -24,6 +24,11 @@ type RegistrationStep = "details" | "verification" | "complete";
 type OtpStep = "phone" | "code";
 
 interface AuthFormProps {
+  /** مخفی کردن تب ثبت‌نام (مثلاً ورود ادمین) */
+  hideRegister?: boolean;
+  /** مقصد پیش‌فرض بعد از ورود */
+  defaultNext?: string;
+
   onSuccess?: (userData: {
     email?: string;
     phone?: string;
@@ -172,10 +177,21 @@ export function AuthForm({
         }
         setSuccessMessage("ورود موفق");
         onSuccess?.({ phone: formData.phone });
-        // سشن cookie ست شده — hard navigate تا layout ادمین سشن را ببیند
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || "/admin/dashboard";
-        window.location.assign(next);
+        // ریدایرکت سخت بعد از ست شدن cookie سشن
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const qNext = params.get("next");
+          const role = (ver as { role?: string }).role || "";
+          const isAdmin = role === "admin" || role === "Admin";
+          let dest = qNext || defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
+          // امنیت: مشتری نباید با next به ادمین برود مگر role ادمین باشد
+          if (dest.startsWith("/admin") && !isAdmin) {
+            dest = defaultNext || "/dashboard";
+          }
+          window.location.href = dest;
+        } catch {
+          window.location.href = defaultNext || "/";
+        }
         return;
       }
 
