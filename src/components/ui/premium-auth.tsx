@@ -176,10 +176,11 @@ export function AuthForm({
         }
                 
         
+        
         const email = (ver as { email?: string }).email;
         const tempPass = (ver as { temp_password?: string }).temp_password;
         if (!email || !tempPass) {
-          setErrors({ otpCode: "سشن ساخته نشد؛ دوباره تلاش کنید" });
+          setErrors({ otpCode: "خطا در ساخت نشست؛ دوباره تلاش کنید" });
           setIsLoading(false);
           return;
         }
@@ -189,39 +190,35 @@ export function AuthForm({
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           );
-          const { data: sign, error: signErr } = await browser.auth.signInWithPassword({
+          const { data: signed, error: signErr } = await browser.auth.signInWithPassword({
             email,
             password: tempPass,
           });
-          if (signErr || !sign.session) {
+          if (signErr || !signed.session) {
             console.error("[otp signIn]", signErr);
-            setErrors({ otpCode: "خطا در ایجاد نشست ورود" });
+            setErrors({ otpCode: "ورود ناموفق؛ دوباره کد بگیرید" });
             setIsLoading(false);
             return;
           }
         } catch (e) {
-          console.error("[otp client session]", e);
+          console.error("[otp session]", e);
           setErrors({ otpCode: "خطا در ورود" });
           setIsLoading(false);
           return;
         }
 
         setSuccessMessage("ورود موفق");
-        try {
-          void onSuccess?.({ phone: formData.phone });
-        } catch {}
+        try { void onSuccess?.({ phone: formData.phone }); } catch {}
 
         const role = String((ver as { role?: string }).role || "").toLowerCase();
         const isAdmin = role === "admin";
         const qNext = new URLSearchParams(window.location.search).get("next");
-        let dest =
-          qNext ||
-          defaultNext ||
-          (isAdmin ? "/admin/dashboard" : "/dashboard");
+        let dest = qNext || defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard");
         if (!dest.startsWith("/")) dest = "/dashboard";
         if (dest.startsWith("/admin") && !isAdmin) dest = "/dashboard";
         window.location.replace(dest);
         return;
+
 
 
 

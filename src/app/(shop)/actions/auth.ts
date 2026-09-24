@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -71,15 +70,16 @@ export async function verifyOtpAction(phone: string, code: string) {
   const normalized = verified.phone;
   const email = otpEmail(normalized);
   const admin = createServiceClient();
-  const supabase = await createClient();
 
+  // پیدا کردن / ساخت کاربر
   const { data: profile } = await admin
     .from("profiles")
-    .select("id")
+    .select("id, role")
     .eq("phone", normalized)
     .maybeSingle();
 
-  let userId = profile?.id as string | undefined;
+  let userId = (profile as { id?: string } | null)?.id as string | undefined;
+  let role = String((profile as { role?: string } | null)?.role || "customer");
 
   if (!userId) {
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -89,14 +89,20 @@ export async function verifyOtpAction(phone: string, code: string) {
       phone: `+98${normalized.slice(1)}`,
       phone_confirm: true,
     });
-    if (createErr || !created.user) {
-      console.error("[otp createUser]", createErr);
-      // کاربر از قبل با این ایمیل
+    if (createErr) {
+      // شاید از قبل با همین ایمیل باشد
+      console.warn("[otp createUser]", createErr.message);
+      const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const found = listed?.users?.find((u) => u.email === email);
+      userId = found?.id;
     } else {
-      userId = created.user.id;
+      userId = created.user?.id;
+    }
+    if (userId) {
       await admin.from("profiles").upsert({
         id: userId,
         phone: normalized,
+        role: role === "admin" ? "admin" : "customer",
       } as never);
     }
   } else {
@@ -111,18 +117,13 @@ export async function verifyOtpAction(phone: string, code: string) {
     }
   }
 
-  // پسورد یک‌بارمصرف برای signIn سمت کلاینت (HTTPS)
-  const tempPass = randomBytes(24).toString("base64url") + "Aa1!";
   if (!userId) {
-    // اگر هنوز id نداریم از ایمیل پیدا کن
-    const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const found = list?.users?.find((u) => u.email === email);
-    userId = found?.id;
-  }
-  if (!userId) {
-    console.error("[otp] no userId for session");
+    console.error("[otp] no userId");
     return { ok: false as const, error: "server" as const };
   }
+
+  // پسورد یک‌بارمصرف — کلاینت با آن signIn می‌کند (استاندارد و قابل اعتماد)
+  const tempPass = randomBytes(24).toString("base64url") + "Aa1!";
   const { error: passErr } = await admin.auth.admin.updateUserById(userId, {
     password: tempPass,
     email_confirm: true,
@@ -132,6 +133,18 @@ export async function verifyOtpAction(phone: string, code: string) {
     return { ok: false as const, error: "server" as const };
   }
 
+  // نقش نهایی
+  try {
+    const { data: prof2 } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+    if (prof2 && (prof2 as { role?: string }).role) {
+      role = String((prof2 as { role: string }).role);
+    }
+  } catch {}
+
   return {
     ok: true as const,
     role,
@@ -139,3 +152,4 @@ export async function verifyOtpAction(phone: string, code: string) {
     temp_password: tempPass,
   };
 }
+
