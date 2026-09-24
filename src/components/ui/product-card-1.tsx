@@ -357,12 +357,12 @@ if (res.ok === false && res.error === "login_required") {
               className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
               onClick={(e) => e.stopPropagation()}
             >
-              <Badge className="border-0 bg-violet-200 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-950 shadow-none dark:bg-violet-500 dark:text-white sm:text-xs">
+              <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] font-semibold leading-tight whitespace-nowrap text-violet-800 shadow-none sm:text-xs dark:bg-violet-400/25 dark:text-violet-100">
                 {category}
               </Badge>
             </Link>
           ) : category ? (
-            <Badge className="border-0 bg-violet-200 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-violet-950 shadow-none dark:bg-violet-500 dark:text-white sm:text-xs">
+            <Badge className="me-auto w-fit self-start border-0 bg-violet-100 px-2.5 py-1 text-left text-[10px] font-semibold leading-tight whitespace-nowrap text-violet-800 shadow-none sm:text-xs dark:bg-violet-400/25 dark:text-violet-100">
               {category}
             </Badge>
           ) : null}
@@ -372,12 +372,12 @@ if (res.ok === false && res.error === "login_required") {
               className="relative z-30 me-auto inline-flex w-fit shrink-0 self-start no-underline"
               onClick={(e) => e.stopPropagation()}
             >
-              <Badge className="border-0 bg-emerald-200 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-950 shadow-none dark:bg-emerald-500 dark:text-white sm:text-xs">
+              <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] font-semibold leading-tight whitespace-nowrap text-emerald-800 shadow-none sm:text-xs dark:bg-emerald-400/25 dark:text-emerald-100">
                 {brand}
               </Badge>
             </Link>
           ) : brand ? (
-            <Badge className="border-0 bg-emerald-200 px-2.5 py-1 text-left text-[10px] leading-tight whitespace-nowrap text-emerald-950 shadow-none dark:bg-emerald-500 dark:text-white sm:text-xs">
+            <Badge className="me-auto w-fit self-start border-0 bg-emerald-100 px-2.5 py-1 text-left text-[10px] font-semibold leading-tight whitespace-nowrap text-emerald-800 shadow-none sm:text-xs dark:bg-emerald-400/25 dark:text-emerald-100">
               {brand}
             </Badge>
           ) : null}
@@ -386,7 +386,7 @@ if (res.ok === false && res.error === "login_required") {
         {/* شگفت‌انگیز — پایین سمت راست تصویر */}
         {isSpecialSale ? (
           <div className="pointer-events-none absolute bottom-2 right-2 z-20 sm:bottom-3 sm:right-3">
-            <Badge className="border-0 bg-rose-200 px-2 py-0.5 text-[10px] leading-tight whitespace-nowrap text-rose-950 shadow-none dark:bg-rose-500 dark:text-white sm:text-xs">
+            <Badge className="me-auto w-fit self-start border-0 bg-rose-100 px-2 py-0.5 text-left text-[10px] font-semibold leading-tight whitespace-nowrap text-rose-800 shadow-none sm:text-xs dark:bg-rose-400/25 dark:text-rose-100">
               شگفت‌انگیز
             </Badge>
           </div>
