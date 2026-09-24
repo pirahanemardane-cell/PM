@@ -69,28 +69,31 @@ export function ProductPdpGalleryAndBuy({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-8 lg:items-start">
+      {/* موبایل order-2 | دسکتاپ ستون تصویر */}
       <div className="max-lg:order-2 min-w-0 w-full overflow-hidden">
-        <div className="min-w-0 w-full overflow-hidden">
         <ProductGallery
-        productName={productName}
-        images={images}
-        variants={variants}
-        activeColor={activeColor}
-      />
-        {childrenBelowGallery}
-        </div>
-        </div>
-      <div className="max-lg:order-1 space-y-6 w-full max-w-xl lg:justify-self-start lg:max-w-none">
-        {childrenBeforeBuy}
-        <ProductBuyBox
-          productId={productId}
-          title={productName}
-          image={cartImage}
-          href={href}
+          productName={productName}
+          images={images}
           variants={variants}
-          onColorChange={onColorChange}
+          activeColor={activeColor}
         />
-        {childrenAfterBuy}
+        {childrenBelowGallery}
+      </div>
+
+      {/* موبایل: contents تا order روی فرزندان | دسکتاپ: ستون محتوا */}
+      <div className="max-lg:contents w-full max-w-xl space-y-6 lg:justify-self-start lg:max-w-none">
+        <div className="max-lg:order-1 space-y-6">{childrenBeforeBuy}</div>
+        <div className="max-lg:order-3">
+          <ProductBuyBox
+            productId={productId}
+            title={productName}
+            image={cartImage}
+            href={href}
+            variants={variants}
+            onColorChange={onColorChange}
+          />
+        </div>
+        <div className="max-lg:order-4">{childrenAfterBuy}</div>
       </div>
     </div>
   );
