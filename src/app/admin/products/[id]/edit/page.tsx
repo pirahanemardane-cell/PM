@@ -133,6 +133,7 @@ export default function EditProductPage() {
         is_new?: boolean;
         is_bestseller?: boolean;
         product_variants?: {
+          id?: string;
           sku?: string | null;
           price?: number;
           original_price?: number | null;

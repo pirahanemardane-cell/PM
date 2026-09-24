@@ -22,7 +22,12 @@ function slugify(input: string): string {
 async function linkVariantImages(
   supabase: any,
   productId: string,
-  variants: { size?: string | null; color_name?: string | null; image_url?: string | null }[],
+  variants: {
+    id?: string | null;
+    size?: string | null;
+    color_name?: string | null;
+    image_url?: string | null;
+  }[],
 ) {
   const { data: allVars, error: listErr } = await supabase
     .from("product_variants")
@@ -32,27 +37,41 @@ async function linkVariantImages(
     console.error("[linkVariantImages list]", listErr);
     return;
   }
-  const rows = (allVars ?? []) as { id: string; size: string | null; color_name: string | null }[];
+  const rows = (allVars ?? []) as {
+    id: string;
+    size: string | null;
+    color_name: string | null;
+  }[];
 
   for (const vv of variants) {
     const url = (vv.image_url || "").trim();
     if (!url) continue;
-    const size = (vv.size || "").trim() || null;
-    const color = (vv.color_name || "").trim() || null;
-    const match = rows.find(
-      (r) => (r.size || null) === size && (r.color_name || null) === color,
-    );
-    if (!match?.id) {
-      console.warn("[linkVariantImages] no variant for", size, color);
+
+    let vid: string | null = (vv.id || "").trim() || null;
+    if (!vid) {
+      const size = (vv.size || "").trim() || null;
+      const color = (vv.color_name || "").trim() || null;
+      const match = rows.find(
+        (r) => (r.size || null) === size && (r.color_name || null) === color,
+      );
+      vid = match?.id ?? null;
+    }
+    if (!vid) {
+      console.warn("[linkVariantImages] no variant", vv.size, vv.color_name, vv.id);
       continue;
     }
-    const vid = match.id;
-    const { data: existing } = await supabase
+
+    const { data: existing, error: exErr } = await supabase
       .from("product_images")
       .select("id")
       .eq("product_id", productId)
       .eq("variant_id", vid)
       .limit(1);
+    if (exErr) {
+      console.error("[linkVariantImages existing]", exErr);
+      continue;
+    }
+
     if (existing?.[0]?.id) {
       const { error } = await supabase
         .from("product_images")
@@ -71,6 +90,7 @@ async function linkVariantImages(
     }
   }
 }
+
 
 
 
@@ -516,6 +536,7 @@ export async function adminSoftDeleteProductAction(id: string) {
 }
 
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند */
+/** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند + تصویر واریانت */
 export async function adminSyncProductVariantsAction(
   productId: string,
   variants: AdminVariantInput[],
@@ -523,6 +544,7 @@ export async function adminSyncProductVariantsAction(
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   if (!productId) return { ok: false as const, error: "product_required" };
+
   try {
     const cleaned = (variants ?? [])
       .map((v) => ({
@@ -546,10 +568,12 @@ export async function adminSyncProductVariantsAction(
       return { ok: false as const, error: "variants_required" };
     }
 
-    const { data: existing } = await gate.supabase
+    const { data: existing, error: exErr } = await gate.supabase
       .from("product_variants")
       .select("id")
       .eq("product_id", productId);
+    if (exErr) throw exErr;
+
     const keepIds = new Set(
       cleaned.map((v) => v.id).filter((id): id is string => Boolean(id)),
     );
@@ -557,8 +581,20 @@ export async function adminSyncProductVariantsAction(
       (e) => !keepIds.has(e.id),
     );
     for (const d of toDelete) {
-      await gate.supabase.from("product_variants").delete().eq("id", d.id);
+      // تصاویر واریانت با ON DELETE SET NULL می‌مانند؛ خود واریانت حذف می‌شود
+      const { error } = await gate.supabase
+        .from("product_variants")
+        .delete()
+        .eq("id", d.id);
+      if (error) console.error("[sync delete variant]", error);
     }
+
+    const resolved: {
+      id: string;
+      size: string | null;
+      color_name: string | null;
+      image_url: string | null;
+    }[] = [];
 
     for (const v of cleaned) {
       const row = {
@@ -572,6 +608,7 @@ export async function adminSyncProductVariantsAction(
         stock_quantity: v.stock_quantity,
         is_active: v.is_active,
       };
+
       if (v.id) {
         const { error } = await gate.supabase
           .from("product_variants")
@@ -579,32 +616,37 @@ export async function adminSyncProductVariantsAction(
           .eq("id", v.id)
           .eq("product_id", productId);
         if (error) throw error;
+        resolved.push({
+          id: v.id,
+          size: v.size,
+          color_name: v.color_name,
+          image_url: v.image_url,
+        });
       } else {
-        const { error } = await gate.supabase.from("product_variants").insert(row);
+        const { data: inserted, error } = await gate.supabase
+          .from("product_variants")
+          .insert(row)
+          .select("id")
+          .single();
         if (error) throw error;
+        resolved.push({
+          id: inserted.id as string,
+          size: v.size,
+          color_name: v.color_name,
+          image_url: v.image_url,
+        });
       }
-    }
-
-    // تاریخچه قیمت از اولین وریانت
-    try {
-      const { recordProductPrice } = await import("@/lib/price-history");
-      await recordProductPrice({
-        productId,
-        price: cleaned[0]!.price,
-        supabase: gate.supabase,
-      });
-    } catch {
-      /* optional */
     }
 
     try {
       await linkVariantImages(
         gate.supabase,
         productId,
-        cleaned.map((v) => ({
-          size: v.size,
-          color_name: v.color_name,
-          image_url: v.image_url,
+        resolved.map((r) => ({
+          id: r.id,
+          size: r.size,
+          color_name: r.color_name,
+          image_url: r.image_url,
         })),
       );
     } catch (e) {
@@ -614,6 +656,6 @@ export async function adminSyncProductVariantsAction(
     return { ok: true as const };
   } catch (e) {
     console.error("[adminSyncProductVariants]", e);
-    return { ok: false as const, error: "server" };
+    return { ok: false as const, error: "server" as const };
   }
 }
