@@ -21,12 +21,9 @@ function LoginInner() {
           hideRegister={wantsAdmin}
           defaultNext={wantsAdmin ? "/admin/dashboard" : "/dashboard"}
           onSuccess={async () => {
-            // فقط سبد مهمان — ریدایرکت را AuthForm انجام می‌دهد
             try {
               await mergeGuestCartToServer();
-            } catch {
-              /* ignore */
-            }
+            } catch {}
           }}
         />
       </div>
@@ -36,13 +33,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[40vh] items-center justify-center" dir="rtl">
-          در حال بارگذاری…
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="p-8 text-center" dir="rtl">…</div>}>
       <LoginInner />
     </Suspense>
   );
