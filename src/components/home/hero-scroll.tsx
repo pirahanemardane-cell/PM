@@ -209,14 +209,6 @@ export function HeroScroll() {
           }}
         />
 
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-16 text-center">
-          <h1 className="px-4 text-3xl font-black tracking-tight text-white drop-shadow-md md:text-5xl">
-            پیراهن مردانه
-          </h1>
-          <p className="mt-2 px-4 text-sm text-white/90 drop-shadow md:text-base">
-            کیفیت، دوخت و استایل — مخصوص آقایان
-          </p>
-        </div>
       </div>
     </section>
   );
