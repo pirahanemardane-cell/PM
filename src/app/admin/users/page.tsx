@@ -7,6 +7,8 @@ import {
   adminUpdateUserRoleAction,
 } from "@/app/admin/actions/users";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 const ROLES = ["customer", "staff", "admin"] as const;
 
@@ -173,7 +175,7 @@ export default function AdminUsersPage() {
                       </select>
                     </td>
                     <td className="text-muted-foreground p-3 text-xs whitespace-nowrap">
-                      {new Date(u.created_at).toLocaleDateString("fa-IR")}
+                      {formatJalaliDate(u.created_at)}
                     </td>
                   </tr>
                 ))}

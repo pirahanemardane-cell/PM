@@ -45,6 +45,8 @@ import { ComposerInput } from "@/components/ui/composer-input";
 import { normalizeIranMobile } from "@/lib/numbers";
 import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
 import { useNotifications } from "@/lib/notifications/use-notifications";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 const TABS = [
   { id: "shop", label: "فروشگاه" },
@@ -401,7 +403,7 @@ useEffect(() => {
               id: o.id,
               label: `${o.id.slice(0, 8)}… · ${o.status ?? "—"} · ${
                 o.created_at
-                  ? new Date(o.created_at).toLocaleDateString("fa-IR")
+                  ? formatJalaliDate(o.created_at)
                   : ""
               }`,
             })),
@@ -489,7 +491,7 @@ useEffect(() => {
                       </span>
                       <span className="text-muted-foreground text-xs">
                         {o.created_at
-                          ? new Date(o.created_at).toLocaleDateString("fa-IR")
+                          ? formatJalaliDate(o.created_at)
                           : ""}
                         {" · "}
                         {o.status === "pending"
@@ -589,7 +591,7 @@ useEffect(() => {
                       <div className="mb-1 flex items-start justify-between gap-2">
                         <span className="text-sm font-medium">{n.title}</span>
                         <span className="text-muted-foreground shrink-0 text-[11px]">
-                          {new Date(n.created_at).toLocaleString("fa-IR")}
+                          {formatJalaliDateTime(n.created_at)}
                         </span>
                       </div>
                       {n.body ? (
@@ -1033,7 +1035,7 @@ useEffect(() => {
                   </p>
                   {trackResult.createdAt ? (
                     <p className="text-muted-foreground text-xs">
-                      {new Date(trackResult.createdAt).toLocaleDateString("fa-IR")}
+                      {formatJalaliDate(trackResult.createdAt)}
                     </p>
                   ) : null}
                 </div>
@@ -1142,7 +1144,7 @@ useEffect(() => {
                         </span>
                       </div>
                       <time className="text-muted-foreground text-xs">
-                        {new Date(tk.created_at).toLocaleDateString("fa-IR")}
+                        {formatJalaliDate(tk.created_at)}
                       </time>
                       {activeTicketId === tk.id ? (
                         <div className="mt-3 space-y-2 border-t pt-3">
@@ -1249,7 +1251,7 @@ useEffect(() => {
                       <p className="text-muted-foreground mt-1">{r.reason}</p>
                       <p className="mt-1 text-xs">
                         {r.status} ·{" "}
-                        {new Date(r.created_at).toLocaleDateString("fa-IR")}
+                        {formatJalaliDate(r.created_at)}
                       </p>
                     </li>
                   ))}

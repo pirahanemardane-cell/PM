@@ -8,6 +8,8 @@ import {
   adminReplyTicketAction,
 } from "@/app/admin/actions/support";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Row = {
   id: string;
@@ -172,7 +174,7 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <p className="text-muted-foreground mt-1 text-xs">
-                {new Date(t.created_at).toLocaleString("fa-IR")} ·{" "}
+                {formatJalaliDateTime(t.created_at)} ·{" "}
                 {PRIORITY_FA[t.priority] ?? t.priority}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">

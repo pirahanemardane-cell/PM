@@ -9,6 +9,8 @@ import {
   adminSetReturnStatusAction,
 } from "@/app/admin/actions/support";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Row = {
   id: string;
@@ -156,7 +158,7 @@ export default function AdminReturnsPage() {
                     </select>
                   </td>
                   <td className="text-muted-foreground p-3 text-xs whitespace-nowrap">
-                    {new Date(r.created_at).toLocaleDateString("fa-IR")}
+                    {formatJalaliDate(r.created_at)}
                   </td>
                 </tr>
               ))}

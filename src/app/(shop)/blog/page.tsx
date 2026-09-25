@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { listPublishedPostsAction } from "@/app/(shop)/actions/blog-public";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +66,7 @@ export default async function BlogIndexPage() {
                     ) : null}
                     {post.published_at ? (
                       <time className="text-muted-foreground text-xs">
-                        {new Date(post.published_at).toLocaleDateString("fa-IR")}
+                        {formatJalaliDate(post.published_at)}
                       </time>
                     ) : null}
                   </div>

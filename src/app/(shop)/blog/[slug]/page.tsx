@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlugAction } from "@/app/(shop)/actions/blog-public";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -44,7 +46,7 @@ export default async function BlogPostPage({ params }: Props) {
       <h1 className="text-3xl font-bold leading-snug text-primary">{post.title}</h1>
       {post.published_at ? (
         <time className="text-muted-foreground text-sm">
-          {new Date(post.published_at).toLocaleDateString("fa-IR")}
+          {formatJalaliDate(post.published_at)}
         </time>
       ) : null}
       {post.cover_url ? (

@@ -8,6 +8,8 @@ import {
   adminSetDiscountActiveAction,
 } from "@/app/admin/actions/discounts";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Row = {
   id: string;
@@ -26,7 +28,7 @@ type Row = {
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleDateString("fa-IR");
+    return formatJalaliDate(iso);
   } catch {
     return "—";
   }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Props = {
   ticketId: string;
@@ -25,7 +27,7 @@ export function AnimatedTicket({
   }, []);
 
   const code = barcodeValue || ticketId.replace(/-/g, "").slice(0, 14);
-  const dateStr = date.toLocaleDateString("fa-IR");
+  const dateStr = formatJalaliDate(date);
 
   return (
     <div

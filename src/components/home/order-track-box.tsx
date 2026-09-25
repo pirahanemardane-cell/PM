@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toEnglishDigits } from "@/lib/numbers";
 import { trackOrderAction } from "@/app/(shop)/actions/shop";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 const STATUS_FA: Record<string, string> = {
   pending: "در انتظار",
@@ -99,7 +101,7 @@ export function OrderTrackBox() {
           </div>
           <p className="text-muted-foreground text-xs">
             {result.created_at
-              ? new Date(result.created_at).toLocaleDateString("fa-IR")
+              ? formatJalaliDate(result.created_at)
               : ""}
             {result.shipping_city ? ` · ${result.shipping_city}` : ""}
             {result.shipping_name ? ` · ${result.shipping_name}` : ""}

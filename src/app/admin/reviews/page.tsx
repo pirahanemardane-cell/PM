@@ -10,6 +10,8 @@ import {
   adminSetReviewReplyAction,
 } from "@/app/admin/actions/reviews";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Row = {
   id: string;
@@ -148,7 +150,7 @@ export default function AdminReviewsPage() {
                   <p className="font-medium">{r.product?.name ?? "—"}</p>
                   <p className="text-muted-foreground text-xs">
                     {r.user?.full_name ?? "—"} ·{" "}
-                    {new Date(r.created_at).toLocaleDateString("fa-IR")} ·{" "}
+                    {formatJalaliDate(r.created_at)} ·{" "}
                     {"★".repeat(r.rating)}
                   </p>
                 </div>

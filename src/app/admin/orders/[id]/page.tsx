@@ -8,6 +8,8 @@ import {
   adminUpdateOrderStatusAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 const STATUSES = [
   "pending",
@@ -162,7 +164,7 @@ export default function AdminOrderDetailPage() {
             </p>
           ) : null}
           <p className="text-muted-foreground text-xs">
-            {new Date(order.created_at).toLocaleString("fa-IR")}
+            {formatJalaliDateTime(order.created_at)}
           </p>
         </div>
 

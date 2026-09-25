@@ -1,5 +1,12 @@
 import { format as formatJalali } from "date-fns-jalali";
 import { faIR } from "date-fns-jalali/locale";
+import { toPersianDigits } from "@/lib/numbers";
+
+function toDate(date: Date | string | number): Date | null {
+  const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+  if (!(d instanceof Date) || isNaN(d.getTime())) return null;
+  return d;
+}
 
 /**
  * فرمت تاریخ شمسی
@@ -9,10 +16,9 @@ export function formatJalaliDate(
   date: Date | string | number,
   pattern: string = "yyyy/MM/dd"
 ): string {
-  const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
-  if (isNaN(d.getTime())) return "";
-
-  return formatJalali(d, pattern, { locale: faIR });
+  const d = toDate(date);
+  if (!d) return "";
+  return toPersianDigits(formatJalali(d, pattern, { locale: faIR }));
 }
 
 /**

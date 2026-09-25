@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { adminListLogsAction, type AdminLogRow } from "@/app/admin/actions/logs";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 export default function AdminLogsPage() {
   const [items, setItems] = useState<AdminLogRow[]>([]);
@@ -89,7 +91,7 @@ export default function AdminLogsPage() {
               {items.map((row) => (
                 <tr key={row.id} className="border-t">
                   <td className="text-muted-foreground whitespace-nowrap p-3 text-xs">
-                    {new Date(row.created_at).toLocaleString("fa-IR")}
+                    {formatJalaliDateTime(row.created_at)}
                   </td>
                   <td className="p-3 font-medium">{row.action}</td>
                   <td className="text-muted-foreground p-3 text-xs">
