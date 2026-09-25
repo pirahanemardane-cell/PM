@@ -1,0 +1,61 @@
+import { createClient } from "@/lib/supabase/server";
+
+export type SizeGuideView = {
+  id: string;
+  name: string;
+  description: string | null;
+  rows: {
+    size_label: string;
+    chest_cm: number | null;
+    waist_cm: number | null;
+    shoulder_cm: number | null;
+    sleeve_cm: number | null;
+    length_cm: number | null;
+    neck_cm: number | null;
+  }[];
+};
+
+export async function loadPrimarySizeGuide(): Promise<SizeGuideView | null> {
+  try {
+    const supabase = await createClient();
+    const { data: guide, error } = await supabase
+      .from("size_guides")
+      .select("id, name, description")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error || !guide) return null;
+
+    const { data: rows, error: rErr } = await supabase
+      .from("size_guide_rows")
+      .select(
+        "size_label, chest_cm, waist_cm, shoulder_cm, sleeve_cm, length_cm, neck_cm, sort_order",
+      )
+      .eq("size_guide_id", guide.id)
+      .order("sort_order", { ascending: true });
+    if (rErr) return null;
+
+    return {
+      id: guide.id as string,
+      name: (guide.name as string) || "راهنمای سایز",
+      description: (guide.description as string | null) ?? null,
+      rows: (rows ?? []).map((r) => ({
+        size_label: String(r.size_label ?? ""),
+        chest_cm: r.chest_cm != null ? Number(r.chest_cm) : null,
+        waist_cm: r.waist_cm != null ? Number(r.waist_cm) : null,
+        shoulder_cm: r.shoulder_cm != null ? Number(r.shoulder_cm) : null,
+        sleeve_cm: r.sleeve_cm != null ? Number(r.sleeve_cm) : null,
+        length_cm: r.length_cm != null ? Number(r.length_cm) : null,
+        neck_cm: r.neck_cm != null ? Number(r.neck_cm) : null,
+      })),
+    };
+  } catch (e) {
+    console.error("[loadPrimarySizeGuide]", e);
+    return null;
+  }
+}
+
+export function formatCm(n: number | null): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString("fa-IR", { maximumFractionDigits: 1 });
+}
