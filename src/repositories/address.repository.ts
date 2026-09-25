@@ -85,7 +85,7 @@ export class AddressRepository extends BaseRepository {
 
     const { error } = await supabase
       .from("addresses")
-      .update(patch)
+      .update(patch as never)
       .eq("id", id)
       .eq("user_id", userId);
     if (error) throw error;

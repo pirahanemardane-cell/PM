@@ -322,7 +322,7 @@ export class ProductRepository extends BaseRepository {
     if (flags.is_new !== undefined) patch.is_new = flags.is_new;
     if (flags.is_bestseller !== undefined) patch.is_bestseller = flags.is_bestseller;
     if (!Object.keys(patch).length) return true;
-    const { error } = await client.from("products").update(patch).eq("id", id);
+    const { error } = await client.from("products").update(patch as never).eq("id", id);
     if (error) throw error;
     return true;
   }

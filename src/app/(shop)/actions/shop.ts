@@ -473,10 +473,10 @@ const orderRepo = new OrderRepository();
         name: nameOk.text,
         phone: phoneOk.text,
         address: addrOk.text,
-        city: cityOk.text || null,
+        city: cityOk.text || undefined,
         postal: payload.postal,
       },
-      note: noteOk.text || null,
+      note: noteOk.text || undefined,
       discountCode,
       discountAmount,
       // اگر repo هنوز total را خودش از items می‌سازد، داخل repo:
@@ -624,7 +624,7 @@ export async function updateMyProfileAction(input: {
     }
     const { error } = await supabase
       .from("profiles")
-      .update(patch)
+      .update(patch as never)
       .eq("id", user.id);
     if (error) throw error;
     return { ok: true as const };

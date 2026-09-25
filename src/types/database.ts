@@ -578,6 +578,9 @@ export type Database = {
           shipping_address: string | null; shipping_city: string | null;
           shipping_postal: string | null; note: string | null;
           created_at: string; updated_at: string;
+          discount_code: string | null;
+          discount_amount: number | null;
+          paid_at: string | null;
         };
         Insert: {
           id?: string; user_id: string; status?: string; total_amount?: number;
@@ -585,6 +588,9 @@ export type Database = {
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null;
           created_at?: string; updated_at?: string;
+          discount_code?: string | null;
+          discount_amount?: number | null;
+          paid_at?: string | null;
         };
         Update: {
           id?: string; user_id?: string; status?: string; total_amount?: number;
@@ -592,6 +598,9 @@ export type Database = {
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null;
           created_at?: string; updated_at?: string;
+          discount_code?: string | null;
+          discount_amount?: number | null;
+          paid_at?: string | null;
         };
         Relationships: [];
       };
@@ -695,19 +704,29 @@ export type Database = {
         Row: { id: string; user_id: string; subject: string; status: string; created_at: string; updated_at: string; };
         Insert: { id?: string; user_id: string; subject: string; status?: string; created_at?: string; updated_at?: string; };
         Update: { id?: string; user_id?: string; subject?: string; status?: string; created_at?: string; updated_at?: string; };
-        Relationships: [];
+        Relationships: []
+          priority: string | null;
+          category: string | null;
+          priority?: string | null;
+          category?: string | null;;
       };
       support_ticket_messages: {
         Row: { id: string; ticket_id: string; user_id: string | null; body: string; is_staff: boolean; created_at: string; };
         Insert: { id?: string; ticket_id: string; user_id?: string | null; body: string; is_staff?: boolean; created_at?: string; };
         Update: { id?: string; ticket_id?: string; user_id?: string | null; body?: string; is_staff?: boolean; created_at?: string; };
-        Relationships: [];
+        Relationships: []
+          sender_id: string | null;
+          sender_id?: string | null;;
       };
       return_requests: {
         Row: { id: string; user_id: string; order_id: string | null; status: string; reason: string | null; created_at: string; updated_at: string; };
         Insert: { id?: string; user_id: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
         Update: { id?: string; user_id?: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
-        Relationships: [];
+        Relationships: []
+          admin_note: string | null;
+          order_item_id: string | null;
+          admin_note?: string | null;
+          order_item_id?: string | null;;
       };
       addresses: {
         Row: {
@@ -754,7 +773,12 @@ export type Database = {
 
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      increment_discount_use: {
+        Args: { p_code: string };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

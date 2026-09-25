@@ -51,7 +51,7 @@ export async function loadProductsPage(input: {
       page: input.page,
       totalPages: 0,
       hasMore: false,
-      error: result.error,
+      error: result.error ?? undefined,
     };
   }
 
