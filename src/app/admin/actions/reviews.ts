@@ -32,11 +32,28 @@ export async function adminSetReviewApprovedAction(id: string, is_approved: bool
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
+    const { data: row, error: fetchErr } = await gate.supabase
+      .from("reviews")
+      .select("id, product_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    if (!row) return { ok: false as const, error: "not_found" };
+
     const { error } = await gate.supabase
       .from("reviews")
       .update({ is_approved })
       .eq("id", id);
     if (error) throw error;
+
+    // DB trigger also runs; explicit RPC keeps stats correct if trigger lag/missing
+    try {
+      await gate.supabase.rpc("recompute_product_review_stats", {
+        p_product_id: (row as { product_id: string }).product_id,
+      });
+    } catch (e) {
+      console.error("[adminSetReviewApproved recompute]", e);
+    }
     return { ok: true as const };
   } catch {
     return { ok: false as const, error: "server" };
