@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Ticket,
   Bell,
+  Database,
   Percent,
 } from "lucide-react";
 
@@ -46,6 +47,7 @@ const NAV = [
   { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },
   { href: "/admin/logs", label: "لاگ‌ها", icon: FileText },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },
+  { href: "/admin/backup", label: "بک‌آپ", icon: Database },
 ];
 
 
