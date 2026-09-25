@@ -60,6 +60,42 @@ export async function createProductReviewAction(input: {
     }
 
     const supabase = await createClient();
+
+    // فقط خریدار واقعی همان محصول
+    const { data: purchased, error: pErr } = await supabase
+      .from("order_items")
+      .select("id, orders!inner(user_id, status)")
+      .eq("product_id", input.productId)
+      .eq("orders.user_id", user.id)
+      .in("orders.status", ["paid", "processing", "shipped", "delivered", "pending"])
+      .limit(1)
+      .maybeSingle();
+    if (pErr) {
+      console.error("[createProductReview purchase check]", pErr);
+      // fallback بدون join اگر relation نام دیگری دارد
+    }
+    if (pErr || !purchased) {
+      // مسیر جایگزین: از orders + order_items جدا
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .in("status", ["paid", "processing", "shipped", "delivered", "pending"]);
+      const orderIds = (orders ?? []).map((o: { id: string }) => o.id);
+      if (!orderIds.length) {
+        return { ok: false as const, error: "not_purchased" };
+      }
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("id")
+        .eq("product_id", input.productId)
+        .in("order_id", orderIds)
+        .limit(1);
+      if (!items?.length) {
+        return { ok: false as const, error: "not_purchased" };
+      }
+    }
+
     const { error } = await supabase.from("reviews").insert({
       product_id: input.productId,
       user_id: user.id,

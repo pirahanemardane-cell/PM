@@ -51,6 +51,7 @@ export function ProductReviews({ productId }: { productId: string }) {
         rating_invalid: "امتیاز نامعتبر",
         body_short: "متن نظر کوتاه است",
         already_reviewed: "قبلاً برای این محصول نظر داده‌اید",
+        not_purchased: "فقط پس از خرید این محصول می‌توانید نظر دهید",
       };
       setMsg(map[res.error] || res.error || "خطا در ثبت نظر");
       return;
