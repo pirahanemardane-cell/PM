@@ -30,20 +30,44 @@ export class OrderRepository extends BaseRepository {
     const { createServiceClient } = await import("@/lib/supabase/service");
     const service = createServiceClient();
 
-    // 1) رزرو اتمی موجودی (RPC — بدون TOCTOU)
+    // 1) موجودی: اگر رزرو active کاربر هست → consume؛ وگرنه decrement اتمی
+    await service.rpc("release_expired_stock_reservations");
+    const { data: activeRes } = await service
+      .from("stock_reservations")
+      .select("id, variant_id, quantity")
+      .eq("user_id", input.userId)
+      .eq("status", "active");
+
+    const resByVariant = new Map<string, number>();
+    for (const r of activeRes ?? []) {
+      const vid = r.variant_id as string;
+      resByVariant.set(vid, (resByVariant.get(vid) ?? 0) + Number(r.quantity));
+    }
+
     const reserved: { variantId: string; quantity: number }[] = [];
     for (const item of input.items) {
       const qty = Number(item.quantity);
       if (!item.variantId || qty < 1) {
         throw new Error("invalid_item");
       }
+      const held = resByVariant.get(item.variantId) ?? 0;
+      if (held >= qty) {
+        // قبلاً در checkout کسر شده
+        resByVariant.set(item.variantId, held - qty);
+        reserved.push({ variantId: item.variantId, quantity: qty });
+        continue;
+      }
+      const need = qty - held;
+      if (held > 0) {
+        resByVariant.set(item.variantId, 0);
+        reserved.push({ variantId: item.variantId, quantity: held });
+      }
       const { data: ok, error: dErr } = await service.rpc("decrement_variant_stock", {
         p_variant_id: item.variantId,
-        p_qty: qty,
+        p_qty: need,
       });
       if (dErr) throw dErr;
       if (!ok) {
-        // rollback previous reserves
         for (const r of reserved) {
           try {
             await service.rpc("increment_variant_stock", {
@@ -56,7 +80,14 @@ export class OrderRepository extends BaseRepository {
         }
         throw new Error(`insufficient_stock:${item.title || item.variantId}`);
       }
-      reserved.push({ variantId: item.variantId, quantity: qty });
+      reserved.push({ variantId: item.variantId, quantity: need });
+    }
+
+    // رزروهای active کاربر را consumed کن (موجودی برنمی‌گردد)
+    try {
+      await service.rpc("consume_user_reservations", { p_user_id: input.userId });
+    } catch (ce) {
+      console.error("[createFromCart] consume reservations", ce);
     }
 
     const total = input.items.reduce(

@@ -11,6 +11,11 @@ import {
   validateDiscountAction,
   type CartLineDTO,
 } from "@/app/(shop)/actions/shop";
+import {
+  reserveCheckoutStockAction,
+  extendCheckoutReservationAction,
+  releaseCheckoutReservationAction,
+} from "@/app/(shop)/actions/stock-reservations";
 import { useShopStore } from "@/lib/shop-store";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { AnimatedTicket } from "@/components/ui/ticket-confirmation-card";
@@ -63,13 +68,43 @@ export default function CheckoutPage() {
   } | null>(null);
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
+  const [reserveExpiresAt, setReserveExpiresAt] = useState<string | null>(null);
+  const [reserveHint, setReserveHint] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const res = await getCartAction();
+      if (cancelled) return;
       if (res.ok) setItems(res.items);
       setLoading(false);
+
+      // رزرو ۱۵دقیقه‌ای موجودی فقط در checkout
+      const r = await reserveCheckoutStockAction();
+      if (cancelled) return;
+      if (r.ok) {
+        setReserveExpiresAt(r.expiresAt);
+        setReserveHint("موجودی تا ۱۵ دقیقه برای شما نگه داشته شد.");
+      } else if (r.error === "insufficient_stock") {
+        setReserveHint(
+          "برخی اقلام موجودی کافی ندارند: " +
+            ((r as { failed?: string[] }).failed ?? []).join("، "),
+        );
+      }
     })();
+
+    const iv = window.setInterval(() => {
+      void extendCheckoutReservationAction().then((x) => {
+        if (x.ok && x.expiresAt) setReserveExpiresAt(x.expiresAt);
+      });
+    }, 120_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+      // ترک صفحه بدون ثبت سفارش → آزادسازی
+      void releaseCheckoutReservationAction();
+    };
   }, []);
 
   function applyAddress(a: {
@@ -164,6 +199,24 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const reserveBanner =
+    reserveHint && !doneOrder ? (
+      <p className="text-muted-foreground border-border bg-muted/40 mb-4 rounded-xl border px-3 py-2 text-xs">
+        {reserveHint}
+        {reserveExpiresAt ? (
+          <span className="mr-2 tabular-nums">
+            {" "}
+            (تا{" "}
+            {new Date(reserveExpiresAt).toLocaleTimeString("fa-IR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            )
+          </span>
+        ) : null}
+      </p>
+    ) : null;
 
   if (!items.length && !doneOrder) {
     return (
