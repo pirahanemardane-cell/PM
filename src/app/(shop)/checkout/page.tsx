@@ -2,7 +2,7 @@
 
 import { normalizeIranMobile } from "@/lib/numbers";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createOrderAction,
@@ -68,6 +68,7 @@ export default function CheckoutPage() {
   } | null>(null);
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
+  const orderPlacedRef = useRef(false);
   const [reserveExpiresAt, setReserveExpiresAt] = useState<string | null>(null);
   const [reserveHint, setReserveHint] = useState<string | null>(null);
 
@@ -102,8 +103,10 @@ export default function CheckoutPage() {
     return () => {
       cancelled = true;
       window.clearInterval(iv);
-      // ترک صفحه بدون ثبت سفارش → آزادسازی
-      void releaseCheckoutReservationAction();
+      // ترک بدون ثبت سفارش → آزادسازی (بعد از موفقیت سفارش نه)
+      if (!orderPlacedRef.current) {
+        void releaseCheckoutReservationAction();
+      }
     };
   }, []);
 
@@ -185,6 +188,7 @@ export default function CheckoutPage() {
       setError(res.error ? `خطا: ${res.error}` : "ثبت سفارش ناموفق بود.");
       return;
     }
+    orderPlacedRef.current = true;
     clearCartLocal();
     setDoneOrder({
       id: res.orderId,
@@ -249,6 +253,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
+      {reserveBanner}
       <div className="w-full max-w-none px-4 py-8">
         <h1 className="mb-6 text-xl font-bold text-primary">تسویه حساب</h1>
 
