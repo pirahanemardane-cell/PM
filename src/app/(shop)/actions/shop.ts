@@ -527,8 +527,9 @@ export async function listMyOrdersAction() {
 export async function trackOrderAction(code: string) {
   try {
     const c = (code || "").trim();
-    if (c.length < 8) {
-      return { ok: false as const, error: "کد سفارش حداقل ۸ کاراکتر" };
+    const compact = c.toLowerCase().replace(/[^0-9a-f]/g, "");
+    if (compact.length !== 32) {
+      return { ok: false as const, error: "کد سفارش باید شناسه کامل باشد" };
     }
     const orderRepo = new OrderRepository();
     const order = await orderRepo.trackPublic(c);
@@ -541,7 +542,6 @@ export async function trackOrderAction(code: string) {
         id: order.id as string,
         status: order.status as string,
         total_amount: Number(order.total_amount ?? 0),
-        shipping_name: (order as { shipping_name?: string }).shipping_name ?? null,
         shipping_city: (order as { shipping_city?: string }).shipping_city ?? null,
         created_at: order.created_at as string,
         items: ((order as { order_items?: unknown[] }).order_items ?? []).map(

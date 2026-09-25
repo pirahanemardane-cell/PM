@@ -203,57 +203,30 @@ export class OrderRepository extends BaseRepository {
   }
 
   async trackPublic(code: string) {
-    const supabase = await this.getClient();
-    const q = code
-      .trim()
-      .toLowerCase()
-      .replace(/[^0-9a-f-]/g, "");
-    if (q.length < 8) return null;
+    // فقط UUID کامل — بدون پیشوند/fallback (ضد IDOR)
+    // service role: مهمان هم بتواند وضعیت را ببیند؛ فیلدها حداقل
+    const raw = (code || "").trim().toLowerCase();
+    const q = raw.replace(/[^0-9a-f-]/g, "");
+    const compact = q.replace(/-/g, "");
+    if (compact.length !== 32) return null;
 
-    // UUID کامل
-    if (q.length >= 32) {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          "id, status, total_amount, shipping_name, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, unit_price, line_total)"
-        )
-        .eq("id", q)
-        .maybeSingle();
-      if (error) {
-        console.error("[trackPublic full]", error);
-        throw error;
-      }
-      return data;
+    let id = q;
+    if (!q.includes("-") && compact.length === 32) {
+      id = `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(16, 20)}-${compact.slice(20)}`;
     }
 
-    // پیشوند — cast به text در PostgREST با filter
-    const { data, error } = await supabase
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const service = createServiceClient();
+    const { data, error } = await service
       .from("orders")
       .select(
-        "id, status, total_amount, shipping_name, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, unit_price, line_total)"
+        "id, status, total_amount, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, line_total)"
       )
-      .like("id", `${q}%`)
-      .limit(1)
+      .eq("id", id)
       .maybeSingle();
-
     if (error) {
-      console.error("[trackPublic prefix]", error);
-      // fallback: همه سفارش‌های اخیر و فیلتر در JS (فقط برای dev/تست)
-      const { data: all, error: e2 } = await supabase
-        .from("orders")
-        .select(
-          "id, status, total_amount, shipping_name, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, unit_price, line_total)"
-        )
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (e2) {
-        console.error("[trackPublic fallback]", e2);
-        throw e2;
-      }
-      const hit = (all ?? []).find((o: { id: string }) =>
-        String(o.id).toLowerCase().startsWith(q)
-      );
-      return hit ?? null;
+      console.error("[trackPublic]", error);
+      throw error;
     }
     return data;
   }
@@ -263,7 +236,8 @@ export class OrderRepository extends BaseRepository {
     limit = 50,
     opts?: { status?: string; q?: string },
   ) {
-    const supabase = await this.getClient();
+    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const supabase = createServiceClient();
     let q = supabase
       .from("orders")
       .select(
@@ -302,7 +276,8 @@ export class OrderRepository extends BaseRepository {
   }
 
   async updateStatus(orderId: string, status: string) {
-    const supabase = await this.getClient();
+    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const supabase = createServiceClient();
     const allowed = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
     if (!allowed.includes(status)) throw new Error("bad_status");
     const { error } = await supabase
@@ -315,7 +290,8 @@ export class OrderRepository extends BaseRepository {
 
 
   async getByIdAdmin(orderId: string) {
-    const supabase = await this.getClient();
+    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("orders")
       .select(
