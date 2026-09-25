@@ -46,24 +46,46 @@ export class CartRepository extends BaseRepository {
     quantity = 1
   ): Promise<void> {
     const supabase = await this.getClient();
+    const qtyAdd = Math.max(1, Number(quantity) || 1);
+
+    const { data: variant, error: vErr } = await supabase
+      .from("product_variants")
+      .select("id, stock_quantity, is_active")
+      .eq("id", variantId)
+      .maybeSingle();
+    if (vErr) throw vErr;
+    if (!variant || variant.is_active === false) {
+      throw new Error("unavailable");
+    }
+    const stock = Math.max(0, Number(variant.stock_quantity ?? 0));
+
     const { data: existing } = await supabase
       .from("cart_items")
       .select("id, quantity")
       .eq("cart_id", cartId)
       .eq("variant_id", variantId)
       .maybeSingle();
+
     if (existing) {
+      const next = Number(existing.quantity) + qtyAdd;
+      if (next > stock) {
+        throw new Error(`insufficient_stock:${stock}`);
+      }
       const { error } = await supabase
         .from("cart_items")
-        .update({ quantity: existing.quantity + quantity })
+        .update({ quantity: next })
         .eq("id", existing.id);
       if (error) throw error;
       return;
     }
+
+    if (qtyAdd > stock) {
+      throw new Error(`insufficient_stock:${stock}`);
+    }
     const { error } = await supabase.from("cart_items").insert({
       cart_id: cartId,
       variant_id: variantId,
-      quantity,
+      quantity: qtyAdd,
     });
     if (error) throw error;
   }
@@ -78,9 +100,23 @@ export class CartRepository extends BaseRepository {
       await this.removeItem(cartId, variantId);
       return;
     }
+    const { data: variant, error: vErr } = await supabase
+      .from("product_variants")
+      .select("stock_quantity, is_active")
+      .eq("id", variantId)
+      .maybeSingle();
+    if (vErr) throw vErr;
+    if (!variant || variant.is_active === false) {
+      throw new Error("unavailable");
+    }
+    const stock = Math.max(0, Number(variant.stock_quantity ?? 0));
+    const qty = Math.min(Number(quantity) || 1, stock);
+    if (qty < 1) {
+      throw new Error(`insufficient_stock:${stock}`);
+    }
     const { error } = await supabase
       .from("cart_items")
-      .update({ quantity })
+      .update({ quantity: qty })
       .eq("cart_id", cartId)
       .eq("variant_id", variantId);
     if (error) throw error;
