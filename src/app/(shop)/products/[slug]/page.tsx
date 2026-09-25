@@ -16,6 +16,8 @@ import { ProductSpecs } from "@/components/product/product-specs";
 import { getProductSpecRows } from "@/lib/product-specs";
 import { getProductPriceHistory } from "@/lib/price-history";
 import { resolveColorHex } from "@/lib/colors";
+import { loadPrimarySizeGuide } from "@/lib/size-guide/load";
+import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -51,6 +53,7 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const product = result.data;
+  const sizeGuide = await loadPrimarySizeGuide();
   const images = product.images ?? [];
   const primaryImage =
     images.find((img) => img.is_primary) ?? images[0] ?? null;
@@ -205,12 +208,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <div className="pdp-desktop-after-buy hidden lg:block space-y-4">
               <div className="grid gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
-                    راهنمای سایز
-                  </Link>
-                  <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-                    جدول اندازه‌ها برای انتخاب سایز دقیق
-                  </p>
+                  <SizeGuideSnippet guide={sizeGuide} />
                 </div>
                 <div>
                   <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
@@ -255,12 +253,7 @@ export default async function ProductDetailPage({ params }: Props) {
         ) : null}
         <div className="grid gap-3 text-sm sm:grid-cols-3">
           <div>
-            <Link href="/size-guide" className="text-primary font-medium underline-offset-4 hover:underline">
-              راهنمای سایز
-            </Link>
-            <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
-              جدول اندازه‌ها برای انتخاب سایز دقیق
-            </p>
+            <SizeGuideSnippet guide={sizeGuide} />
           </div>
           <div>
             <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
