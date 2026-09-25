@@ -26,6 +26,43 @@ export type CreateOrderInput = {
 export class OrderRepository extends BaseRepository {
   async createFromCart(input: CreateOrderInput): Promise<string> {
     const supabase = await this.getClient();
+    // کسر موجودی باید از RLS مشتری رد شود → service role
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    const service = createServiceClient();
+
+    // 1) بررسی + رزرو موجودی (قبل از ساخت سفارش)
+    for (const item of input.items) {
+      const qty = Number(item.quantity);
+      if (!item.variantId || qty < 1) {
+        throw new Error("invalid_item");
+      }
+      const { data: variant, error: vErr } = await service
+        .from("product_variants")
+        .select("id, stock_quantity, is_active")
+        .eq("id", item.variantId)
+        .maybeSingle();
+      if (vErr) throw vErr;
+      if (!variant || variant.is_active === false) {
+        throw new Error(`unavailable:${item.title || item.variantId}`);
+      }
+      const stock = Number(variant.stock_quantity ?? 0);
+      if (stock < qty) {
+        throw new Error(`insufficient_stock:${item.title || item.variantId}`);
+      }
+      // update شرطی — جلوگیری از race ساده
+      const { data: updated, error: uErr } = await service
+        .from("product_variants")
+        .update({ stock_quantity: stock - qty })
+        .eq("id", item.variantId)
+        .gte("stock_quantity", qty)
+        .select("id")
+        .maybeSingle();
+      if (uErr) throw uErr;
+      if (!updated) {
+        throw new Error(`insufficient_stock:${item.title || item.variantId}`);
+      }
+    }
+
     const total = input.items.reduce(
       (s, i) => s + i.unitPrice * i.quantity,
       0
@@ -48,7 +85,30 @@ export class OrderRepository extends BaseRepository {
       })
       .select("id")
       .single();
-    if (oErr) throw oErr;
+
+    if (oErr) {
+      // best-effort rollback stock
+      for (const item of input.items) {
+        try {
+          const { data: v } = await service
+            .from("product_variants")
+            .select("stock_quantity")
+            .eq("id", item.variantId)
+            .maybeSingle();
+          if (v) {
+            await service
+              .from("product_variants")
+              .update({
+                stock_quantity: Number(v.stock_quantity ?? 0) + Number(item.quantity),
+              })
+              .eq("id", item.variantId);
+          }
+        } catch (re) {
+          console.error("[createFromCart] stock rollback", item.variantId, re);
+        }
+      }
+      throw oErr;
+    }
 
     const rows = input.items.map((i) => ({
       order_id: order.id,
@@ -63,7 +123,28 @@ export class OrderRepository extends BaseRepository {
     }));
 
     const { error: iErr } = await supabase.from("order_items").insert(rows);
-    if (iErr) throw iErr;
+    if (iErr) {
+      for (const item of input.items) {
+        try {
+          const { data: v } = await service
+            .from("product_variants")
+            .select("stock_quantity")
+            .eq("id", item.variantId)
+            .maybeSingle();
+          if (v) {
+            await service
+              .from("product_variants")
+              .update({
+                stock_quantity: Number(v.stock_quantity ?? 0) + Number(item.quantity),
+              })
+              .eq("id", item.variantId);
+          }
+        } catch (re) {
+          console.error("[createFromCart] stock rollback items", item.variantId, re);
+        }
+      }
+      throw iErr;
+    }
 
     return order.id;
   }
