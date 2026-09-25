@@ -2,10 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { adminDashboardStatsAction, type AdminDashboardStats } from "@/app/admin/actions/stats";
+import { adminDashboardStatsAction } from "@/app/admin/actions/stats";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
-type Stats = AdminDashboardStats;
+type Stats = {
+  ordersTotal: number;
+  ordersPending: number;
+  productsTotal: number;
+  productsPublished: number;
+  usersTotal: number;
+  discountsActive: number;
+  stockAlertsPending: number;
+};
 
 export default function AdminAnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -36,37 +44,31 @@ export default function AdminAnalyticsPage() {
           label: "کل سفارش‌ها",
           value: stats.ordersTotal,
           href: "/admin/orders",
-          hint: `${stats.ordersPending} در انتظار · ${stats.ordersProcessing} پردازش`,
-        },
-        {
-          label: "فروش (غیرلغو)",
-          value: stats.revenueTotal,
-          href: "/admin/orders",
-          hint: "تومان",
+          hint: `${stats.ordersPending} در انتظار`,
         },
         {
           label: "محصولات",
           value: stats.productsTotal,
           href: "/admin/products",
-          hint: `${stats.productsPublished} منتشر · ${stats.lowStockVariants} کم‌موجودی`,
+          hint: `${stats.productsPublished} منتشر`,
         },
         {
           label: "کاربران",
           value: stats.usersTotal,
           href: "/admin/users",
-          hint: `${stats.discountsActive} تخفیف فعال`,
+          hint: "پروفایل‌ها",
         },
         {
-          label: "مرجوعی باز",
-          value: stats.returnsOpen,
-          href: "/admin/returns",
-          hint: "نیاز به رسیدگی",
+          label: "تخفیف فعال",
+          value: stats.discountsActive,
+          href: "/admin/discounts",
+          hint: "کدهای فعال",
         },
         {
-          label: "تیکت باز",
-          value: stats.ticketsOpen,
-          href: "/admin/tickets",
-          hint: "پشتیبانی",
+          label: "لیست انتظار موجودی",
+          value: stats.stockAlertsPending ?? 0,
+          href: "/admin/stock-alerts",
+          hint: "در انتظار اطلاع",
         },
       ]
     : [];
@@ -76,36 +78,33 @@ export default function AdminAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-bold text-primary">گزارش‌ها</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          خلاصهٔ آمار فروشگاه (نسخهٔ سبک؛ نمودار پیشرفته بعداً)
+          خلاصه آمار فروشگاه (نسخه سبک؛ نمودار پیشرفته بعداً)
         </p>
       </div>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
       {loading ? (
-        <div className="flex justify-center py-16">
+        <div className="flex justify-center py-20">
           <LumaSpin />
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {cards.map((c) => (
             <Link
-              key={c.label}
+              key={c.href}
               href={c.href}
-              className="border-border hover:bg-muted/40 block rounded-xl border p-4 transition-colors"
+              className="border-border bg-card hover:border-primary/40 rounded-2xl border p-5 shadow-sm transition-colors"
             >
               <p className="text-muted-foreground text-xs">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums">{c.value}</p>
+              <p className="mt-2 text-3xl font-bold tabular-nums">
+                {c.value.toLocaleString("fa-IR")}
+              </p>
               <p className="text-muted-foreground mt-1 text-xs">{c.hint}</p>
             </Link>
           ))}
         </div>
       )}
-
-      <p className="text-muted-foreground text-xs leading-relaxed">
-        این صفحه از همان منبع داشبورد استفاده می‌کند. گزارش فروش روزانه، قیف
-        تبدیل و نمودار در فاز بعدی اضافه می‌شود.
-      </p>
     </div>
   );
 }
