@@ -15,11 +15,8 @@ import { OrderTrackBox } from "@/components/home/order-track-box";
 import { HeroScroll } from "@/components/home/hero-scroll";
 import { HomeAfterHero } from "@/components/home/home-after-hero";
 import { RecentlyViewed } from "@/components/home/recently-viewed";
-import {
-  CarouselCards,
-  CarouselLinks,
-  productToCarouselCardItem,
-} from "@/components/ui/carousel-cards";
+import { CarouselCards, CarouselLinks } from "@/components/ui/carousel-cards";
+import { productToCarouselCardItem } from "@/lib/product-to-carousel-item";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 
 export const dynamic = "force-dynamic";

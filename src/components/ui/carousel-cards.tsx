@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * کاروسل اجباری فروشگاه — RTL + Embla (shadcn Carousel)
- * همه کاروسل‌های محصول فقط از این کامپوننت استفاده کنند.
- */
-
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,23 +15,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { ProductWithRelations } from "@/repositories/product.repository";
+import type { CarouselCardItem } from "@/lib/product-to-carousel-item";
 
-export type CarouselCardItem = {
-  id: string;
-  title: string;
-  brand?: string;
-  href: string;
-  imageUrl: string;
-  imageAlt?: string;
-  price: number;
-  originalPrice?: number;
-  discountPercent?: number;
-  rating?: number;
-  reviewCount?: number;
-  badge?: string;
-  inStock?: boolean;
-};
+export type { CarouselCardItem };
 
 type CarouselCardsProps = {
   items: CarouselCardItem[];
@@ -47,57 +28,8 @@ type CarouselCardsProps = {
   leading?: React.ReactNode;
 };
 
-const FALLBACK_IMAGE = "/og-image.webp";
-
 function formatPrice(price: number) {
   return toPersianDigits(price.toLocaleString("en-US")) + " تومان";
-}
-
-export function productToCarouselCardItem(
-  product: ProductWithRelations,
-): CarouselCardItem {
-  const images = (product.images ?? [])
-    .slice()
-    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
-  const imageUrl = images[0]?.url || FALLBACK_IMAGE;
-
-  const variants = (product.variants ?? []).filter((v) => v.is_active);
-  const prices = variants
-    .map((v) => Number(v.price))
-    .filter((n) => !Number.isNaN(n));
-  const price = prices.length ? Math.min(...prices) : 0;
-
-  const originals = variants
-    .map((v) => Number(v.original_price))
-    .filter((n) => !Number.isNaN(n) && n > 0);
-  const originalPrice = originals.length ? Math.max(...originals) : undefined;
-
-  let discountPercent: number | undefined;
-  if (originalPrice && originalPrice > price && price > 0) {
-    discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
-  }
-
-  const inStock = variants.some((v) => Number(v.stock_quantity ?? 0) > 0);
-
-  let badge: string | undefined;
-  if (product.is_new) badge = "جدید";
-  else if (product.is_bestseller) badge = "پرفروش";
-  else if (product.is_featured) badge = "ویژه";
-
-  return {
-    id: product.id,
-    title: product.name,
-    brand: product.brand?.name,
-    href: `/products/${product.slug}`,
-    imageUrl,
-    imageAlt: images[0]?.alt_text || product.name,
-    price,
-    originalPrice:
-      originalPrice && originalPrice > price ? originalPrice : undefined,
-    discountPercent,
-    badge,
-    inStock: variants.length ? inStock : true,
-  };
 }
 
 export function CarouselCards({
@@ -134,11 +66,7 @@ export function CarouselCards({
 
       <div className="relative px-10 md:px-12">
         <Carousel
-          opts={{
-            align: "start",
-            loop: false,
-            direction: "rtl",
-          }}
+          opts={{ align: "start", loop: false, direction: "rtl" }}
           className="w-full"
         >
           <CarouselContent className="-mr-4">
@@ -173,7 +101,7 @@ export function CarouselCards({
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                     <Image
-                      src={item.imageUrl}
+                      src={item.imageUrl || "/og-image.webp"}
                       alt={item.imageAlt || item.title}
                       fill
                       className="object-contain transition-transform duration-300 group-hover:scale-105"
@@ -191,7 +119,6 @@ export function CarouselCards({
                       </Badge>
                     )}
                   </div>
-
                   <div className="space-y-1.5 p-3">
                     {item.brand && (
                       <p className="text-xs text-muted-foreground">{item.brand}</p>
@@ -199,17 +126,12 @@ export function CarouselCards({
                     <h3 className="line-clamp-2 text-sm font-medium leading-snug text-primary">
                       {item.title}
                     </h3>
-
                     {typeof item.rating === "number" && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Star className="size-3.5 fill-amber-400 text-amber-400" />
                         <span>{toPersianDigits(item.rating.toFixed(1))}</span>
-                        {item.reviewCount !== undefined && (
-                          <span>({toPersianDigits(item.reviewCount)})</span>
-                        )}
                       </div>
                     )}
-
                     <div className="flex flex-wrap items-baseline gap-2 pt-1">
                       <span className="font-bold">{formatPrice(item.price)}</span>
                       {item.originalPrice != null &&
@@ -219,7 +141,6 @@ export function CarouselCards({
                           </span>
                         )}
                     </div>
-
                     {item.inStock === false && (
                       <p className="text-xs text-destructive">ناموجود</p>
                     )}
@@ -228,7 +149,6 @@ export function CarouselCards({
               </CarouselItem>
             ))}
           </CarouselContent>
-
           <CarouselPrevious className="right-0 left-auto" />
           <CarouselNext className="left-0 right-auto" />
         </Carousel>
@@ -275,7 +195,6 @@ export function CarouselLinks({
           ) : null}
         </div>
       )}
-
       <div className="relative px-10 md:px-12">
         <Carousel
           opts={{ align: "start", loop: false, direction: "rtl" }}

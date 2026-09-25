@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  CarouselCards,
-  type CarouselCardItem,
-} from "@/components/ui/carousel-cards";
+import { CarouselCards } from "@/components/ui/carousel-cards";
+import type { CarouselCardItem } from "@/lib/product-to-carousel-item";
 
 type StoredItem = {
   id?: string;
