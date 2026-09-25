@@ -15,6 +15,7 @@ type Review = {
   title: string | null;
   body: string;
   admin_reply?: string | null;
+  is_verified?: boolean | null;
   created_at: string;
   user?: { full_name: string | null } | null;
 };
@@ -72,6 +73,11 @@ export function ProductReviews({ productId }: { productId: string }) {
               <span className="font-medium">
                 {r.user?.full_name?.trim() || "خریدار"}
               </span>
+              {r.is_verified ? (
+                <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-md px-1.5 py-0.5 text-[10px] font-medium">
+                  خریدار
+                </span>
+              ) : null}
               <span className="text-amber-600">{"★".repeat(r.rating)}</span>
               <time className="text-muted-foreground text-xs">
                 {formatJalaliDate(r.created_at)}

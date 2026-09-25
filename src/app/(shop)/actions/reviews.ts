@@ -17,7 +17,7 @@ export async function listProductReviewsAction(productId: string) {
     const { data, error } = await supabase
       .from("reviews")
       .select(
-        "id, rating, title, body, admin_reply, created_at, user:profiles(full_name)",
+        "id, rating, title, body, admin_reply, is_verified, created_at, user:profiles(full_name)",
       )
       .eq("product_id", productId)
       .eq("is_approved", true)
@@ -67,7 +67,7 @@ export async function createProductReviewAction(input: {
       .select("id, orders!inner(user_id, status)")
       .eq("product_id", input.productId)
       .eq("orders.user_id", user.id)
-      .in("orders.status", ["paid", "processing", "shipped", "delivered", "pending"])
+      .in("orders.status", ["paid", "processing", "shipped", "delivered"])
       .limit(1)
       .maybeSingle();
     if (pErr) {
@@ -80,7 +80,7 @@ export async function createProductReviewAction(input: {
         .from("orders")
         .select("id, status")
         .eq("user_id", user.id)
-        .in("status", ["paid", "processing", "shipped", "delivered", "pending"]);
+        .in("status", ["paid", "processing", "shipped", "delivered"]);
       const orderIds = (orders ?? []).map((o: { id: string }) => o.id);
       if (!orderIds.length) {
         return { ok: false as const, error: "not_purchased" };
@@ -103,6 +103,7 @@ export async function createProductReviewAction(input: {
       title,
       body: bodyOk.text,
       is_approved: false,
+      is_verified: true,
     });
     if (error) {
       if (String(error.message || "").includes("duplicate") || error.code === "23505") {
