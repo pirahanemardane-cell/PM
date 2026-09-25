@@ -236,7 +236,7 @@ export class OrderRepository extends BaseRepository {
     limit = 50,
     opts?: { status?: string; q?: string },
   ) {
-    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const supabase = createServiceClient();
     let q = supabase
       .from("orders")
@@ -276,7 +276,7 @@ export class OrderRepository extends BaseRepository {
   }
 
   async updateStatus(orderId: string, status: string) {
-    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const supabase = createServiceClient();
     const allowed = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
     if (!allowed.includes(status)) throw new Error("bad_status");
@@ -290,7 +290,7 @@ export class OrderRepository extends BaseRepository {
 
 
   async getByIdAdmin(orderId: string) {
-    const { createServiceClient } = await import(\"@/lib/supabase/service\");
+    const { createServiceClient } = await import("@/lib/supabase/service");
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("orders")
