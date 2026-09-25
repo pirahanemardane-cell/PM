@@ -3,11 +3,11 @@ import { logger } from "@/lib/logger";
 
 export abstract class BaseService {
   protected success<T>(data: T): ApiResponse<T> {
-    return { success: true, data };
+    return { success: true, data, error: null };
   }
 
   protected failure(error: string): ApiResponse<never> {
-    return { success: false, error };
+    return { success: false, data: null, error };
   }
 
   protected logError(context: string, error: unknown) {

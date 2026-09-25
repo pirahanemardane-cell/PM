@@ -58,6 +58,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       brands: {
         Row: {
@@ -90,6 +91,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       products: {
         Row: {
@@ -152,6 +154,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       product_variants: {
         Row: {
@@ -202,6 +205,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       attributes: {
         Row: {
@@ -234,6 +238,7 @@ export type Database = {
           sort_order?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
       attribute_options: {
         Row: {
@@ -257,6 +262,7 @@ export type Database = {
           slug?: string;
           sort_order?: number;
         };
+        Relationships: [];
       };
       product_attribute_values: {
         Row: {
@@ -280,6 +286,7 @@ export type Database = {
           option_id?: string | null;
           value_text?: string | null;
         };
+        Relationships: [];
       };
       product_images: {
         Row: {
@@ -312,6 +319,7 @@ export type Database = {
           is_primary?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       size_guides: {
         Row: {
@@ -338,6 +346,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       size_guide_rows: {
         Row: {
@@ -376,6 +385,7 @@ export type Database = {
           neck_cm?: number | null;
           sort_order?: number;
         };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -405,6 +415,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       reviews: {
         Row: {
@@ -443,6 +454,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       wishlists: {
         Row: {
@@ -463,6 +475,7 @@ export type Database = {
           product_id?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       carts: {
         Row: {
@@ -486,6 +499,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       cart_items: {
         Row: {
@@ -512,6 +526,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       discounts: {
         Row: {
@@ -553,11 +568,195 @@ export type Database = {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
+
+      orders: {
+        Row: {
+          id: string; user_id: string; status: string; total_amount: number;
+          shipping_name: string | null; shipping_phone: string | null;
+          shipping_address: string | null; shipping_city: string | null;
+          shipping_postal: string | null; note: string | null;
+          created_at: string; updated_at: string;
+        };
+        Insert: {
+          id?: string; user_id: string; status?: string; total_amount?: number;
+          shipping_name?: string | null; shipping_phone?: string | null;
+          shipping_address?: string | null; shipping_city?: string | null;
+          shipping_postal?: string | null; note?: string | null;
+          created_at?: string; updated_at?: string;
+        };
+        Update: {
+          id?: string; user_id?: string; status?: string; total_amount?: number;
+          shipping_name?: string | null; shipping_phone?: string | null;
+          shipping_address?: string | null; shipping_city?: string | null;
+          shipping_postal?: string | null; note?: string | null;
+          created_at?: string; updated_at?: string;
+        };
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string; order_id: string; variant_id: string; product_id: string;
+          title: string; size_name: string | null; color_name: string | null;
+          unit_price: number; quantity: number; line_total: number;
+        };
+        Insert: {
+          id?: string; order_id: string; variant_id: string; product_id: string;
+          title: string; size_name?: string | null; color_name?: string | null;
+          unit_price: number; quantity: number; line_total: number;
+        };
+        Update: {
+          id?: string; order_id?: string; variant_id?: string; product_id?: string;
+          title?: string; size_name?: string | null; color_name?: string | null;
+          unit_price?: number; quantity?: number; line_total?: number;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string; user_id: string; title: string; body: string | null;
+          type: string | null; link: string | null; read_at: string | null; created_at: string;
+        };
+        Insert: {
+          id?: string; user_id: string; title: string; body?: string | null;
+          type?: string | null; link?: string | null; read_at?: string | null; created_at?: string;
+        };
+        Update: {
+          id?: string; user_id?: string; title?: string; body?: string | null;
+          type?: string | null; link?: string | null; read_at?: string | null; created_at?: string;
+        };
+        Relationships: [];
+      };
+      sizes: {
+        Row: { id: string; name: string; slug: string; sort_order: number; is_active: boolean; created_at: string; };
+        Insert: { id?: string; name: string; slug: string; sort_order?: number; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; name?: string; slug?: string; sort_order?: number; is_active?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      colors: {
+        Row: { id: string; name: string; slug: string; hex_code: string | null; sort_order: number; is_active: boolean; created_at: string; };
+        Insert: { id?: string; name: string; slug: string; hex_code?: string | null; sort_order?: number; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; name?: string; slug?: string; hex_code?: string | null; sort_order?: number; is_active?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      product_tags: {
+        Row: { id: string; name: string; slug: string; is_active: boolean; created_at: string; };
+        Insert: { id?: string; name: string; slug: string; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; name?: string; slug?: string; is_active?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      product_tag_map: {
+        Row: { product_id: string; tag_id: string };
+        Insert: { product_id: string; tag_id: string };
+        Update: { product_id?: string; tag_id?: string };
+        Relationships: [];
+      };
+      blog_categories: {
+        Row: { id: string; name: string; slug: string; description: string | null; is_active: boolean; sort_order: number; created_at: string; updated_at: string; };
+        Insert: { id?: string; name: string; slug: string; description?: string | null; is_active?: boolean; sort_order?: number; created_at?: string; updated_at?: string; };
+        Update: { id?: string; name?: string; slug?: string; description?: string | null; is_active?: boolean; sort_order?: number; created_at?: string; updated_at?: string; };
+        Relationships: [];
+      };
+      blog_posts: {
+        Row: {
+          id: string; category_id: string | null; author_id: string | null; title: string; slug: string;
+          excerpt: string | null; body: string | null; cover_url: string | null; status: string;
+          published_at: string | null; meta_title: string | null; meta_description: string | null;
+          created_at: string; updated_at: string;
+        };
+        Insert: {
+          id?: string; category_id?: string | null; author_id?: string | null; title: string; slug: string;
+          excerpt?: string | null; body?: string | null; cover_url?: string | null; status?: string;
+          published_at?: string | null; meta_title?: string | null; meta_description?: string | null;
+          created_at?: string; updated_at?: string;
+        };
+        Update: {
+          id?: string; category_id?: string | null; author_id?: string | null; title?: string; slug?: string;
+          excerpt?: string | null; body?: string | null; cover_url?: string | null; status?: string;
+          published_at?: string | null; meta_title?: string | null; meta_description?: string | null;
+          created_at?: string; updated_at?: string;
+        };
+        Relationships: [];
+      };
+      blog_tags: {
+        Row: { id: string; name: string; slug: string; is_active: boolean; created_at: string; };
+        Insert: { id?: string; name: string; slug: string; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; name?: string; slug?: string; is_active?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      blog_tag_map: {
+        Row: { post_id: string; tag_id: string };
+        Insert: { post_id: string; tag_id: string };
+        Update: { post_id?: string; tag_id?: string };
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: { id: string; user_id: string; subject: string; status: string; created_at: string; updated_at: string; };
+        Insert: { id?: string; user_id: string; subject: string; status?: string; created_at?: string; updated_at?: string; };
+        Update: { id?: string; user_id?: string; subject?: string; status?: string; created_at?: string; updated_at?: string; };
+        Relationships: [];
+      };
+      support_ticket_messages: {
+        Row: { id: string; ticket_id: string; user_id: string | null; body: string; is_staff: boolean; created_at: string; };
+        Insert: { id?: string; ticket_id: string; user_id?: string | null; body: string; is_staff?: boolean; created_at?: string; };
+        Update: { id?: string; ticket_id?: string; user_id?: string | null; body?: string; is_staff?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      return_requests: {
+        Row: { id: string; user_id: string; order_id: string | null; status: string; reason: string | null; created_at: string; updated_at: string; };
+        Insert: { id?: string; user_id: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
+        Update: { id?: string; user_id?: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [];
+      };
+      addresses: {
+        Row: {
+          id: string; user_id: string; title: string | null; full_name: string; phone: string;
+          province: string | null; city: string; address_line: string; postal_code: string | null;
+          is_default: boolean; created_at: string;
+        };
+        Insert: {
+          id?: string; user_id: string; title?: string | null; full_name: string; phone: string;
+          province?: string | null; city: string; address_line: string; postal_code?: string | null;
+          is_default?: boolean; created_at?: string;
+        };
+        Update: {
+          id?: string; user_id?: string; title?: string | null; full_name?: string; phone?: string;
+          province?: string | null; city?: string; address_line?: string; postal_code?: string | null;
+          is_default?: boolean; created_at?: string;
+        };
+        Relationships: [];
+      };
+      admin_logs: {
+        Row: { id: string; actor_id: string | null; action: string; entity: string | null; entity_id: string | null; meta: Json | null; created_at: string; };
+        Insert: { id?: string; actor_id?: string | null; action: string; entity?: string | null; entity_id?: string | null; meta?: Json | null; created_at?: string; };
+        Update: { id?: string; actor_id?: string | null; action?: string; entity?: string | null; entity_id?: string | null; meta?: Json | null; created_at?: string; };
+        Relationships: [];
+      };
+      otp_challenges: {
+        Row: { id: string; phone: string; code_hash: string; expires_at: string; attempts: number; created_at: string; };
+        Insert: { id?: string; phone: string; code_hash: string; expires_at: string; attempts?: number; created_at?: string; };
+        Update: { id?: string; phone?: string; code_hash?: string; expires_at?: string; attempts?: number; created_at?: string; };
+        Relationships: [];
+      };
+      product_price_history: {
+        Row: { id: string; product_id: string; price: number; recorded_at: string; };
+        Insert: { id?: string; product_id: string; price: number; recorded_at?: string; };
+        Update: { id?: string; product_id?: string; price?: number; recorded_at?: string; };
+        Relationships: [];
+      };
+      site_settings: {
+        Row: { key: string; value: Json | null; updated_at: string; };
+        Insert: { key: string; value?: Json | null; updated_at?: string; };
+        Update: { key?: string; value?: Json | null; updated_at?: string; };
+        Relationships: [];
+      };
+
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 
