@@ -12,13 +12,13 @@ type Review = {
   rating: number;
   title: string | null;
   body: string;
+  admin_reply?: string | null;
   created_at: string;
   user?: { full_name: string | null } | null;
 };
 
 export function ProductReviews({ productId }: { productId: string }) {
   const [items, setItems] = useState<Review[]>([]);
-  const [replyTo, setReplyTo] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
   const [msg, setMsg] = useState("");
@@ -41,9 +41,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       rating,
       title: title || undefined,
       body,
-      parentId: replyTo || undefined,
     });
-    setReplyTo(null);
     setBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
@@ -79,13 +77,14 @@ export function ProductReviews({ productId }: { productId: string }) {
             </div>
             {r.title ? <p className="font-medium">{r.title}</p> : null}
             <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{r.body}</p>
-            <button
-              type="button"
-              className="text-primary mt-2 text-xs font-medium hover:underline"
-              onClick={() => setReplyTo(r.id)}
-            >
-              پاسخ
-            </button>
+            {r.admin_reply ? (
+              <div className="bg-muted/50 mt-3 rounded-lg border-r-2 border-primary p-3 text-xs">
+                <p className="mb-1 font-medium text-primary">پاسخ فروشگاه</p>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {r.admin_reply}
+                </p>
+              </div>
+            ) : null}
           </article>
         ))}
         {!items.length ? (
@@ -95,18 +94,31 @@ export function ProductReviews({ productId }: { productId: string }) {
 
       <div className="space-y-3">
         <h3 className="font-semibold text-primary">ثبت نظر</h3>
-        {replyTo ? (
-          <p className="text-muted-foreground text-xs">
-            در حال پاسخ به نظر{" "}
-            <button type="button" className="text-primary underline" onClick={() => setReplyTo(null)}>
-              انصراف
-            </button>
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs">امتیاز</label>
+          <select
+            value={rating}
+            onChange={(e) => setRating(Number(e.target.value))}
+            className="border-input bg-background h-9 rounded-lg border px-2 text-sm"
+          >
+            {[5, 4, 3, 2, 1].map((n) => (
+              <option key={n} value={n}>
+                {n} ★
+              </option>
+            ))}
+          </select>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="عنوان (اختیاری)"
+            className="border-input bg-background h-9 min-w-[12rem] flex-1 rounded-lg border px-3 text-sm"
+            dir="rtl"
+          />
+        </div>
         <ComposerInput
           onSend={onSend}
-          placeholder={replyTo ? "پاسخ خود را بنویسید..." : "نظر خود را بنویسید..."}
-          sendLabel={replyTo ? "ارسال پاسخ" : "ارسال نظر"}
+          placeholder="نظر خود را بنویسید... (بدون لینک و تصویر)"
+          sendLabel="ارسال نظر"
           disabled={busy}
         />
         {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}

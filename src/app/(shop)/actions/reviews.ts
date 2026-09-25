@@ -17,7 +17,7 @@ export async function listProductReviewsAction(productId: string) {
     const { data, error } = await supabase
       .from("reviews")
       .select(
-        "id, rating, title, body, created_at, user:profiles(full_name)",
+        "id, rating, title, body, admin_reply, created_at, user:profiles(full_name)",
       )
       .eq("product_id", productId)
       .eq("is_approved", true)

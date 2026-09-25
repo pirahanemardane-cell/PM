@@ -427,6 +427,7 @@ export type Database = {
           body: string | null;
           is_verified: boolean;
           is_approved: boolean;
+          admin_reply: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -439,6 +440,7 @@ export type Database = {
           body?: string | null;
           is_verified?: boolean;
           is_approved?: boolean;
+          admin_reply?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -451,6 +453,7 @@ export type Database = {
           body?: string | null;
           is_verified?: boolean;
           is_approved?: boolean;
+          admin_reply?: string | null;
           created_at?: string;
           updated_at?: string;
         };

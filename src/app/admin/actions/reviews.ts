@@ -11,7 +11,7 @@ export async function adminListReviewsAction(opts?: {
     let query = gate.supabase
       .from("reviews")
       .select(
-        "id, rating, title, body, is_approved, created_at, product:products(name), user:profiles(full_name)",
+        "id, rating, title, body, is_approved, admin_reply, created_at, product:products(name), user:profiles(full_name)",
       )
       .order("created_at", { ascending: false })
       .limit(100);
@@ -39,6 +39,24 @@ export async function adminSetReviewApprovedAction(id: string, is_approved: bool
     if (error) throw error;
     return { ok: true as const };
   } catch {
+    return { ok: false as const, error: "server" };
+  }
+}
+
+export async function adminSetReviewReplyAction(id: string, reply: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const text = (reply ?? "").trim();
+    if (text.length > 2000) return { ok: false as const, error: "too_long" };
+    const { error } = await gate.supabase
+      .from("reviews")
+      .update({ admin_reply: text || null, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSetReviewReply]", e);
     return { ok: false as const, error: "server" };
   }
 }

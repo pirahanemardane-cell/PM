@@ -7,6 +7,7 @@ import { RT } from "@/lib/realtime/events";
 import {
   adminListReviewsAction,
   adminSetReviewApprovedAction,
+  adminSetReviewReplyAction,
 } from "@/app/admin/actions/reviews";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
@@ -16,6 +17,7 @@ type Row = {
   title: string | null;
   body: string;
   is_approved: boolean;
+  admin_reply?: string | null;
   created_at: string;
   product?: { name: string } | null;
   user?: { full_name: string | null } | null;
@@ -27,6 +29,7 @@ export default function AdminReviewsPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "yes" | "no">("all");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,7 +47,11 @@ export default function AdminReviewsPage() {
       setItems([]);
       return;
     }
-    setItems((res.items as Row[]) ?? []);
+    const rows = (res.items as Row[]) ?? [];
+    setItems(rows);
+    const next: Record<string, string> = {};
+    for (const r of rows) next[r.id] = r.admin_reply ?? "";
+    setDrafts(next);
   }, [filter]);
 
   useEffect(() => {
@@ -63,7 +70,6 @@ export default function AdminReviewsPage() {
       setError("ذخیره ناموفق بود");
       return;
     }
-    // اگر فیلتر محدود است و دیگر نمی‌خورد، از لیست بردار
     if (filter === "yes" && !is_approved) {
       setItems((prev) => prev.filter((r) => r.id !== id));
     } else if (filter === "no" && is_approved) {
@@ -75,12 +81,28 @@ export default function AdminReviewsPage() {
     }
   }
 
+  async function saveReply(id: string) {
+    setBusyId(id);
+    const text = drafts[id] ?? "";
+    const res = await adminSetReviewReplyAction(id, text);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("ذخیره پاسخ ناموفق بود");
+      return;
+    }
+    setItems((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, admin_reply: text.trim() || null } : r)),
+    );
+  }
+
   return (
     <div className="space-y-4 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">نظرات محصولات</h1>
-          <p className="text-muted-foreground text-sm">تأیید یا رد نظرات خریداران</p>
+          <p className="text-muted-foreground text-sm">
+            تأیید، رد و پاسخ رسمی فروشگاه
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <select
@@ -115,56 +137,64 @@ export default function AdminReviewsPage() {
           <LumaSpin />
         </div>
       ) : (
-        <div className="table-scroll border-border overflow-x-auto rounded-xl border">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-3 text-right font-medium">محصول</th>
-                <th className="p-3 text-right font-medium">کاربر</th>
-                <th className="p-3 text-right font-medium">امتیاز</th>
-                <th className="p-3 text-right font-medium">متن</th>
-                <th className="p-3 text-right font-medium">تاریخ</th>
-                <th className="p-3 text-right font-medium">تأیید</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((r) => (
-                <tr key={r.id} className="border-t align-top">
-                  <td className="p-3 font-medium">{r.product?.name ?? "—"}</td>
-                  <td className="p-3">{r.user?.full_name ?? "—"}</td>
-                  <td className="p-3 tabular-nums">{r.rating} / ۵</td>
-                  <td className="text-muted-foreground max-w-xs p-3 text-xs">
-                    {r.title ? <strong className="text-foreground">{r.title} — </strong> : null}
-                    {r.body}
-                  </td>
-                  <td className="text-muted-foreground p-3 text-xs whitespace-nowrap">
-                    {new Date(r.created_at).toLocaleDateString("fa-IR")}
-                  </td>
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      disabled={busyId === r.id}
-                      className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ${
-                        r.is_approved
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
-                          : "border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100"
-                      }`}
-                      onClick={() => void toggle(r.id, !r.is_approved)}
-                    >
-                      {r.is_approved ? "تأیید شده" : "در انتظار"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!items.length ? (
-                <tr>
-                  <td colSpan={6} className="text-muted-foreground p-6 text-center">
-                    نظری نیست
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {items.map((r) => (
+            <article
+              key={r.id}
+              className="border-border space-y-3 rounded-xl border p-4 text-sm"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium">{r.product?.name ?? "—"}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {r.user?.full_name ?? "—"} ·{" "}
+                    {new Date(r.created_at).toLocaleDateString("fa-IR")} ·{" "}
+                    {"★".repeat(r.rating)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={busyId === r.id}
+                  className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ${
+                    r.is_approved
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
+                      : "border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100"
+                  }`}
+                  onClick={() => void toggle(r.id, !r.is_approved)}
+                >
+                  {r.is_approved ? "تأیید شده" : "در انتظار"}
+                </button>
+              </div>
+              {r.title ? <p className="font-medium">{r.title}</p> : null}
+              <p className="text-muted-foreground whitespace-pre-wrap">{r.body}</p>
+              <div className="space-y-2 border-t pt-3">
+                <label className="text-xs font-medium">پاسخ فروشگاه</label>
+                <textarea
+                  value={drafts[r.id] ?? ""}
+                  onChange={(e) =>
+                    setDrafts((d) => ({ ...d, [r.id]: e.target.value }))
+                  }
+                  rows={2}
+                  className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
+                  placeholder="پاسخ رسمی (اختیاری)"
+                  dir="rtl"
+                />
+                <button
+                  type="button"
+                  disabled={busyId === r.id}
+                  onClick={() => void saveReply(r.id)}
+                  className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
+                >
+                  ذخیره پاسخ
+                </button>
+              </div>
+            </article>
+          ))}
+          {!items.length ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              نظری نیست
+            </p>
+          ) : null}
         </div>
       )}
     </div>
