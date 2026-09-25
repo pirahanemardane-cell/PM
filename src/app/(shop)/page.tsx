@@ -119,6 +119,7 @@ export default async function HomePage() {
             <CarouselLinks
               title="دسته‌بندی‌ها"
               viewAllHref="/products"
+              variant="category"
               items={categories.map((cat) => ({
                 id: cat.id,
                 label: cat.name,
