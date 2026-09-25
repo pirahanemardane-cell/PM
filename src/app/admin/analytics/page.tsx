@@ -2,17 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { adminDashboardStatsAction } from "@/app/admin/actions/stats";
+import { adminDashboardStatsAction, type AdminDashboardStats } from "@/app/admin/actions/stats";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
-type Stats = {
-  ordersTotal: number;
-  ordersPending: number;
-  productsTotal: number;
-  productsPublished: number;
-  usersTotal: number;
-  discountsActive: number;
-};
+type Stats = AdminDashboardStats;
 
 export default function AdminAnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -43,25 +36,37 @@ export default function AdminAnalyticsPage() {
           label: "کل سفارش‌ها",
           value: stats.ordersTotal,
           href: "/admin/orders",
-          hint: `${stats.ordersPending} در انتظار`,
+          hint: `${stats.ordersPending} در انتظار · ${stats.ordersProcessing} پردازش`,
+        },
+        {
+          label: "فروش (غیرلغو)",
+          value: stats.revenueTotal,
+          href: "/admin/orders",
+          hint: "تومان",
         },
         {
           label: "محصولات",
           value: stats.productsTotal,
           href: "/admin/products",
-          hint: `${stats.productsPublished} منتشر`,
+          hint: `${stats.productsPublished} منتشر · ${stats.lowStockVariants} کم‌موجودی`,
         },
         {
           label: "کاربران",
           value: stats.usersTotal,
           href: "/admin/users",
-          hint: "پروفایل‌ها",
+          hint: `${stats.discountsActive} تخفیف فعال`,
         },
         {
-          label: "تخفیف فعال",
-          value: stats.discountsActive,
-          href: "/admin/discounts",
-          hint: "کدهای فعال",
+          label: "مرجوعی باز",
+          value: stats.returnsOpen,
+          href: "/admin/returns",
+          hint: "نیاز به رسیدگی",
+        },
+        {
+          label: "تیکت باز",
+          value: stats.ticketsOpen,
+          href: "/admin/tickets",
+          hint: "پشتیبانی",
         },
       ]
     : [];
