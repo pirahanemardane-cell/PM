@@ -3,6 +3,8 @@
 import { useNotifications } from "@/lib/notifications/use-notifications";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { cn } from "@/lib/utils";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 export function NotificationsPanel({ onNavigate }: { onNavigate?: () => void }) {
   const { items, loading, unread, markRead, markAll } = useNotifications(true);
@@ -54,7 +56,7 @@ export function NotificationsPanel({ onNavigate }: { onNavigate?: () => void }) 
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <span className="text-sm font-medium">{n.title}</span>
                     <span className="text-muted-foreground shrink-0 text-[10px]">
-                      {new Date(n.created_at).toLocaleDateString("fa-IR")}
+                      {formatJalaliDate(n.created_at)}
                     </span>
                   </div>
                   {n.body ? (

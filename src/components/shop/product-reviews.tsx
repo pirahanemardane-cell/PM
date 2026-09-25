@@ -6,6 +6,8 @@ import {
   listProductReviewsAction,
 } from "@/app/(shop)/actions/reviews";
 import { ComposerInput } from "@/components/ui/composer-input";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Review = {
   id: string;
@@ -72,7 +74,7 @@ export function ProductReviews({ productId }: { productId: string }) {
               </span>
               <span className="text-amber-600">{"★".repeat(r.rating)}</span>
               <time className="text-muted-foreground text-xs">
-                {new Date(r.created_at).toLocaleDateString("fa-IR")}
+                {formatJalaliDate(r.created_at)}
               </time>
             </div>
             {r.title ? <p className="font-medium">{r.title}</p> : null}

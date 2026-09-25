@@ -6,6 +6,8 @@ import { Bell } from "lucide-react";
 import { useNotifications } from "@/lib/notifications/use-notifications";
 import { cn } from "@/lib/utils";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+
 
 type Props = {
   className?: string;
@@ -124,7 +126,7 @@ export function NotificationBell({ className, variant = "header" }: Props) {
                           {n.title}
                         </span>
                         <span className="text-muted-foreground shrink-0 text-[10px]">
-                          {new Date(n.created_at).toLocaleDateString("fa-IR")}
+                          {formatJalaliDate(n.created_at)}
                         </span>
                       </div>
                       {n.body ? (
