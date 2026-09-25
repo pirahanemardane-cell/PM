@@ -32,14 +32,24 @@ export default async function HomePage() {
   const categoryService = new CategoryService();
   const brandService = new BrandService();
 
-  const [featuredResult, newResult, bestsellerResult, categoriesResult, brandsResult] =
-    await Promise.all([
-      productService.getPublishedProducts({ page: 1, pageSize: 8, featured: true }),
-      productService.getPublishedProducts({ page: 1, pageSize: 8, sort: "newest" }),
-      productService.getPublishedProducts({ page: 1, pageSize: 12, bestseller: true }),
-      categoryService.getRoots(),
-      brandService.getActive(),
-    ]);
+  const settled = await Promise.allSettled([
+    productService.getPublishedProducts({ page: 1, pageSize: 8, featured: true }),
+    productService.getPublishedProducts({ page: 1, pageSize: 8, sort: "newest" }),
+    productService.getPublishedProducts({ page: 1, pageSize: 12, bestseller: true }),
+    categoryService.getRoots(),
+    brandService.getActive(),
+  ]);
+  const pick = <T,>(i: number, fallback: T): T => {
+    const s = settled[i];
+    if (s.status === "fulfilled") return s.value as T;
+    console.error("[home] section failed", i, s.reason);
+    return fallback;
+  };
+  const featuredResult = pick(0, { success: false as const, data: null });
+  const newResult = pick(1, { success: false as const, data: null });
+  const bestsellerResult = pick(2, { success: false as const, data: null });
+  const categoriesResult = pick(3, { success: false as const, data: null });
+  const brandsResult = pick(4, { success: false as const, data: null });
 
   const featured: ProductWithRelations[] =
     featuredResult.success && featuredResult.data
