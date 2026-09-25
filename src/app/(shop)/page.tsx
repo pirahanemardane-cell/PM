@@ -15,8 +15,8 @@ import { OrderTrackBox } from "@/components/home/order-track-box";
 import { HeroScroll } from "@/components/home/hero-scroll";
 import { HomeAfterHero } from "@/components/home/home-after-hero";
 import { RecentlyViewed } from "@/components/home/recently-viewed";
-import { CarouselCards, CarouselLinks } from "@/components/ui/carousel-cards";
-import { productToCarouselCardItem } from "@/lib/product-to-carousel-item";
+import { CarouselLinks } from "@/components/ui/carousel-cards";
+import { ProductCarousel } from "@/components/ui/product-carousel";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 
 export const dynamic = "force-dynamic";
@@ -76,31 +76,11 @@ export default async function HomePage() {
   const deals = flashActive ? featured : [];
 
   const features = [
-    {
-      title: "ضمانت کالا",
-      desc: "کالای با کیفیت",
-      icon: ShieldCheck,
-    },
-    {
-      title: "ارسال سریع",
-      desc: "ارسال به سراسر کشور",
-      icon: Truck,
-    },
-    {
-      title: "۷ روز بازگشت",
-      desc: "مرجوعی آسان طبق شرایط",
-      icon: RotateCcw,
-    },
-    {
-      title: "پشتیبانی",
-      desc: "همراه شما قبل و بعد خرید",
-      icon: Headphones,
-    },
+    { title: "ضمانت کالا", desc: "کالای با کیفیت", icon: ShieldCheck },
+    { title: "ارسال سریع", desc: "ارسال به سراسر کشور", icon: Truck },
+    { title: "۷ روز بازگشت", desc: "مرجوعی آسان طبق شرایط", icon: RotateCcw },
+    { title: "پشتیبانی", desc: "همراه شما قبل و بعد خرید", icon: Headphones },
   ];
-
-  const newestItems = newest.map(productToCarouselCardItem);
-  const dealItems = deals.map(productToCarouselCardItem);
-  const bestsellerItems = bestsellers.map(productToCarouselCardItem);
 
   return (
     <>
@@ -147,11 +127,11 @@ export default async function HomePage() {
             />
           ) : null}
 
-          {newestItems.length > 0 ? (
-            <CarouselCards
+          {newest.length > 0 ? (
+            <ProductCarousel
               title="محصولات جدید"
               viewAllHref="/products?sort=newest"
-              items={newestItems}
+              products={newest}
             />
           ) : (
             <section aria-label="محصولات جدید">
@@ -165,11 +145,11 @@ export default async function HomePage() {
           )}
 
           <section aria-label="پیشنهاد شگفت‌انگیز">
-            {flashActive && (dealItems.length > 0 || flashEndsAt) ? (
-              <CarouselCards
+            {flashActive && (deals.length > 0 || flashEndsAt) ? (
+              <ProductCarousel
                 title="پیشنهاد شگفت‌انگیز"
                 viewAllHref="/products?featured=1"
-                items={dealItems}
+                products={deals}
                 leading={
                   flashEndsAt ? (
                     <FlashSalePromoCard endsAt={flashEndsAt} />
@@ -188,11 +168,11 @@ export default async function HomePage() {
             )}
           </section>
 
-          {bestsellerItems.length > 0 ? (
-            <CarouselCards
+          {bestsellers.length > 0 ? (
+            <ProductCarousel
               title="پرفروش‌ترین‌ها"
               viewAllHref="/products?sort=popular"
-              items={bestsellerItems}
+              products={bestsellers}
             />
           ) : (
             <section aria-label="پرفروش‌ترین‌ها">
