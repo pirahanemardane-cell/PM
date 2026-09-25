@@ -576,31 +576,22 @@ export type Database = {
           id: string; user_id: string; status: string; total_amount: number;
           shipping_name: string | null; shipping_phone: string | null;
           shipping_address: string | null; shipping_city: string | null;
-          shipping_postal: string | null; note: string | null;
+          shipping_postal: string | null; note: string | null; discount_code: string | null; discount_amount: number | null; paid_at: string | null;
           created_at: string; updated_at: string;
-          discount_code: string | null;
-          discount_amount: number | null;
-          paid_at: string | null;
         };
         Insert: {
           id?: string; user_id: string; status?: string; total_amount?: number;
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
-          shipping_postal?: string | null; note?: string | null;
+          shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
           created_at?: string; updated_at?: string;
-          discount_code?: string | null;
-          discount_amount?: number | null;
-          paid_at?: string | null;
         };
         Update: {
           id?: string; user_id?: string; status?: string; total_amount?: number;
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
-          shipping_postal?: string | null; note?: string | null;
+          shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
           created_at?: string; updated_at?: string;
-          discount_code?: string | null;
-          discount_amount?: number | null;
-          paid_at?: string | null;
         };
         Relationships: [];
       };
@@ -701,32 +692,22 @@ export type Database = {
         Relationships: [];
       };
       support_tickets: {
-        Row: { id: string; user_id: string; subject: string; status: string; created_at: string; updated_at: string; };
-        Insert: { id?: string; user_id: string; subject: string; status?: string; created_at?: string; updated_at?: string; };
-        Update: { id?: string; user_id?: string; subject?: string; status?: string; created_at?: string; updated_at?: string; };
-        Relationships: []
-          priority: string | null;
-          category: string | null;
-          priority?: string | null;
-          category?: string | null;;
+        Row: { id: string; user_id: string; subject: string; status: string; priority: string | null; category: string | null; created_at: string; updated_at: string; };
+        Insert: { id?: string; user_id: string; subject: string; status?: string; priority?: string | null; category?: string | null; created_at?: string; updated_at?: string; };
+        Update: { id?: string; user_id?: string; subject?: string; status?: string; priority?: string | null; category?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [];
       };
       support_ticket_messages: {
-        Row: { id: string; ticket_id: string; user_id: string | null; body: string; is_staff: boolean; created_at: string; };
-        Insert: { id?: string; ticket_id: string; user_id?: string | null; body: string; is_staff?: boolean; created_at?: string; };
-        Update: { id?: string; ticket_id?: string; user_id?: string | null; body?: string; is_staff?: boolean; created_at?: string; };
-        Relationships: []
-          sender_id: string | null;
-          sender_id?: string | null;;
+        Row: { id: string; ticket_id: string; user_id: string | null; sender_id: string | null; body: string; is_staff: boolean; created_at: string; };
+        Insert: { id?: string; ticket_id: string; user_id?: string | null; sender_id?: string | null; body: string; is_staff?: boolean; created_at?: string; };
+        Update: { id?: string; ticket_id?: string; user_id?: string | null; sender_id?: string | null; body?: string; is_staff?: boolean; created_at?: string; };
+        Relationships: [];
       };
       return_requests: {
-        Row: { id: string; user_id: string; order_id: string | null; status: string; reason: string | null; created_at: string; updated_at: string; };
-        Insert: { id?: string; user_id: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
-        Update: { id?: string; user_id?: string; order_id?: string | null; status?: string; reason?: string | null; created_at?: string; updated_at?: string; };
-        Relationships: []
-          admin_note: string | null;
-          order_item_id: string | null;
-          admin_note?: string | null;
-          order_item_id?: string | null;;
+        Row: { id: string; user_id: string; order_id: string | null; order_item_id: string | null; status: string; reason: string | null; admin_note: string | null; created_at: string; updated_at: string; };
+        Insert: { id?: string; user_id: string; order_id?: string | null; order_item_id?: string | null; status?: string; reason?: string | null; admin_note?: string | null; created_at?: string; updated_at?: string; };
+        Update: { id?: string; user_id?: string; order_id?: string | null; order_item_id?: string | null; status?: string; reason?: string | null; admin_note?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [];
       };
       addresses: {
         Row: {
