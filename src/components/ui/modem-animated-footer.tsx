@@ -40,17 +40,17 @@ export function Footer({
 }: FooterProps) {
   return (
     <section className={cn("relative mt-0 w-full overflow-hidden", className)}>
-      <footer className="border-t bg-background relative mt-20">
-        <div className="relative mx-auto flex min-h-[26rem] w-full max-w-7xl flex-col justify-between p-4 py-8 sm:min-h-[28rem] md:min-h-[30rem] md:py-10">
+      <footer className="border-t bg-background relative mt-20 overflow-hidden">
+        <div className="relative mx-auto flex min-h-[22rem] w-full max-w-7xl flex-col justify-between p-4 py-8 sm:min-h-[26rem] md:min-h-[30rem] md:py-10">
           <div className="mb-8 flex w-full flex-col sm:mb-10 md:mb-6">
             <div className="flex w-full flex-col items-center">
-              <div className="flex flex-1 flex-col items-center space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-primary whitespace-nowrap text-6xl font-black tracking-tight">
+              <div className="flex w-full max-w-full flex-1 flex-col items-center space-y-2 px-2">
+                <div className="flex max-w-full items-center justify-center gap-2">
+                  <span className="text-primary text-center text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                     {brandName}
                   </span>
                 </div>
-                <p className="text-muted-foreground max-w-4xl px-4 text-center text-sm font-semibold whitespace-nowrap sm:text-base">
+                <p className="text-muted-foreground max-w-xl px-2 text-center text-xs font-semibold leading-relaxed sm:max-w-2xl sm:text-sm md:text-base">
                   {brandDescription}
                 </p>
               </div>
@@ -75,7 +75,7 @@ export function Footer({
               )}
 
               {navLinks.length > 0 && (
-                <div className="text-muted-foreground relative z-20 mx-auto grid w-full max-w-4xl grid-cols-4 gap-x-2 gap-y-2.5 px-4 pb-10 text-center text-xs font-medium sm:text-sm md:flex md:flex-wrap md:justify-center md:gap-x-5 md:gap-y-0 md:pb-36 md:text-sm">
+                <div className="text-muted-foreground relative z-20 mx-auto grid w-full max-w-4xl grid-cols-2 gap-x-2 gap-y-2.5 px-4 pb-10 text-center text-xs font-medium sm:grid-cols-4 sm:text-sm md:flex md:flex-wrap md:justify-center md:gap-x-5 md:gap-y-0 md:pb-36 md:text-sm">
                   {navLinks.map((link, index) => (
                     <Link
                       key={index}
@@ -91,25 +91,25 @@ export function Footer({
           </div>
         </div>
 
-        {/* Large background text */}
         <div
-          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-8 left-1/2 z-0 sm:bottom-8 md:bottom-0 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-0"
-          style={{ fontSize: "clamp(2.75rem, 12vw, 9.5rem)" }}
+          className="text-primary/35 pointer-events-none absolute bottom-6 left-1/2 z-0 w-[min(100%,100vw)] max-w-full -translate-x-1/2 overflow-hidden px-2 text-center leading-none font-extrabold tracking-tighter select-none sm:bottom-8 md:bottom-0"
+          style={{
+            fontSize: "clamp(1.35rem, 7.5vw, 7.5rem)",
+            whiteSpace: "nowrap",
+          }}
+          aria-hidden
         >
           {watermarkName}
         </div>
 
-        {/* Logo frame: border kept, NO fill background on inner */}
-        <div className="absolute bottom-12 left-1/2 z-10 md:bottom-10 flex -translate-x-1/2 items-center justify-center md:bottom-20">
-          <div
-            className="border-border/60 bg-background/70 backdrop-blur-md flex h-14 w-14 items-center justify-center rounded-2xl border p-2 shadow-sm transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
-          >
+        <div className="absolute bottom-10 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center sm:bottom-12 md:bottom-20">
+          <div className="border-border/60 bg-background/70 backdrop-blur-md flex h-12 w-12 items-center justify-center rounded-2xl border p-1.5 shadow-sm transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-16 sm:w-16 sm:p-2 md:h-24 md:w-24">
             {brandIcon}
           </div>
         </div>
 
-        <div className="pointer-events-none absolute bottom-22 left-1/2 h-px w-[min(100%,42rem)] -translate-x-1/2 bg-gradient-to-r from-transparent from-0% via-primary/70 via-50% to-transparent to-100% sm:bottom-24 md:bottom-34" />
-        <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
+        <div className="pointer-events-none absolute bottom-18 left-1/2 h-px w-[min(100%,42rem)] -translate-x-1/2 bg-gradient-to-r from-transparent from-0% via-primary/70 via-50% to-transparent to-100% sm:bottom-22 md:bottom-34" />
+        <div className="from-background via-background/80 to-background/40 absolute bottom-24 h-20 w-full bg-gradient-to-t blur-[1em] sm:bottom-28 sm:h-24" />
       </footer>
     </section>
   );
