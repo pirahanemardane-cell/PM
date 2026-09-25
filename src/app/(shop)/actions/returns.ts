@@ -47,15 +47,33 @@ export async function createReturnAction(input: {
 
     const supabase = await createClient();
 
-    // سفارش باید مال همین کاربر باشد (نام جدول orders)
+    // سفارش باید مال همین کاربر باشد + وضعیت قابل مرجوعی
     const { data: order, error: oErr } = await supabase
       .from("orders")
-      .select("id")
+      .select("id, status, created_at")
       .eq("id", input.orderId)
       .eq("user_id", user.id)
       .maybeSingle();
     if (oErr) console.error("[createReturn order check]", oErr);
     if (!order) return { ok: false as const, error: "order_not_found" };
+
+    const allowed = new Set(["delivered", "shipped"]);
+    if (!allowed.has(String(order.status))) {
+      return { ok: false as const, error: "order_not_eligible" };
+    }
+
+    // جلوگیری از درخواست باز تکراری روی همان سفارش
+    const { data: existing } = await supabase
+      .from("return_requests")
+      .select("id, status")
+      .eq("order_id", input.orderId)
+      .eq("user_id", user.id)
+      .in("status", ["pending", "approved", "received"])
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      return { ok: false as const, error: "return_already_open" };
+    }
 
     const { data, error } = await supabase
       .from("return_requests")
