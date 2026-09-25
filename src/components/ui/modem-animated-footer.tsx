@@ -100,7 +100,7 @@ export function Footer({
         </div>
 
         {/* Logo + side borders: one flex row → always vertically/horizontally centered on the line */}
-        <div className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20">
+        <div className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20">
           <div className="h-px min-w-0 flex-1 bg-gradient-to-r from-transparent to-primary/70" />
           <div
             className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
