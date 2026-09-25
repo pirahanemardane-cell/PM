@@ -168,13 +168,20 @@ export function CarouselLinks({
   title,
   viewAllHref,
   className,
+  variant = "brand",
 }: {
   items: CarouselLinkItem[];
   title?: string;
   viewAllHref?: string;
   className?: string;
+  variant?: "brand" | "category";
 }) {
   if (!items?.length) return null;
+
+  const chip =
+    variant === "category"
+      ? "hover:border-foreground/20 flex h-24 w-40 shrink-0 items-center justify-center rounded-2xl border p-4 text-center text-sm font-medium transition-colors hover:bg-muted/40"
+      : "bg-muted/40 hover:border-foreground/20 flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60";
 
   return (
     <section className={cn("w-full", className)}>
@@ -195,28 +202,21 @@ export function CarouselLinks({
           ) : null}
         </div>
       )}
-      <div className="relative px-10 md:px-12">
+
+      <div className="-mx-4">
         <Carousel
-          opts={{ align: "start", loop: false, direction: "rtl" }}
+          opts={{ align: "start", loop: false, direction: "rtl", dragFree: true }}
           className="w-full"
         >
-          <CarouselContent className="-mr-3">
+          <CarouselContent className="-mr-4 ml-0 px-4">
             {items.map((item) => (
-              <CarouselItem
-                key={item.id}
-                className="basis-[42%] pr-3 sm:basis-[30%] md:basis-1/4 lg:basis-1/6"
-              >
-                <Link
-                  href={item.href}
-                  className="bg-muted/40 hover:border-foreground/20 flex h-20 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60"
-                >
+              <CarouselItem key={item.id} className="basis-auto pr-4">
+                <Link href={item.href} className={chip}>
                   {item.label}
                 </Link>
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="right-0 left-auto" />
-          <CarouselNext className="left-0 right-auto" />
         </Carousel>
       </div>
     </section>
