@@ -99,16 +99,16 @@ export function Footer({
           {watermarkName}
         </div>
 
-        {/* Logo frame: border kept, NO fill background on inner */}
-        <div className="absolute bottom-12 left-1/2 z-10 md:bottom-10 flex -translate-x-1/2 items-center justify-center md:bottom-20">
+        {/* Logo + side borders: one flex row → always vertically/horizontally centered on the line */}
+        <div className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20">
+          <div className="h-px min-w-0 flex-1 bg-gradient-to-r from-transparent to-primary/70" />
           <div
-            className="border-border/60 bg-background/70 backdrop-blur-md flex h-14 w-14 items-center justify-center rounded-2xl border p-2 shadow-sm transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
+            className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
           >
             {brandIcon}
           </div>
+          <div className="h-px min-w-0 flex-1 bg-gradient-to-l from-transparent to-primary/70" />
         </div>
-
-        <div className="pointer-events-none absolute bottom-22 left-1/2 h-px w-[min(100%,42rem)] -translate-x-1/2 bg-gradient-to-r from-transparent from-0% via-primary/70 via-50% to-transparent to-100% sm:bottom-24 md:bottom-34" />
         <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
       </footer>
     </section>
