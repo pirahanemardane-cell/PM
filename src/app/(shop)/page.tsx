@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   ShieldCheck,
   Truck,
@@ -9,14 +8,19 @@ import {
 import { ProductService } from "@/services/product.service";
 import { CategoryService } from "@/services/category.service";
 import { BrandService } from "@/services/brand.service";
-import { ProductCard } from "@/components/product/product-card";
 import { FlashSalePromoCard } from "@/components/home/flash-sale-promo-card";
 import { getFlashSaleEndsAtAction } from "@/app/admin/actions/flash-sale";
-import { toPersianDigits } from "@/lib/numbers";
 import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
-import { HeroScroll } from "@/components/home/hero-scroll"
+import { HeroScroll } from "@/components/home/hero-scroll";
 import { HomeAfterHero } from "@/components/home/home-after-hero";
+import { RecentlyViewed } from "@/components/home/recently-viewed";
+import {
+  CarouselCards,
+  CarouselLinks,
+  productToCarouselCardItem,
+} from "@/components/ui/carousel-cards";
+import type { ProductWithRelations } from "@/repositories/product.repository";
 
 export const dynamic = "force-dynamic";
 
@@ -25,36 +29,6 @@ export const metadata: Metadata = {
   description:
     "خرید پیراهن مردانه، کروات، پاپیون و اکسسوری از فروشگاه تخصصی پیراهن مردانه",
 };
-
-function SectionHeader({
-  title,
-  href,
-}: {
-  title: string;
-  href?: string;
-}) {
-  return (
-    <div className="mb-5 flex items-end justify-between gap-4">
-      <h2 className="text-xl font-bold md:text-2xl text-primary">{title}</h2>
-      {href ? (
-        <Link
-          href={href}
-          className=" hover:text-foreground text-sm"
-        >
-          مشاهده همه
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
-function HorizontalRail({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {children}
-    </div>
-  );
-}
 
 export default async function HomePage() {
   const productService = new ProductService();
@@ -70,12 +44,14 @@ export default async function HomePage() {
       brandService.getActive(),
     ]);
 
-  const featured =
+  const featured: ProductWithRelations[] =
     featuredResult.success && featuredResult.data
-      ? featuredResult.data.data
+      ? (featuredResult.data.data as ProductWithRelations[])
       : [];
-  const newest =
-    newResult.success && newResult.data ? newResult.data.data : [];
+  const newest: ProductWithRelations[] =
+    newResult.success && newResult.data
+      ? (newResult.data.data as ProductWithRelations[])
+      : [];
   const categories =
     categoriesResult.success && categoriesResult.data
       ? categoriesResult.data
@@ -83,26 +59,23 @@ export default async function HomePage() {
   const brands =
     brandsResult.success && brandsResult.data ? brandsResult.data : [];
 
-  // پرفروش‌ها از فلگ is_bestseller — اگر خالی بود newest
-  const bestsellersRaw =
+  const bestsellersRaw: ProductWithRelations[] =
     bestsellerResult.success && bestsellerResult.data
-      ? bestsellerResult.data.data
+      ? (bestsellerResult.data.data as ProductWithRelations[])
       : [];
   const bestsellers =
     bestsellersRaw.length > 0
       ? bestsellersRaw
-      : (newest as Array<{ is_bestseller?: boolean }>).filter((p) => p.is_bestseller)
-          .length
-        ? (newest as Array<{ is_bestseller?: boolean }>).filter((p) => p.is_bestseller)
+      : newest.filter((p) => p.is_bestseller).length
+        ? newest.filter((p) => p.is_bestseller)
         : newest;
+
   const flashRes = await getFlashSaleEndsAtAction();
   const flashEndsAt = flashRes.ok ? flashRes.endsAt : null;
-  // فقط وقتی زمان پایان در آینده است، فروش ویژه فعال است
   const flashActive =
     Boolean(flashEndsAt) &&
     !Number.isNaN(new Date(flashEndsAt as string).getTime()) &&
     new Date(flashEndsAt as string).getTime() > Date.now();
-  // پیشنهاد شگفت‌انگیز = فقط محصولات is_featured (بدون fallback به newest)
   const deals = flashActive ? featured : [];
 
   const features = [
@@ -128,119 +101,120 @@ export default async function HomePage() {
     },
   ];
 
+  const newestItems = newest.map(productToCarouselCardItem);
+  const dealItems = deals.map(productToCarouselCardItem);
+  const bestsellerItems = bestsellers.map(productToCarouselCardItem);
+
   return (
     <>
       <HeroScroll />
       <HomeAfterHero>
-      <main className="w-full max-w-none mx-auto space-y-14 px-4 py-10 md:py-14">
-      {/* 1. Feature */}
-      <section aria-label="اعتماد" className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        {features.map((f) => (
-          <div
-            key={f.title}
-            className="bg-card flex flex-col gap-2 rounded-2xl border p-4"
+        <main className="mx-auto w-full max-w-none space-y-14 px-4 py-10 md:py-14">
+          <section
+            aria-label="اعتماد"
+            className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4"
           >
-            <f.icon className="text-primary size-6" />
-            <h3 className="text-sm font-semibold text-primary">{f.title}</h3>
-            <p className="text-muted-foreground text-xs leading-6">{f.desc}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* 2. Brands */}
-      {brands.length > 0 ? (
-        <section aria-label="برندها">
-          <SectionHeader title="برندها" href="/brands" />
-          <HorizontalRail>
-            {brands.map((b) => (
-              <Link
-                key={b.id}
-                href={`/brands/${b.slug}`}
-                className="bg-muted/40 hover:border-foreground/20 flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60"
+            {features.map((f) => (
+              <div
+                key={f.title}
+                className="bg-card flex flex-col gap-2 rounded-2xl border p-4"
               >
-                {b.name}
-              </Link>
-            ))}
-          </HorizontalRail>
-        </section>
-      ) : null}
-
-      {/* 3. Categories */}
-      {categories.length > 0 && (
-        <section aria-label="دسته‌بندی‌ها">
-          <SectionHeader title="دسته‌بندی‌ها" href="/products" />
-          <HorizontalRail>
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/categories/${cat.slug}`}
-                className="hover:border-foreground/20 flex h-24 w-40 shrink-0 items-center justify-center rounded-2xl border p-4 text-center text-sm font-medium transition-colors hover:bg-muted/40"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </HorizontalRail>
-        </section>
-      )}
-
-      {/* 4. Newest */}
-      <section aria-label="محصولات جدید">
-        <SectionHeader title="محصولات جدید" href="/products?sort=newest" />
-        {newest.length > 0 ? (
-          <HorizontalRail>
-            {newest.map((product) => (
-              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
-                <ProductCard product={product} />
+                <f.icon className="text-primary size-6" />
+                <h3 className="text-sm font-semibold text-primary">{f.title}</h3>
+                <p className="text-muted-foreground text-xs leading-6">{f.desc}</p>
               </div>
             ))}
-          </HorizontalRail>
-        ) : (
-          <p className="text-muted-foreground text-sm">فعلاً محصول جدیدی موجود نیست.</p>
-        )}
-      </section>
+          </section>
 
-      {/* 5. Deals */}
-      <section aria-label="پیشنهاد شگفت‌انگیز">
-        <SectionHeader title="پیشنهاد شگفت‌انگیز" href="/products?featured=1" />
-        {flashActive ? (
-          <HorizontalRail>
-            <div className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
-              <FlashSalePromoCard endsAt={flashEndsAt} />
-            </div>
-            {deals.map((product) => (
-              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </HorizontalRail>
-        ) : (
-          <p className="text-muted-foreground text-sm">پیشنهاد شگفت‌انگیزی فعلاً فعال نیست.</p>
-        )}
-      </section>
+          {brands.length > 0 ? (
+            <CarouselLinks
+              title="برندها"
+              viewAllHref="/brands"
+              items={brands.map((b) => ({
+                id: b.id,
+                label: b.name,
+                href: `/brands/${b.slug}`,
+              }))}
+            />
+          ) : null}
 
-      {/* 6. Bestsellers */}
-      <section aria-label="پرفروش‌ترین‌ها">
-        <SectionHeader title="پرفروش‌ترین‌ها" href="/products?sort=popular" />
-        {bestsellers.length > 0 ? (
-          <HorizontalRail>
-            {bestsellers.map((product) => (
-              <div key={product.id} className="w-[min(100%,240px)] shrink-0 sm:w-[220px] lg:w-[calc((100%-2.25rem)/3.5)]">
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </HorizontalRail>
-        ) : (
-          <p className="text-muted-foreground text-sm">پرفروش‌ترین‌ها فعلاً خالی است.</p>
-        )}
-      </section>
+          {categories.length > 0 ? (
+            <CarouselLinks
+              title="دسته‌بندی‌ها"
+              viewAllHref="/products"
+              items={categories.map((cat) => ({
+                id: cat.id,
+                label: cat.name,
+                href: `/categories/${cat.slug}`,
+              }))}
+            />
+          ) : null}
 
+          {newestItems.length > 0 ? (
+            <CarouselCards
+              title="محصولات جدید"
+              viewAllHref="/products?sort=newest"
+              items={newestItems}
+            />
+          ) : (
+            <section aria-label="محصولات جدید">
+              <h2 className="mb-5 text-xl font-bold text-primary md:text-2xl">
+                محصولات جدید
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                فعلاً محصول جدیدی موجود نیست.
+              </p>
+            </section>
+          )}
 
-      {/* 8 + 9 */}
-      <section className="grid gap-6 md:grid-cols-2">
-        <NewsletterSmsBox />
-        <OrderTrackBox />
-      </section>
-    </main>
+          <section aria-label="پیشنهاد شگفت‌انگیز">
+            {flashActive && (dealItems.length > 0 || flashEndsAt) ? (
+              <CarouselCards
+                title="پیشنهاد شگفت‌انگیز"
+                viewAllHref="/products?featured=1"
+                items={dealItems}
+                leading={
+                  flashEndsAt ? (
+                    <FlashSalePromoCard endsAt={flashEndsAt} />
+                  ) : null
+                }
+              />
+            ) : (
+              <>
+                <h2 className="mb-5 text-xl font-bold text-primary md:text-2xl">
+                  پیشنهاد شگفت‌انگیز
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  پیشنهاد شگفت‌انگیزی فعلاً فعال نیست.
+                </p>
+              </>
+            )}
+          </section>
+
+          {bestsellerItems.length > 0 ? (
+            <CarouselCards
+              title="پرفروش‌ترین‌ها"
+              viewAllHref="/products?sort=popular"
+              items={bestsellerItems}
+            />
+          ) : (
+            <section aria-label="پرفروش‌ترین‌ها">
+              <h2 className="mb-5 text-xl font-bold text-primary md:text-2xl">
+                پرفروش‌ترین‌ها
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                پرفروش‌ترین‌ها فعلاً خالی است.
+              </p>
+            </section>
+          )}
+
+          <RecentlyViewed />
+
+          <section className="grid gap-6 md:grid-cols-2">
+            <NewsletterSmsBox />
+            <OrderTrackBox />
+          </section>
+        </main>
       </HomeAfterHero>
     </>
   );

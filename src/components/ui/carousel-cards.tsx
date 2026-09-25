@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * کاروسل اجباری فروشگاه — RTL + Embla (shadcn Carousel)
+ * همه کاروسل‌های محصول فقط از این کامپوننت استفاده کنند.
+ */
+
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +20,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import type { ProductWithRelations } from "@/repositories/product.repository";
 
 export type CarouselCardItem = {
   id: string;
@@ -35,33 +41,98 @@ export type CarouselCardItem = {
 type CarouselCardsProps = {
   items: CarouselCardItem[];
   title?: string;
+  viewAllHref?: string;
   className?: string;
   slidesToShow?: number;
+  leading?: React.ReactNode;
 };
+
+const FALLBACK_IMAGE = "/og-image.webp";
 
 function formatPrice(price: number) {
   return toPersianDigits(price.toLocaleString("en-US")) + " تومان";
 }
 
+export function productToCarouselCardItem(
+  product: ProductWithRelations,
+): CarouselCardItem {
+  const images = (product.images ?? [])
+    .slice()
+    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
+  const imageUrl = images[0]?.url || FALLBACK_IMAGE;
+
+  const variants = (product.variants ?? []).filter((v) => v.is_active);
+  const prices = variants
+    .map((v) => Number(v.price))
+    .filter((n) => !Number.isNaN(n));
+  const price = prices.length ? Math.min(...prices) : 0;
+
+  const originals = variants
+    .map((v) => Number(v.original_price))
+    .filter((n) => !Number.isNaN(n) && n > 0);
+  const originalPrice = originals.length ? Math.max(...originals) : undefined;
+
+  let discountPercent: number | undefined;
+  if (originalPrice && originalPrice > price && price > 0) {
+    discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
+  }
+
+  const inStock = variants.some((v) => Number(v.stock_quantity ?? 0) > 0);
+
+  let badge: string | undefined;
+  if (product.is_new) badge = "جدید";
+  else if (product.is_bestseller) badge = "پرفروش";
+  else if (product.is_featured) badge = "ویژه";
+
+  return {
+    id: product.id,
+    title: product.name,
+    brand: product.brand?.name,
+    href: `/products/${product.slug}`,
+    imageUrl,
+    imageAlt: images[0]?.alt_text || product.name,
+    price,
+    originalPrice:
+      originalPrice && originalPrice > price ? originalPrice : undefined,
+    discountPercent,
+    badge,
+    inStock: variants.length ? inStock : true,
+  };
+}
+
 export function CarouselCards({
   items,
   title,
+  viewAllHref,
   className,
   slidesToShow = 4,
+  leading,
 }: CarouselCardsProps) {
-  if (!items?.length) return null;
+  if (!items?.length && !leading) return null;
 
   return (
     <section className={cn("w-full", className)}>
-      {title && (
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight md:text-2xl text-primary">
-            {title}
-          </h2>
+      {(title || viewAllHref) && (
+        <div className="mb-5 flex items-end justify-between gap-4">
+          {title ? (
+            <h2 className="text-xl font-bold tracking-tight text-primary md:text-2xl">
+              {title}
+            </h2>
+          ) : (
+            <span />
+          )}
+          {viewAllHref ? (
+            <Link
+              href={viewAllHref}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              مشاهده همه
+            </Link>
+          ) : null}
         </div>
       )}
 
-      <div className="relative px-12">
+      <div className="relative px-10 md:px-12">
         <Carousel
           opts={{
             align: "start",
@@ -71,19 +142,34 @@ export function CarouselCards({
           className="w-full"
         >
           <CarouselContent className="-mr-4">
+            {leading ? (
+              <CarouselItem
+                className={cn(
+                  "pr-4",
+                  slidesToShow === 2 && "basis-[85%]",
+                  slidesToShow === 3 && "basis-[70%] md:basis-1/3",
+                  slidesToShow === 4 &&
+                    "basis-[75%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4",
+                )}
+              >
+                {leading}
+              </CarouselItem>
+            ) : null}
+
             {items.map((item) => (
               <CarouselItem
                 key={item.id}
                 className={cn(
                   "pr-4",
                   slidesToShow === 2 && "basis-[85%]",
-                  slidesToShow === 3 && "md:basis-1/3",
-                  slidesToShow === 4 && "sm:basis-[85%] md:basis-1/3 lg:basis-[22.22%]"
+                  slidesToShow === 3 && "basis-[70%] md:basis-1/3",
+                  slidesToShow === 4 &&
+                    "basis-[75%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4",
                 )}
               >
                 <Link
                   href={item.href}
-                  className="group block overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
+                  className="group block h-full overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-md"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-muted">
                     <Image
@@ -91,14 +177,12 @@ export function CarouselCards({
                       alt={item.imageAlt || item.title}
                       fill
                       className="object-contain transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      sizes="(max-width: 640px) 75vw, (max-width: 1024px) 33vw, 25vw"
                     />
                     {item.badge && (
-                      <Badge className="absolute top-3 right-3">
-                        {item.badge}
-                      </Badge>
+                      <Badge className="absolute top-3 right-3">{item.badge}</Badge>
                     )}
-                    {item.discountPercent && item.discountPercent > 0 && (
+                    {item.discountPercent != null && item.discountPercent > 0 && (
                       <Badge
                         variant="destructive"
                         className="absolute top-3 left-3"
@@ -110,9 +194,7 @@ export function CarouselCards({
 
                   <div className="space-y-1.5 p-3">
                     {item.brand && (
-                      <p className="text-xs text-muted-foreground">
-                        {item.brand}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{item.brand}</p>
                     )}
                     <h3 className="line-clamp-2 text-sm font-medium leading-snug text-primary">
                       {item.title}
@@ -129,10 +211,8 @@ export function CarouselCards({
                     )}
 
                     <div className="flex flex-wrap items-baseline gap-2 pt-1">
-                      <span className="font-bold">
-                        {formatPrice(item.price)}
-                      </span>
-                      {item.originalPrice &&
+                      <span className="font-bold">{formatPrice(item.price)}</span>
+                      {item.originalPrice != null &&
                         item.originalPrice > item.price && (
                           <span className="text-xs text-muted-foreground line-through">
                             {formatPrice(item.originalPrice)}
@@ -149,6 +229,73 @@ export function CarouselCards({
             ))}
           </CarouselContent>
 
+          <CarouselPrevious className="right-0 left-auto" />
+          <CarouselNext className="left-0 right-auto" />
+        </Carousel>
+      </div>
+    </section>
+  );
+}
+
+export type CarouselLinkItem = {
+  id: string;
+  label: string;
+  href: string;
+};
+
+export function CarouselLinks({
+  items,
+  title,
+  viewAllHref,
+  className,
+}: {
+  items: CarouselLinkItem[];
+  title?: string;
+  viewAllHref?: string;
+  className?: string;
+}) {
+  if (!items?.length) return null;
+
+  return (
+    <section className={cn("w-full", className)}>
+      {(title || viewAllHref) && (
+        <div className="mb-5 flex items-end justify-between gap-4">
+          {title ? (
+            <h2 className="text-xl font-bold text-primary md:text-2xl">{title}</h2>
+          ) : (
+            <span />
+          )}
+          {viewAllHref ? (
+            <Link
+              href={viewAllHref}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              مشاهده همه
+            </Link>
+          ) : null}
+        </div>
+      )}
+
+      <div className="relative px-10 md:px-12">
+        <Carousel
+          opts={{ align: "start", loop: false, direction: "rtl" }}
+          className="w-full"
+        >
+          <CarouselContent className="-mr-3">
+            {items.map((item) => (
+              <CarouselItem
+                key={item.id}
+                className="basis-[42%] pr-3 sm:basis-[30%] md:basis-1/4 lg:basis-1/6"
+              >
+                <Link
+                  href={item.href}
+                  className="bg-muted/40 hover:border-foreground/20 flex h-20 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60"
+                >
+                  {item.label}
+                </Link>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
           <CarouselPrevious className="right-0 left-auto" />
           <CarouselNext className="left-0 right-auto" />
         </Carousel>
