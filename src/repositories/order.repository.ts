@@ -30,37 +30,33 @@ export class OrderRepository extends BaseRepository {
     const { createServiceClient } = await import("@/lib/supabase/service");
     const service = createServiceClient();
 
-    // 1) بررسی + رزرو موجودی (قبل از ساخت سفارش)
+    // 1) رزرو اتمی موجودی (RPC — بدون TOCTOU)
+    const reserved: { variantId: string; quantity: number }[] = [];
     for (const item of input.items) {
       const qty = Number(item.quantity);
       if (!item.variantId || qty < 1) {
         throw new Error("invalid_item");
       }
-      const { data: variant, error: vErr } = await service
-        .from("product_variants")
-        .select("id, stock_quantity, is_active")
-        .eq("id", item.variantId)
-        .maybeSingle();
-      if (vErr) throw vErr;
-      if (!variant || variant.is_active === false) {
-        throw new Error(`unavailable:${item.title || item.variantId}`);
-      }
-      const stock = Number(variant.stock_quantity ?? 0);
-      if (stock < qty) {
+      const { data: ok, error: dErr } = await service.rpc("decrement_variant_stock", {
+        p_variant_id: item.variantId,
+        p_qty: qty,
+      });
+      if (dErr) throw dErr;
+      if (!ok) {
+        // rollback previous reserves
+        for (const r of reserved) {
+          try {
+            await service.rpc("increment_variant_stock", {
+              p_variant_id: r.variantId,
+              p_qty: r.quantity,
+            });
+          } catch (re) {
+            console.error("[createFromCart] reserve rollback", r.variantId, re);
+          }
+        }
         throw new Error(`insufficient_stock:${item.title || item.variantId}`);
       }
-      // update شرطی — جلوگیری از race ساده
-      const { data: updated, error: uErr } = await service
-        .from("product_variants")
-        .update({ stock_quantity: stock - qty })
-        .eq("id", item.variantId)
-        .gte("stock_quantity", qty)
-        .select("id")
-        .maybeSingle();
-      if (uErr) throw uErr;
-      if (!updated) {
-        throw new Error(`insufficient_stock:${item.title || item.variantId}`);
-      }
+      reserved.push({ variantId: item.variantId, quantity: qty });
     }
 
     const total = input.items.reduce(
@@ -96,12 +92,10 @@ export class OrderRepository extends BaseRepository {
             .eq("id", item.variantId)
             .maybeSingle();
           if (v) {
-            await service
-              .from("product_variants")
-              .update({
-                stock_quantity: Number(v.stock_quantity ?? 0) + Number(item.quantity),
-              })
-              .eq("id", item.variantId);
+            await service.rpc("increment_variant_stock", {
+              p_variant_id: item.variantId,
+              p_qty: Number(item.quantity),
+            });
           }
         } catch (re) {
           console.error("[createFromCart] stock rollback", item.variantId, re);
@@ -132,12 +126,10 @@ export class OrderRepository extends BaseRepository {
             .eq("id", item.variantId)
             .maybeSingle();
           if (v) {
-            await service
-              .from("product_variants")
-              .update({
-                stock_quantity: Number(v.stock_quantity ?? 0) + Number(item.quantity),
-              })
-              .eq("id", item.variantId);
+            await service.rpc("increment_variant_stock", {
+              p_variant_id: item.variantId,
+              p_qty: Number(item.quantity),
+            });
           }
         } catch (re) {
           console.error("[createFromCart] stock rollback items", item.variantId, re);
@@ -280,6 +272,35 @@ export class OrderRepository extends BaseRepository {
     const supabase = createServiceClient();
     const allowed = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
     if (!allowed.includes(status)) throw new Error("bad_status");
+
+    // restore stock once when moving into cancelled from a non-cancelled state
+    if (status === "cancelled") {
+      const { data: prev, error: pErr } = await supabase
+        .from("orders")
+        .select("id, status, order_items(variant_id, quantity)")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (prev && prev.status !== "cancelled") {
+        const items = (prev as {
+          order_items?: { variant_id: string | null; quantity: number }[];
+        }).order_items ?? [];
+        for (const it of items) {
+          if (!it.variant_id) continue;
+          const q = Number(it.quantity) || 0;
+          if (q < 1) continue;
+          try {
+            await supabase.rpc("increment_variant_stock", {
+              p_variant_id: it.variant_id,
+              p_qty: q,
+            });
+          } catch (re) {
+            console.error("[updateStatus] stock restore", it.variant_id, re);
+          }
+        }
+      }
+    }
+
     const { error } = await supabase
       .from("orders")
       .update({ status })
