@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";
 import { addToCartAction } from "@/app/(shop)/actions/shop";
+import { subscribeStockAlertAction } from "@/app/(shop)/actions/stock-alerts";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
 import { useRtEvent } from "@/hooks/use-rt-event";
@@ -105,6 +106,9 @@ export function ProductBuyBox({
     if (selectedColor) onColorChange?.(selectedColor);
   }, [selectedColor, onColorChange]);
   const [loading, setLoading] = useState(false);
+  const [alertLoading, setAlertLoading] = useState(false);
+  const [alertDone, setAlertDone] = useState(false);
+  const [guestPhone, setGuestPhone] = useState("");
 
   const match = useMemo(() => {
     return (
@@ -126,6 +130,10 @@ export function ProductBuyBox({
   const price = match?.price;
   const stock = Number(match?.stock ?? 0);
   const outOfStock = stock <= 0;
+
+  useEffect(() => {
+    setAlertDone(false);
+  }, [match?.id, outOfStock]);
 
   function sameColor(a?: string | null, b?: string | null) {
     if (!a || !b) return false;
@@ -304,17 +312,85 @@ export function ProductBuyBox({
         </p>
       </div>
 
-      <button
-        type="button"
-        disabled={loading || outOfStock}
-        onClick={() => void handleAdd()}
-        className={cn(
-          "bg-primary text-primary-foreground w-full rounded-xl py-3 text-sm font-medium hover:bg-primary/90",
-          (loading || outOfStock) && "opacity-60",
-        )}
-      >
-        {outOfStock ? "ناموجود" : loading ? "…" : "افزودن به سبد"}
-      </button>
+      {outOfStock ? (
+        <div className="space-y-2">
+          <input
+            type="tel"
+            inputMode="numeric"
+            placeholder="موبایل برای خبر (اگر وارد نیستید)"
+            value={guestPhone}
+            onChange={(e) => setGuestPhone(e.target.value)}
+            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+            dir="ltr"
+          />
+          <button
+            type="button"
+            disabled={alertLoading || alertDone}
+            onClick={() => {
+              void (async () => {
+                if (sizes.length > 0 && !selectedSize) {
+                  toast.error("سایز را انتخاب کنید");
+                  return;
+                }
+                if (!match?.id) {
+                  toast.error("این ترکیب را انتخاب کنید");
+                  return;
+                }
+                setAlertLoading(true);
+                try {
+                  const res = await subscribeStockAlertAction({
+                    variantId: match.id,
+                    productId,
+                    phone: guestPhone.trim() || undefined,
+                  });
+                  if (!res.ok) {
+                    const map: Record<string, string> = {
+                      auth_or_phone_required: "وارد شوید یا موبایل وارد کنید",
+                      invalid_phone: "شماره موبایل معتبر نیست",
+                      already_in_stock: "الان موجود است — صفحه را تازه کنید",
+                      variant_not_found: "واریانت یافت نشد",
+                    };
+                    toast.error(map[res.error ?? ""] ?? "ثبت نشد");
+                    return;
+                  }
+                  setAlertDone(true);
+                  toast.success(
+                    res.already
+                      ? "قبلاً در لیست انتظار هستید"
+                      : "ثبت شد؛ موجود شد خبرتان می‌کنیم",
+                  );
+                } catch {
+                  toast.error("خطا در ثبت");
+                } finally {
+                  setAlertLoading(false);
+                }
+              })();
+            }}
+            className={cn(
+              "border-primary text-primary w-full rounded-xl border py-3 text-sm font-medium hover:bg-primary/5",
+              (alertLoading || alertDone) && "opacity-60",
+            )}
+          >
+            {alertDone
+              ? "در لیست انتظار هستید"
+              : alertLoading
+                ? "…"
+                : "موجود شد خبرم کن"}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => void handleAdd()}
+          className={cn(
+            "bg-primary text-primary-foreground w-full rounded-xl py-3 text-sm font-medium hover:bg-primary/90",
+            loading && "opacity-60",
+          )}
+        >
+          {loading ? "…" : "افزودن به سبد"}
+        </button>
+      )}
     </div>
   );
 }

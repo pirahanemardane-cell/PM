@@ -449,6 +449,16 @@ export async function adminUpdateProductAction(
           detail: vErr.message,
         };
       }
+      if (Math.max(0, Number(input.stock_quantity ?? 0) || 0) > 0) {
+        try {
+          const { notifyStockAlertsForVariant } = await import(
+            "@/lib/stock-alerts/notify"
+          );
+          await notifyStockAlertsForVariant(variants[0].id as string);
+        } catch (ne) {
+          console.error("[adminUpdateProduct stock alert]", ne);
+        }
+      }
     }
 
     if (input.tag_ids) {

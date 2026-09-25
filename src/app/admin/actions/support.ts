@@ -131,6 +131,14 @@ export async function adminSetReturnStatusAction(
             p_variant_id: vid,
             p_qty: q,
           });
+          try {
+            const { notifyStockAlertsForVariant } = await import(
+              "@/lib/stock-alerts/notify"
+            );
+            await notifyStockAlertsForVariant(vid);
+          } catch (ne) {
+            console.error("[return stock alert]", ne);
+          }
         }
       } catch (re) {
         console.error("[adminSetReturnStatus stock restore]", re);
