@@ -92,7 +92,7 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-              <!-- pm-static-favicons -->
+              {/* pm-static-favicons */}
         <link rel="icon" href="/favicon.ico" sizes="48x48" />
         <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
