@@ -99,39 +99,51 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       console.error("[adminHardDeleteCategories] link", linkErr);
       return { ok: false as const, error: "server" as const, detail: linkErr.message };
     }
-
     const rows = linked ?? [];
-    const isLive = (r: { deleted_at?: string | null; status?: string | null }) => {
+    const live = rows.filter((r: { deleted_at?: string | null; status?: string | null }) => {
       if (r.deleted_at) return false;
       if (r.status && ["archived", "deleted", "trash"].includes(String(r.status))) return false;
       return true;
-    };
-
-    const live = rows.filter(isLive);
+    });
     if (live.length > 0) {
-      return {
-        ok: false as const,
-        error: "has_products" as const,
-        detail: `live=${live.length} total_linked=${rows.length}`,
-      };
+      return { ok: false as const, error: "has_products" as const, detail: `live=${live.length}` };
     }
 
-    if (rows.length > 0) {
-      const { error: upErr } = await gate.supabase
-        .from("products")
-        .update({ category_id: null })
-        .in("category_id", list);
-      if (upErr) {
-        console.error("[adminHardDeleteCategories] detach", upErr);
-        return { ok: false as const, error: "server" as const, detail: upErr.message };
-      }
+    // محصولات آرشیو را کامل حذف کن (FK + NOT NULL)
+    const softIds = rows.map((r: { id: string }) => r.id);
+    if (softIds.length > 0) {
+      await gate.supabase.from("order_items").delete().in(
+        "variant_id",
+        (
+          await gate.supabase
+            .from("product_variants")
+            .select("id")
+            .in("product_id", softIds)
+        ).data?.map((v: { id: string }) => v.id) ?? []
+      );
+      await gate.supabase.from("cart_items").delete().in(
+        "variant_id",
+        (
+          await gate.supabase
+            .from("product_variants")
+            .select("id")
+            .in("product_id", softIds)
+        ).data?.map((v: { id: string }) => v.id) ?? []
+      );
+      await gate.supabase.from("wishlists").delete().in("product_id", softIds);
+      await gate.supabase.from("stock_alerts").delete().in("product_id", softIds);
+      await gate.supabase.from("reviews").delete().in("product_id", softIds);
+      await gate.supabase.from("product_images").delete().in("product_id", softIds);
+      await gate.supabase.from("product_attribute_values").delete().in("product_id", softIds);
+      await gate.supabase.from("product_variants").delete().in("product_id", softIds);
+      await gate.supabase.from("products").delete().in("id", softIds);
     }
 
-    const { count: childCount, error: childErr } = await gate.supabase
+    const { count: childCount } = await gate.supabase
       .from("categories")
       .select("id", { count: "exact", head: true })
       .in("parent_id", list);
-    if (!childErr && (childCount ?? 0) > 0) {
+    if ((childCount ?? 0) > 0) {
       return { ok: false as const, error: "has_children" as const };
     }
 
