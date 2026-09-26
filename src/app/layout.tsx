@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     "پاپیون",
     "دکمه سردست",
   ],
+  appleWebApp: {
+    title: "پیراهن مردانه",
+  },
   icons: {
     icon: [{ url: "/icon.png", type: "image/png" }],
     apple: [{ url: "/apple-touch-icon.png" }],
