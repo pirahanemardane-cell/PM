@@ -1,22 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false as const, error: "auth" as const, supabase };
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", auth.user.id)
-    .maybeSingle();
-  const role = (profile as { role?: string } | null)?.role;
-  if (role !== "admin" && role !== "superadmin") {
-    return { ok: false as const, error: "forbidden" as const, supabase };
-  }
-  return { ok: true as const, userId: auth.user.id, supabase };
-}
+import { requireAdmin } from "@/lib/admin/require-admin";
 
 function cleanIds(ids: string[]): string[] {
   return Array.from(new Set((ids || []).map((x) => String(x || "").trim()).filter(Boolean)));
