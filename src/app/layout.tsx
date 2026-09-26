@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     "پاپیون",
     "دکمه سردست",
   ],
+  manifest: "/site.webmanifest",
   appleWebApp: {
     title: "پیراهن مردانه",
   },
