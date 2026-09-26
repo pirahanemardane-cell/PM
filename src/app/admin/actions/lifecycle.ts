@@ -91,10 +91,9 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    // 1) fetch linked products (id + soft-delete hints)
     const { data: linked, error: linkErr } = await gate.supabase
       .from("products")
-      .select("id, deleted_at, is_published, status")
+      .select("id, deleted_at, status")
       .in("category_id", list);
     if (linkErr) {
       console.error("[adminHardDeleteCategories] link", linkErr);
@@ -102,18 +101,9 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
     }
 
     const rows = linked ?? [];
-    const isLive = (r: {
-      deleted_at?: string | null;
-      is_published?: boolean | null;
-      status?: string | null;
-    }) => {
+    const isLive = (r: { deleted_at?: string | null; status?: string | null }) => {
       if (r.deleted_at) return false;
       if (r.status && ["archived", "deleted", "trash"].includes(String(r.status))) return false;
-      // if is_published explicitly false and no deleted_at, still treat as non-blocking leftover
-      // only block truly "live" published products
-      if (r.is_published === true) return true;
-      if (r.is_published === false) return false;
-      // unknown schema → treat as live to be safe
       return true;
     };
 
@@ -126,7 +116,6 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       };
     }
 
-    // 2) detach ALL leftovers (soft-deleted / unpublished) so FK cannot block
     if (rows.length > 0) {
       const { error: upErr } = await gate.supabase
         .from("products")
@@ -138,7 +127,6 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       }
     }
 
-    // 3) block if child categories
     const { count: childCount, error: childErr } = await gate.supabase
       .from("categories")
       .select("id", { count: "exact", head: true })
@@ -147,7 +135,6 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       return { ok: false as const, error: "has_children" as const };
     }
 
-    // 4) hard delete categories
     const { error } = await gate.supabase.from("categories").delete().in("id", list);
     if (error) {
       console.error("[adminHardDeleteCategories] delete", error);
@@ -191,21 +178,15 @@ export async function adminHardDeleteBrandsAction(ids: string[]) {
   try {
     const { data: linked, error: linkErr } = await gate.supabase
       .from("products")
-      .select("id, deleted_at, is_published, status")
+      .select("id, deleted_at, status")
       .in("brand_id", list);
     if (linkErr) {
       return { ok: false as const, error: "server" as const, detail: linkErr.message };
     }
     const rows = linked ?? [];
-    const isLive = (r: {
-      deleted_at?: string | null;
-      is_published?: boolean | null;
-      status?: string | null;
-    }) => {
+    const isLive = (r: { deleted_at?: string | null; status?: string | null }) => {
       if (r.deleted_at) return false;
       if (r.status && ["archived", "deleted", "trash"].includes(String(r.status))) return false;
-      if (r.is_published === true) return true;
-      if (r.is_published === false) return false;
       return true;
     };
     const live = rows.filter(isLive);
