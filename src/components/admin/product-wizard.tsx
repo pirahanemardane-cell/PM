@@ -25,6 +25,7 @@ import {
   adminListBrandsAction,
 } from "@/app/admin/actions/taxonomy";
 import { adminListProductTagsAction } from "@/app/admin/actions/tags";
+import { adminListSizeGuidesAction } from "@/app/admin/actions/products";
 import { Toolbar } from "@/components/ui/toolbar";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { parseLocaleNumber } from "@/lib/numbers";
@@ -113,19 +114,25 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [cats, setCats] = useState<Opt[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
   const [tags, setTags] = useState<Opt[]>([]);
+  const [guides, setGuides] = useState<Opt[]>([]);
+  const [sizeGuideId, setSizeGuideId] = useState("");
+  const [publishedAt, setPublishedAt] = useState("");
+  const [publishMode, setPublishMode] = useState<"draft" | "now" | "schedule">("draft");
 
   useEffect(() => {
     void (async () => {
-      const [c, b, t, a] = await Promise.all([
+      const [c, b, t, a, g] = await Promise.all([
         adminListCategoriesAction(),
         adminListBrandsAction(),
         adminListProductTagsAction(),
         adminListAttributesAction(),
+        adminListSizeGuidesAction(),
       ]);
       if (c.ok) setCats((c.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
       if (b.ok) setBrands((b.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
       if (t.ok) setTags((t.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
       if (a.ok) setAttrDefs((a.data as AttrWithOptions[]) ?? []);
+      if (g.ok) setGuides((g.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
     })();
   }, []);
 
@@ -134,12 +141,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     void (async () => {
       setLoading(true);
       const res = await adminGetProductAction(initialId);
-      if (!res.ok || !res.data) {
-        setErr(res.error || "محصول یافت نشد");
+      const payload = (res as { data?: unknown; product?: unknown }).data ?? (res as { product?: unknown }).product;
+      if (!res.ok || !payload) {
+        setErr((res as { error?: string }).error || "محصول یافت نشد");
         setLoading(false);
         return;
       }
-      const p = res.data as Record<string, unknown>;
+      const p = payload as Record<string, unknown>;
       setName(String(p.name ?? ""));
       setSlug(String(p.slug ?? ""));
       setSlugTouched(true);
@@ -152,6 +160,19 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setIsNew(p.is_new !== false);
       setIsActive(p.is_active !== false);
       setImageUrl(String(p.image_url ?? ""));
+      setSizeGuideId(String(p.size_guide_id ?? "") || "");
+      {
+        const pa = p.published_at ? String(p.published_at) : "";
+        if (pa) {
+          const d = new Date(pa);
+          if (!Number.isNaN(d.getTime())) {
+            const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            setPublishedAt(local);
+            if (d.getTime() > Date.now()) setPublishMode("schedule");
+            else if ((p.status as string) === "published") setPublishMode("now");
+          }
+        } else if ((p.status as string) === "published") setPublishMode("now");
+      }
       const tagIds = (p.tag_ids as string[]) || [];
       setSelectedTags(tagIds);
       const vars = (p.variants as Array<Record<string, unknown>>) || [];
@@ -252,6 +273,19 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const persistCore = useCallback(
     async (opts: { finalStatus?: "draft" | "published" }) => {
       const st = opts.finalStatus ?? status;
+      let resolvedStatus: "draft" | "published" = st;
+      let resolvedPublishedAt: string | null = null;
+      if (opts.finalStatus === "published" || publishMode === "now") {
+        resolvedStatus = "published";
+        resolvedPublishedAt = new Date().toISOString();
+      } else if (publishMode === "schedule" && publishedAt) {
+        resolvedStatus = "published";
+        const d = new Date(publishedAt);
+        resolvedPublishedAt = Number.isNaN(d.getTime()) ? null : d.toISOString();
+      } else if (publishMode === "draft") {
+        resolvedStatus = "draft";
+        resolvedPublishedAt = null;
+      }
       const base = {
         name: name.trim(),
         slug: slug.trim(),
@@ -259,12 +293,17 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         brand_id: brandId || null,
         short_description: shortDesc,
         description,
-        status: st,
+        status: resolvedStatus,
         is_featured: featured,
         is_new: isNew,
         is_active: isActive,
         image_url: imageUrl || null,
         tag_ids: selectedTags,
+        size_guide_id: sizeGuideId || null,
+        published_at: resolvedPublishedAt,
+        price: sellingPrice || 0,
+        original_price: originalPrice || null,
+        stock_quantity: parseLocaleNumber(simpleStock) || 0,
       };
 
       let id = productId;
@@ -273,8 +312,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           ...base,
           status: "draft",
         } as Parameters<typeof adminCreateProductAction>[0]);
-        if (!res.ok || !res.data) return { ok: false as const, error: res.error || "ایجاد ناموفق" };
-        id = String((res.data as { id: string }).id);
+        if (!res.ok) return { ok: false as const, error: (res as { error?: string }).error || "ایجاد ناموفق" };
+        const createdId = (res as { id?: string }).id || (res as { data?: { id?: string } }).data?.id;
+        if (!createdId) return { ok: false as const, error: "ایجاد ناموفق" };
+        id = String(createdId);
         setProductId(id);
       } else {
         const upd = await adminUpdateProductAction(id, base as Parameters<typeof adminUpdateProductAction>[1]);
@@ -332,6 +373,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       productId, name, slug, categoryId, brandId, shortDesc, description, status,
       featured, isNew, isActive, imageUrl, selectedTags, attrValues, productType,
       simpleSku, simpleStock, variants, sellingPrice, originalPrice,
+      sizeGuideId, publishedAt, publishMode,
     ],
   );
 
@@ -821,11 +863,24 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         )}
 
         {step === 7 && (
-          <div className="text-muted-foreground space-y-2 text-sm">
-            <p>
-              در Phase A راهنمای سایز از پیش‌فرض دسته خوانده می‌شود. اتصال
-              <code className="mx-1">size_guide_id</code>
-              روی محصول در Phase B اضافه می‌شود.
+          <div className="space-y-3">
+            <label className="block space-y-1 text-sm">
+              <span>راهنمای سایز</span>
+              <select
+                className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                value={sizeGuideId}
+                onChange={(e) => setSizeGuideId(e.target.value)}
+              >
+                <option value="">پیش‌فرض دسته / سراسری</option>
+                {guides.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-muted-foreground text-xs">
+              اگر خالی بماند، ابتدا راهنمای همان دسته و سپس راهنمای سراسری استفاده می‌شود.
             </p>
           </div>
         )}
@@ -864,6 +919,28 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 <option value="published">انتشار</option>
               </select>
             </label>
+            <div className="space-y-2 text-sm">
+              <span className="block">زمان انتشار</span>
+              <div className="flex flex-wrap gap-2">
+                {([["draft", "پیش‌نویس"], ["now", "همین حالا"], ["schedule", "زمان‌بندی"]] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className={publishMode === k ? "bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs" : "bg-muted rounded-lg px-3 py-1.5 text-xs"}
+                    onClick={() => {
+                      setPublishMode(k);
+                      if (k === "draft") setStatus("draft");
+                      else setStatus("published");
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {publishMode === "schedule" ? (
+                <input type="datetime-local" className="border-input bg-background mt-2 w-full rounded-lg border px-3 py-2" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
+              ) : null}
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
               ویژه (featured)
@@ -876,8 +953,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
               فعال در فروشگاه
             </label>
-            <p className="text-muted-foreground text-xs">زمان‌بندی انتشار → Phase B</p>
-          </div>
+                      </div>
         )}
       </div>
 

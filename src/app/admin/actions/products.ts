@@ -189,7 +189,7 @@ type CreateProductInput = {
   is_featured?: boolean;
   is_new?: boolean;
   is_bestseller?: boolean;
-  price: number;
+  price?: number;
   original_price?: number | null;
   stock_quantity?: number;
   size?: string;
@@ -200,6 +200,8 @@ type CreateProductInput = {
   image_url?: string;
   image_alt?: string;
   variants?: AdminVariantInput[];
+  size_guide_id?: string | null;
+  published_at?: string | null;
 };
 
 export type AdminVariantInput = {
@@ -222,7 +224,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
   const name = (input.name || "").trim();
   if (!name) return { ok: false as const, error: "name_required" };
   if (!input.category_id) return { ok: false as const, error: "category_required" };
-  const price = Number(input.price);
+  const price = input.price == null || input.price === ("" as never) ? 0 : Number(input.price);
   if (!Number.isFinite(price) || price < 0)
     return { ok: false as const, error: "price_invalid" };
 
@@ -242,6 +244,8 @@ export async function adminCreateProductAction(input: CreateProductInput) {
         is_featured: !!input.is_featured,
         is_new: !!input.is_new,
         is_bestseller: !!input.is_bestseller,
+        size_guide_id: input.size_guide_id || null,
+        published_at: input.published_at || null,
       })
       .select("id")
       .single();
@@ -319,7 +323,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       if (imgErr) console.error("[product_images]", imgErr);
     }
 
-    return { ok: true as const, id: product.id as string };
+    return { ok: true as const, id: product.id as string, data: { id: product.id as string } };
   } catch (e) {
     console.error("[adminCreateProduct]", e);
     const msg =
@@ -344,7 +348,8 @@ export async function adminGetProductAction(id: string) {
         id, name, slug, category_id, brand_id,
         short_description, description, status,
         is_featured, is_new, is_bestseller,
-        product_variants ( id, sku, price, original_price, stock_quantity, size, color_name, color_hex, is_active ),
+        size_guide_id, published_at,
+        product_variants ( id, sku, price, original_price, stock_quantity, size, color_name, color_hex, is_active, image_url ),
         product_images ( id, url, alt_text, is_primary, sort_order, variant_id ),
         product_tag_map ( tag_id )
       `,
@@ -353,7 +358,11 @@ export async function adminGetProductAction(id: string) {
       .maybeSingle();
     if (error) throw error;
     if (!data) return { ok: false as const, error: "not_found" };
-    return { ok: true as const, product: data };
+    const tag_ids = ((data as { product_tag_map?: { tag_id: string }[] }).product_tag_map ?? []).map((x) => x.tag_id);
+    const images = ((data as { product_images?: { id: string; url: string; is_primary?: boolean }[] }).product_images ?? []).map((im) => ({ id: im.id, url: im.url, is_primary: im.is_primary }));
+    const primary = images.find((i) => i.is_primary) ?? images[0];
+    const shaped = { ...data, tag_ids, images, image_url: primary?.url ?? null, variants: (data as { product_variants?: unknown }).product_variants ?? [] };
+    return { ok: true as const, product: shaped, data: shaped };
   } catch (e) {
     console.error("[adminGetProduct]", e);
     return { ok: false as const, error: "server" };
@@ -408,6 +417,8 @@ export async function adminUpdateProductAction(
         is_featured: !!input.is_featured,
         is_new: !!input.is_new,
         is_bestseller: !!input.is_bestseller,
+        size_guide_id: input.size_guide_id !== undefined ? input.size_guide_id || null : undefined,
+        published_at: input.published_at !== undefined ? input.published_at || null : undefined,
       })
       .eq("id", id);
     if (pErr) {
@@ -427,7 +438,11 @@ export async function adminUpdateProductAction(
       .order("created_at", { ascending: true })
       .limit(1);
 
-    if (variants?.[0]?.id) {
+    if (variants?.[0]?.id && input.price !== undefined) {
+      const price = Number(input.price);
+      if (!Number.isFinite(price) || price < 0) {
+        return { ok: false as const, error: "price" };
+      }
       const { error: vErr } = await gate.supabase
         .from("product_variants")
         .update({
@@ -911,4 +926,20 @@ export async function adminAddProductGalleryImageAction(input: {
     return { ok: false as const, error: "server" as const, detail: error.message };
   }
   return { ok: true as const, image: data };
+}
+
+export async function adminListSizeGuidesAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { data, error } = await gate.supabase
+      .from("size_guides")
+      .select("id, name, category_id, description")
+      .order("name", { ascending: true });
+    if (error) throw error;
+    return { ok: true as const, data: data ?? [] };
+  } catch (e) {
+    console.error("[adminListSizeGuides]", e);
+    return { ok: false as const, error: "server" };
+  }
 }

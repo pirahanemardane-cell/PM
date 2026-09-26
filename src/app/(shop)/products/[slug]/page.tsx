@@ -16,7 +16,7 @@ import { ProductSpecs } from "@/components/product/product-specs";
 import { getProductSpecRows } from "@/lib/product-specs";
 import { getProductPriceHistory } from "@/lib/price-history";
 import { resolveColorHex } from "@/lib/colors";
-import { loadPrimarySizeGuide } from "@/lib/size-guide/load";
+import { loadSizeGuideForProduct } from "@/lib/size-guide/load";
 import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
 
 type Props = {
@@ -53,7 +53,10 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const product = result.data;
-  const sizeGuide = await loadPrimarySizeGuide();
+  const sizeGuide = await loadSizeGuideForProduct({
+    sizeGuideId: (product as { size_guide_id?: string | null }).size_guide_id,
+    categoryId: (product as { category_id?: string | null }).category_id,
+  });
   const images = product.images ?? [];
   const primaryImage =
     images.find((img) => img.is_primary) ?? images[0] ?? null;
