@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type SizeGuideView = {
   id: string;
@@ -54,7 +55,7 @@ async function loadGuideById(
 /** Global first guide (legacy / size-guide page). */
 export async function loadPrimarySizeGuide(): Promise<SizeGuideView | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data: guide, error } = await supabase
       .from("size_guides")
       .select("id")
@@ -80,7 +81,7 @@ export async function loadSizeGuideForProduct(opts: {
   categoryId?: string | null;
 }): Promise<SizeGuideView | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     if (opts.sizeGuideId) {
       const g = await loadGuideById(supabase, opts.sizeGuideId);
       if (g) return g;
