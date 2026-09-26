@@ -206,7 +206,8 @@ export default function AdminCategoriesPage() {
                   <tr key={r.id} className="border-border border-t">
                     <td className="p-3">
                       <input
-                        defaultValue=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><span>{r.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, r.name)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, r.name)}>حذف دائمی</button>
+                        <span className="inline-flex items-center gap-1 ml-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, r.name)}>آرشیو</button><button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, r.name)}>حذف دائمی</button></span>
+                        defaultValue={r.name}
                         disabled={busyId === r.id}
                         className="border-input bg-background h-9 w-full min-w-[8rem] rounded-lg border px-2 text-sm font-medium"
                         onBlur={(e) => {
