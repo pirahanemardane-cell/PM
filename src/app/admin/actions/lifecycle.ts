@@ -91,20 +91,64 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    // products linked?
-    const { count: prodCount, error: prodErr } = await gate.supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .in("category_id", list);
-    if (prodErr) {
-      console.error("[adminHardDeleteCategories] products check", prodErr);
-      return { ok: false as const, error: "server" as const, detail: prodErr.message };
-    }
-    if ((prodCount ?? 0) > 0) {
-      return { ok: false as const, error: "has_products" as const };
+    // Block only if there is at least one non-deleted product
+    // Try deleted_at first; if column missing, fall back to counting all then detach soft ones.
+    let liveCount = 0;
+    {
+      const q = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("category_id", list)
+        .is("deleted_at", null);
+      if (!q.error) {
+        liveCount = q.count ?? 0;
+      } else {
+        // no deleted_at — count all products linked
+        const q2 = await gate.supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .in("category_id", list);
+        if (q2.error) {
+          console.error("[adminHardDeleteCategories] products check", q2.error);
+          return { ok: false as const, error: "server" as const, detail: q2.error.message };
+        }
+        liveCount = q2.count ?? 0;
+      }
     }
 
-    // child categories?
+    if (liveCount > 0) {
+      // If schema has deleted_at we already excluded soft-deleted.
+      // If not, user may have "deleted" via archive only — try detach archived/unpublished.
+      const soft = await gate.supabase
+        .from("products")
+        .update({ category_id: null as unknown as string })
+        .in("category_id", list)
+        .or("deleted_at.not.is.null,is_published.eq.false,status.eq.archived");
+      // ignore soft update errors (columns may not exist)
+
+      // recount strict live
+      const again = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("category_id", list)
+        .is("deleted_at", null);
+      const again2 = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("category_id", list);
+
+      const remaining = !again.error ? (again.count ?? 0) : (again2.count ?? 0);
+      if (remaining > 0) {
+        return { ok: false as const, error: "has_products" as const };
+      }
+    }
+
+    // Always detach any leftover soft rows before hard delete (clears FK)
+    await gate.supabase
+      .from("products")
+      .update({ category_id: null as unknown as string })
+      .in("category_id", list);
+
     const { count: childCount, error: childErr } = await gate.supabase
       .from("categories")
       .select("id", { count: "exact", head: true })
@@ -116,7 +160,6 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
     const { error } = await gate.supabase.from("categories").delete().in("id", list);
     if (error) {
       console.error("[adminHardDeleteCategories] delete", error);
-      // FK residual
       if (String(error.code) === "23503" || /foreign key/i.test(error.message)) {
         return { ok: false as const, error: "has_products" as const, detail: error.message };
       }
@@ -155,18 +198,58 @@ export async function adminHardDeleteBrandsAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    const { count, error: cErr } = await gate.supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .in("brand_id", list)
-      .is("deleted_at", null);
-    if (cErr) throw cErr;
-    if ((count ?? 0) > 0) {
-      return { ok: false as const, error: "has_products" as const };
+    let liveCount = 0;
+    {
+      const q = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("brand_id", list)
+        .is("deleted_at", null);
+      if (!q.error) {
+        liveCount = q.count ?? 0;
+      } else {
+        const q2 = await gate.supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .in("brand_id", list);
+        if (q2.error) {
+          return { ok: false as const, error: "server" as const, detail: q2.error.message };
+        }
+        liveCount = q2.count ?? 0;
+      }
     }
-    await gate.supabase.from("products").update({ brand_id: null }).in("brand_id", list);
+    if (liveCount > 0) {
+      await gate.supabase
+        .from("products")
+        .update({ brand_id: null as unknown as string })
+        .in("brand_id", list)
+        .or("deleted_at.not.is.null,is_published.eq.false,status.eq.archived");
+      const again = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("brand_id", list)
+        .is("deleted_at", null);
+      const again2 = await gate.supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .in("brand_id", list);
+      const remaining = !again.error ? (again.count ?? 0) : (again2.count ?? 0);
+      if (remaining > 0) {
+        return { ok: false as const, error: "has_products" as const };
+      }
+    }
+    await gate.supabase
+      .from("products")
+      .update({ brand_id: null as unknown as string })
+      .in("brand_id", list);
+
     const { error } = await gate.supabase.from("brands").delete().in("id", list);
-    if (error) throw error;
+    if (error) {
+      if (String(error.code) === "23503" || /foreign key/i.test(error.message)) {
+        return { ok: false as const, error: "has_products" as const, detail: error.message };
+      }
+      return { ok: false as const, error: "server" as const, detail: error.message };
+    }
     return { ok: true as const, count: list.length };
   } catch (e) {
     console.error("[adminHardDeleteBrands]", e);
