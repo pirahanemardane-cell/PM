@@ -193,6 +193,12 @@ export default function AdminBlogPage() {
             دسته‌ها
           </Link>
           <Link
+            href="/admin/blog/tags"
+            className="border-border rounded-xl border px-4 py-2 text-sm"
+          >
+            برچسب‌ها
+          </Link>
+          <Link
             href="/admin/dashboard"
             className="border-border rounded-xl border px-4 py-2 text-sm"
           >

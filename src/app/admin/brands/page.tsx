@@ -188,6 +188,16 @@ export default function AdminBrandsPage() {
           </button>
         </form>
 
+        <AdminBulkBar
+          count={selected.length}
+          total={items.length}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
         {loading ? (
           <div className="flex justify-center py-16">
             <LumaSpin />
