@@ -11,7 +11,7 @@ export async function adminListDiscountsAction(limit = 50) {
     const { data, error } = await gate.supabase
       .from("discounts")
       .select(
-        "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active, created_at",
+        "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active, once_per_user, created_at",
       )
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -47,6 +47,7 @@ export async function adminCreateDiscountAction(input: {
   max_uses?: number | null;
   starts_at?: string | null;
   ends_at?: string | null;
+  once_per_user?: boolean;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -73,6 +74,7 @@ export async function adminCreateDiscountAction(input: {
         starts_at: input.starts_at ?? null,
         ends_at: input.ends_at ?? null,
         is_active: true,
+        once_per_user: Boolean(input.once_per_user),
       })
       .select("id")
       .single();

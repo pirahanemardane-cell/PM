@@ -451,8 +451,28 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       discountCode = v.discount.code;
       discountAmount = v.discount.discountAmount;
 
-      // رزرو اتمی سقف استفاده — قبل از ساخت سفارش
       const supabaseInc = await createClient();
+
+      // once_per_user: قبل از رزرو سراسری
+      const { data: dRow } = await supabaseInc
+        .from("discounts")
+        .select("once_per_user")
+        .ilike("code", discountCode)
+        .maybeSingle();
+      if ((dRow as { once_per_user?: boolean } | null)?.once_per_user) {
+        const { data: prior } = await supabaseInc
+          .from("orders")
+          .select("id")
+          .eq("user_id", user.id)
+          .ilike("discount_code", discountCode)
+          .limit(1)
+          .maybeSingle();
+        if (prior) {
+          return { ok: false as const, error: "discount_already_used" };
+        }
+      }
+
+      // رزرو اتمی سقف استفاده — قبل از ساخت سفارش
       const { data: reserved, error: incErr } = await supabaseInc.rpc(
         "increment_discount_use",
         { p_code: discountCode },
