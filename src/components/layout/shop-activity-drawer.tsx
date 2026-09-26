@@ -264,13 +264,22 @@ export function ShopActivityDrawer({
 
         <DrawerFooter className="shrink-0 space-y-2 border-t border-border/40">
           {tab === "cart" && (isLoggedIn ? unifiedLines.length > 0 : cart.length > 0) ? (
-            <Link
-              href="/checkout"
-              onClick={() => onOpenChange(false)}
-              className="bg-primary text-primary-foreground flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
-            >
-              تسویه حساب
-            </Link>
+            <>
+              <Link
+                href="/checkout"
+                onClick={() => onOpenChange(false)}
+                className="bg-primary text-primary-foreground flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
+              >
+                تسویه حساب
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => onOpenChange(false)}
+                className="border-border text-foreground hover:bg-muted flex h-10 w-full items-center justify-center rounded-xl border text-sm font-medium"
+              >
+                صفحه سبد خرید
+              </Link>
+            </>
           ) : null}
           <Link
             href="/dashboard"
