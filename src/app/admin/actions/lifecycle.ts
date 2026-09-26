@@ -91,64 +91,54 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    // Block only if there is at least one non-deleted product
-    // Try deleted_at first; if column missing, fall back to counting all then detach soft ones.
-    let liveCount = 0;
-    {
-      const q = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("category_id", list)
-        .is("deleted_at", null);
-      if (!q.error) {
-        liveCount = q.count ?? 0;
-      } else {
-        // no deleted_at — count all products linked
-        const q2 = await gate.supabase
-          .from("products")
-          .select("id", { count: "exact", head: true })
-          .in("category_id", list);
-        if (q2.error) {
-          console.error("[adminHardDeleteCategories] products check", q2.error);
-          return { ok: false as const, error: "server" as const, detail: q2.error.message };
-        }
-        liveCount = q2.count ?? 0;
-      }
-    }
-
-    if (liveCount > 0) {
-      // If schema has deleted_at we already excluded soft-deleted.
-      // If not, user may have "deleted" via archive only — try detach archived/unpublished.
-      const soft = await gate.supabase
-        .from("products")
-        .update({ category_id: null as unknown as string })
-        .in("category_id", list)
-        .or("deleted_at.not.is.null,is_published.eq.false,status.eq.archived");
-      // ignore soft update errors (columns may not exist)
-
-      // recount strict live
-      const again = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("category_id", list)
-        .is("deleted_at", null);
-      const again2 = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("category_id", list);
-
-      const remaining = !again.error ? (again.count ?? 0) : (again2.count ?? 0);
-      if (remaining > 0) {
-        return { ok: false as const, error: "has_products" as const };
-      }
-    }
-
-    // Always detach any leftover soft rows before hard delete (clears FK)
-    await gate.supabase
+    // 1) fetch linked products (id + soft-delete hints)
+    const { data: linked, error: linkErr } = await gate.supabase
       .from("products")
-      .update({ category_id: null as unknown as string })
+      .select("id, deleted_at, is_published, status")
       .in("category_id", list);
+    if (linkErr) {
+      console.error("[adminHardDeleteCategories] link", linkErr);
+      return { ok: false as const, error: "server" as const, detail: linkErr.message };
+    }
 
+    const rows = linked ?? [];
+    const isLive = (r: {
+      deleted_at?: string | null;
+      is_published?: boolean | null;
+      status?: string | null;
+    }) => {
+      if (r.deleted_at) return false;
+      if (r.status && ["archived", "deleted", "trash"].includes(String(r.status))) return false;
+      // if is_published explicitly false and no deleted_at, still treat as non-blocking leftover
+      // only block truly "live" published products
+      if (r.is_published === true) return true;
+      if (r.is_published === false) return false;
+      // unknown schema → treat as live to be safe
+      return true;
+    };
+
+    const live = rows.filter(isLive);
+    if (live.length > 0) {
+      return {
+        ok: false as const,
+        error: "has_products" as const,
+        detail: `live=${live.length} total_linked=${rows.length}`,
+      };
+    }
+
+    // 2) detach ALL leftovers (soft-deleted / unpublished) so FK cannot block
+    if (rows.length > 0) {
+      const { error: upErr } = await gate.supabase
+        .from("products")
+        .update({ category_id: null })
+        .in("category_id", list);
+      if (upErr) {
+        console.error("[adminHardDeleteCategories] detach", upErr);
+        return { ok: false as const, error: "server" as const, detail: upErr.message };
+      }
+    }
+
+    // 3) block if child categories
     const { count: childCount, error: childErr } = await gate.supabase
       .from("categories")
       .select("id", { count: "exact", head: true })
@@ -157,10 +147,11 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       return { ok: false as const, error: "has_children" as const };
     }
 
+    // 4) hard delete categories
     const { error } = await gate.supabase.from("categories").delete().in("id", list);
     if (error) {
       console.error("[adminHardDeleteCategories] delete", error);
-      if (String(error.code) === "23503" || /foreign key/i.test(error.message)) {
+      if (String(error.code) === "23503" || /foreign key/i.test(error.message ?? "")) {
         return { ok: false as const, error: "has_products" as const, detail: error.message };
       }
       return { ok: false as const, error: "server" as const, detail: error.message };
@@ -198,54 +189,41 @@ export async function adminHardDeleteBrandsAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    let liveCount = 0;
-    {
-      const q = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("brand_id", list)
-        .is("deleted_at", null);
-      if (!q.error) {
-        liveCount = q.count ?? 0;
-      } else {
-        const q2 = await gate.supabase
-          .from("products")
-          .select("id", { count: "exact", head: true })
-          .in("brand_id", list);
-        if (q2.error) {
-          return { ok: false as const, error: "server" as const, detail: q2.error.message };
-        }
-        liveCount = q2.count ?? 0;
-      }
-    }
-    if (liveCount > 0) {
-      await gate.supabase
-        .from("products")
-        .update({ brand_id: null as unknown as string })
-        .in("brand_id", list)
-        .or("deleted_at.not.is.null,is_published.eq.false,status.eq.archived");
-      const again = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("brand_id", list)
-        .is("deleted_at", null);
-      const again2 = await gate.supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .in("brand_id", list);
-      const remaining = !again.error ? (again.count ?? 0) : (again2.count ?? 0);
-      if (remaining > 0) {
-        return { ok: false as const, error: "has_products" as const };
-      }
-    }
-    await gate.supabase
+    const { data: linked, error: linkErr } = await gate.supabase
       .from("products")
-      .update({ brand_id: null as unknown as string })
+      .select("id, deleted_at, is_published, status")
       .in("brand_id", list);
-
+    if (linkErr) {
+      return { ok: false as const, error: "server" as const, detail: linkErr.message };
+    }
+    const rows = linked ?? [];
+    const isLive = (r: {
+      deleted_at?: string | null;
+      is_published?: boolean | null;
+      status?: string | null;
+    }) => {
+      if (r.deleted_at) return false;
+      if (r.status && ["archived", "deleted", "trash"].includes(String(r.status))) return false;
+      if (r.is_published === true) return true;
+      if (r.is_published === false) return false;
+      return true;
+    };
+    const live = rows.filter(isLive);
+    if (live.length > 0) {
+      return { ok: false as const, error: "has_products" as const, detail: `live=${live.length}` };
+    }
+    if (rows.length > 0) {
+      const { error: upErr } = await gate.supabase
+        .from("products")
+        .update({ brand_id: null })
+        .in("brand_id", list);
+      if (upErr) {
+        return { ok: false as const, error: "server" as const, detail: upErr.message };
+      }
+    }
     const { error } = await gate.supabase.from("brands").delete().in("id", list);
     if (error) {
-      if (String(error.code) === "23503" || /foreign key/i.test(error.message)) {
+      if (String(error.code) === "23503" || /foreign key/i.test(error.message ?? "")) {
         return { ok: false as const, error: "has_products" as const, detail: error.message };
       }
       return { ok: false as const, error: "server" as const, detail: error.message };
