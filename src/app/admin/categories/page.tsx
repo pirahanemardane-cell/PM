@@ -63,9 +63,15 @@ export default function AdminCategoriesPage() {
     setBulkBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
-        has_products: "به محصول متصل است",
-        has_orders: "در سفارش‌ها استفاده شده",
-      };
+      has_products: "حذف ممکن نیست: هنوز محصول وابسته دارد",
+      has_children: "حذف ممکن نیست: زیردسته دارد",
+      has_orders: "حذف ممکن نیست: سفارش ثبت‌شده دارد",
+      forbidden: "دسترسی کافی نیست",
+      auth: "دسترسی کافی نیست",
+      login_required: "دسترسی کافی نیست",
+      empty: "موردی انتخاب نشده",
+      server: "خطای سرور — کنسول را ببین",
+    };
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }
@@ -87,9 +93,15 @@ export default function AdminCategoriesPage() {
     setBulkBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
-        has_products: "به محصول متصل است",
-        has_orders: "در سفارش‌ها استفاده شده",
-      };
+      has_products: "حذف ممکن نیست: هنوز محصول وابسته دارد",
+      has_children: "حذف ممکن نیست: زیردسته دارد",
+      has_orders: "حذف ممکن نیست: سفارش ثبت‌شده دارد",
+      forbidden: "دسترسی کافی نیست",
+      auth: "دسترسی کافی نیست",
+      login_required: "دسترسی کافی نیست",
+      empty: "موردی انتخاب نشده",
+      server: "خطای سرور — کنسول را ببین",
+    };
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }

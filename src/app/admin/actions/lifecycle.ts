@@ -91,19 +91,37 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    const { count, error: cErr } = await gate.supabase
+    // products linked?
+    const { count: prodCount, error: prodErr } = await gate.supabase
       .from("products")
       .select("id", { count: "exact", head: true })
-      .in("category_id", list)
-      .is("deleted_at", null);
-    if (cErr) throw cErr;
-    if ((count ?? 0) > 0) {
+      .in("category_id", list);
+    if (prodErr) {
+      console.error("[adminHardDeleteCategories] products check", prodErr);
+      return { ok: false as const, error: "server" as const, detail: prodErr.message };
+    }
+    if ((prodCount ?? 0) > 0) {
       return { ok: false as const, error: "has_products" as const };
     }
-    // detach children categories
-    await gate.supabase.from("categories").update({ parent_id: null }).in("parent_id", list);
+
+    // child categories?
+    const { count: childCount, error: childErr } = await gate.supabase
+      .from("categories")
+      .select("id", { count: "exact", head: true })
+      .in("parent_id", list);
+    if (!childErr && (childCount ?? 0) > 0) {
+      return { ok: false as const, error: "has_children" as const };
+    }
+
     const { error } = await gate.supabase.from("categories").delete().in("id", list);
-    if (error) throw error;
+    if (error) {
+      console.error("[adminHardDeleteCategories] delete", error);
+      // FK residual
+      if (String(error.code) === "23503" || /foreign key/i.test(error.message)) {
+        return { ok: false as const, error: "has_products" as const, detail: error.message };
+      }
+      return { ok: false as const, error: "server" as const, detail: error.message };
+    }
     return { ok: true as const, count: list.length };
   } catch (e) {
     console.error("[adminHardDeleteCategories]", e);
