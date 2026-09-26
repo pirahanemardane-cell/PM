@@ -22,6 +22,34 @@ import { AnimatedTicket } from "@/components/ui/ticket-confirmation-card";
 
 type Step = 1 | 2 | 3;
 
+
+function mapCheckoutError(code: string | undefined): string {
+  if (!code) return "ثبت سفارش ناموفق بود.";
+  const map: Record<string, string> = {
+    login_required: "برای ثبت سفارش وارد شوید.",
+    empty_cart: "سبد خرید خالی است.",
+    discount_invalid: "کد تخفیف نامعتبر است.",
+    discount_not_found: "کد تخفیف یافت نشد.",
+    discount_inactive: "این کد تخفیف غیرفعال است.",
+    discount_expired: "مهلت این کد تخفیف تمام شده است.",
+    discount_not_started: "این کد تخفیف هنوز فعال نشده است.",
+    discount_exhausted: "سقف استفاده از این کد پر شده است.",
+    discount_max_uses: "سقف استفاده از این کد پر شده است.",
+    discount_min_order: "مبلغ سبد برای این کد کافی نیست.",
+    discount_already_used: "این کد را قبلاً استفاده کرده‌اید.",
+    discount_reserve_failed: "اعمال کد تخفیف ممکن نشد؛ دوباره تلاش کنید.",
+    discount_empty: "کد تخفیف وارد نشده است.",
+    discount_db: "خطا در بررسی کد تخفیف.",
+    discount_bad_subtotal: "مبلغ سبد نامعتبر است.",
+    insufficient_stock: "موجودی یکی از اقلام کافی نیست.",
+  };
+  if (map[code]) return map[code];
+  if (code.startsWith("discount_")) return "کد تخفیف قابل اعمال نیست.";
+  if (code.startsWith("insufficient_stock")) return "موجودی یکی از اقلام کافی نیست.";
+  if (/[\u0600-\u06FF]/.test(code)) return code;
+  return "ثبت سفارش ناموفق بود. دوباره تلاش کنید.";
+}
+
 export default function CheckoutPage() {
   const clearCartLocal = useShopStore((s) => s.clearCart);
 
@@ -181,11 +209,7 @@ export default function CheckoutPage() {
         window.location.href = "/ورود?next=/checkout";
         return;
       }
-      if (res.error === "empty_cart") {
-        setError("سبد خرید خالی است.");
-        return;
-      }
-      setError(res.error ? `خطا: ${res.error}` : "ثبت سفارش ناموفق بود.");
+      setError(mapCheckoutError(res.error));
       return;
     }
     orderPlacedRef.current = true;
@@ -436,13 +460,19 @@ export default function CheckoutPage() {
                         if (!res.ok) {
                           setDiscountPreview(null);
                           setDiscountError(
-                            res.error === "invalid"
-                              ? "کد نامعتبر است"
-                              : res.error === "exhausted"
-                                ? "سقف استفاده تمام شده"
-                                : res.error === "min_order"
-                                  ? "حداقل مبلغ سفارش رعایت نشده"
-                                  : "خطا در بررسی کد",
+                            (
+                              {
+                                invalid: "کد نامعتبر است",
+                                not_found: "کد تخفیف یافت نشد",
+                                inactive: "این کد غیرفعال است",
+                                expired: "مهلت کد تمام شده",
+                                not_started: "کد هنوز فعال نشده",
+                                exhausted: "سقف استفاده تمام شده",
+                                max_uses: "سقف استفاده تمام شده",
+                                min_order: "حداقل مبلغ سفارش رعایت نشده",
+                                empty: "کد را وارد کنید",
+                              } as Record<string, string>
+                            )[res.error] ?? "خطا در بررسی کد",
                           );
                           return;
                         }

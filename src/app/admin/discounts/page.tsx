@@ -22,6 +22,7 @@ type Row = {
   starts_at: string | null;
   ends_at: string | null;
   is_active: boolean;
+  once_per_user?: boolean;
   created_at: string;
 };
 
@@ -50,6 +51,7 @@ export default function AdminDiscountsPage() {
     max_uses: "",
     starts_at: "",
     ends_at: "",
+    once_per_user: false,
   });
 
   const load = useCallback(async () => {
@@ -110,6 +112,7 @@ export default function AdminDiscountsPage() {
         ? new Date(form.starts_at).toISOString()
         : null,
       ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
+      once_per_user: form.once_per_user,
     });
     setCreating(false);
     if (!res.ok) {
@@ -132,6 +135,7 @@ export default function AdminDiscountsPage() {
       max_uses: "",
       starts_at: "",
       ends_at: "",
+      once_per_user: false,
     });
     void load();
   }
@@ -240,6 +244,17 @@ export default function AdminDiscountsPage() {
               className="border-input bg-background h-10 rounded-xl border px-3 text-sm text-foreground"
             />
           </label>
+          <label className="text-muted-foreground flex h-10 items-center gap-2 text-sm sm:col-span-2 lg:col-span-1">
+            <input
+              type="checkbox"
+              checked={form.once_per_user}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, once_per_user: e.target.checked }))
+              }
+              className="h-4 w-4"
+            />
+            یک‌بار برای هر کاربر
+          </label>
           <button
             type="submit"
             disabled={creating}
@@ -276,6 +291,7 @@ export default function AdminDiscountsPage() {
                   <th className="p-3 font-medium">استفاده</th>
                   <th className="p-3 font-medium">حداقل</th>
                   <th className="p-3 font-medium">اعتبار</th>
+                  <th className="p-3 font-medium">یک‌بار/کاربر</th>
                   <th className="p-3 font-medium">فعال</th>
                 </tr>
               </thead>
@@ -297,6 +313,9 @@ export default function AdminDiscountsPage() {
                     </td>
                     <td className="text-muted-foreground p-3 text-xs">
                       {fmtDate(d.starts_at)} → {fmtDate(d.ends_at)}
+                    </td>
+                    <td className="p-3 text-xs">
+                      {d.once_per_user ? "بله" : "—"}
                     </td>
                     <td className="p-3">
                       <input
