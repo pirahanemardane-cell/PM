@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
-export { PREDEFINED_NOTIFICATIONS };
 
 async function requireAdmin() {
   const supabase = await createClient();

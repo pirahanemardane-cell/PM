@@ -2,15 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  adminSendNotificationAction,
-  PREDEFINED_NOTIFICATIONS,
-} from "@/app/admin/actions/notifications-admin";
+import { adminSendNotificationAction } from "@/app/admin/actions/notifications-admin";
+import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
 
 export default function AdminNotificationsPage() {
-  const templates = useMemo(() => PREDEFINED_NOTIFICATIONS ?? [], []);
+  const templates = useMemo(() => (Array.isArray(PREDEFINED_NOTIFICATIONS) ? [...PREDEFINED_NOTIFICATIONS] : []), []);
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [mode, setMode] = useState<"user" | "all">("user");
   const [target, setTarget] = useState("");
