@@ -18,6 +18,8 @@ const PERSIAN_ROUTES: Record<string, string> = {
   "/ارسال": "/shipping",
   "/مرجوعی": "/returns",
   "/راهنمای-سایز": "/size-guide",
+  "/پیگیری-سفارش": "/track",
+  "/پیگیری": "/track",
 };
 
 export async function middleware(request: NextRequest) {
