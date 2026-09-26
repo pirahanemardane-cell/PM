@@ -33,6 +33,13 @@ export default function AdminCategoriesPage() {
   const [creating, setCreating] = useState(false);
 
   
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) =>
+      prev.length === ids.length && ids.every((id) => prev.includes(id))
+        ? []
+        : [...ids],
+    );
+  }
   function toggleSelect(id: string) {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],

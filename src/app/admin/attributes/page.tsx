@@ -10,6 +10,11 @@ import {
   type AttrWithOptions,
 } from "@/app/admin/actions/attributes";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveAttributesAction,
+  adminHardDeleteAttributesAction,
+} from "@/app/admin/actions/lifecycle";
 
 export default function AdminAttributesPage() {
   const [items, setItems] = useState<AttrWithOptions[]>([]);
@@ -19,6 +24,58 @@ export default function AdminAttributesPage() {
   const [creating, setCreating] = useState(false);
   const [optValue, setOptValue] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) =>
+      prev.length === ids.length && ids.every((id) => prev.includes(id))
+        ? []
+        : [...ids],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو مشخصه‌های انتخاب‌شده؟ (غیرفعال فیلتر)")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveAttributesAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی مشخصه‌ها؟ گزینه‌ها و مقادیر محصولات هم پاک می‌شوند.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteAttributesAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("حذف دائمی ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveAttributesAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteAttributesAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("حذف دائمی ناموفق"); return; }
+    void load();
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -119,6 +176,18 @@ export default function AdminAttributesPage() {
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
+      <AdminBulkBar
+          count={selected.length}
+          total={items.length}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+          archiveLabel="آرشیو (غیرفعال فیلتر)"
+        />
+
+
       {loading ? (
         <div className="flex justify-center py-12">
           <LumaSpin />
@@ -131,7 +200,14 @@ export default function AdminAttributesPage() {
               className="border-border space-y-3 rounded-2xl border p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-semibold text-primary">{a.name}</h2>
+                <h2 className="font-semibold text-primary">
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" checked={selected.includes(a.id)} onChange={() => toggleSelect(a.id)} />
+                    <span>{a.name}</span>
+                  </label>
+                  <button type="button" className="text-muted-foreground mr-2 text-xs" onClick={() => void archiveOne(a.id, a.name)}>آرشیو</button>
+                  <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(a.id, a.name)}>حذف دائمی</button>
+                </h2>
                 <span className="text-muted-foreground font-mono text-xs">
                   {a.slug}
                 </span>

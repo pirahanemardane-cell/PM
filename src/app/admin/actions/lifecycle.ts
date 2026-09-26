@@ -315,3 +315,40 @@ export async function adminHardDeleteBlogTagsAction(ids: string[]) {
     return { ok: false as const, error: "server" as const };
   }
 }
+
+/* ───────── Product attributes ───────── */
+
+export async function adminArchiveAttributesAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase
+      .from("attributes")
+      .update({ is_filterable: false })
+      .in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveAttributes]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteAttributesAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    await gate.supabase.from("product_attribute_values").delete().in("attribute_id", list);
+    await gate.supabase.from("attribute_options").delete().in("attribute_id", list);
+    const { error } = await gate.supabase.from("attributes").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteAttributes]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}

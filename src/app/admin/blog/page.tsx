@@ -38,6 +38,13 @@ export default function AdminBlogPage() {
   const [creating, setCreating] = useState(false);
 
   
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) =>
+      prev.length === ids.length && ids.every((id) => prev.includes(id))
+        ? []
+        : [...ids],
+    );
+  }
   function toggleSelect(id: string) {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -238,6 +245,8 @@ export default function AdminBlogPage() {
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
         <AdminBulkBar
           count={selected.length}
+          total={items.length}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
           onArchive={() => void runBulkArchive()}
           onHardDelete={() => void runBulkHardDelete()}

@@ -21,6 +21,13 @@ export default function AdminBlogTagsPage() {
   const [error, setError] = useState<string | null>(null);
 
   
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) =>
+      prev.length === ids.length && ids.every((id) => prev.includes(id))
+        ? []
+        : [...ids],
+    );
+  }
   function toggleSelect(id: string) {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -91,6 +98,8 @@ export default function AdminBlogTagsPage() {
         <h1 className="text-2xl font-bold text-primary">برچسب مقالات</h1>
         <AdminBulkBar
           count={selected.length}
+          total={items.length}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
           onArchive={() => void runBulkArchive()}
           onHardDelete={() => void runBulkHardDelete()}
