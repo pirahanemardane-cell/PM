@@ -14,7 +14,6 @@ import { NewsletterSmsBox } from "@/components/home/newsletter-sms-box";
 import { OrderTrackBox } from "@/components/home/order-track-box";
 import { HeroScroll } from "@/components/home/hero-scroll";
 import { HomeAfterHero } from "@/components/home/home-after-hero";
-import { RecentlyViewed } from "@/components/home/recently-viewed";
 import { CarouselLinks } from "@/components/ui/carousel-cards";
 import { ProductCarousel } from "@/components/ui/product-carousel";
 import type { ProductWithRelations } from "@/repositories/product.repository";
@@ -195,10 +194,7 @@ export default async function HomePage() {
               </p>
             </section>
           )}
-
-          <RecentlyViewed />
-
-          <section className="grid gap-6 md:grid-cols-2">
+<section className="grid gap-6 md:grid-cols-2">
             <NewsletterSmsBox />
             <OrderTrackBox />
           </section>
