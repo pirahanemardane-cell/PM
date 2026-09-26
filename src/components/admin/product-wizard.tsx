@@ -9,6 +9,7 @@ import {
   adminUpdateProductAction,
   adminSyncProductVariantsAction,
   adminAddProductGalleryImageAction,
+  adminCheckProductSlugAction,
 } from "@/app/admin/actions/products";
 import {
   adminListAttributesAction,
@@ -118,6 +119,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [sizeGuideId, setSizeGuideId] = useState("");
   const [publishedAt, setPublishedAt] = useState("");
   const [publishMode, setPublishMode] = useState<"draft" | "now" | "schedule">("draft");
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "ok" | "taken" | "err">("idle");
 
   useEffect(() => {
     void (async () => {
@@ -245,6 +247,9 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     if (s === 1) {
       if (!name.trim()) return "نام محصول الزامی است";
       if (!slug.trim()) return "slug الزامی است";
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug.trim()))
+        return "slug فقط لاتین کوچک، عدد و خط تیره";
+      if (slugStatus === "taken") return "این slug قبلاً استفاده شده";
     }
     if (s === 2) {
       if (!(parseLocaleNumber(price) > 0)) return "قیمت اصلی معتبر نیست";
@@ -267,6 +272,9 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       }
     }
     if (s === 8 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
+    if (s === 9 && publishMode === "schedule") {
+      if (!publishedAt.trim()) return "تاریخ زمان‌بندی الزامی است";
+    }
     return null;
   }
 
@@ -377,6 +385,23 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     ],
   );
 
+  
+  async function checkSlug(): Promise<boolean> {
+    const s = slug.trim();
+    if (!s || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s)) {
+      setSlugStatus("err");
+      return false;
+    }
+    setSlugStatus("checking");
+    const res = await adminCheckProductSlugAction(s, productId);
+    if (!res.ok) {
+      setSlugStatus("err");
+      return false;
+    }
+    setSlugStatus(res.available ? "ok" : "taken");
+    return res.available;
+  }
+
   async function ensureProductId(): Promise<string | null> {
     if (productId) return productId;
     setBusy(true);
@@ -393,12 +418,19 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   async function goNext() {
     setErr("");
     setOkMsg("");
+    if (step === 1) {
+      const ok = await checkSlug();
+      if (!ok) {
+        setErr(slugStatus === "taken" ? "این slug قبلاً استفاده شده" : "slug نامعتبر است");
+        return;
+      }
+    }
     const v = validateStep(step);
     if (v) {
       setErr(v);
       return;
     }
-    if (step === 4) {
+    if (step === 3 || step === 4) {
       const id = await ensureProductId();
       if (!id) return;
     }
@@ -425,6 +457,12 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   }
 
   async function finishPublish() {
+    const slugOk = await checkSlug();
+    if (!slugOk) {
+      setErr("slug تکراری یا نامعتبر — مرحله هویت");
+      setStep(1);
+      return;
+    }
     const v = validateStep(9);
     if (v) {
       setErr(v);
@@ -574,6 +612,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input
                 className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
                 value={slug}
+              onBlur={() => void checkSlug()}
                 onChange={(e) => {
                   setSlugTouched(true);
                   setSlug(e.target.value);

@@ -928,6 +928,28 @@ export async function adminAddProductGalleryImageAction(input: {
   return { ok: true as const, image: data };
 }
 
+
+/** Unique slug check for wizard step 1. */
+export async function adminCheckProductSlugAction(
+  slug: string,
+  excludeId?: string | null,
+): Promise<{ ok: true; available: boolean } | { ok: false; error: string }> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const s = (slug || "").trim().toLowerCase();
+  if (!s) return { ok: false as const, error: "slug_empty" };
+  try {
+    let q = gate.supabase.from("products").select("id").eq("slug", s).is("deleted_at", null).limit(1);
+    if (excludeId) q = q.neq("id", excludeId);
+    const { data, error } = await q.maybeSingle();
+    if (error) throw error;
+    return { ok: true as const, available: !data };
+  } catch (e) {
+    console.error("[adminCheckProductSlug]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
 export async function adminListSizeGuidesAction() {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
