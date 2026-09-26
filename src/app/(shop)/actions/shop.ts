@@ -450,9 +450,22 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       }
       discountCode = v.discount.code;
       discountAmount = v.discount.discountAmount;
+
+      // رزرو اتمی سقف استفاده — قبل از ساخت سفارش
+      const supabaseInc = await createClient();
+      const { data: reserved, error: incErr } = await supabaseInc.rpc(
+        "increment_discount_use",
+        { p_code: discountCode },
+      );
+      if (incErr) {
+        console.error("[discount reserve]", incErr);
+        return { ok: false as const, error: "discount_reserve_failed" };
+      }
+      if (reserved !== true) {
+        return { ok: false as const, error: "discount_max_uses" };
+      }
     }
 
-    
     const nameOk = assertNoLinkOrImage(payload.name, "نام");
     if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
     const phoneNorm = normalizeIranMobile(payload.phone || "");
@@ -485,19 +498,6 @@ const orderRepo = new OrderRepository();
       // اگر repo هنوز total را خودش از items می‌سازد، داخل repo:
       // total = subtotal - discountAmount
     });
-
-    // افزایش اتمی used_count
-    if (discountCode) {
-      try {
-        const supabaseInc = await createClient();
-        const { error: incErr } = await supabaseInc.rpc("increment_discount_use", {
-          p_code: discountCode,
-        });
-        if (incErr) console.error("[discount used_count rpc]", incErr);
-      } catch (e) {
-        console.error("[discount used_count]", e);
-      }
-    }
 
     await cartRepo.clearCart(cartId);
     return { ok: true as const, orderId };

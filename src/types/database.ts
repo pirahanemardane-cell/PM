@@ -760,7 +760,7 @@ export type Database = {
     Functions: {
       increment_discount_use: {
         Args: { p_code: string };
-        Returns: undefined;
+        Returns: boolean;
       };
     };
     Enums: Record<string, never>;
