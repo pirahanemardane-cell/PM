@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveBlogCategoriesAction,
+  adminHardDeleteBlogCategoriesAction,
+} from "@/app/admin/actions/lifecycle";
   adminListBlogCategoriesAction,
   adminCreateBlogCategoryAction,
   adminToggleBlogCategoryAction,
@@ -19,6 +24,9 @@ type Cat = {
 
 export default function AdminBlogCategoriesPage() {
   const [items, setItems] = useState<Cat[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -26,6 +34,62 @@ export default function AdminBlogCategoriesPage() {
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveBlogCategoriesAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteBlogCategoriesAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_products: "به محصول متصل است",
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveBlogCategoriesAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteBlogCategoriesAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_products: "به محصول متصل است",
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
@@ -92,6 +156,14 @@ export default function AdminBlogCategoriesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">دسته‌های بلاگ</h1>
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
           <p className="text-muted-foreground text-sm">مدیریت دسته‌بندی مقالات</p>
         </div>
         <div className="flex gap-2">
@@ -159,7 +231,7 @@ export default function AdminBlogCategoriesPage() {
             <tbody>
               {filtered.map((c) => (
                 <tr key={c.id} className="border-t">
-                  <td className="p-3 font-medium">{c.name}</td>
+                  <td className="p-3 font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(c.id)} onChange={() => toggleSelect(c.id)} /><span>{c.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(c.id, c.name)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(c.id, c.name)}>حذف دائمی</button></td>
                   <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
                     {c.slug}
                   </td>
