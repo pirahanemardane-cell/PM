@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   adminListOrdersAction,
   adminUpdateOrderStatusAction,
+  adminHardDeleteOrdersAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
@@ -124,7 +125,25 @@ export default function AdminOrdersPage() {
     void load();
   }
   async function runBulkHardDelete() {
-    setError("حذف دائمی سفارش از این صفحه پشتیبانی نمی‌شود");
+    if (!selected.length) return;
+    if (
+      !confirm(
+        `حذف دائمی ${selected.length} سفارش؟ این عمل برگشت‌ناپذیر است و موجودی سفارش‌های غیرلغو بازگردانده می‌شود.`,
+      )
+    )
+      return;
+    setBulkBusy(true);
+    setError("");
+    const res = await adminHardDeleteOrdersAction(selected);
+    setBulkBusy(false);
+    setSelected([]);
+    if (!res.ok) {
+      setError(
+        `حذف: ${res.deleted} موفق، ${res.failed} ناموفق` +
+          ((res as { detail?: string }).detail ? ` — ${(res as { detail?: string }).detail}` : ""),
+      );
+    }
+    void load();
   }
 
   function submitSearch(e: React.FormEvent) {
@@ -144,7 +163,7 @@ export default function AdminOrdersPage() {
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
           archiveLabel="لغو گروهی"
-          hardLabel="حذف دائمی (غیرفعال)"
+          hardLabel="حذف دائمی"
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

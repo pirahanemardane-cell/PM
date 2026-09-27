@@ -89,3 +89,90 @@ export async function adminGetOrderAction(orderId: string) {
     return { ok: false as const, error: "server", order: null };
   }
 }
+
+/** حذف دائمی سفارش‌ها: آیتم‌ها + مرجوعی‌ها، در صورت نیاز بازگردانی موجودی، سپس خود سفارش */
+export async function adminHardDeleteOrdersAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, deleted: 0, failed: 0 };
+  const list = [...new Set((ids || []).map((x) => String(x || "").trim()).filter(Boolean))];
+  if (!list.length) return { ok: false as const, error: "empty", deleted: 0, failed: 0 };
+
+  const service = createServiceClient();
+  let deleted = 0;
+  let failed = 0;
+  const details: string[] = [];
+
+  for (const orderId of list) {
+    try {
+      // وضعیت فعلی + آیتم‌ها برای بازگردانی موجودی
+      const { data: prev, error: pErr } = await service
+        .from("orders")
+        .select("id, status, order_items(variant_id, quantity)")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!prev) {
+        failed += 1;
+        details.push(`${orderId.slice(0, 8)}:not_found`);
+        continue;
+      }
+
+      const status = String((prev as { status?: string }).status || "");
+      // اگر لغو نشده، موجودی را برگردان (مثل cancel)
+      if (status !== "cancelled") {
+        const items =
+          (
+            prev as {
+              order_items?: { variant_id: string | null; quantity: number }[];
+            }
+          ).order_items ?? [];
+        for (const it of items) {
+          if (!it.variant_id) continue;
+          const q = Number(it.quantity) || 0;
+          if (q < 1) continue;
+          try {
+            await service.rpc("increment_variant_stock", {
+              p_variant_id: it.variant_id,
+              p_qty: q,
+            });
+          } catch (re) {
+            console.error("[hardDelete order] stock restore", orderId, it.variant_id, re);
+          }
+        }
+      }
+
+      // وابستگی‌ها
+      await service.from("return_requests").delete().eq("order_id", orderId);
+      await service.from("order_items").delete().eq("order_id", orderId);
+
+      const { error: dErr } = await service.from("orders").delete().eq("id", orderId);
+      if (dErr) throw dErr;
+
+      void adminWriteLogAction({
+        action: "order_hard_delete",
+        entity: "order",
+        entity_id: orderId,
+        meta: status,
+      });
+      deleted += 1;
+    } catch (e) {
+      failed += 1;
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? String((e as { message?: string }).message || "")
+          : e instanceof Error
+            ? e.message
+            : "error";
+      console.error("[adminHardDeleteOrders]", orderId, e);
+      details.push(`${orderId.slice(0, 8)}:${msg.slice(0, 80)}`);
+    }
+  }
+
+  return {
+    ok: failed === 0,
+    deleted,
+    failed,
+    detail: details.slice(0, 5).join(" | ") || undefined,
+  };
+}
+
