@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import {
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
   adminArchiveMediaAction,
   adminHardDeleteMediaAction,
 } from "@/app/admin/actions/lifecycle";
+import {
   adminDeleteProductImageAction,
   adminListProductImagesAction,
   adminUploadProductImageAction,

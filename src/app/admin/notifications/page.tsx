@@ -1,22 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-  const [selected, setSelected] = useState<string[]>([]);
-  const [bulkBusy, setBulkBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 import Link from "next/link";
 import { adminSendNotificationAction } from "@/app/admin/actions/notifications-admin";
 import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
-import { AdminBulkBar } from "@/components/admin/bulk-bar";
-import {
-  adminArchiveNotificationsAction,
-  adminHardDeleteNotificationsAction,
-} from "@/app/admin/actions/lifecycle";
 
 export default function AdminNotificationsPage() {
-  const templates = useMemo(() => (Array.isArray(PREDEFINED_NOTIFICATIONS) ? [...PREDEFINED_NOTIFICATIONS] : []), []);
+  const templates = useMemo(
+    () => (Array.isArray(PREDEFINED_NOTIFICATIONS) ? [...PREDEFINED_NOTIFICATIONS] : []),
+    [],
+  );
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [mode, setMode] = useState<"user" | "all">("user");
   const [target, setTarget] = useState("");
@@ -47,181 +42,91 @@ export default function AdminNotificationsPage() {
       return;
     }
     const sent = "sent" in res ? Number(res.sent) : 1;
-    setMsg(`ارسال شد: ${toPersianDigits(String(sent))} مورد`);
+    setMsg("ارسال شد: " + toPersianDigits(String(sent)) + " مورد");
     if (mode === "user") setTarget("");
   }
 
-  const selected = templates.find((t) => t.id === templateId);
-
-  function toggleSelect(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
-  async function runBulkArchive() {
-    if (!selected.length) return;
-    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
-    setBulkBusy(true);
-    const res = await adminArchiveNotificationsAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    setSelected([]);
-    void load();
-  }
-  async function runBulkHardDelete() {
-    if (!selected.length) return;
-    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteNotificationsAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-        has_products: "به محصول متصل است",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    setSelected([]);
-    void load();
-  }
-  async function archiveOne(id: string, name: string) {
-    if (!confirm(`آرشیو «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminArchiveNotificationsAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    void load();
-  }
-  async function hardDeleteOne(id: string, name: string) {
-    if (!confirm(`حذف دائمی «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteNotificationsAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    void load();
-  }
+  const selectedTpl = templates.find((t) => t.id === templateId);
 
   return (
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">اعلان‌ها</h1>
-        <AdminBulkBar
-          count={selected.length}
-          busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
-          onHardDelete={() => void runBulkHardDelete()}
-          onClear={() => setSelected([])}
-        />
-
-          <p className="text-muted-foreground text-sm">
-            ارسال قالب‌های از پیش‌تعریف‌شده به کاربر یا همه
-          </p>
+          <p className="text-muted-foreground text-sm">ارسال اعلان از قالب‌های از پیش تعریف‌شده</p>
         </div>
-        <Link
-          href="/admin/dashboard"
-          className="border-border rounded-xl border px-4 py-2 text-sm"
-        >
-          داشبورد
+        <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
+          بازگشت به داشبورد
         </Link>
       </div>
 
-      <form
-        onSubmit={onSend}
-        className="border-border space-y-4 rounded-2xl border p-4"
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block space-y-1 text-sm">
-            <span className="text-muted-foreground">قالب</span>
-            <select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
-              required
-            >
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block space-y-1 text-sm">
-            <span className="text-muted-foreground">گیرنده</span>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value as "user" | "all")}
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
-            >
-              <option value="user">یک کاربر (موبایل / id)</option>
-              <option value="all">همه کاربران (حداکثر ۵۰۰۰)</option>
-            </select>
-          </label>
+      {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
+      {err ? <p className="text-destructive text-sm">{err}</p> : null}
+
+      <form onSubmit={onSend} className="border-border bg-card max-w-lg space-y-4 rounded-xl border p-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">قالب</label>
+          <select
+            className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title ?? t.id}
+              </option>
+            ))}
+          </select>
+          {selectedTpl && "body" in selectedTpl && selectedTpl.body ? (
+            <p className="text-muted-foreground mt-2 text-xs whitespace-pre-wrap">{String(selectedTpl.body)}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">گیرنده</label>
+          <div className="flex gap-3 text-sm">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === "user"}
+                onChange={() => setMode("user")}
+              />
+              یک کاربر
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="mode"
+                checked={mode === "all"}
+                onChange={() => setMode("all")}
+              />
+              همه کاربران
+            </label>
+          </div>
         </div>
 
         {mode === "user" ? (
-          <label className="block space-y-1 text-sm">
-            <span className="text-muted-foreground">موبایل یا شناسه</span>
+          <div>
+            <label className="mb-1 block text-sm font-medium">شماره موبایل یا شناسه کاربر</label>
             <input
+              className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
               placeholder="09xxxxxxxxx"
-              className="border-border bg-background w-full rounded-xl border px-3 py-2"
               dir="ltr"
-              required
             />
-          </label>
-        ) : null}
-
-        {selected ? (
-          <div className="bg-muted/40 rounded-xl p-3 text-sm">
-            <p className="font-medium">{selected.title}</p>
-            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
-              {selected.body}
-            </p>
           </div>
         ) : null}
 
         <button
           type="submit"
           disabled={busy || !templateId}
-          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm disabled:opacity-50"
+          className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-50"
         >
-          {busy ? (
-            <span className="inline-flex items-center gap-2">
-              <LumaSpin /> در حال ارسال…
-            </span>
-          ) : (
-            "ارسال"
-          )}
+          {busy ? <LumaSpin className="h-5 w-5" /> : "ارسال اعلان"}
         </button>
       </form>
-
-      {msg ? <p className="text-sm text-emerald-700 dark:text-emerald-400">{msg}</p> : null}
-      {err ? <p className="text-destructive text-sm">{err}</p> : null}
-
-      <div className="border-border rounded-xl border p-4">
-        <h2 className="mb-2 font-semibold text-primary">قالب‌های موجود</h2>
-        <ul className="text-muted-foreground space-y-1 text-sm">
-          {templates.map((t) => (
-            <li key={t.id}>
-              <span className="text-foreground font-medium">{t.title}</span>
-              {" — "}
-              <span className="font-mono text-xs" dir="ltr">
-                {t.id}
-              </span>
-            </li>
-          ))}
-          {!templates.length ? <li>قالبی تعریف نشده</li> : null}
-        </ul>
-      </div>
     </div>
   );
 }
