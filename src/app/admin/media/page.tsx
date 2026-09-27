@@ -234,10 +234,6 @@ export default function AdminMediaPage() {
             void onUpload(e.target.files);
             e.target.value = "";
           }}
-        /> {
-            void onUpload(e.target.files);
-            e.target.value = "";
-          }}
         />
         <p className="text-muted-foreground text-xs">می‌توانید چند تصویر را یکجا انتخاب کنید.</p>
         {uploading ? <LumaSpin className="h-6 w-6" /> : null}
