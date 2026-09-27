@@ -225,11 +225,16 @@ export default function AdminMediaPage() {
       <div className="border-border bg-card max-w-xl space-y-3 rounded-xl border p-4">
         <label className="block text-sm font-medium">آپلود تصویر</label>
         <input
-          type="file" className="block w-full max-w-md cursor-pointer rounded-xl border-2 border-dashed border-primary/60 bg-background px-4 py-3 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground hover:border-primary"
+          type="file"
           accept="image/*"
           multiple
           disabled={uploading}
+          className="w-auto max-w-full cursor-pointer rounded-lg border-2 border-primary/70 bg-background px-2 py-1.5 text-sm file:me-2 file:cursor-pointer file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:border-primary"
           onChange={(e) => {
+            void onUpload(e.target.files);
+            e.target.value = "";
+          }}
+        /> {
             void onUpload(e.target.files);
             e.target.value = "";
           }}
