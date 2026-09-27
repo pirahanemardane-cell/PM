@@ -60,7 +60,7 @@ export function AdminBulkBar({
             type="button"
             disabled={busy}
             onClick={onHardDelete}
-            className="bg-destructive text-destructive-foreground rounded-lg px-3 py-1.5 text-sm disabled:opacity-40"
+            className="bg-destructive rounded-lg px-3 py-1.5 text-sm text-white disabled:opacity-40"
           >
             {hardLabel}
           </button>

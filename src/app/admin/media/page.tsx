@@ -345,7 +345,7 @@ export default function AdminMediaPage() {
                     type="button"
                     disabled={bulkBusy}
                     onClick={() => void deleteOne(item)}
-                    className="bg-destructive text-destructive-foreground rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
+                    className="bg-destructive rounded-lg px-3 py-1.5 text-xs text-white disabled:opacity-50"
                   >
                     حذف
                   </button>
