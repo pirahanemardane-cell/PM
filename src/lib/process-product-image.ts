@@ -3,9 +3,9 @@ import { readFile } from "fs/promises";
 import path from "path";
 
 const WEBP_QUALITY = 82;
-const WATERMARK_RATIO = 0.224; // ~20% smaller than 0.28
+const WATERMARK_RATIO = 0.14; // smaller mark on product photos
 const MARGIN_RATIO = 0.03;
-const WATERMARK_OPACITY = 0.85;
+const WATERMARK_OPACITY = 0.55;
 
 /** فقط این فایل — طبق درخواست */
 const WATERMARK_FILE = "logo-light-transparent.webp";
