@@ -102,16 +102,17 @@ export function Footer({
           {watermarkName}
         </div>
 
-        {/* Logo + side borders: dir=ltr تا در سایت RTL گرادیان برعکس نشود — نزدیک لوگو پررنگ، لبه محو */}
+        {/* Logo + side borders — همان قاب قبلی؛ dir=ltr تا در RTL برعکس نشود */}
         <div
           dir="ltr"
-          className="pointer-events-none absolute bottom-12 left-0 right-0 z-10 flex w-full items-center px-0 sm:bottom-14 md:bottom-20"
+          className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20 md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)]"
         >
+          {/* چپ: لبه شفاف → نزدیک لوگو پررنگ */}
           <div
             className="h-px min-w-0 flex-1"
             style={{
               backgroundImage:
-                "linear-gradient(90deg, transparent 0%, transparent 25%, hsl(var(--primary) / 0.25) 70%, hsl(var(--primary) / 0.65) 100%)",
+                "linear-gradient(to right, transparent 0%, hsl(var(--primary) / 0.15) 40%, hsl(var(--primary) / 0.75) 100%)",
             }}
           />
           <div
@@ -119,11 +120,12 @@ export function Footer({
           >
             {brandIcon}
           </div>
+          {/* راست: نزدیک لوگو پررنگ → لبه شفاف */}
           <div
             className="h-px min-w-0 flex-1"
             style={{
               backgroundImage:
-                "linear-gradient(270deg, transparent 0%, transparent 25%, hsl(var(--primary) / 0.25) 70%, hsl(var(--primary) / 0.65) 100%)",
+                "linear-gradient(to left, transparent 0%, hsl(var(--primary) / 0.15) 40%, hsl(var(--primary) / 0.75) 100%)",
             }}
           />
         </div>
