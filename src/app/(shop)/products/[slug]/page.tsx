@@ -259,6 +259,15 @@ export default async function ProductDetailPage({ params }: Props) {
                   </p>
                 </div>
               </div>
+
+            {product.description ? (
+              <section className="mt-6 border-t pt-6" aria-label="توضیحات محصول">
+                <h2 className="mb-3 text-lg font-semibold text-primary md:text-xl">توضیحات</h2>
+                <div className="text-muted-foreground text-sm leading-7 whitespace-pre-line md:text-base">
+                  {product.description}
+                </div>
+              </section>
+            ) : null}
             </div>
           </>
         }
@@ -288,19 +297,18 @@ export default async function ProductDetailPage({ params }: Props) {
             </p>
           </div>
         </div>
+
+            {product.description ? (
+              <section className="mt-6 border-t pt-6" aria-label="توضیحات محصول">
+                <h2 className="mb-3 text-lg font-semibold text-primary md:text-xl">توضیحات</h2>
+                <div className="text-muted-foreground text-sm leading-7 whitespace-pre-line md:text-base">
+                  {product.description}
+                </div>
+              </section>
+            ) : null}
       </div>
 
-      {product.description ? (
-        <section
-          className="mt-10 w-full max-w-none border-t pt-8"
-          aria-label="توضیحات محصول"
-        >
-          <h2 className="mb-4 text-lg font-semibold md:text-xl text-primary">توضیحات</h2>
-          <div className="text-muted-foreground w-full max-w-none text-sm leading-7 whitespace-pre-line md:text-base">
-            {product.description}
-          </div>
-        </section>
-      ) : null}
+
 
 
       {relatedProducts?.length ? (
