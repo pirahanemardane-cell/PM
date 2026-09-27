@@ -631,7 +631,26 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
 
   async function applyMainImageFromMedia(item: { url: string; id?: string }) {
     setImageUrl(item.url);
-    setOkMsg("تصویر شاخص از رسانه انتخاب شد");
+    const id = productId || (await ensureProductId());
+    if (!id) {
+      setOkMsg("تصویر انتخاب شد — با ذخیره نهایی اعمال می‌شود");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    const res = await adminUpdateProductAction(id, { image_url: item.url } as never);
+    setBusy(false);
+    if (!res.ok) {
+      setErr(
+        String(
+          (res as { detail?: string }).detail ||
+            (res as { error?: string }).error ||
+            "ذخیره تصویر شاخص ناموفق",
+        ),
+      );
+      return;
+    }
+    setOkMsg("تصویر شاخص ذخیره شد");
   }
 
   async function applyGalleryFromMedia(item: { url: string; id?: string; alt_text?: string | null }) {

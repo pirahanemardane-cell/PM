@@ -1,6 +1,9 @@
 import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
+
+export const revalidate = 30;
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";

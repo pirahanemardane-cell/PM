@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { recordProductPrice } from "@/lib/price-history";
 
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
@@ -218,6 +220,26 @@ export type AdminVariantInput = {
   image_url?: string | null;
 };
 
+
+async function revalidateProductPaths(
+  supabase: { from: (t: string) => any },
+  productId: string,
+) {
+  try {
+    const { data } = await supabase
+      .from("products")
+      .select("slug")
+      .eq("id", productId)
+      .maybeSingle();
+    const slug = (data?.slug || "").trim();
+    if (slug) revalidatePath(`/products/${slug}`);
+    revalidatePath("/");
+    revalidatePath("/products");
+  } catch (e) {
+    console.warn("[revalidateProductPaths]", e);
+  }
+}
+
 export async function adminCreateProductAction(input: CreateProductInput) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -324,6 +346,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
       if (imgErr) console.error("[product_images]", imgErr);
     }
 
+    await revalidateProductPaths(gate.supabase, product.id as string);
     return { ok: true as const, id: product.id as string, data: { id: product.id as string } };
   } catch (e) {
     console.error("[adminCreateProduct]", e);
@@ -625,6 +648,7 @@ export async function adminUpdateProductAction(
       /* optional */
     }
 
+    await revalidateProductPaths(gate.supabase, id);
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateProduct]", e);
@@ -992,6 +1016,7 @@ export async function adminAddProductGalleryImageAction(input: {
     console.error("[adminAddProductGalleryImage]", error);
     return { ok: false as const, error: "server" as const, detail: error.message };
   }
+  await revalidateProductPaths(gate.supabase, productId);
   return { ok: true as const, image: data };
 }
 

@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { randomUUID } from "crypto";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import {
@@ -97,6 +99,18 @@ export async function adminUploadProductImageAction(formData: FormData) {
       };
     }
 
+    if (productId) {
+      try {
+        const { data: p } = await gate.supabase
+          .from("products")
+          .select("slug")
+          .eq("id", productId)
+          .maybeSingle();
+        if (p?.slug) revalidatePath(`/products/${p.slug}`);
+        revalidatePath("/");
+        revalidatePath("/products");
+      } catch {}
+    }
     return {
       ok: true as const,
       url: urls.large!,
