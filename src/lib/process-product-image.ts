@@ -78,7 +78,11 @@ async function buildWatermarkOverlay(
   try {
     const logoMaxW = Math.max(48, Math.round(targetW * WATERMARK_RATIO));
     const resized = await sharp(logoBuf)
-      .resize({ width: logoMaxW, withoutEnlargement: true })
+      .resize({
+        width: logoMaxW,
+        withoutEnlargement: true,
+        kernel: sharp.kernel.lanczos3,
+      })
       .ensureAlpha()
       .toBuffer({ resolveWithObject: true });
 
@@ -126,15 +130,18 @@ export async function processProductImageSizes(
     number,
   ][]) {
     const targetW = Math.min(srcW, maxW);
+
+    // 1) resize + mild sharpen ONLY on base photo (نه روی واترمارک)
     const resized = await sharp(rotated)
       .resize({ width: targetW, withoutEnlargement: true })
+      .sharpen({ sigma: 0.6, m1: 0.8, m2: 0.4 })
       .toBuffer({ resolveWithObject: true });
 
     const w = resized.info.width;
     const h = resized.info.height;
-    const margin = Math.max(8, Math.round(Math.min(w, h) * MARGIN_RATIO));
-    let pipeline = sharp(resized.data);
 
+    // 2) composite watermark AFTER sharpen — edges stay crisp
+    let pipeline = sharp(resized.data);
     if (logoBuf) {
       try {
         const overlay =
@@ -142,7 +149,6 @@ export async function processProductImageSizes(
             ? masterOverlay
             : await buildWatermarkOverlay(logoBuf, w);
         if (overlay) {
-          // وسط تصویر
           const left = Math.max(0, Math.round((w - overlay.width) / 2));
           const top = Math.max(0, Math.round((h - overlay.height) / 2));
           pipeline = sharp(resized.data).composite([
@@ -154,7 +160,10 @@ export async function processProductImageSizes(
       }
     }
 
-    out[name] = await pipeline.webp({ quality: 82, effort: 6, smartSubsample: true }).toBuffer();
+    // 3) webp: کمی کیفیت بالاتر تا آلفا/لبه لوگو نرم نشود
+    out[name] = await pipeline
+      .webp({ quality: 88, effort: 6, smartSubsample: true })
+      .toBuffer();
   }
 
   return out;
