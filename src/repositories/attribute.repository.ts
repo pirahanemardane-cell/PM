@@ -22,7 +22,7 @@ export class AttributeRepository extends BaseRepository {
     const ids = attributeRows.map((a) => a.id);
     const { data: options, error: optErr } = await client
       .from("attribute_options")
-      .select("id, attribute_id, value, slug, sort_order")
+      .select("id, attribute_id, value, slug, sort_order, hex")
       .in("attribute_id", ids)
       .order("sort_order", { ascending: true });
 

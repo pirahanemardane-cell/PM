@@ -156,9 +156,12 @@ export class ProductRepository extends BaseRepository {
     // UUID فیلتر → برچسب متنی واریانت (size / color_name)
     let sizeLabel: string | null = null;
     let colorName: string | null = null;
-    if (filters.sizeId) {
+    
+    let resolvedSizeName: string | undefined = filters.sizeValue;
+    let resolvedColorName: string | undefined = filters.colorValue;
+if (filters.sizeId) {
       const { data: sz } = await client
-        .from("sizes")
+        .from("sizes") /* attr-aware */
         .select("name, slug")
         .eq("id", filters.sizeId)
         .maybeSingle();
@@ -181,7 +184,9 @@ export class ProductRepository extends BaseRepository {
 
     if (
       filters.sizeId ||
+      filters.sizeValue ||
       filters.colorId ||
+      filters.colorValue ||
       filters.inStock ||
       filters.minPrice != null ||
       filters.maxPrice != null
@@ -189,7 +194,9 @@ export class ProductRepository extends BaseRepository {
       items = items.filter((p) => {
         const variants = (p.variants ?? []).filter((v) => v.is_active);
         return variants.some((v) => {
-          if (filters.sizeId) {
+          if (filters.sizeId || filters.sizeValue) {
+            const wantSize = resolvedSizeName;
+            if (wantSize && String(v.size || "").toLowerCase() !== String(wantSize).toLowerCase()) return false;
             if (!sizeLabel) return false;
             const sn = (
               typeof (v as { size?: string | null }).size === "string"
@@ -198,7 +205,9 @@ export class ProductRepository extends BaseRepository {
             ).trim();
             if (!sn || sn.toLowerCase() !== sizeLabel.toLowerCase()) return false;
           }
-          if (filters.colorId) {
+          if (filters.colorId || filters.colorValue) {
+            const wantColor = resolvedColorName;
+            if (wantColor && String(v.color_name || "").toLowerCase() !== String(wantColor).toLowerCase()) return false;
             if (!colorName) return false;
             const cn = (
               typeof (v as { color_name?: string | null }).color_name === "string"

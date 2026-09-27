@@ -7,6 +7,8 @@ export const productFilterSchema = paginationSchema.extend({
   brandSlug: z.string().optional(),
   sizeId: z.string().uuid().optional(),
   colorId: z.string().uuid().optional(),
+  sizeValue: z.string().optional(),
+  colorValue: z.string().optional(),
   tagSlug: z.string().optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),

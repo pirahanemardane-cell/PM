@@ -59,10 +59,17 @@ export default async function ProductsPage({
     "fabric",
     "pattern",
     "season",
+    "collar",
     "collar-type",
+    "sleeve",
     "sleeve-type",
     "button-type",
     "fit",
+    "thickness",
+    "closure",
+    "pocket",
+    "occasion",
+    "origin",
     "tie-width",
     "tie-length",
     "bow-tie-type",
@@ -82,19 +89,59 @@ export default async function ProductsPage({
   const facets = allFacets.filter((f) => allowed.has(f.slug));
 
   
+  // منبع اصلی: attribute options (size/color) — fallback: جداول sizes/colors
+  const colorAttr = allFacets.find((f) => f.slug === "color");
+  const sizeAttr = allFacets.find((f) => f.slug === "size");
+  type Chip = { id: string; name: string; slug: string; hex?: string | null };
+  let colors: Chip[] = (colorAttr?.options ?? []).map((o) => ({
+    id: o.id,
+    name: o.value,
+    slug: o.slug || o.value,
+    hex: (o as { hex?: string | null }).hex ?? null,
+  }));
+  let sizes: Chip[] = (sizeAttr?.options ?? []).map((o) => ({
+    id: o.id,
+    name: o.value,
+    slug: o.slug || o.value,
+  }));
   const colorRepo = new ColorRepository();
   const sizeRepo = new SizeRepository();
-  const [colors, sizes] = await Promise.all([
-    colorRepo.findAllActive().catch(() => [] as Awaited<ReturnType<ColorRepository["findAllActive"]>>),
-    sizeRepo.findAllActive().catch(() => [] as Awaited<ReturnType<SizeRepository["findAllActive"]>>),
-  ]);
+  if (!colors.length || !sizes.length) {
+    const [legacyColors, legacySizes] = await Promise.all([
+      colorRepo.findAllActive().catch(() => [] as Awaited<ReturnType<ColorRepository["findAllActive"]>>),
+      sizeRepo.findAllActive().catch(() => [] as Awaited<ReturnType<SizeRepository["findAllActive"]>>),
+    ]);
+    if (!colors.length) {
+      colors = legacyColors.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        hex:
+          (c as { hex_code?: string | null }).hex_code ??
+          (c as { hex?: string | null }).hex ??
+          null,
+      }));
+    }
+    if (!sizes.length) {
+      sizes = legacySizes.map((s) => ({ id: s.id, name: s.name, slug: s.slug }));
+    }
+  }
+  const colorOpt = colorSlug
+    ? colors.find((c) => c.slug === colorSlug || c.name === colorSlug)
+    : undefined;
+  const sizeOpt = sizeSlug
+    ? sizes.find((s) => s.slug === sizeSlug || s.name === sizeSlug)
+    : undefined;
+  const colorValue = colorOpt?.name;
+  const sizeValue = sizeOpt?.name;
   let colorId: string | undefined;
   let sizeId: string | undefined;
-  if (colorSlug) {
+  // فقط fallback legacy id وقتی از جدول قدیمی آمده
+  if (colorSlug && !colorAttr) {
     const c = await colorRepo.findBySlug(colorSlug).catch(() => null);
     colorId = c?.id;
   }
-  if (sizeSlug) {
+  if (sizeSlug && !sizeAttr) {
     const s = await sizeRepo.findBySlug(sizeSlug).catch(() => null);
     sizeId = s?.id;
   }
@@ -111,6 +158,8 @@ export default async function ProductsPage({
     minPrice: minPrice && !Number.isNaN(minPrice) ? minPrice : undefined,
     colorId,
     sizeId,
+    sizeValue,
+    colorValue,
     maxPrice: maxPrice && !Number.isNaN(maxPrice) ? maxPrice : undefined,
   });
 

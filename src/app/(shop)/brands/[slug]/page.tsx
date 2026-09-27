@@ -95,24 +95,54 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
   const allowed = new Set(facetSlugsForCategory(categorySlug));
   const facets = allFacets.filter((f) => allowed.has(f.slug));
 
+  const colorAttr = allFacets.find((f) => f.slug === "color");
+  const sizeAttr = allFacets.find((f) => f.slug === "size");
+  type Chip = { id: string; name: string; slug: string; hex?: string | null };
+  let colors: Chip[] = (colorAttr?.options ?? []).map((o) => ({
+    id: o.id,
+    name: o.value,
+    slug: o.slug || o.value,
+    hex: (o as { hex?: string | null }).hex ?? null,
+  }));
+  let sizes: Chip[] = (sizeAttr?.options ?? []).map((o) => ({
+    id: o.id,
+    name: o.value,
+    slug: o.slug || o.value,
+  }));
   const colorRepo = new ColorRepository();
   const sizeRepo = new SizeRepository();
-  const [colors, sizes] = await Promise.all([
-    colorRepo
-      .findAllActive()
-      .catch(() => [] as Awaited<ReturnType<ColorRepository["findAllActive"]>>),
-    sizeRepo
-      .findAllActive()
-      .catch(() => [] as Awaited<ReturnType<SizeRepository["findAllActive"]>>),
-  ]);
-
+  if (!colors.length || !sizes.length) {
+    const [legacyColors, legacySizes] = await Promise.all([
+      colorRepo.findAllActive().catch(() => [] as Awaited<ReturnType<ColorRepository["findAllActive"]>>),
+      sizeRepo.findAllActive().catch(() => [] as Awaited<ReturnType<SizeRepository["findAllActive"]>>),
+    ]);
+    if (!colors.length) {
+      colors = legacyColors.map((c) => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        hex: (c as { hex_code?: string | null }).hex_code ?? null,
+      }));
+    }
+    if (!sizes.length) {
+      sizes = legacySizes.map((s) => ({ id: s.id, name: s.name, slug: s.slug }));
+    }
+  }
+  const colorOpt = colorSlug
+    ? colors.find((c) => c.slug === colorSlug || c.name === colorSlug)
+    : undefined;
+  const sizeOpt = sizeSlug
+    ? sizes.find((s) => s.slug === sizeSlug || s.name === sizeSlug)
+    : undefined;
+  const colorValue = colorOpt?.name;
+  const sizeValue = sizeOpt?.name;
   let colorId: string | undefined;
   let sizeId: string | undefined;
-  if (colorSlug) {
+  if (colorSlug && !colorAttr) {
     const c = await colorRepo.findBySlug(colorSlug).catch(() => null);
     colorId = c?.id;
   }
-  if (sizeSlug) {
+  if (sizeSlug && !sizeAttr) {
     const s = await sizeRepo.findBySlug(sizeSlug).catch(() => null);
     sizeId = s?.id;
   }
@@ -126,6 +156,8 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
     sort,
     featured,
     attrs: Object.keys(attrs).length ? attrs : undefined,
+    sizeValue,
+    colorValue,
     minPrice: minPrice && !Number.isNaN(minPrice) ? minPrice : undefined,
     maxPrice: maxPrice && !Number.isNaN(maxPrice) ? maxPrice : undefined,
     colorId,
