@@ -240,8 +240,10 @@ export function HeroScroll() {
                   style={{
                     opacity: op,
                     transition: "opacity 40ms linear",
-                    // سایز موقت تا در قدم بعد دقیق شود
                     fontSize: "clamp(1.35rem, 4.2vw, 2.35rem)",
+                    WebkitTextStroke: "1.25px #ffffff",
+                    paintOrder: "stroke fill",
+                    textShadow: "0 0 1px rgba(255,255,255,0.85)",
                   }}
                 >
                   {slide.text}
