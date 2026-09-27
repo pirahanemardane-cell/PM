@@ -68,6 +68,10 @@ export default function AdminProductsPage() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [editName, setEditName] = useState<Record<string, string>>({});
+  /** تغییرات pending تا زدن به‌روزرسانی */
+  const [pending, setPending] = useState<
+    Record<string, { name?: string; category_id?: string | null; brand_id?: string | null }>
+  >({});
 
   function toggleSelectAll(ids: string[]) {
     setSelected((prev) =>
@@ -386,7 +390,10 @@ export default function AdminProductsPage() {
                           onBlur={() => {
                             const next = (editName[p.id] ?? p.name).trim();
                             if (next && next !== p.name) {
-                              void quick(p.id, { name: next });
+                              setPending((m) => ({
+                                ...m,
+                                [p.id]: { ...m[p.id], name: next },
+                              }));
                             }
                           }}
                           onKeyDown={(e) => {
@@ -402,11 +409,26 @@ export default function AdminProductsPage() {
                         <select
                           value={p.category_id || p.category?.id || ""}
                           disabled={busyId === p.id}
-                          onChange={(e) =>
-                            void quick(p.id, {
-                              category_id: e.target.value || null,
-                            })
-                          }
+                          onChange={(e) => {
+                            const v = e.target.value || null;
+                            setPending((m) => ({
+                              ...m,
+                              [p.id]: { ...m[p.id], category_id: v },
+                            }));
+                            setItems((prev) =>
+                              prev.map((x) =>
+                                x.id === p.id
+                                  ? {
+                                      ...x,
+                                      category_id: v,
+                                      category: cats.find((c) => c.id === v)
+                                        ? { id: v!, name: cats.find((c) => c.id === v)!.name }
+                                        : null,
+                                    }
+                                  : x,
+                              ),
+                            );
+                          }}
                           className="border-input bg-background h-8 max-w-[140px] rounded-lg border px-1 text-xs"
                         >
                           <option value="">— دسته —</option>
@@ -421,11 +443,26 @@ export default function AdminProductsPage() {
                         <select
                           value={p.brand_id || p.brand?.id || ""}
                           disabled={busyId === p.id}
-                          onChange={(e) =>
-                            void quick(p.id, {
-                              brand_id: e.target.value || null,
-                            })
-                          }
+                          onChange={(e) => {
+                            const v = e.target.value || null;
+                            setPending((m) => ({
+                              ...m,
+                              [p.id]: { ...m[p.id], brand_id: v },
+                            }));
+                            setItems((prev) =>
+                              prev.map((x) =>
+                                x.id === p.id
+                                  ? {
+                                      ...x,
+                                      brand_id: v,
+                                      brand: brands.find((b) => b.id === v)
+                                        ? { id: v!, name: brands.find((b) => b.id === v)!.name }
+                                        : null,
+                                    }
+                                  : x,
+                              ),
+                            );
+                          }}
                           className="border-input bg-background h-8 max-w-[140px] rounded-lg border px-1 text-xs"
                         >
                           <option value="">— برند —</option>
@@ -507,13 +544,6 @@ export default function AdminProductsPage() {
                           >
                             مشاهده
                           </Link>
-                          <button
-                            type="button"
-                            className="text-muted-foreground text-xs hover:underline"
-                            onClick={() => void archiveOne(p.id, p.name)}
-                          >
-                            آرشیو
-                          </button>
                           <button
                             type="button"
                             disabled={busyId === p.id}

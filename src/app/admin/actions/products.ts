@@ -1109,21 +1109,23 @@ export async function adminQuickUpdateProductAction(
   }
 }
 
-/** ناموجود سریع: همه واریانت‌های محصول stock → 0 */
+/**
+ * ناموجود سریع — بدون نابود کردن عدد موجودی.
+ * out=true  → is_active=false روی همه واریانت‌ها
+ * out=false → is_active=true (موجودی قبلی حفظ می‌شود)
+ */
 export async function adminSetProductOutOfStockAction(id: string, out: boolean) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
-    if (out) {
-      const { error } = await gate.supabase
-        .from("product_variants")
-        .update({ stock_quantity: 0 })
-        .eq("product_id", id);
-      if (error) throw error;
-    }
-    // وقتی out=false فقط فلگ UI؛ موجودی دستی از ویرایش/واریانت
+    const { error } = await gate.supabase
+      .from("product_variants")
+      .update({ is_active: !out })
+      .eq("product_id", id);
+    if (error) throw error;
     revalidatePath("/admin/products");
     revalidatePath("/products");
+    revalidatePath("/", "layout");
     return { ok: true as const };
   } catch (e) {
     console.error("[adminSetProductOutOfStock]", e);
