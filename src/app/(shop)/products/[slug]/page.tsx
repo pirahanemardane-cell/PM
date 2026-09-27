@@ -210,10 +210,6 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             ) : null}
 
-            {specRows.length > 0 ? (
-              <ProductSpecs rows={specRows} compact />
-            ) : null}
-
             <TrackRecentlyViewed
               id={String(product.id)}
               title={String(product.name ?? "")}
@@ -222,6 +218,9 @@ export default async function ProductDetailPage({ params }: Props) {
               href={`/products/${product.slug}`}
             />
           </>
+        }
+        childrenSpecs={
+          specRows.length > 0 ? <ProductSpecs rows={specRows} compact /> : null
         }
         childrenAfterBuy={
           <>

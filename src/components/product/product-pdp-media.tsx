@@ -25,6 +25,8 @@ type Props = {
   childrenTitle?: ReactNode;
   /** موبایل: بعد از تصویر، قبل از Buy Box */
   childrenBeforeBuy?: ReactNode;
+  /** موبایل: بعد از افزودن، قبل از نمودار | دسکتاپ: قبل از Buy Box */
+  childrenSpecs?: ReactNode;
   childrenAfterBuy?: ReactNode;
   childrenBelowGallery?: ReactNode;
 };
@@ -38,6 +40,7 @@ export function ProductPdpGalleryAndBuy({
   variants,
   childrenTitle,
   childrenBeforeBuy,
+  childrenSpecs,
   childrenAfterBuy,
   childrenBelowGallery,
 }: Props) {
@@ -94,6 +97,10 @@ export function ProductPdpGalleryAndBuy({
           <div className="max-lg:order-3 space-y-6">{childrenBeforeBuy}</div>
         ) : null}
 
+        {childrenSpecs ? (
+          <div className="hidden lg:block space-y-6">{childrenSpecs}</div>
+        ) : null}
+
         <div className="max-lg:order-4">
           <ProductBuyBox
             productId={productId}
@@ -105,8 +112,11 @@ export function ProductPdpGalleryAndBuy({
           />
         </div>
 
-        <div className="max-lg:order-5 mt-4 lg:hidden">{childrenBelowGallery}</div>
-        <div className="max-lg:order-6">{childrenAfterBuy}</div>
+        {childrenSpecs ? (
+          <div className="max-lg:order-5 space-y-6 lg:hidden">{childrenSpecs}</div>
+        ) : null}
+        <div className="max-lg:order-6 mt-4 lg:hidden">{childrenBelowGallery}</div>
+        <div className="max-lg:order-7">{childrenAfterBuy}</div>
       </div>
     </div>
   );
