@@ -192,9 +192,11 @@ export default function AdminCategoriesPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="نام دسته جدید"
+            className="border-input bg-background h-10 min-w-[12rem] flex-1 rounded-xl border px-3 text-sm"
+            required
           />
           <select
-            className="border-border bg-background rounded-lg border px-3 py-2 text-sm"
+            className="border-border bg-background h-10 rounded-xl border px-3 text-sm"
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
           >
@@ -207,9 +209,6 @@ export default function AdminCategoriesPage() {
                 </option>
               ))}
           </select>
-            className="border-input bg-background h-10 min-w-[12rem] flex-1 rounded-xl border px-3 text-sm"
-            required
-          />
           <button
             type="submit"
             disabled={creating}
