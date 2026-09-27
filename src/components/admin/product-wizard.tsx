@@ -48,7 +48,7 @@ const STEPS = [
   { id: 1, title: "هویت" },
   { id: 2, title: "قیمت" },
   { id: 3, title: "طبقه‌بندی" },
-  { id: 4, title: "ویژگی‌ها" },
+  { id: 4, title: "مشخصات" },
   { id: 5, title: "رسانه" },
   { id: 6, title: "واریانت / موجودی" },
   { id: 7, title: "راهنمای سایز" },
@@ -111,6 +111,9 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [imageUrl, setImageUrl] = useState("");
   const [gallery, setGallery] = useState<{ id?: string; url: string }[]>([]);
   const [attrDefs, setAttrDefs] = useState<AttrWithOptions[]>([]);
+  const sizeOpts = (attrDefs.find((a) => a.slug === "size")?.options ?? []) as Array<{ id: string; value: string }>;
+  const colorOpts = (attrDefs.find((a) => a.slug === "color")?.options ?? []) as Array<{ id: string; value: string }>;
+  const specDefs = attrDefs.filter((a) => a.slug !== "size" && a.slug !== "color");
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
   const [cats, setCats] = useState<Opt[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
@@ -708,10 +711,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
 
         {step === 4 && (
           <div className="space-y-3">
-            {attrDefs.length === 0 ? (
-              <p className="text-muted-foreground text-sm">ویژگی‌ای تعریف نشده.</p>
+            {specDefs.length === 0 ? (
+              <p className="text-muted-foreground text-sm">مشخصه‌ای تعریف نشده. از ادمین → مشخصات اضافه کنید.</p>
             ) : (
-              attrDefs.map((a) => (
+              specDefs.map((a) => (
                 <label key={a.id} className="block space-y-1 text-sm">
                   <span>{a.name}</span>
                   <select
@@ -819,28 +822,57 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 {variants.map((v, idx) => (
                   <div key={v.key} className="border-border space-y-2 rounded-lg border p-3">
                     <div className="grid gap-2 sm:grid-cols-3">
-                      <input
-                        placeholder="سایز"
-                        className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
+                      <select
+                        className="border-input bg-background w-full rounded-lg border px-2 py-1.5 text-sm"
                         value={v.size}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const size = e.target.value;
                           setVariants((rows) =>
-                            rows.map((r, i) => (i === idx ? { ...r, size: val } : r)),
+                            rows.map((r, i) => (i === idx ? { ...r, size } : r)),
                           );
                         }}
-                      />
-                      <input
-                        placeholder="رنگ"
-                        className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
+                      >
+                        <option value="">سایز…</option>
+                        {sizeOpts.map((o) => (
+                          <option key={o.id} value={o.value}>
+                            {o.value}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="border-input bg-background min-w-[5.5rem] rounded-lg border px-2 py-1.5 text-sm"
+                        value={v.size}
+                        onChange={(e) => {
+                          const size = e.target.value;
+                          setVariants((rows) =>
+                            rows.map((r, i) => (i === idx ? { ...r, size } : r)),
+                          );
+                        }}
+                      >
+                        <option value="">سایز…</option>
+                        {sizeOpts.map((o) => (
+                          <option key={o.id} value={o.value}>
+                            {o.value}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="border-input bg-background min-w-[5.5rem] rounded-lg border px-2 py-1.5 text-sm"
                         value={v.color_name}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const color_name = e.target.value;
                           setVariants((rows) =>
-                            rows.map((r, i) => (i === idx ? { ...r, color_name: val } : r)),
+                            rows.map((r, i) => (i === idx ? { ...r, color_name } : r)),
                           );
                         }}
-                      />
+                      >
+                        <option value="">رنگ…</option>
+                        {colorOpts.map((o) => (
+                          <option key={o.id} value={o.value}>
+                            {o.value}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         placeholder="SKU"
                         className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
