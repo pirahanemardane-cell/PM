@@ -823,23 +823,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                   <div key={v.key} className="border-border space-y-2 rounded-lg border p-3">
                     <div className="grid gap-2 sm:grid-cols-3">
                       <select
-                        className="border-input bg-background w-full rounded-lg border px-2 py-1.5 text-sm"
-                        value={v.size}
-                        onChange={(e) => {
-                          const size = e.target.value;
-                          setVariants((rows) =>
-                            rows.map((r, i) => (i === idx ? { ...r, size } : r)),
-                          );
-                        }}
-                      >
-                        <option value="">سایز…</option>
-                        {sizeOpts.map((o) => (
-                          <option key={o.id} value={o.value}>
-                            {o.value}
-                          </option>
-                        ))}
-                      </select>
-                      <select
                         className="border-input bg-background min-w-[5.5rem] rounded-lg border px-2 py-1.5 text-sm"
                         value={v.size}
                         onChange={(e) => {
