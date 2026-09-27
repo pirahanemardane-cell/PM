@@ -225,7 +225,7 @@ export default function AdminMediaPage() {
       <div className="border-border bg-card max-w-xl space-y-3 rounded-xl border p-4">
         <label className="block text-sm font-medium">آپلود تصویر</label>
         <input
-          type="file"
+          type="file" className="block w-full max-w-md cursor-pointer rounded-xl border-2 border-dashed border-primary/60 bg-background px-4 py-3 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground hover:border-primary"
           accept="image/*"
           multiple
           disabled={uploading}
@@ -345,7 +345,7 @@ export default function AdminMediaPage() {
                     type="button"
                     disabled={bulkBusy}
                     onClick={() => void deleteOne(item)}
-                    className="bg-destructive rounded-lg px-3 py-1.5 text-xs text-white disabled:opacity-50"
+                    className="bg-destructive rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-900 disabled:opacity-50"
                   >
                     حذف
                   </button>

@@ -18,6 +18,7 @@ const WATERMARK_PUBLIC_URL =
 
 export const PRODUCT_IMAGE_SIZES = {
   thumb: 800,
+  small: 800,
   medium: 800,
   large: 800,
 } as const as const;
@@ -148,11 +149,7 @@ export async function processProductImageSizes(
     const h = resized.info.height;
 
     // 2) watermark AFTER sharpen — کیفیت لوگو مستقل از کیفیت عکس ورودی
-    let pipeline = sharp(resized.data, {
-      raw: undefined as never,
-    });
-    // sharp(Buffer) is enough; avoid invalid raw
-    pipeline = sharp(resized.data);
+    let pipeline = sharp(resized.data);
 
     if (logoBuf) {
       try {
