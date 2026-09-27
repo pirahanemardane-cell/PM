@@ -256,6 +256,7 @@ function parseProductImageKey(url: string): {
   }
 }
 
+/** @deprecated URL فایل باید پایدار بماند — از alt_text استفاده کنید؛ rename فیزیکی توصیه نمی‌شود. */
 export async function adminRenameProductImageAction(input: {
   id: string;
   newBaseName: string;

@@ -11,7 +11,6 @@ import {
   adminListProductImagesAction,
   adminUploadProductImageAction,
   adminUpdateProductImageMetaAction,
-  adminRenameProductImageAction,
   adminDeleteProductImageAction,
   type MediaListItem,
 } from "@/app/admin/actions/media";
@@ -28,8 +27,6 @@ export default function AdminMediaPage() {
   const [lastUploadUrl, setLastUploadUrl] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [draftAlt, setDraftAlt] = useState<Record<string, string>>({});
-  const [draftName, setDraftName] = useState<Record<string, string>>({});
-  const [renamingId, setRenamingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -50,8 +47,7 @@ export default function AdminMediaPage() {
     }
     setItems(res.items);
     const alts: Record<string, string> = {};
-    const names: Record<string, string> = {};
-    for (const it of res.items) {
+        for (const it of res.items) {
       alts[it.id] = it.alt_text ?? "";
       try {
         const file = (it.url || "").split("/").pop() || "";
@@ -62,7 +58,7 @@ export default function AdminMediaPage() {
       }
     }
     setDraftAlt(alts);
-    setDraftName(names);
+    
   }, []);
 
   useEffect(() => {
@@ -134,35 +130,6 @@ export default function AdminMediaPage() {
       return;
     }
     setSelected((prev) => prev.filter((x) => x !== item.id));
-    void load();
-  }
-
-  async function renameFile(id: string) {
-    const name = (draftName[id] || "").trim();
-    if (!name) {
-      setError("نام فایل را وارد کنید");
-      return;
-    }
-    setRenamingId(id);
-    setError(null);
-    setMsg(null);
-    const res = await adminRenameProductImageAction({ id, newBaseName: name });
-    setRenamingId(null);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        bad_name: "نام نامعتبر (حروف انگلیسی، عدد، خط تیره)",
-        not_found: "تصویر پیدا نشد",
-        bad_url: "آدرس فعلی قابل rename نیست",
-        source_missing: "فایل منبع روی فضای ابری نیست",
-        upload_failed: "آپلود نام جدید ناموفق",
-        db_failed: "به‌روزرسانی دیتابیس ناموفق",
-      };
-      setError(map[(res as { error?: string }).error || ""] || "تغییر نام ناموفق");
-      return;
-    }
-    setMsg(
-      "unchanged" in res && res.unchanged ? "نام تغییری نکرد" : "نام فایل تغییر کرد",
-    );
     void load();
   }
 
@@ -309,6 +276,9 @@ export default function AdminMediaPage() {
                       {copiedId === item.id ? "کپی شد" : "کپی"}
                     </button>
                   </div>
+                <p className="text-muted-foreground text-[11px]">
+                  نام فایل روی فضای ابری ثابت است؛ برای SEO از فیلد alt استفاده کنید.
+                </p>
                 </div>
 
                 {item.product_id ? (
@@ -321,34 +291,6 @@ export default function AdminMediaPage() {
                 ) : (
                   <span className="text-muted-foreground text-xs">بدون محصول</span>
                 )}
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium">
-                    نام فایل (بدون پسوند)
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      className="border-border bg-background min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-sm"
-                      dir="ltr"
-                      value={draftName[item.id] ?? ""}
-                      onChange={(e) =>
-                        setDraftName((prev) => ({ ...prev, [item.id]: e.target.value }))
-                      }
-                      placeholder="classic-blue-shirt"
-                    />
-                    <button
-                      type="button"
-                      disabled={renamingId === item.id}
-                      onClick={() => void renameFile(item.id)}
-                      className="border-border shrink-0 rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
-                    >
-                      {renamingId === item.id ? "..." : "اعمال نام"}
-                    </button>
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-[11px]">
-                    فقط حروف انگلیسی، عدد و - — همه سایزها با هم عوض می‌شوند
-                  </p>
-                </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium">
                     نام / متن جایگزین (alt)
