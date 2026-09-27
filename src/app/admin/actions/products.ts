@@ -1094,7 +1094,11 @@ export async function adminQuickUpdateProductAction(
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
-    const body: Record<string, unknown> = {};
+    const body: {
+      name?: string;
+      category_id?: string | null;
+      brand_id?: string | null;
+    } = {};
     if (patch.name !== undefined) {
       const name = String(patch.name || "").trim();
       if (!name) return { ok: false as const, error: "name_required" };
@@ -1104,7 +1108,10 @@ export async function adminQuickUpdateProductAction(
     if (patch.category_id !== undefined) body.category_id = patch.category_id || null;
     if (patch.brand_id !== undefined) body.brand_id = patch.brand_id || null;
     if (!Object.keys(body).length) return { ok: true as const };
-    const { error } = await gate.supabase.from("products").update(body).eq("id", id);
+    const { error } = await gate.supabase
+      .from("products")
+      .update(body as any)
+      .eq("id", id);
     if (error) throw error;
     revalidatePath("/admin/products");
     return { ok: true as const };
