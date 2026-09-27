@@ -115,7 +115,7 @@ export async function adminListProductsAction(
 
     const status = (opts?.status || "").trim();
     if (status && ["draft", "published", "archived"].includes(status)) {
-      query = query.eq("status", status);
+      query = query.eq("status", status as "draft" | "published" | "archived");
     }
     const q = (opts?.q || "").trim();
     if (q) {
