@@ -9,7 +9,7 @@ const SCROLL_VH = 320;
 /** بازه‌های متن (ایندکس فریم ۰-based، مطابق اسکراب فعلی) */
 const SLIDES = [
   { start: 0, end: 23, text: "استایلی که فکر شده" },
-  { start: 24, end: 48, text: "هماهنگی از یقه تا گره" },
+  { start: 24, end: 48, text: "هماهنگی از آستین تا یقه" },
   { start: 48, end: 69, text: "پیراهن مردانه" },
 ] as const;
 
@@ -28,13 +28,35 @@ function rangeOpacity(idx: number, start: number, end: number, fade = FADE_FRAME
   return Math.min(fadeIn, fadeOut);
 }
 
+/** سایز دسکتاپ فقط — موبایل همان clamp والد */
+function TitleContent({ text }: { text: string }) {
+  if (text === "استایلی که فکر شده") {
+    return (
+      <>
+        <span className="lg:text-[40px]">استایلی</span>{" "}
+        <span className="lg:text-[32px]">که فکر شده</span>
+      </>
+    );
+  }
+  if (text === "هماهنگی از آستین تا یقه") {
+    return (
+      <>
+        <span className="lg:text-[32px]">هماهنگی از</span>{" "}
+        <span className="lg:text-[40px]">آستین تا یقه</span>
+      </>
+    );
+  }
+  if (text === "پیراهن مردانه") {
+    return <span className="lg:text-[40px]">پیراهن مردانه</span>;
+  }
+  return <>{text}</>;
+}
+
 export function HeroScroll() {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>(
-    new Array(FRAME_COUNT).fill(null),
-  );
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(FRAME_COUNT).fill(null));
   const lastIdxRef = useRef(-1);
   const introFiredRef = useRef(false);
   const rafRef = useRef(0);
@@ -44,13 +66,12 @@ export function HeroScroll() {
   const drawIndex = useCallback((idx: number, force = false) => {
     if (!force && idx === lastIdxRef.current) return;
     lastIdxRef.current = idx;
-
+    setFrameIdx(idx);
     const canvas = canvasRef.current;
     const stage = stageRef.current;
     if (!canvas || !stage) return;
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
-
     let img = imagesRef.current[idx];
     if (!img?.complete || !img.naturalWidth) {
       for (let d = 1; d < FRAME_COUNT; d++) {
@@ -67,7 +88,6 @@ export function HeroScroll() {
       }
     }
     if (!img?.complete || !img.naturalWidth) return;
-
     const rect = stage.getBoundingClientRect();
     const w = Math.max(1, Math.round(rect.width));
     const h = Math.max(1, Math.round(rect.height));
@@ -79,7 +99,6 @@ export function HeroScroll() {
       canvas.height = th;
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
     const zoom = 1.08;
     const ir = img.naturalWidth / img.naturalHeight;
     const cr = w / h;
@@ -99,7 +118,6 @@ export function HeroScroll() {
     const imgs: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
     imagesRef.current = imgs;
     let cancelled = false;
-
     const loadOne = (i: number) =>
       new Promise<void>((resolve) => {
         const img = new Image();
@@ -117,13 +135,11 @@ export function HeroScroll() {
         img.onerror = () => resolve();
         img.src = frameSrc(i + 1);
       });
-
     (async () => {
       await loadOne(0);
-      const concurrency = 16;
       let next = 1;
       await Promise.all(
-        Array.from({ length: concurrency }, async () => {
+        Array.from({ length: 16 }, async () => {
           while (next < FRAME_COUNT) {
             const i = next++;
             await loadOne(i);
@@ -131,7 +147,6 @@ export function HeroScroll() {
         }),
       );
     })();
-
     return () => {
       cancelled = true;
     };
@@ -139,7 +154,6 @@ export function HeroScroll() {
 
   useEffect(() => {
     if (!firstReady) return;
-
     const onScroll = () => {
       if (rafRef.current) return;
       rafRef.current = requestAnimationFrame(() => {
@@ -150,13 +164,8 @@ export function HeroScroll() {
         const total = Math.max(1, el.offsetHeight - window.innerHeight);
         const scrolled = Math.min(Math.max(-rect.top, 0), total);
         const progress = scrolled / total;
-        const idx = Math.min(
-          FRAME_COUNT - 1,
-          Math.max(0, Math.round(progress * (FRAME_COUNT - 1))),
-        );
+        const idx = Math.min(FRAME_COUNT - 1, Math.max(0, Math.round(progress * (FRAME_COUNT - 1))));
         drawIndex(idx);
-        setFrameIdx(idx);
-
         if (
           idx >= FRAME_COUNT - 1 &&
           progress >= 0.995 &&
@@ -168,7 +177,6 @@ export function HeroScroll() {
         }
       });
     };
-
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
@@ -179,7 +187,7 @@ export function HeroScroll() {
     };
   }, [drawIndex, firstReady]);
 
-  const buttonOpacity = rangeOpacity(frameIdx, BUTTON_FROM, FRAME_COUNT - 1, FADE_FRAMES);
+  const buttonOpacity = rangeOpacity(frameIdx, BUTTON_FROM, FRAME_COUNT - 1, 3);
 
   return (
     <section
@@ -243,10 +251,11 @@ export function HeroScroll() {
                     fontSize: "clamp(1.35rem, 4.2vw, 2.35rem)",
                     WebkitTextStroke: "1.25px #ffffff",
                     paintOrder: "stroke fill",
-                    textShadow: "0 0 1px rgba(255,255,255,0.85)",
+                    textShadow:
+                      "0 0 6px rgba(255,255,255,0.45), 0 0 14px rgba(255,255,255,0.28), 0 0 1px rgba(255,255,255,0.85)",
                   }}
                 >
-                  {slide.text}
+                  <TitleContent text={slide.text} />
                 </p>
               );
             })}
