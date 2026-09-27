@@ -301,20 +301,20 @@ export function HeroScroll() {
 
           </div>
         </div>
-        {/* نشانگر اسکرول — پایین استیج */}
+        {/* نشانگر اسکرول — وسط استیج، سفید */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex flex-col items-center gap-1.5 sm:bottom-7"
+          className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2"
           style={{
             opacity: frameIdx < 0.5 ? 1 : Math.max(0, 1 - (frameIdx - 0.5) / 9),
             transition: "opacity 160ms linear",
           }}
           aria-hidden
         >
-          <span className="text-[11px] font-semibold tracking-wide text-[#023047] drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:text-[#13ABC4]">
+          <span className="text-sm font-semibold tracking-wide text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.55)] sm:text-base">
             اسکرول کنید
           </span>
-          <span className="hero-scroll-hint inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#023047]/50 bg-white/35 text-[#023047] shadow-sm backdrop-blur-[2px] dark:border-[#13ABC4]/55 dark:bg-black/25 dark:text-[#13ABC4]">
-            <ChevronDown className="h-5 w-5" strokeWidth={2.75} />
+          <span className="hero-scroll-hint inline-flex items-center justify-center text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">
+            <ChevronDown className="h-12 w-12 sm:h-16 sm:w-16 lg:h-[100px] lg:w-[100px]" strokeWidth={2.25} />
           </span>
         </div>
 
