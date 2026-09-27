@@ -209,6 +209,10 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             ) : null}
 
+            {specRows.length > 0 ? (
+              <ProductSpecs rows={specRows} compact />
+            ) : null}
+
             <TrackRecentlyViewed
               id={String(product.id)}
               title={String(product.name ?? "")}
@@ -285,9 +289,6 @@ export default async function ProductDetailPage({ params }: Props) {
         </section>
       ) : null}
 
-      <div className="mt-8 w-full max-w-none">
-        <ProductSpecs rows={specRows} />
-      </div>
 
       {relatedProducts?.length ? (
         <div className="mt-12 w-full max-w-none">
