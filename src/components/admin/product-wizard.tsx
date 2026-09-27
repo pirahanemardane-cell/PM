@@ -201,19 +201,32 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       const vars = (p.variants as Array<Record<string, unknown>>) || [];
       if (vars.length > 1 || (vars[0] && (vars[0].size || vars[0].color_name))) {
         setProductType("variable");
-        setVariants(
-          vars.map((v) => ({
-            key: String(v.id ?? `e-${Math.random()}`),
-            id: v.id ? String(v.id) : undefined,
-            size: String(v.size ?? ""),
-            color_name: String(v.color_name ?? ""),
-            sku: String(v.sku ?? ""),
-            price: String(v.price ?? ""),
-            original_price: String(v.original_price ?? ""),
-            stock: String(v.stock_quantity ?? v.stock ?? "0"),
-            image_url: String(v.image_url ?? ""),
-          })),
-        );
+        {
+          const imgsEarly =
+            (p.images as Array<{ url?: string; variant_id?: string | null }>) || [];
+          const byVariant = new Map<string, string>();
+          for (const im of imgsEarly) {
+            if (im.variant_id && im.url) byVariant.set(String(im.variant_id), String(im.url));
+          }
+          setVariants(
+            vars.map((v) => {
+              const vid = v.id ? String(v.id) : undefined;
+              return {
+                key: String(v.id ?? `e-${Math.random()}`),
+                id: vid,
+                size: String(v.size ?? ""),
+                color_name: String(v.color_name ?? ""),
+                sku: String(v.sku ?? ""),
+                price: String(v.price ?? ""),
+                original_price: String(v.original_price ?? ""),
+                stock: String(v.stock_quantity ?? v.stock ?? "0"),
+                image_url: String(
+                  (vid && byVariant.get(vid)) || v.image_url || "",
+                ),
+              };
+            }),
+          );
+        }
       } else if (vars[0]) {
         setProductType("simple");
         setSimpleSku(String(vars[0].sku ?? ""));
@@ -231,8 +244,24 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           setSalePrice("");
         }
       }
-      const imgs = (p.images as Array<{ id?: string; url: string }>) || [];
-      setGallery(imgs.filter((i) => i.url && i.url !== p.image_url));
+      const imgs =
+        (p.images as Array<{
+          id?: string;
+          url: string;
+          is_primary?: boolean;
+          variant_id?: string | null;
+        }>) || [];
+      setGallery(
+        imgs
+          .filter(
+            (i) =>
+              i.url &&
+              !i.is_primary &&
+              !i.variant_id &&
+              i.url !== p.image_url,
+          )
+          .map((i) => ({ id: i.id, url: i.url })),
+      );
       const av = await adminGetProductAttributeValuesAction(initialId);
       if (av.ok && av.data) {
         const map: Record<string, string> = {};
@@ -564,35 +593,91 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     let okCount = 0;
     const errors: string[] = [];
     for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("productId", id);
-      const up = await adminUploadProductImageAction(fd);
-      if (!up.ok) {
-        errors.push(file.name);
-        continue;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("productId", id);
+        const up = await adminUploadProductImageAction(fd);
+        if (!up.ok) {
+          errors.push(
+            file.name +
+              ":" +
+              String((up as { error?: string }).error || "upload"),
+          );
+          continue;
+        }
+        const url = String(
+          (up as { url?: string }).url ??
+            (up as { data?: { url?: string } }).data?.url ??
+            "",
+        );
+        if (!url) {
+          errors.push(file.name + ":no_url");
+          continue;
+        }
+        let imgId =
+          (up as { imageId?: string }).imageId ||
+          (up as { image?: { id?: string } }).image?.id;
+        // اگر آپلود بدون product_id در DB مانده → صریح لینک کن
+        if (!imgId) {
+          const add = await adminAddProductGalleryImageAction({
+            productId: id,
+            url,
+          });
+          if (!add.ok) {
+            errors.push(
+              file.name +
+                ":" +
+                String(
+                  (add as { detail?: string }).detail ||
+                    (add as { error?: string }).error ||
+                    "link",
+                ),
+            );
+            continue;
+          }
+          imgId = (add as { image?: { id?: string } }).image?.id;
+        }
+        setGallery((g) => [...g, { id: imgId, url }]);
+        okCount += 1;
+      } catch (e) {
+        errors.push(file.name + ":exception");
+        console.error("[onGalleryImages]", e);
       }
-      const url = String(
-        (up as { url?: string }).url ??
-          (up as { data?: { url?: string } }).data?.url ??
-          "",
-      );
-      if (!url) {
-        errors.push(file.name);
-        continue;
-      }
-      const add = await adminAddProductGalleryImageAction({ productId: id, url });
-      if (!add.ok) {
-        errors.push(file.name);
-        continue;
-      }
-      const imgId = (add as { image?: { id?: string } }).image?.id;
-      setGallery((g) => [...g, { id: imgId, url }]);
-      okCount += 1;
     }
     setBusy(false);
     if (okCount) setOkMsg(okCount + " تصویر به گالری اضافه شد");
     if (errors.length) setErr("خطا در: " + errors.slice(0, 3).join("، "));
+  }
+
+  async function onVariantImage(idx: number, file: File | null) {
+    if (!file) return;
+    const id = await ensureProductId();
+    if (!id) return;
+    setBusy(true);
+    setErr("");
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("productId", id);
+    const up = await adminUploadProductImageAction(fd);
+    setBusy(false);
+    if (!up.ok) {
+      setErr((up as { error?: string }).error || "آپلود تصویر واریانت ناموفق");
+      return;
+    }
+    const url = String(
+      (up as { url?: string }).url ??
+        (up as { data?: { url?: string } }).data?.url ??
+        "",
+    );
+    if (!url) {
+      setErr("آپلود بدون URL");
+      return;
+    }
+    setVariants((rows) =>
+      rows.map((r, i) => (i === idx ? { ...r, image_url: url } : r)),
+    );
+    setOkMsg("تصویر واریانت تنظیم شد — با ذخیره به رنگ لینک می‌شود");
   }
 
   if (loading) {
@@ -950,6 +1035,53 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <div className="space-y-3">
                 {variants.map((v, idx) => (
                   <div key={v.key} className="border-border space-y-2 rounded-lg border p-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {v.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={v.image_url}
+                          alt=""
+                          className="h-14 w-14 rounded-lg border object-cover"
+                        />
+                      ) : (
+                        <div className="text-muted-foreground flex h-14 w-14 items-center justify-center rounded-lg border border-dashed text-[10px]">
+                          بدون تصویر
+                        </div>
+                      )}
+                      <label className="bg-muted hover:bg-muted/80 cursor-pointer rounded-lg px-3 py-1.5 text-xs">
+                        تصویر این رنگ/واریانت
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0] ?? null;
+                            void onVariantImage(idx, f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                      {v.image_url ? (
+                        <button
+                          type="button"
+                          className="text-destructive text-xs"
+                          onClick={() =>
+                            setVariants((rows) =>
+                              rows.map((r, i) =>
+                                i === idx ? { ...r, image_url: "" } : r,
+                              ),
+                            )
+                          }
+                        >
+                          حذف تصویر
+                        </button>
+                      ) : null}
+                      {v.color_name ? (
+                        <span className="text-muted-foreground text-xs">
+                          رنگ: {v.color_name}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="grid gap-2 sm:grid-cols-3">
                       <select
                         className="border-input bg-background min-w-[5.5rem] rounded-lg border px-2 py-1.5 text-sm"

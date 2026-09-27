@@ -52,15 +52,34 @@ export async function adminUploadProductImageAction(formData: FormData) {
       urls[size] = url;
     }
 
-    // DB: ردیف کتابخانه رسانه (بدون محصول) تا در /admin/media دیده شود
+    // اگر productId در FormData باشد → مستقیم به گالری محصول؛ وگرنه کتابخانه رسانه
+    const productIdRaw = formData.get("productId");
+    const productId =
+      typeof productIdRaw === "string" && productIdRaw.trim()
+        ? productIdRaw.trim()
+        : null;
+
+    let sort_order = 0;
+    if (productId) {
+      const { data: maxRow } = await gate.supabase
+        .from("product_images")
+        .select("sort_order")
+        .eq("product_id", productId)
+        .order("sort_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      sort_order = (maxRow?.sort_order ?? 0) + 1;
+    }
+
     const { data: row, error: dbErr } = await gate.supabase
       .from("product_images")
       .insert({
-        product_id: null,
+        product_id: productId,
         url: urls.large!,
         alt_text: file.name?.slice(0, 120) || null,
-        sort_order: 0,
+        sort_order,
         is_primary: false,
+        variant_id: null,
       })
       .select("id, url, alt_text, is_primary, sort_order, product_id")
       .maybeSingle();
