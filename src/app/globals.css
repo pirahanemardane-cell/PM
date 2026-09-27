@@ -184,7 +184,7 @@ h4, .h4 {
   --primary: #023047;
   --primary-foreground: #F8F9FA;
   --secondary: #023047;
-  --secondary-foreground: #023047;
+  --secondary-foreground: #F8F9FA;
   --muted: #DEE2E6;
   --muted-foreground: #495057;
   --accent: #DEE2E6;
@@ -373,7 +373,7 @@ h4, .h4 { font-weight: 600 !important; }
   --popover-foreground: #212529;
   --primary: #023047;
   --primary-foreground: #FFFFFF;
-  --secondary: #9B2226;
+  --secondary: #023047;
   --secondary-foreground: #FFFFFF;
   --muted: #E9ECEF;
   --muted-foreground: #495057;
