@@ -33,21 +33,21 @@ function TitleContent({ text }: { text: string }) {
   if (text === "استایلی که فکر شده") {
     return (
       <>
-        <span className="lg:text-[40px]">استایلی</span>{" "}
-        <span className="lg:text-[32px]">که فکر شده</span>
+        <span className="lg:text-[65px]">استایلی</span>{" "}
+        <span className="lg:text-[40px] text-white">که فکر شده</span>
       </>
     );
   }
   if (text === "هماهنگی از آستین تا یقه") {
     return (
       <>
-        <span className="lg:text-[32px]">هماهنگی از</span>{" "}
-        <span className="lg:text-[40px]">آستین تا یقه</span>
+        <span className="lg:text-[40px] text-white">هماهنگی از</span>{" "}
+        <span className="lg:text-[65px]">آستین تا یقه</span>
       </>
     );
   }
   if (text === "پیراهن مردانه") {
-    return <span className="lg:text-[40px]">پیراهن مردانه</span>;
+    return <span className="lg:text-[65px]">پیراهن مردانه</span>;
   }
   return <>{text}</>;
 }
