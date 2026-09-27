@@ -93,23 +93,39 @@ export function Footer({
 
         {/* Large background text */}
         <div
-          className="text-primary/35 pointer-events-none pointer-events-none absolute bottom-8 left-1/2 z-0 sm:bottom-8 md:bottom-0 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold tracking-tighter select-none md:bottom-0"
-          style={{ fontSize: "clamp(1.35rem, 9vw, 9.5rem)" }}
+          className="text-primary/35 pointer-events-none absolute bottom-8 left-1/2 z-0 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold select-none sm:bottom-8 md:bottom-0"
+          style={{
+            fontSize: "clamp(1.35rem, 9vw, 9.5rem)",
+            letterSpacing: "0.06em",
+          }}
         >
           {watermarkName}
         </div>
 
-        {/* Logo + side borders: strong near logo, fully faded at outer edges */}
-        <div className="pointer-events-none absolute bottom-12 left-0 right-0 z-10 flex w-full items-center px-0 sm:bottom-14 md:bottom-20">
-          {/* left arm: edge (left) = transparent → logo (right) = visible */}
-          <div className="h-px min-w-0 flex-1 bg-gradient-to-r from-transparent from-0% via-transparent via-[35%] to-primary/60" />
+        {/* Logo + side borders: dir=ltr تا در سایت RTL گرادیان برعکس نشود — نزدیک لوگو پررنگ، لبه محو */}
+        <div
+          dir="ltr"
+          className="pointer-events-none absolute bottom-12 left-0 right-0 z-10 flex w-full items-center px-0 sm:bottom-14 md:bottom-20"
+        >
+          <div
+            className="h-px min-w-0 flex-1"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, transparent 0%, transparent 25%, hsl(var(--primary) / 0.25) 70%, hsl(var(--primary) / 0.65) 100%)",
+            }}
+          />
           <div
             className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
           >
             {brandIcon}
           </div>
-          {/* right arm: edge (right) = transparent → logo (left) = visible */}
-          <div className="h-px min-w-0 flex-1 bg-gradient-to-l from-transparent from-0% via-transparent via-[35%] to-primary/60" />
+          <div
+            className="h-px min-w-0 flex-1"
+            style={{
+              backgroundImage:
+                "linear-gradient(270deg, transparent 0%, transparent 25%, hsl(var(--primary) / 0.25) 70%, hsl(var(--primary) / 0.65) 100%)",
+            }}
+          />
         </div>
         <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
       </footer>
