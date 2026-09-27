@@ -15,9 +15,14 @@ export default function AdminNotificationsPage() {
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
   const [mode, setMode] = useState<"user" | "all">("user");
   const [target, setTarget] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [customBody, setCustomBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+
+  const selectedTpl = templates.find((t) => t.id === templateId);
+  const useCustom = Boolean(customTitle.trim() && customBody.trim());
 
   async function onSend(e: React.FormEvent) {
     e.preventDefault();
@@ -25,20 +30,22 @@ export default function AdminNotificationsPage() {
     setMsg(null);
     setErr(null);
     const res = await adminSendNotificationAction({
-      templateId,
+      templateId: useCustom ? undefined : templateId,
       mode,
       target: mode === "user" ? target : undefined,
+      customTitle: customTitle.trim() || undefined,
+      customBody: customBody.trim() || undefined,
     });
     setBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
         auth: "ورود لازم است",
         forbidden: "دسترسی ادمین ندارید",
-        template: "قالب نامعتبر",
+        template: "قالب نامعتبر یا متن دستی ناقص",
         target_required: "شماره یا شناسه کاربر لازم است",
         user_not_found: "کاربر پیدا نشد",
       };
-      setErr(map[res.error] ?? res.error ?? "ارسال ناموفق");
+      setErr(map[String(res.error)] ?? String(res.error ?? "ارسال ناموفق"));
       return;
     }
     const sent = "sent" in res ? Number(res.sent) : 1;
@@ -46,14 +53,20 @@ export default function AdminNotificationsPage() {
     if (mode === "user") setTarget("");
   }
 
-  const selectedTpl = templates.find((t) => t.id === templateId);
+  function applyTemplateToFields() {
+    if (!selectedTpl) return;
+    setCustomTitle(String(selectedTpl.title ?? ""));
+    setCustomBody(String((selectedTpl as { body?: string }).body ?? ""));
+  }
 
   return (
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">اعلان‌ها</h1>
-          <p className="text-muted-foreground text-sm">ارسال اعلان از قالب‌های از پیش تعریف‌شده</p>
+          <p className="text-muted-foreground text-sm">
+            ارسال از قالب یا نوشتن متن دستی
+          </p>
         </div>
         <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
           بازگشت به داشبورد
@@ -65,7 +78,7 @@ export default function AdminNotificationsPage() {
 
       <form onSubmit={onSend} className="border-border bg-card max-w-lg space-y-4 rounded-xl border p-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">قالب</label>
+          <label className="mb-1 block text-sm font-medium">قالب (اختیاری)</label>
           <select
             className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
             value={templateId}
@@ -77,9 +90,38 @@ export default function AdminNotificationsPage() {
               </option>
             ))}
           </select>
-          {selectedTpl && "body" in selectedTpl && selectedTpl.body ? (
-            <p className="text-muted-foreground mt-2 text-xs whitespace-pre-wrap">{String(selectedTpl.body)}</p>
-          ) : null}
+          <button
+            type="button"
+            className="text-primary mt-2 text-xs underline-offset-2 hover:underline"
+            onClick={applyTemplateToFields}
+          >
+            کپی متن قالب در فیلدهای دستی
+          </button>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">عنوان دستی</label>
+          <input
+            className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
+            value={customTitle}
+            onChange={(e) => setCustomTitle(e.target.value)}
+            placeholder="اگر پر شود به‌جای عنوان قالب استفاده می‌شود"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">متن دستی</label>
+          <textarea
+            className="border-border bg-background min-h-[100px] w-full rounded-lg border px-3 py-2 text-sm"
+            value={customBody}
+            onChange={(e) => setCustomBody(e.target.value)}
+            placeholder="اگر عنوان و متن هر دو پر باشند، اعلان کاملاً دستی ارسال می‌شود"
+          />
+          <p className="text-muted-foreground mt-1 text-xs">
+            {useCustom
+              ? "حالت: ارسال دستی (قالب نادیده گرفته می‌شود)"
+              : "حالت: ارسال از قالب انتخاب‌شده"}
+          </p>
         </div>
 
         <div>
@@ -121,7 +163,7 @@ export default function AdminNotificationsPage() {
 
         <button
           type="submit"
-          disabled={busy || !templateId}
+          disabled={busy || (!useCustom && !templateId)}
           className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-50"
         >
           {busy ? <LumaSpin className="h-5 w-5" /> : "ارسال اعلان"}

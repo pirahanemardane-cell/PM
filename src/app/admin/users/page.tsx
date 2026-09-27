@@ -42,6 +42,9 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
 
   
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) => (prev.length === ids.length ? [] : ids));
+  }
   function toggleSelect(id: string) {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -191,6 +194,9 @@ export default function AdminUsersPage() {
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
         <AdminBulkBar
+          total={items.length}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+          onClear={() => setSelected([])}
           count={selected.length}
           busy={bulkBusy}
           onArchive={() => void runBulkArchive()}

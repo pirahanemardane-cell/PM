@@ -52,13 +52,39 @@ export async function adminUploadProductImageAction(formData: FormData) {
       urls[size] = url;
     }
 
-    // DB و UI فقط large را نگه می‌دارند؛ بقیه از قرارداد نام قابل ساخت‌اند
+    // DB: ردیف کتابخانه رسانه (بدون محصول) تا در /admin/media دیده شود
+    const { data: row, error: dbErr } = await gate.supabase
+      .from("product_images")
+      .insert({
+        product_id: null,
+        url: urls.large!,
+        alt_text: file.name?.slice(0, 120) || null,
+        sort_order: 0,
+        is_primary: false,
+      })
+      .select("id, url, alt_text, is_primary, sort_order, product_id")
+      .maybeSingle();
+
+    if (dbErr) {
+      console.error("[adminUploadProductImage] db", dbErr);
+      // فایل در R2 هست؛ UI را با url برمی‌گردانیم ولی لیست ممکن است خالی بماند
+      return {
+        ok: true as const,
+        url: urls.large!,
+        key: keys.large!,
+        urls: urls as Record<ProductImageSizeName, string>,
+        keys: keys as Record<ProductImageSizeName, string>,
+        warning: "db_insert_failed" as const,
+      };
+    }
+
     return {
       ok: true as const,
       url: urls.large!,
       key: keys.large!,
       urls: urls as Record<ProductImageSizeName, string>,
       keys: keys as Record<ProductImageSizeName, string>,
+      imageId: row?.id as string | undefined,
     };
   } catch (e) {
     console.error("[adminUploadProductImage]", e);
@@ -140,6 +166,7 @@ export async function adminListProductImagesAction(limit = 60) {
     .select(
       "id, url, alt_text, is_primary, sort_order, product_id, products(name)",
     )
+    .order("created_at", { ascending: false })
     .order("sort_order", { ascending: true })
     .limit(Math.min(Math.max(limit, 1), 200));
 

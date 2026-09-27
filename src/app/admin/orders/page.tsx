@@ -7,6 +7,7 @@ import {
   adminUpdateOrderStatusAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
 
 
@@ -49,6 +50,8 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [q, setQ] = useState("");
   const [qApplied, setQApplied] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,6 +100,33 @@ export default function AdminOrdersPage() {
     );
   }
 
+
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) => (prev.length === ids.length ? [] : ids));
+  }
+  async function runBulkCancel() {
+    if (!selected.length) return;
+    if (!confirm("لغو سفارش‌های انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    let failed = 0;
+    for (const id of selected) {
+      const res = await adminUpdateOrderStatusAction(id, "cancelled");
+      if (!res.ok) failed += 1;
+    }
+    setBulkBusy(false);
+    setSelected([]);
+    if (failed) setError(`لغو ${failed} مورد ناموفق بود`);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    setError("حذف دائمی سفارش از این صفحه پشتیبانی نمی‌شود");
+  }
+
   function submitSearch(e: React.FormEvent) {
     e.preventDefault();
     setQApplied(q.trim());
@@ -105,6 +135,17 @@ export default function AdminOrdersPage() {
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
       <div className="w-full max-w-none space-y-4">
+        <AdminBulkBar
+          count={selected.length}
+          total={items.length}
+          busy={bulkBusy}
+          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+          onArchive={() => void runBulkCancel()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+          archiveLabel="لغو گروهی"
+          hardLabel="حذف دائمی (غیرفعال)"
+        />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-primary">سفارش‌ها</h1>
@@ -200,6 +241,8 @@ export default function AdminOrdersPage() {
                 {items.map((o) => (
                   <tr key={o.id} className="border-border border-t">
                     <td className="p-3 font-mono text-xs">
+                      <input type="checkbox" className="ml-2 align-middle" checked={selected.includes(o.id)} onChange={() => toggleSelect(o.id)} />
+                      
                       <Link
                         href={`/admin/orders/${o.id}`}
                         className="text-primary hover:underline"

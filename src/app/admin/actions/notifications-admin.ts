@@ -23,16 +23,29 @@ async function requireAdmin() {
 }
 
 export async function adminSendNotificationAction(input: {
-  templateId: string;
+  templateId?: string;
   mode: "user" | "all";
   /** شماره موبایل یا user id */
   target?: string;
+  /** عنوان/متن دستی — اگر پر باشد جایگزین قالب می‌شود */
+  customTitle?: string;
+  customBody?: string;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return gate;
 
-  const tpl = PREDEFINED_NOTIFICATIONS.find((x) => x.id === input.templateId);
-  if (!tpl) return { ok: false as const, error: "template" };
+  const customTitle = (input.customTitle || "").trim();
+  const customBody = (input.customBody || "").trim();
+  const useCustom = Boolean(customTitle && customBody);
+
+  const tpl = input.templateId
+    ? PREDEFINED_NOTIFICATIONS.find((x) => x.id === input.templateId)
+    : undefined;
+  if (!useCustom && !tpl) return { ok: false as const, error: "template" };
+
+  const title = useCustom ? customTitle : (tpl!.title as string);
+  const body = useCustom ? customBody : (tpl!.body as string);
+  const type = useCustom ? "custom" : (tpl!.type as string);
 
   const service = createServiceClient();
 
@@ -62,9 +75,9 @@ export async function adminSendNotificationAction(input: {
 
     const { error } = await service.from("notifications").insert({
       user_id: userId,
-      title: tpl.title,
-      body: tpl.body,
-      type: tpl.type,
+      title,
+      body,
+      type,
       link: "/dashboard?tab=notifications",
     });
     if (error) return { ok: false as const, error: error.message };
@@ -79,9 +92,9 @@ export async function adminSendNotificationAction(input: {
   if (listErr) return { ok: false as const, error: listErr.message };
   const rows = (users ?? []).map((u: { id: string }) => ({
     user_id: u.id,
-    title: tpl.title,
-    body: tpl.body,
-    type: tpl.type,
+    title,
+    body,
+    type,
     link: "/dashboard?tab=notifications",
   }));
   if (rows.length === 0) return { ok: true as const, sent: 0 };
