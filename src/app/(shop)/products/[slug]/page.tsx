@@ -225,7 +225,7 @@ export default async function ProductDetailPage({ params }: Props) {
         childrenAfterBuy={
           <>
             <div className="pdp-desktop-after-buy hidden lg:block space-y-4">
-              <div className="grid gap-3 text-sm sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 <div>
                   <SizeGuideSnippet guide={sizeGuide} />
                 </div>
@@ -254,7 +254,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
       {/* موبایل/تبلت: لینک‌های اعتماد — دسکتاپ مخفی (خلاصه قبل از Buy Box آمده) */}
       <div className="mt-6 space-y-4 lg:hidden">
-        <div className="grid gap-3 text-sm sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 text-sm">
           <div>
             <SizeGuideSnippet guide={sizeGuide} />
           </div>
