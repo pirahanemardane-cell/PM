@@ -220,8 +220,9 @@ export default function AdminUsersPage() {
               </thead>
               <tbody>
                 {items.map((u) => (
-                  <tr key=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(u.id)} onChange={() => toggleSelect(u.id)} /><span>{u.id}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(u.id, String(u.id || u.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(u.id, String(u.id || u.id))}>حذف دائمی</button> className="border-border border-t">
-                    <td className="p-3 font-medium">
+                  <tr key={u.id} className="border-border border-t">
+                    <td className="p-3 font-medium"><input type="checkbox" className="ml-2 align-middle" checked={selected.includes(u.id)} onChange={() => toggleSelect(u.id)} />
+                    
                       {u.full_name?.trim() || "—"}
                       <div className="text-muted-foreground font-mono text-[10px]">
                         {u.id.slice(0, 8)}…

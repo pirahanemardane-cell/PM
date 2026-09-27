@@ -204,9 +204,10 @@ export default function AdminMediaPage() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item) => (
             <li
-              key=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} /><span>{item.id}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(item.id, String(item.id || item.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(item.id, String(item.id || item.id))}>حذف دائمی</button>
+              key={item.id}
               className="border-border overflow-hidden rounded-xl border bg-background"
             >
+              <input type="checkbox" className="m-2" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.url}

@@ -196,8 +196,9 @@ export default function AdminReturnsPage() {
             </thead>
             <tbody>
               {items.map((r) => (
-                <tr key=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><span>{r.id}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, String(r.id || r.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, String(r.id || r.id))}>حذف دائمی</button> className="border-t align-top">
-                  <td className="p-3">
+                <tr key={r.id} className="border-t align-top">
+                  <td className="p-3"><input type="checkbox" className="ml-2 align-middle" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} />
+                    
                     <Link
                       href={`/admin/orders/${r.order_id}`}
                       className="text-primary font-mono text-xs hover:underline"
