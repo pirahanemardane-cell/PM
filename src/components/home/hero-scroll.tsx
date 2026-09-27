@@ -236,7 +236,7 @@ export function HeroScroll() {
               return (
                 <p
                   key={i}
-                  className="text-secondary absolute inset-x-0 font-black leading-relaxed"
+                  className="absolute inset-x-0 font-black leading-relaxed text-[#023047] dark:text-[#13ABC4]"
                   style={{
                     opacity: op,
                     transition: "opacity 40ms linear",
