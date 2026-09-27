@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { X, ChevronRight, ChevronLeft } from "lucide-react";\nimport { ProductWishCompareStack } from "@/components/product/product-wish-compare";
+import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { ProductWishCompareStack } from "@/components/product/product-wish-compare";
 import { colorNorm, colorKey } from "@/lib/variant-availability";
 
 export type GalleryImage = {

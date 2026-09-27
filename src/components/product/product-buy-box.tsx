@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
 import { createClient } from "@/lib/supabase/client";
-import { resolveColorHex } from "@/lib/colors";\nimport { ProductWishCompareInline } from "@/components/product/product-wish-compare";
+import { resolveColorHex } from "@/lib/colors";
+import { ProductWishCompareInline } from "@/components/product/product-wish-compare";
 
 export type VariantOpt = {
   id: string;
