@@ -1,12 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 const FRAME_COUNT = 70;
 const SCROLL_VH = 320;
 
+/** بازه‌های متن (ایندکس فریم ۰-based، مطابق اسکراب فعلی) */
+const SLIDES = [
+  { start: 0, end: 23, text: "استایلی که فکر شده" },
+  { start: 24, end: 48, text: "هماهنگی از یقه تا گره" },
+  { start: 48, end: 69, text: "پیراهن مردانه" },
+] as const;
+
+const FADE_FRAMES = 2.5;
+const BUTTON_FROM = 48;
+
 function frameSrc(i: number) {
   return `/hero/frames/frame-${String(i).padStart(3, "0")}.webp`;
+}
+
+/** opacity نرم داخل بازه [start, end] */
+function rangeOpacity(idx: number, start: number, end: number, fade = FADE_FRAMES) {
+  if (idx < start - 0.001 || idx > end + 0.001) return 0;
+  const fadeIn = Math.min(1, Math.max(0, (idx - start) / fade));
+  const fadeOut = Math.min(1, Math.max(0, (end - idx) / fade));
+  return Math.min(fadeIn, fadeOut);
 }
 
 export function HeroScroll() {
@@ -20,6 +39,7 @@ export function HeroScroll() {
   const introFiredRef = useRef(false);
   const rafRef = useRef(0);
   const [firstReady, setFirstReady] = useState(false);
+  const [frameIdx, setFrameIdx] = useState(0);
 
   const drawIndex = useCallback((idx: number, force = false) => {
     if (!force && idx === lastIdxRef.current) return;
@@ -60,7 +80,6 @@ export function HeroScroll() {
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // object-cover + کمی زوم تا لبه خالی نماند
     const zoom = 1.08;
     const ir = img.naturalWidth / img.naturalHeight;
     const cr = w / h;
@@ -101,7 +120,6 @@ export function HeroScroll() {
 
     (async () => {
       await loadOne(0);
-      // همه فریم‌ها فوری و موازی (بدون idle) تا اسکراب گیر نکند
       const concurrency = 16;
       let next = 1;
       await Promise.all(
@@ -137,6 +155,7 @@ export function HeroScroll() {
           Math.max(0, Math.round(progress * (FRAME_COUNT - 1))),
         );
         drawIndex(idx);
+        setFrameIdx(idx);
 
         if (
           idx >= FRAME_COUNT - 1 &&
@@ -160,6 +179,8 @@ export function HeroScroll() {
     };
   }, [drawIndex, firstReady]);
 
+  const buttonOpacity = rangeOpacity(frameIdx, BUTTON_FROM, FRAME_COUNT - 1, FADE_FRAMES);
+
   return (
     <section
       ref={sectionRef}
@@ -182,7 +203,6 @@ export function HeroScroll() {
           backgroundColor: "#111",
         }}
       >
-        {/* پوستر تا فریم ۱ آماده شود — cover کامل */}
         {!firstReady && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -200,15 +220,53 @@ export function HeroScroll() {
           style={{ width: "100%", height: "100%" }}
         />
 
-        {/* گرادیان پایین برای خوانایی متن */}
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
           style={{
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
           }}
         />
 
+        {/* لایه متن اسکراب — وسط صفحه */}
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
+          <div className="relative flex w-full max-w-3xl flex-col items-center justify-center text-center">
+            {SLIDES.map((slide, i) => {
+              const op = rangeOpacity(frameIdx, slide.start, slide.end);
+              if (op <= 0.001) return null;
+              return (
+                <p
+                  key={i}
+                  className="text-secondary absolute inset-x-0 font-black leading-relaxed"
+                  style={{
+                    opacity: op,
+                    transition: "opacity 40ms linear",
+                    // سایز موقت تا در قدم بعد دقیق شود
+                    fontSize: "clamp(1.35rem, 4.2vw, 2.35rem)",
+                  }}
+                >
+                  {slide.text}
+                </p>
+              );
+            })}
+
+            {/* دکمه از فریم ۴۸ — زیر متن آخر */}
+            <div
+              className="mt-28 flex justify-center"
+              style={{
+                opacity: buttonOpacity,
+                pointerEvents: buttonOpacity > 0.15 ? "auto" : "none",
+                transition: "opacity 40ms linear",
+              }}
+            >
+              <Link
+                href="/products"
+                className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-9 min-w-[10rem] items-center justify-center rounded-lg px-6 text-sm font-medium transition-all"
+              >
+                خرید آنلاین
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
