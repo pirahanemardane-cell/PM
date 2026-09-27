@@ -70,14 +70,20 @@ function emptyVariant(seed?: { price?: string; original?: string }): VRow {
 }
 
 function suggestSlug(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[\u0600-\u06FF]+/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\u0600-\u06FFa-z0-9\-]+/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || `p-${Date.now()}`
+  );
 }
+
+/** slug: فارسی + لاتین کوچک + عدد + خط تیره */
+const SLUG_RE = /^[\u0600-\u06FFa-z0-9]+(?:-[\u0600-\u06FFa-z0-9]+)*$/;
 
 export type ProductWizardProps = { productId?: string | null };
 
@@ -142,11 +148,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         adminListAttributesAction(),
         adminListSizeGuidesAction(),
       ]);
-      if (c.ok) setCats((c.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
-      if (b.ok) setBrands((b.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
-      if (t.ok) setTags((t.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
+      const pickOpts = (res: { ok?: boolean; items?: { id: string; name: string }[]; data?: { id: string; name: string }[] }) =>
+        ((res.items ?? res.data ?? []) as { id: string; name: string }[]).map((x) => ({ id: x.id, name: x.name }));
+      if (c.ok) setCats(pickOpts(c as { items?: { id: string; name: string }[]; data?: { id: string; name: string }[] }));
+      if (b.ok) setBrands(pickOpts(b as { items?: { id: string; name: string }[]; data?: { id: string; name: string }[] }));
+      if (t.ok) setTags(pickOpts(t as { items?: { id: string; name: string }[]; data?: { id: string; name: string }[] }));
       if (a.ok) setAttrDefs((((a as { items?: AttrWithOptions[]; data?: AttrWithOptions[] }).items) ?? ((a as { data?: AttrWithOptions[] }).data) ?? []) as AttrWithOptions[]);
-      if (g.ok) setGuides((g.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
+      if (g.ok) setGuides(pickOpts(g as { items?: { id: string; name: string }[]; data?: { id: string; name: string }[] }));
     })();
   }, []);
 
@@ -259,8 +267,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     if (s === 1) {
       if (!name.trim()) return "نام محصول الزامی است";
       if (!slug.trim()) return "slug الزامی است";
-      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug.trim()))
-        return "slug فقط لاتین کوچک، عدد و خط تیره";
+      if (!SLUG_RE.test(slug.trim()))
+        return "slug: حروف فارسی/لاتین، عدد و خط تیره";
       if (slugStatus === "taken") return "این slug قبلاً استفاده شده";
     }
     if (s === 2) {
@@ -409,7 +417,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   
   async function checkSlug(): Promise<boolean> {
     const s = slug.trim();
-    if (!s || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s)) {
+    if (!s || !SLUG_RE.test(s)) {
       setSlugStatus("err");
       return false;
     }

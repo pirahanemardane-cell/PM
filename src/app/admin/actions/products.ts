@@ -936,8 +936,9 @@ export async function adminCheckProductSlugAction(
 ): Promise<{ ok: true; available: boolean } | { ok: false; error: string }> {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
-  const s = (slug || "").trim().toLowerCase();
+  const s = (slug || "").trim();
   if (!s) return { ok: false as const, error: "slug_empty" };
+  // فارسی + لاتین؛ فقط فاصله‌های اطراف trim شده 
   try {
     let q = gate.supabase.from("products").select("id").eq("slug", s).is("deleted_at", null).limit(1);
     if (excludeId) q = q.neq("id", excludeId);
