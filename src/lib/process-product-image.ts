@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const WEBP_QUALITY = 82;
+const WEBP_QUALITY = 100;
 const WATERMARK_RATIO = 0.14; // smaller mark on product photos
 const MARGIN_RATIO = 0.03;
 const WATERMARK_OPACITY = 0.40;
@@ -17,11 +17,10 @@ const WATERMARK_PUBLIC_URL =
     : `https://pirahanmardane.ir/brand/${WATERMARK_FILE}`;
 
 export const PRODUCT_IMAGE_SIZES = {
-  thumb: 200,
-  small: 400,
+  thumb: 800,
   medium: 800,
-  large: 1200,
-} as const;
+  large: 800,
+} as const as const;
 
 export type ProductImageSizeName = keyof typeof PRODUCT_IMAGE_SIZES;
 
@@ -129,25 +128,36 @@ export async function processProductImageSizes(
     ProductImageSizeName,
     number,
   ][]) {
-    const targetW = Math.min(srcW, maxW);
+    // همه خروجی‌ها مربع ۸۰۰×۸۰۰ (center cover)
+    const side = 800;
 
-    // 1) resize + mild sharpen ONLY on base photo (نه روی واترمارک)
+    // 1) base: cover → 800×800 + mild sharpen (فقط عکس، نه لوگو)
     const resized = await sharp(rotated)
-      .resize({ width: targetW, withoutEnlargement: true })
-      .sharpen({ sigma: 0.6, m1: 0.8, m2: 0.4 })
+      .resize({
+        width: side,
+        height: side,
+        fit: "cover",
+        position: "centre",
+        withoutEnlargement: false,
+        kernel: sharp.kernel.lanczos3,
+      })
+      .sharpen({ sigma: 0.55, m1: 0.7, m2: 0.35 })
       .toBuffer({ resolveWithObject: true });
 
     const w = resized.info.width;
     const h = resized.info.height;
 
-    // 2) composite watermark AFTER sharpen — edges stay crisp
-    let pipeline = sharp(resized.data);
+    // 2) watermark AFTER sharpen — کیفیت لوگو مستقل از کیفیت عکس ورودی
+    let pipeline = sharp(resized.data, {
+      raw: undefined as never,
+    });
+    // sharp(Buffer) is enough; avoid invalid raw
+    pipeline = sharp(resized.data);
+
     if (logoBuf) {
       try {
-        const overlay =
-          name === "large" && masterOverlay
-            ? masterOverlay
-            : await buildWatermarkOverlay(logoBuf, w);
+        // همیشه از فایل لوگوی اصلی با lanczos بساز — نه از نسخه فشرده‌شده‌ی عکس
+        const overlay = await buildWatermarkOverlay(logoBuf, w);
         if (overlay) {
           const left = Math.max(0, Math.round((w - overlay.width) / 2));
           const top = Math.max(0, Math.round((h - overlay.height) / 2));
@@ -160,9 +170,15 @@ export async function processProductImageSizes(
       }
     }
 
-    // 3) webp: کمی کیفیت بالاتر تا آلفا/لبه لوگو نرم نشود
+    // 3) WebP بالاترین کیفیت عملی (nearLossless + effort max)
     out[name] = await pipeline
-      .webp({ quality: 88, effort: 6, smartSubsample: true })
+      .webp({
+        quality: 100,
+        alphaQuality: 100,
+        effort: 6,
+        smartSubsample: true,
+        nearLossless: true,
+      })
       .toBuffer();
   }
 
