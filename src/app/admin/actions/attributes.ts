@@ -123,10 +123,18 @@ export async function adminSyncProductAttributesAction(
   if (!gate.ok) return { ok: false as const, error: gate.error };
   if (!productId) return { ok: false as const, error: "product_required" };
   try {
-    await gate.supabase
+    const { error: delErr } = await gate.supabase
       .from("product_attribute_values")
       .delete()
       .eq("product_id", productId);
+    if (delErr) {
+      console.error("[adminSyncProductAttributes delete]", delErr);
+      return {
+        ok: false as const,
+        error: "server" as const,
+        detail: delErr.message,
+      };
+    }
 
     const rows = (values ?? [])
       .filter((v) => v.attribute_id && (v.option_id || (v.value_text || "").trim()))
@@ -137,16 +145,44 @@ export async function adminSyncProductAttributesAction(
         value_text: (v.value_text || "").trim() || null,
       }));
 
-    if (rows.length) {
-      const { error } = await gate.supabase
+    if (!rows.length) return { ok: true as const, count: 0 };
+
+    // اول همه را بگذار؛ اگر unique روی (product_id, attribute_id) بود → یکی از هر attribute
+    let { error } = await gate.supabase
+      .from("product_attribute_values")
+      .insert(rows);
+    if (error) {
+      console.warn("[adminSyncProductAttributes bulk]", error.message);
+      const uniq = new Map<string, (typeof rows)[0]>();
+      for (const r of rows) uniq.set(r.attribute_id, r);
+      const fallback = [...uniq.values()];
+      const second = await gate.supabase
         .from("product_attribute_values")
-        .insert(rows);
-      if (error) throw error;
+        .insert(fallback);
+      if (second.error) {
+        console.error("[adminSyncProductAttributes fallback]", second.error);
+        return {
+          ok: false as const,
+          error: "server" as const,
+          detail: second.error.message,
+        };
+      }
+      return { ok: true as const, count: fallback.length, deduped: true as const };
     }
-    return { ok: true as const };
+    return { ok: true as const, count: rows.length };
   } catch (e) {
     console.error("[adminSyncProductAttributes]", e);
-    return { ok: false as const, error: "server" };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message || "")
+        : e instanceof Error
+          ? e.message
+          : "";
+    return {
+      ok: false as const,
+      error: "server" as const,
+      detail: msg.slice(0, 200) || undefined,
+    };
   }
 }
 

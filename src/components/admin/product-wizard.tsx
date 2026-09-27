@@ -123,6 +123,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const colorOpts = (colorAttr?.options ?? []) as Array<{ id: string; value: string; hex?: string | null }>;
   const specDefs = attrDefs.filter((a) => a.slug !== "size" && a.slug !== "color");
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
+  const [loadedAttrRows, setLoadedAttrRows] = useState<
+    Array<{ attribute_id: string; option_id?: string | null; value_text?: string | null }>
+  >([]);
+
   /** option ids chosen on step 4 for variant axes */
   const [pickedSizeIds, setPickedSizeIds] = useState<string[]>([]);
   const [pickedColorIds, setPickedColorIds] = useState<string[]>([]);
@@ -263,10 +267,22 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           .map((i) => ({ id: i.id, url: i.url })),
       );
       const av = await adminGetProductAttributeValuesAction(initialId);
-      if (av.ok && av.data) {
+      if (av.ok) {
+        const list =
+          (
+            av as {
+              values?: Array<{
+                attribute_id: string;
+                option_id?: string | null;
+                value_text?: string | null;
+              }>;
+            }
+          ).values ?? [];
+        setLoadedAttrRows(list);
         const map: Record<string, string> = {};
-        for (const row of av.data as Array<{ attribute_id: string; option_id?: string; value?: string }>) {
-          map[row.attribute_id] = row.option_id || row.value || "";
+        for (const row of list) {
+          const oid = (row.option_id || row.value_text || "").trim();
+          if (oid) map[row.attribute_id] = oid;
         }
         setAttrValues(map);
       }
@@ -274,6 +290,26 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setLoading(false);
     })();
   }, [initialId]);
+
+
+  useEffect(() => {
+    if (!loadedAttrRows.length || !attrDefs.length) return;
+    const sizeId = attrDefs.find((a) => a.slug === "size")?.id;
+    const colorId = attrDefs.find((a) => a.slug === "color")?.id;
+    const sizes: string[] = [];
+    const colors: string[] = [];
+    const map: Record<string, string> = {};
+    for (const row of loadedAttrRows) {
+      const oid = (row.option_id || row.value_text || "").trim();
+      if (!oid) continue;
+      if (sizeId && row.attribute_id === sizeId) sizes.push(oid);
+      else if (colorId && row.attribute_id === colorId) colors.push(oid);
+      else map[row.attribute_id] = oid;
+    }
+    if (Object.keys(map).length) setAttrValues((m) => ({ ...map, ...m }));
+    if (sizes.length) setPickedSizeIds(sizes);
+    if (colors.length) setPickedColorIds(colors);
+  }, [loadedAttrRows, attrDefs]);
 
   useEffect(() => {
     if (!slugTouched && name) setSlug(suggestSlug(name));
@@ -390,8 +426,16 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         if (colorAttr?.id) {
           for (const oid of pickedColorIds) rows.push({ attribute_id: colorAttr.id, option_id: oid });
         }
-        // note: multi size/color → last write wins if sync is 1:1; sync action should replace set
-        await adminSyncProductAttributesAction(id, rows as never);
+        const syncAttr = await adminSyncProductAttributesAction(id, rows as never);
+        if (!syncAttr.ok) {
+          return {
+            ok: false as const,
+            error:
+              (syncAttr as { detail?: string }).detail ||
+              (syncAttr as { error?: string }).error ||
+              "ذخیره مشخصات ناموفق",
+          };
+        }
       }
 
       // variants
@@ -506,6 +550,17 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     if (step === 3 || step === 4) {
       const id = await ensureProductId();
       if (!id) return;
+      // مشخصات باید همان لحظه ذخیره شوند
+      if (step === 4) {
+        setBusy(true);
+        const res = await persistCore({ finalStatus: "draft" });
+        setBusy(false);
+        if (!res.ok) {
+          setErr(res.error || "ذخیره مشخصات ناموفق");
+          return;
+        }
+        setOkMsg("مشخصات ذخیره شد");
+      }
     }
     if (step < 9) setStep((s) => s + 1);
   }
