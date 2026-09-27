@@ -200,6 +200,15 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             </div>
             
+            {product.short_description ? (
+              <div className="border-border rounded-xl border bg-muted/30 p-4">
+                <p className="mb-1 text-sm font-medium text-primary">خلاصه محصول</p>
+                <p className="text-muted-foreground text-sm leading-7">
+                  {product.short_description}
+                </p>
+              </div>
+            ) : null}
+
             <TrackRecentlyViewed
               id={String(product.id)}
               title={String(product.name ?? "")}
@@ -233,30 +242,14 @@ export default async function ProductDetailPage({ params }: Props) {
                   </p>
                 </div>
               </div>
-              {product.short_description ? (
-                <div className="border-border rounded-xl border bg-muted/30 p-4">
-                  <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
-                  <p className="text-muted-foreground text-sm leading-7">
-                    {product.short_description}
-                  </p>
-                </div>
-              ) : null}
             </div>
           </>
         }
       />
 
 
-      {/* موبایل/تبلت: خلاصه + لینک‌ها بعد از نمودار — دسکتاپ مخفی */}
+      {/* موبایل/تبلت: لینک‌های اعتماد — دسکتاپ مخفی (خلاصه قبل از Buy Box آمده) */}
       <div className="mt-6 space-y-4 lg:hidden">
-        {product.short_description ? (
-          <div className="border-border rounded-xl border bg-muted/30 p-4">
-            <p className="mb-1 text-sm font-medium">خلاصه محصول</p>
-            <p className="text-muted-foreground text-sm leading-7">
-              {product.short_description}
-            </p>
-          </div>
-        ) : null}
         <div className="grid gap-3 text-sm sm:grid-cols-3">
           <div>
             <SizeGuideSnippet guide={sizeGuide} />
