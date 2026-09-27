@@ -1,7 +1,8 @@
 "use client";
 
-import {
+
 import { Price } from "@/components/ui/price";
+import {
   sizeAvailable as sizeAvailableShared,
   sameColor,
   imageIndexForColor,

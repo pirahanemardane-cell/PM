@@ -1,8 +1,8 @@
 "use client";
 
-import { sizeAvailable as sizeAvailableShared, sameColor, stockOf, findVariant, colorAvailable } from "@/lib/variant-availability";
-import { Price } from "@/components/ui/price";
 
+import { Price } from "@/components/ui/price";
+import { sizeAvailable as sizeAvailableShared, sameColor, stockOf, findVariant, colorAvailable } from "@/lib/variant-availability";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";

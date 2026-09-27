@@ -1,8 +1,7 @@
+import { Price } from "@/components/ui/price";
 import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
-import { Price } from "@/components/ui/price";
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

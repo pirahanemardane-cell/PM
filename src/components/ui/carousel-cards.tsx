@@ -1,11 +1,11 @@
 "use client";
 
+
+import { Price } from "@/components/ui/price";
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { Price } from "@/components/ui/price";
-
 import { cn } from "@/lib/utils";
 import { toPersianDigits } from "@/lib/numbers";
 import { Badge } from "@/components/ui/badge";

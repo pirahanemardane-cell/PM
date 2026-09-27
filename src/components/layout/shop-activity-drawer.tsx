@@ -1,9 +1,9 @@
 "use client";
+
+import { Price } from "@/components/ui/price";
 import { toast } from "@/lib/toaster";
 import { resolveColorHex } from "@/lib/colors";
 import { sizeAvailable, sameColor, colorAvailable, isVariantAvailable } from "@/lib/variant-availability";
-import { Price } from "@/components/ui/price";
-
 import Link from "next/link";
 import {
   Drawer,

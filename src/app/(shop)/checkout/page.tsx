@@ -1,8 +1,8 @@
 "use client";
 
-import { normalizeIranMobile } from "@/lib/numbers";
-import { Price } from "@/components/ui/price";
 
+import { Price } from "@/components/ui/price";
+import { normalizeIranMobile } from "@/lib/numbers";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {

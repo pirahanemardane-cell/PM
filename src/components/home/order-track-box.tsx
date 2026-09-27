@@ -1,14 +1,13 @@
 "use client";
 
+
+import { Price } from "@/components/ui/price";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toEnglishDigits } from "@/lib/numbers";
 import { trackOrderAction } from "@/app/(shop)/actions/shop";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
-import { Price } from "@/components/ui/price";
-
-
 const STATUS_FA: Record<string, string> = {
   pending: "در انتظار",
   paid: "پرداخت‌شده",
