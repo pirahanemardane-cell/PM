@@ -37,6 +37,7 @@ export async function adminCreateCategoryAction(input: {
   name: string;
   slug?: string;
   sort_order?: number;
+  parent_id?: string | null;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -54,6 +55,7 @@ export async function adminCreateCategoryAction(input: {
         slug,
         sort_order: input.sort_order ?? 0,
         is_active: true,
+        parent_id: input.parent_id || null,
       })
       .select("id")
       .single();
@@ -67,7 +69,13 @@ export async function adminCreateCategoryAction(input: {
 
 export async function adminUpdateCategoryAction(
   id: string,
-  patch: { name?: string; slug?: string; is_active?: boolean; sort_order?: number },
+  patch: {
+    name?: string;
+    slug?: string;
+    is_active?: boolean;
+    sort_order?: number;
+    parent_id?: string | null;
+  },
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -77,6 +85,7 @@ export async function adminUpdateCategoryAction(
     if (patch.slug !== undefined) body.slug = patch.slug.trim();
     if (patch.is_active !== undefined) body.is_active = patch.is_active;
     if (patch.sort_order !== undefined) body.sort_order = patch.sort_order;
+    if (patch.parent_id !== undefined) body.parent_id = patch.parent_id || null;
     if (!Object.keys(body).length) return { ok: true as const };
 
     const { error } = await gate.supabase

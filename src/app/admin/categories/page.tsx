@@ -20,6 +20,7 @@ type Row = {
   slug: string;
   sort_order: number;
   is_active: boolean;
+  parent_id?: string | null;
 };
 
 export default function AdminCategoriesPage() {
@@ -30,6 +31,7 @@ export default function AdminCategoriesPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [parentId, setParentId] = useState("");
   const [creating, setCreating] = useState(false);
 
   
@@ -134,7 +136,7 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     setCreating(true);
     setError(null);
-    const res = await adminCreateCategoryAction({ name });
+    const res = await adminCreateCategoryAction({ name, parent_id: parentId || null });
     setCreating(false);
     if (!res.ok) {
       setError(
@@ -143,6 +145,7 @@ export default function AdminCategoriesPage() {
       return;
     }
     setName("");
+      setParentId("");
     void load();
   }
 
@@ -189,6 +192,20 @@ export default function AdminCategoriesPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="نام دسته جدید"
+          <select
+            className="border-border bg-background rounded-lg border px-3 py-2 text-sm"
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value)}
+          >
+            <option value="">بدون والد (ریشه)</option>
+            {items
+              .filter((c) => !c.parent_id)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+          </select>
             className="border-input bg-background h-10 min-w-[12rem] flex-1 rounded-xl border px-3 text-sm"
             required
           />
