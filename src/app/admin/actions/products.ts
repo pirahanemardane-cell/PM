@@ -5,6 +5,7 @@ import { recordProductPrice } from "@/lib/price-history";
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
+import { normalizeProductSlug } from "@/lib/product-slug";
 
 function slugify(input: string): string {
   return (
@@ -228,7 +229,7 @@ export async function adminCreateProductAction(input: CreateProductInput) {
   if (!Number.isFinite(price) || price < 0)
     return { ok: false as const, error: "price_invalid" };
 
-  const slug = (input.slug || "").trim() || slugify(name);
+  const slug = normalizeProductSlug((input.slug || "").trim() || slugify(name));
 
   try {
     const { data: product, error: pErr } = await gate.supabase

@@ -18,6 +18,7 @@ import { getProductPriceHistory } from "@/lib/price-history";
 import { resolveColorHex } from "@/lib/colors";
 import { loadSizeGuideForProduct } from "@/lib/size-guide/load";
 import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
+import { normalizeProductSlug } from "@/lib/product-slug";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -28,7 +29,8 @@ function formatPrice(price: number) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeProductSlug(rawSlug);
   const service = new ProductService();
   const result = await service.getProductBySlug(slug);
 
@@ -44,7 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeProductSlug(rawSlug);
   const service = new ProductService();
   const result = await service.getProductBySlug(slug);
 

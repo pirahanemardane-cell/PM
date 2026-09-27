@@ -1,6 +1,7 @@
 import { BaseRepository } from "./base.repository";
 import type { Product, ProductVariant, ProductImage } from "@/types/database";
 import type { ProductFilterInput } from "@/lib/validation/product";
+import { normalizeProductSlug } from "@/lib/product-slug";
 
 export type ProductWithRelations = Product & {
   brand?: { id: string; name: string; slug: string } | null;
@@ -237,11 +238,10 @@ if (filters.sizeId) {
 
   async findBySlug(slug: string) {
     const client = await this.getClient();
+    const normalized = normalizeProductSlug(slug);
+    if (!normalized) return null;
 
-    const { data, error } = await client
-      .from("products")
-      .select(
-        `
+    const selectCols = `
         id,
         name,
         slug,
@@ -252,23 +252,67 @@ if (filters.sizeId) {
         is_new,
         is_bestseller,
         created_at,
+        category_id,
+        brand_id,
+        size_guide_id,
+        meta_title,
+        meta_description,
         brand:brands(id, name, slug),
         category:categories(id, name, slug),
         images:product_images(id, url, alt_text, is_primary, sort_order, variant_id),
         variants:product_variants(id, price, original_price, stock_quantity, size, color_name, color_hex, is_active, sku)
-      `
-      )
-      .eq("slug", slug)
-      .eq("status", "published")
-      .is("deleted_at", null)
-      .single();
+      `;
 
-    if (error) {
-      if (error.code === "PGRST116") return null;
-      throw error;
+    // 1) exact match
+    {
+      const { data, error } = await client
+        .from("products")
+        .select(selectCols)
+        .eq("slug", normalized)
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("[findBySlug exact]", normalized, error);
+        throw error;
+      }
+      if (data) return data as ProductWithRelations;
     }
 
-    return data as ProductWithRelations;
+    // 2) raw param (اگر decode فرق داشته)
+    const raw = (slug || "").trim();
+    if (raw && raw !== normalized) {
+      const { data, error } = await client
+        .from("products")
+        .select(selectCols)
+        .eq("slug", raw)
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") {
+        console.error("[findBySlug raw]", raw, error);
+        throw error;
+      }
+      if (data) return data as ProductWithRelations;
+    }
+
+    // 3) fallback: بین publishedها اسلاگ نرمال‌شده را پیدا کن
+    const { data: rows, error: listErr } = await client
+      .from("products")
+      .select(selectCols)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (listErr) {
+      console.error("[findBySlug fallback list]", listErr);
+      throw listErr;
+    }
+    const hit = (rows ?? []).find(
+      (r) => normalizeProductSlug(String((r as { slug?: string }).slug ?? "")) === normalized,
+    );
+    return (hit as ProductWithRelations) ?? null;
   }
 
   async findById(id: string) {
