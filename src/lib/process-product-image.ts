@@ -7,6 +7,15 @@ const WATERMARK_RATIO = 0.28;
 const MARGIN_RATIO = 0.03;
 const WATERMARK_OPACITY = 0.85;
 
+/** فقط این فایل — طبق درخواست */
+const WATERMARK_FILE = "logo-light-transparent.webp";
+
+/** URL عمومی برای fallback وقتی filesystem روی serverless فایل را نبیند */
+const WATERMARK_PUBLIC_URL =
+  process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/brand/${WATERMARK_FILE}`
+    : `https://pirahanmardane.ir/brand/${WATERMARK_FILE}`;
+
 export const PRODUCT_IMAGE_SIZES = {
   thumb: 200,
   small: 400,
@@ -16,44 +25,83 @@ export const PRODUCT_IMAGE_SIZES = {
 
 export type ProductImageSizeName = keyof typeof PRODUCT_IMAGE_SIZES;
 
+let cachedLogo: Buffer | null | undefined;
+
 async function loadWatermarkLogo(): Promise<Buffer | null> {
-  // dark logo on light product photos; light logo as fallback
-  const names = [
-    "logo-dark-transparent.webp",
-    "logo-dark.webp",
-    "logo-light-transparent.webp",
-    "logo-light.webp",
+  if (cachedLogo !== undefined) return cachedLogo;
+
+  const candidates = [
+    path.join(process.cwd(), "public", "brand", WATERMARK_FILE),
+    path.join(process.cwd(), "brand", WATERMARK_FILE),
+    path.join(process.cwd(), "public", WATERMARK_FILE),
   ];
-  const roots = [
-    path.join(process.cwd(), "public", "brand"),
-    path.join(process.cwd(), "brand"),
-    path.join(process.cwd(), "public"),
-  ];
-  const candidates: string[] = [];
-  for (const root of roots) {
-    for (const name of names) {
-      candidates.push(path.join(root, name));
-    }
-  }
+
   for (const logoPath of candidates) {
     try {
       const buf = await readFile(logoPath);
       if (buf.length > 0) {
-        console.info("[processProductImageSizes] watermark from", logoPath, "bytes", buf.length);
+        console.info("[watermark] loaded from fs", logoPath, buf.length);
+        cachedLogo = buf;
         return buf;
       }
-    } catch (e) {
-      // try next
+    } catch {
+      /* next */
     }
   }
-  console.warn(
-    "[processProductImageSizes] watermark logo missing; cwd=",
-    process.cwd(),
-    "tried",
-    candidates.length,
-    "paths",
-  );
+
+  try {
+    const res = await fetch(WATERMARK_PUBLIC_URL, { cache: "force-cache" });
+    if (res.ok) {
+      const ab = await res.arrayBuffer();
+      const buf = Buffer.from(ab);
+      if (buf.length > 0) {
+        console.info("[watermark] loaded from url", WATERMARK_PUBLIC_URL, buf.length);
+        cachedLogo = buf;
+        return buf;
+      }
+    } else {
+      console.warn("[watermark] fetch status", res.status, WATERMARK_PUBLIC_URL);
+    }
+  } catch (e) {
+    console.warn("[watermark] fetch failed", WATERMARK_PUBLIC_URL, e);
+  }
+
+  console.warn("[watermark] logo missing; cwd=", process.cwd());
+  cachedLogo = null;
   return null;
+}
+
+async function buildWatermarkOverlay(
+  logoBuf: Buffer,
+  targetW: number,
+): Promise<{ buf: Buffer; width: number; height: number } | null> {
+  try {
+    const logoMaxW = Math.max(48, Math.round(targetW * WATERMARK_RATIO));
+    const resized = await sharp(logoBuf)
+      .resize({ width: logoMaxW, withoutEnlargement: true })
+      .ensureAlpha()
+      .toBuffer({ resolveWithObject: true });
+
+    const { data: rgba, info } = await sharp(resized.data)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    for (let i = 3; i < rgba.length; i += 4) {
+      rgba[i] = Math.round(rgba[i] * WATERMARK_OPACITY);
+    }
+
+    const buf = await sharp(rgba, {
+      raw: { width: info.width, height: info.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+
+    return { buf, width: info.width, height: info.height };
+  } catch (e) {
+    console.warn("[watermark] build overlay failed", e);
+    return null;
+  }
 }
 
 export async function processProductImageSizes(
@@ -64,6 +112,14 @@ export async function processProductImageSizes(
   const srcW = meta.width ?? PRODUCT_IMAGE_SIZES.large;
   const logoBuf = await loadWatermarkLogo();
   const out = {} as Record<ProductImageSizeName, Buffer>;
+
+  let masterOverlay: { buf: Buffer; width: number; height: number } | null = null;
+  if (logoBuf) {
+    masterOverlay = await buildWatermarkOverlay(
+      logoBuf,
+      Math.min(srcW, PRODUCT_IMAGE_SIZES.large),
+    );
+  }
 
   for (const [name, maxW] of Object.entries(PRODUCT_IMAGE_SIZES) as [
     ProductImageSizeName,
@@ -81,34 +137,19 @@ export async function processProductImageSizes(
 
     if (logoBuf) {
       try {
-        const logoMaxW = Math.max(40, Math.round(w * WATERMARK_RATIO));
-        const logoResized = await sharp(logoBuf)
-          .resize({ width: logoMaxW, withoutEnlargement: true })
-          .ensureAlpha()
-          .toBuffer({ resolveWithObject: true });
-
-        const { data: rgba, info } = await sharp(logoResized.data)
-          .ensureAlpha()
-          .raw()
-          .toBuffer({ resolveWithObject: true });
-
-        for (let i = 3; i < rgba.length; i += 4) {
-          rgba[i] = Math.round(rgba[i] * WATERMARK_OPACITY);
+        const overlay =
+          name === "large" && masterOverlay
+            ? masterOverlay
+            : await buildWatermarkOverlay(logoBuf, w);
+        if (overlay) {
+          const left = Math.max(0, w - overlay.width - margin);
+          const top = margin;
+          pipeline = sharp(resized.data).composite([
+            { input: overlay.buf, left, top },
+          ]);
         }
-
-        const logoWithOpacity = await sharp(rgba, {
-          raw: { width: info.width, height: info.height, channels: 4 },
-        })
-          .png()
-          .toBuffer();
-
-        const left = Math.max(0, w - logoResized.info.width - margin);
-        const top = margin;
-        pipeline = sharp(resized.data).composite([
-          { input: logoWithOpacity, left, top },
-        ]);
       } catch (e) {
-        console.warn("[processProductImageSizes] watermark skip", name, e);
+        console.warn("[watermark] composite skip", name, e);
       }
     }
 

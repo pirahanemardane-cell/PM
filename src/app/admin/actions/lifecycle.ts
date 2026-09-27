@@ -497,34 +497,56 @@ export async function adminHardDeleteUsersAction(ids: string[]) {
 }
 
 export async function adminArchiveMediaAction(ids: string[]) {
-  const gate = await requireAdmin();
-  if (!gate.ok) return { ok: false as const, error: gate.error };
-  const list = cleanIds(ids);
-  if (!list.length) return { ok: false as const, error: "empty" as const };
-  try {
-    const { error } = await gate.supabase.from("media").update({ is_active: false }).in("id", list);
-    if (error) throw error;
-    return { ok: true as const, count: list.length };
-  } catch (e) {
-    console.error("[adminArchiveMedia]", e);
-    return { ok: false as const, error: "server" as const };
-  }
+  // product_images has no is_active — archive = hard delete for library
+  return adminHardDeleteMediaAction(ids);
 }
+
 
 export async function adminHardDeleteMediaAction(ids: string[]) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
-  const list = cleanIds(ids);
+  const list = (ids || []).map((x) => String(x).trim()).filter(Boolean);
   if (!list.length) return { ok: false as const, error: "empty" as const };
+
   try {
-    const { error } = await gate.supabase.from("media").delete().in("id", list);
-    if (error) throw error;
+    const { data: rows, error: qErr } = await gate.supabase
+      .from("product_images")
+      .select("id, url")
+      .in("id", list);
+    if (qErr) {
+      console.error("[adminHardDeleteMedia] select", qErr);
+      return { ok: false as const, error: "server" as const };
+    }
+
+    try {
+      const { adminDeleteProductImageAction } = await import(
+        "@/app/admin/actions/media"
+      );
+      for (const row of rows ?? []) {
+        await adminDeleteProductImageAction({
+          url: row.url as string,
+          imageId: row.id as string,
+        });
+      }
+    } catch (e) {
+      console.warn("[adminHardDeleteMedia] r2 helper", e);
+      const { error } = await gate.supabase
+        .from("product_images")
+        .delete()
+        .in("id", list);
+      if (error) {
+        console.error("[adminHardDeleteMedia] db", error);
+        return { ok: false as const, error: "server" as const };
+      }
+    }
+
     return { ok: true as const, count: list.length };
   } catch (e) {
     console.error("[adminHardDeleteMedia]", e);
     return { ok: false as const, error: "server" as const };
   }
 }
+
 
 export async function adminArchiveReviewsAction(ids: string[]) {
   const gate = await requireAdmin();

@@ -8,9 +8,10 @@ import {
   adminHardDeleteMediaAction,
 } from "@/app/admin/actions/lifecycle";
 import {
-  adminDeleteProductImageAction,
   adminListProductImagesAction,
   adminUploadProductImageAction,
+  adminUpdateProductImageMetaAction,
+  adminDeleteProductImageAction,
   type MediaListItem,
 } from "@/app/admin/actions/media";
 import { LumaSpin } from "@/components/ui/luma-spin";
@@ -20,70 +21,14 @@ export default function AdminMediaPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [lastUploadUrl, setLastUploadUrl] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [draftAlt, setDraftAlt] = useState<Record<string, string>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  
-  function toggleSelectAll(ids: string[]) {
-    setSelected((prev) => (prev.length === ids.length ? [] : ids));
-  }
-  function toggleSelect(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
-  async function runBulkArchive() {
-    if (!selected.length) return;
-    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
-    setBulkBusy(true);
-    const res = await adminArchiveMediaAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    void load();
-    setSelected([]);
-    void load();
-  }
-  async function runBulkHardDelete() {
-    if (!selected.length) return;
-    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteMediaAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-        has_products: "به محصول متصل است",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    setSelected([]);
-    void load();
-  }
-  async function archiveOne(id: string, name: string) {
-    if (!confirm(`آرشیو «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminArchiveMediaAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    void load();
-  }
-  async function hardDeleteOne(id: string, name: string) {
-    if (!confirm(`حذف دائمی «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteMediaAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    void load();
-  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -97,14 +42,108 @@ export default function AdminMediaPage() {
             ? "دسترسی ادمین ندارید"
             : "بارگذاری فهرست ناموفق بود",
       );
+      setItems([]);
       return;
     }
     setItems(res.items);
+    const alts: Record<string, string> = {};
+    for (const it of res.items) {
+      alts[it.id] = it.alt_text ?? "";
+    }
+    setDraftAlt(alts);
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  function toggleSelectAll(ids: string[]) {
+    setSelected((prev) => (prev.length === ids.length ? [] : ids));
+  }
+
+  async function copyUrl(id: string, url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1500);
+    } catch {
+      setError("کپی لینک ناموفق");
+    }
+  }
+
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("حذف موارد انتخاب‌شده از کتابخانه؟")) return;
+    setBulkBusy(true);
+    setError(null);
+    const res = await adminArchiveMediaAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError("حذف گروهی ناموفق");
+      return;
+    }
+    setSelected([]);
+    setMsg("حذف شد");
+    void load();
+  }
+
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    setError(null);
+    const res = await adminHardDeleteMediaAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError("حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    setMsg("حذف دائمی انجام شد");
+    void load();
+  }
+
+  async function deleteOne(item: MediaListItem) {
+    if (!confirm("حذف این تصویر؟")) return;
+    setBulkBusy(true);
+    setError(null);
+    const res = await adminDeleteProductImageAction({
+      url: item.url,
+      imageId: item.id,
+    });
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError("حذف ناموفق");
+      return;
+    }
+    setSelected((prev) => prev.filter((x) => x !== item.id));
+    void load();
+  }
+
+  async function saveMeta(id: string) {
+    setSavingId(id);
+    setError(null);
+    const res = await adminUpdateProductImageMetaAction({
+      id,
+      alt_text: draftAlt[id] ?? "",
+    });
+    setSavingId(null);
+    if (!res.ok) {
+      setError("ذخیره نام/آلت ناموفق");
+      return;
+    }
+    setMsg("ذخیره شد");
+    setItems((prev) =>
+      prev.map((x) =>
+        x.id === id ? { ...x, alt_text: (draftAlt[id] || "").trim() || null } : x,
+      ),
+    );
+  }
 
   async function onUpload(file: File | null) {
     if (!file) return;
@@ -125,121 +164,153 @@ export default function AdminMediaPage() {
       );
       return;
     }
-    setLastUploadUrl(res.url);
-    setMsg("آپلود شد — برای اتصال به محصول از صفحه ویرایش محصول استفاده کنید.");
-    await load();
-  }
-
-  async function onDelete(item: MediaListItem) {
-    if (!confirm("این تصویر از R2 و پایگاه حذف شود؟")) return;
-    setMsg(null);
-    const res = await adminDeleteProductImageAction({
-      url: item.url,
-      imageId: item.id,
-    });
-    if (!res.ok) {
-      setError("حذف ناموفق");
-      return;
+    if ("url" in res && res.url) setLastUploadUrl(res.url as string);
+    if ("warning" in res && res.warning === "db_insert_failed") {
+      setError("آپلود روی فضای ابری شد ولی ثبت در دیتابیس ناموفق بود");
+    } else {
+      setMsg("آپلود شد");
     }
-    setMsg("حذف شد");
-    setItems((prev) => prev.filter((x) => x.id !== item.id));
+    void load();
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">رسانه</h1>
-        <p className="text-muted-foreground text-sm">
-          تصاویر محصولات روی Cloudflare R2 (webp چندسایز)
-        </p>
+    <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-primary">رسانه</h1>
+          <p className="text-muted-foreground text-sm">
+            کتابخانه تصاویر محصول — واترمارک خودکار روی آپلود جدید
+          </p>
+        </div>
+        <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
+          بازگشت به داشبورد
+        </Link>
       </div>
 
-      <div className="border-border flex flex-wrap items-center gap-3 rounded-xl border p-4">
-        <label className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex cursor-pointer items-center rounded-xl px-4 py-2 text-sm font-medium">
-          {uploading ? "در حال آپلود…" : "آپلود تصویر جدید"}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
-          />
-        </label>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="border-border rounded-xl border px-3 py-2 text-sm"
-        >
-          تازه‌سازی
-        </button>
+      {msg ? <p className="text-sm text-green-700">{msg}</p> : null}
+      {error ? <p className="text-destructive text-sm">{error}</p> : null}
+
+      <div className="border-border bg-card max-w-xl space-y-3 rounded-xl border p-4">
+        <label className="block text-sm font-medium">آپلود تصویر</label>
+        <input
+          type="file"
+          accept="image/*"
+          disabled={uploading}
+          onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
+        />
+        {uploading ? <LumaSpin className="h-6 w-6" /> : null}
         {lastUploadUrl ? (
-          <a
-            href={lastUploadUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary truncate text-xs underline"
-          >
-            آخرین URL
-          </a>
+          <p className="text-muted-foreground break-all text-xs" dir="ltr">
+            {lastUploadUrl}
+          </p>
         ) : null}
       </div>
 
-      {error ? <p className="text-destructive text-sm">{error}</p> : null}
-        <AdminBulkBar
-          total={items.length}
-          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
-          onClear={() => setSelected([])}
-          count={selected.length}
-          busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
-          onHardDelete={() => void runBulkHardDelete()}
-          onClear={() => setSelected([])}
-        />
-
-      {msg ? <p className="text-muted-foreground text-sm">{msg}</p> : null}
+      <AdminBulkBar
+        count={selected.length}
+        total={items.length}
+        busy={bulkBusy}
+        onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+        onArchive={() => void runBulkArchive()}
+        onHardDelete={() => void runBulkHardDelete()}
+        onClear={() => setSelected([])}
+        archiveLabel="حذف"
+        hardLabel="حذف دائمی"
+      />
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <LumaSpin />
-        </div>
+        <LumaSpin className="h-8 w-8" />
       ) : items.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          هنوز تصویری در product_images ثبت نشده. از ویرایش محصول یا آپلود بالا
-          اضافه کنید.
-        </p>
+        <p className="text-muted-foreground text-sm">تصویری ثبت نشده</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <li
               key={item.id}
-              className="border-border overflow-hidden rounded-xl border bg-background"
+              className="border-border bg-card overflow-hidden rounded-xl border"
             >
-              <input type="checkbox" className="m-2" checked={selected.includes(item.id)} onChange={() => toggleSelect(item.id)} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.url}
-                alt={item.alt_text || ""}
-                className="aspect-square w-full object-cover bg-muted"
-              />
-              <div className="space-y-1 p-2 text-xs">
-                <p className="truncate font-medium">
-                  {item.product_title || "بدون محصول"}
-                </p>
+              <div className="relative aspect-[4/3] bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.url}
+                  alt={item.alt_text || ""}
+                  className="h-full w-full object-contain"
+                />
+                <label className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-xs text-white">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                  />
+                  انتخاب
+                </label>
+              </div>
+              <div className="space-y-2 p-3">
+                {/* URL کامل زیر هر تصویر */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium">آدرس تصویر</label>
+                  <div className="flex items-start gap-2">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary min-w-0 flex-1 break-all text-xs underline-offset-2 hover:underline"
+                      dir="ltr"
+                    >
+                      {item.url}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => void copyUrl(item.id, item.url)}
+                      className="border-border shrink-0 rounded border px-2 py-1 text-xs"
+                    >
+                      {copiedId === item.id ? "کپی شد" : "کپی"}
+                    </button>
+                  </div>
+                </div>
+
                 {item.product_id ? (
                   <Link
                     href={`/admin/products/${item.product_id}/edit`}
-                    className="text-primary underline"
+                    className="text-primary text-xs underline-offset-2 hover:underline"
                   >
-                    ویرایش محصول
+                    {item.product_title || "محصول"}
                   </Link>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => void onDelete(item)}
-                  className="text-destructive block"
-                >
-                  حذف
-                </button>
+                ) : (
+                  <span className="text-muted-foreground text-xs">بدون محصول</span>
+                )}
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium">
+                    نام / متن جایگزین (alt)
+                  </label>
+                  <input
+                    className="border-border bg-background w-full rounded-lg border px-2 py-1.5 text-sm"
+                    value={draftAlt[item.id] ?? ""}
+                    onChange={(e) =>
+                      setDraftAlt((prev) => ({ ...prev, [item.id]: e.target.value }))
+                    }
+                    placeholder="مثلاً پیراهن آبی کلاسیک"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={savingId === item.id}
+                    onClick={() => void saveMeta(item.id)}
+                    className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
+                  >
+                    {savingId === item.id ? "..." : "ذخیره"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={bulkBusy}
+                    onClick={() => void deleteOne(item)}
+                    className="bg-destructive text-destructive-foreground rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
+                  >
+                    حذف
+                  </button>
+                </div>
               </div>
             </li>
           ))}

@@ -190,3 +190,32 @@ export async function adminListProductImagesAction(limit = 60) {
 
   return { ok: true as const, items };
 }
+
+export async function adminUpdateProductImageMetaAction(input: {
+  id: string;
+  alt_text?: string | null;
+  sort_order?: number;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const id = (input.id || "").trim();
+  if (!id) return { ok: false as const, error: "bad_id" as const };
+  const body: Record<string, unknown> = {};
+  if (input.alt_text !== undefined) {
+    const a = (input.alt_text ?? "").trim();
+    body.alt_text = a.length ? a.slice(0, 200) : null;
+  }
+  if (input.sort_order !== undefined && Number.isFinite(input.sort_order)) {
+    body.sort_order = Math.trunc(input.sort_order);
+  }
+  if (!Object.keys(body).length) return { ok: true as const };
+  const { error } = await gate.supabase
+    .from("product_images")
+    .update(body)
+    .eq("id", id);
+  if (error) {
+    console.error("[adminUpdateProductImageMeta]", error);
+    return { ok: false as const, error: "update_failed" as const };
+  }
+  return { ok: true as const };
+}
