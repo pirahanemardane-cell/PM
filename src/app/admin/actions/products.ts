@@ -172,19 +172,7 @@ export async function adminListCategoriesAction() {
       .select("id, name, slug, is_active")
       .order("name");
     if (error) throw error;
-    const rows = (data ?? []) as any[];
-    const items = rows.map((row) => {
-      const imgs = Array.isArray(row.product_images) ? row.product_images : [];
-      const sorted = [...imgs].sort(
-        (a: any, b: any) =>
-          Number(b.is_primary) - Number(a.is_primary) ||
-          (a.sort_order ?? 0) - (b.sort_order ?? 0),
-      );
-      const thumb = sorted[0]?.url ?? null;
-      const { product_images: _pi, ...rest } = row;
-      return { ...rest, thumb_url: thumb };
-    });
-    return { ok: true as const, items };
+    return { ok: true as const, items: data ?? [] };
   } catch {
     return { ok: false as const, error: "server", items: [] };
   }
