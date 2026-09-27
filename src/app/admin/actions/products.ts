@@ -107,7 +107,7 @@ export async function adminListProductsAction(
     let query = gate.supabase
       .from("products")
       .select(
-        "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, category:categories(name), brand:brands(name)",
+        "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, updated_at, published_at, category_id, brand_id, category:categories(id, name), brand:brands(id, name), product_images(id, url, is_primary, sort_order)",
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -124,7 +124,19 @@ export async function adminListProductsAction(
 
     const { data, error } = await query;
     if (error) throw error;
-    return { ok: true as const, items: data ?? [] };
+    const rows = (data ?? []) as any[];
+    const items = rows.map((row) => {
+      const imgs = Array.isArray(row.product_images) ? row.product_images : [];
+      const sorted = [...imgs].sort(
+        (a: any, b: any) =>
+          Number(b.is_primary) - Number(a.is_primary) ||
+          (a.sort_order ?? 0) - (b.sort_order ?? 0),
+      );
+      const thumb = sorted[0]?.url ?? null;
+      const { product_images: _pi, ...rest } = row;
+      return { ...rest, thumb_url: thumb };
+    });
+    return { ok: true as const, items };
   } catch (e) {
     console.error("[adminListProducts]", e);
     return { ok: false as const, error: "server", items: [] };
@@ -160,7 +172,19 @@ export async function adminListCategoriesAction() {
       .select("id, name, slug, is_active")
       .order("name");
     if (error) throw error;
-    return { ok: true as const, items: data ?? [] };
+    const rows = (data ?? []) as any[];
+    const items = rows.map((row) => {
+      const imgs = Array.isArray(row.product_images) ? row.product_images : [];
+      const sorted = [...imgs].sort(
+        (a: any, b: any) =>
+          Number(b.is_primary) - Number(a.is_primary) ||
+          (a.sort_order ?? 0) - (b.sort_order ?? 0),
+      );
+      const thumb = sorted[0]?.url ?? null;
+      const { product_images: _pi, ...rest } = row;
+      return { ...rest, thumb_url: thumb };
+    });
+    return { ok: true as const, items };
   } catch {
     return { ok: false as const, error: "server", items: [] };
   }
@@ -1058,3 +1082,57 @@ export async function adminListSizeGuidesAction() {
     return { ok: false as const, error: "server" };
   }
 }
+
+export async function adminQuickUpdateProductAction(
+  id: string,
+  patch: Partial<{
+    name: string;
+    category_id: string | null;
+    brand_id: string | null;
+  }>,
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const body: Record<string, unknown> = {};
+    if (patch.name !== undefined) {
+      const name = String(patch.name || "").trim();
+      if (!name) return { ok: false as const, error: "name_required" };
+      body.name = name;
+      // slug intentionally NOT touched
+    }
+    if (patch.category_id !== undefined) body.category_id = patch.category_id || null;
+    if (patch.brand_id !== undefined) body.brand_id = patch.brand_id || null;
+    if (!Object.keys(body).length) return { ok: true as const };
+    const { error } = await gate.supabase.from("products").update(body).eq("id", id);
+    if (error) throw error;
+    revalidatePath("/admin/products");
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminQuickUpdateProduct]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+/** ناموجود سریع: همه واریانت‌های محصول stock → 0 */
+export async function adminSetProductOutOfStockAction(id: string, out: boolean) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    if (out) {
+      const { error } = await gate.supabase
+        .from("product_variants")
+        .update({ stock_quantity: 0 })
+        .eq("product_id", id);
+      if (error) throw error;
+    }
+    // وقتی out=false فقط فلگ UI؛ موجودی دستی از ویرایش/واریانت
+    revalidatePath("/admin/products");
+    revalidatePath("/products");
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSetProductOutOfStock]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
@@ -11,8 +12,15 @@ import {
   adminListProductsAction,
   adminUpdateProductFlagsAction,
   adminSoftDeleteProductAction,
+  adminListCategoriesAction,
+  adminListBrandsAction,
+  adminQuickUpdateProductAction,
+  adminSetProductOutOfStockAction,
 } from "@/app/admin/actions/products";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { formatJalaliDateTime } from "@/lib/dates/jalali";
+
+import { toPersianDigits } from "@/lib/numbers";
 
 const STATUSES = ["draft", "published", "archived"] as const;
 
@@ -22,6 +30,7 @@ const STATUS_FA: Record<string, string> = {
   archived: "بایگانی",
 };
 
+type Opt = { id: string; name: string };
 type Row = {
   id: string;
   name: string;
@@ -31,12 +40,26 @@ type Row = {
   is_new: boolean;
   is_bestseller: boolean;
   created_at: string;
-  brand?: { name: string } | null;
-  category?: { name: string } | null;
+  updated_at?: string | null;
+  published_at?: string | null;
+  category_id?: string | null;
+  brand_id?: string | null;
+  brand?: { id?: string; name: string } | null;
+  category?: { id?: string; name: string } | null;
+  thumb_url?: string | null;
+  /** UI-only: بعد از تیک ناموجود */
+  oos?: boolean;
 };
+
+function fmtWhen(iso?: string | null) {
+  if (!iso) return "—";
+  try { return toPersianDigits(formatJalaliDateTime(iso)); } catch { return toPersianDigits(iso.slice(0, 16).replace('T', ' ')); }
+}
 
 export default function AdminProductsPage() {
   const [items, setItems] = useState<Row[]>([]);
+  const [cats, setCats] = useState<Opt[]>([]);
+  const [brands, setBrands] = useState<Opt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -44,8 +67,8 @@ export default function AdminProductsPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [editName, setEditName] = useState<Record<string, string>>({});
 
-  
   function toggleSelectAll(ids: string[]) {
     setSelected((prev) =>
       prev.length === ids.length && ids.every((id) => prev.includes(id))
@@ -64,7 +87,10 @@ export default function AdminProductsPage() {
     setBulkBusy(true);
     const res = await adminArchiveProductsAction(selected);
     setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    if (!res.ok) {
+      setError("آرشیو ناموفق");
+      return;
+    }
     setSelected([]);
     void load();
   }
@@ -90,7 +116,10 @@ export default function AdminProductsPage() {
     setBulkBusy(true);
     const res = await adminArchiveProductsAction([id]);
     setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    if (!res.ok) {
+      setError("آرشیو ناموفق");
+      return;
+    }
     void load();
   }
   async function hardDeleteOne(id: string, name: string) {
@@ -108,13 +137,18 @@ export default function AdminProductsPage() {
     }
     void load();
   }
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const res = await adminListProductsAction(100, {
-      q: q.trim() || undefined,
-      status: statusFilter || undefined,
-    });
+    const [res, cRes, bRes] = await Promise.all([
+      adminListProductsAction(100, {
+        q: q.trim() || undefined,
+        status: statusFilter || undefined,
+      }),
+      adminListCategoriesAction(),
+      adminListBrandsAction(),
+    ]);
     setLoading(false);
     if (!res.ok) {
       setError(
@@ -128,6 +162,8 @@ export default function AdminProductsPage() {
       return;
     }
     setItems((res.items as Row[]) ?? []);
+    if (cRes.ok) setCats((cRes.items as Opt[]) ?? []);
+    if (bRes.ok) setBrands((bRes.items as Opt[]) ?? []);
   }, [q, statusFilter]);
 
   useEffect(() => {
@@ -148,6 +184,50 @@ export default function AdminProductsPage() {
     setItems((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...flags } : p)),
     );
+  }
+
+  async function quick(
+    id: string,
+    body: Parameters<typeof adminQuickUpdateProductAction>[1],
+  ) {
+    setBusyId(id);
+    const res = await adminQuickUpdateProductAction(id, body);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("ذخیره ناموفق بود");
+      return;
+    }
+    setItems((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = { ...p };
+        if (body.name !== undefined) next.name = body.name;
+        if (body.category_id !== undefined) {
+          next.category_id = body.category_id;
+          next.category = cats.find((c) => c.id === body.category_id)
+            ? { id: body.category_id!, name: cats.find((c) => c.id === body.category_id)!.name }
+            : null;
+        }
+        if (body.brand_id !== undefined) {
+          next.brand_id = body.brand_id;
+          next.brand = brands.find((b) => b.id === body.brand_id)
+            ? { id: body.brand_id!, name: brands.find((b) => b.id === body.brand_id)!.name }
+            : null;
+        }
+        return next;
+      }),
+    );
+  }
+
+  async function toggleOos(id: string, out: boolean) {
+    setBusyId(id);
+    const res = await adminSetProductOutOfStockAction(id, out);
+    setBusyId(null);
+    if (!res.ok) {
+      setError("به‌روزرسانی موجودی ناموفق");
+      return;
+    }
+    setItems((prev) => prev.map((p) => (p.id === id ? { ...p, oos: out } : p)));
   }
 
   async function softDelete(id: string, name: string) {
@@ -230,7 +310,6 @@ export default function AdminProductsPage() {
           onClear={() => setSelected([])}
         />
 
-
         {loading ? (
           <div className="flex justify-center py-16">
             <LumaSpin />
@@ -247,97 +326,214 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
-            <table className="w-full min-w-[900px] text-right text-sm">
+            <table className="w-full min-w-[1100px] text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
-                <tr>
-                  <th className="p-3 font-medium">نام</th>
-                  <th className="p-3 font-medium">دسته / برند</th>
-                  <th className="p-3 font-medium">وضعیت</th>
-                  <th className="p-3 font-medium">شگفت‌انگیز</th>
-                  <th className="p-3 font-medium">جدید</th>
-                  <th className="p-3 font-medium">پرفروش</th>
-                  <th className="p-3 font-medium">عملیات</th>
+                <tr className="whitespace-nowrap">
+                  <th className="p-2 font-medium"> </th>
+                  <th className="p-2 font-medium">تصویر</th>
+                  <th className="p-2 font-medium">نام</th>
+                  <th className="p-2 font-medium">دسته</th>
+                  <th className="p-2 font-medium">برند</th>
+                  <th className="p-2 font-medium">وضعیت</th>
+                  <th className="p-2 font-medium">ناموجود</th>
+                  <th className="p-2 font-medium">شگفت</th>
+                  <th className="p-2 font-medium">جدید</th>
+                  <th className="p-2 font-medium">پرفروش</th>
+                  <th className="p-2 font-medium">تاریخ</th>
+                  <th className="p-2 font-medium">عملیات</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((p) => (
-                  <tr key={p.id} className="border-border border-t">
-                    <td className="p-3">
-                      <div className="font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggleSelect(p.id)} /><span>{p.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(p.id, p.name)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(p.id, p.name)}>حذف دائمی</button></div>
-                      <div className="text-muted-foreground font-mono text-xs">
-                        {p.slug}
-                      </div>
-                    </td>
-                    <td className="text-muted-foreground p-3 text-xs">
-                      {p.category?.name ?? "—"} / {p.brand?.name ?? "—"}
-                    </td>
-                    <td className="p-3">
-                      <select
-                        value={p.status}
-                        disabled={busyId === p.id}
-                        onChange={(e) =>
-                          void patch(p.id, {
-                            status: e.target.value as
-                              | "draft"
-                              | "published"
-                              | "archived",
-                          })
-                        }
-                        className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
-                      >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {STATUS_FA[s] ?? s}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    {(
-                      [
-                        ["is_featured", p.is_featured],
-                        ["is_new", p.is_new],
-                        ["is_bestseller", p.is_bestseller],
-                      ] as const
-                    ).map(([key, val]) => (
-                      <td key={key} className="p-3">
+                {items.map((p) => {
+                  const nameVal = editName[p.id] ?? p.name;
+                  const when = p.published_at || p.updated_at || p.created_at;
+                  return (
+                    <tr
+                      key={p.id}
+                      className="border-border border-t whitespace-nowrap"
+                    >
+                      <td className="p-2 align-middle">
                         <input
                           type="checkbox"
-                          checked={!!val}
-                          disabled={busyId === p.id}
-                          onChange={(e) =>
-                            void patch(p.id, { [key]: e.target.checked })
-                          }
+                          checked={selected.includes(p.id)}
+                          onChange={() => toggleSelect(p.id)}
                           className="h-4 w-4"
                         />
                       </td>
-                    ))}
-                    <td className="p-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          href={`/admin/products/${p.id}/edit`}
-                          className="text-primary text-xs hover:underline"
-                        >
-                          ویرایش
-                        </Link>
-                        <Link
-                          href={`/products/${p.slug}`}
-                          target="_blank"
-                          className="text-muted-foreground text-xs hover:underline"
-                        >
-                          مشاهده
-                        </Link>
-                        <button
-                          type="button"
+                      <td className="p-2 align-middle">
+                        <div className="bg-muted relative h-10 w-10 overflow-hidden rounded-lg">
+                          {p.thumb_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.thumb_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-muted-foreground flex h-full items-center justify-center text-[10px]">
+                              —
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-2 align-middle">
+                        <input
+                          value={nameVal}
                           disabled={busyId === p.id}
-                          onClick={() => void softDelete(p.id, p.name)}
-                          className="text-destructive text-xs hover:underline disabled:opacity-50"
+                          onChange={(e) =>
+                            setEditName((m) => ({ ...m, [p.id]: e.target.value }))
+                          }
+                          onBlur={() => {
+                            const next = (editName[p.id] ?? p.name).trim();
+                            if (next && next !== p.name) {
+                              void quick(p.id, { name: next });
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="border-input bg-background h-8 min-w-[140px] max-w-[220px] rounded-lg border px-2 text-xs font-medium"
+                          title="فقط نام — اسلاگ ثابت می‌ماند"
+                        />
+                      </td>
+                      <td className="p-2 align-middle">
+                        <select
+                          value={p.category_id || p.category?.id || ""}
+                          disabled={busyId === p.id}
+                          onChange={(e) =>
+                            void quick(p.id, {
+                              category_id: e.target.value || null,
+                            })
+                          }
+                          className="border-input bg-background h-8 max-w-[140px] rounded-lg border px-1 text-xs"
                         >
-                          حذف
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          <option value="">— دسته —</option>
+                          {cats.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2 align-middle">
+                        <select
+                          value={p.brand_id || p.brand?.id || ""}
+                          disabled={busyId === p.id}
+                          onChange={(e) =>
+                            void quick(p.id, {
+                              brand_id: e.target.value || null,
+                            })
+                          }
+                          className="border-input bg-background h-8 max-w-[140px] rounded-lg border px-1 text-xs"
+                        >
+                          <option value="">— برند —</option>
+                          {brands.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2 align-middle">
+                        <select
+                          value={p.status}
+                          disabled={busyId === p.id}
+                          onChange={(e) =>
+                            void patch(p.id, {
+                              status: e.target.value as
+                                | "draft"
+                                | "published"
+                                | "archived",
+                            })
+                          }
+                          className="border-input bg-background h-8 rounded-lg border px-1 text-xs"
+                        >
+                          {STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_FA[s] ?? s}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="p-2 align-middle text-center">
+                        <input
+                          type="checkbox"
+                          title="ناموجود کردن سریع (موجودی همه واریانت‌ها صفر)"
+                          checked={!!p.oos}
+                          disabled={busyId === p.id}
+                          onChange={(e) => void toggleOos(p.id, e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                      </td>
+                      {(
+                        [
+                          ["is_featured", p.is_featured],
+                          ["is_new", p.is_new],
+                          ["is_bestseller", p.is_bestseller],
+                        ] as const
+                      ).map(([key, val]) => (
+                        <td key={key} className="p-2 align-middle text-center">
+                          <input
+                            type="checkbox"
+                            checked={!!val}
+                            disabled={busyId === p.id}
+                            onChange={(e) =>
+                              void patch(p.id, { [key]: e.target.checked })
+                            }
+                            className="h-4 w-4"
+                          />
+                        </td>
+                      ))}
+                      <td
+                        className="text-muted-foreground p-2 align-middle text-[11px] tabular-nums"
+                        title={when || ""}
+                      >
+                        {fmtWhen(when)}
+                      </td>
+                      <td className="p-2 align-middle">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/products/${p.id}/edit`}
+                            className="text-primary text-xs hover:underline"
+                          >
+                            ویرایش
+                          </Link>
+                          <Link
+                            href={`/products/${p.slug}`}
+                            target="_blank"
+                            className="text-muted-foreground text-xs hover:underline"
+                          >
+                            مشاهده
+                          </Link>
+                          <button
+                            type="button"
+                            className="text-muted-foreground text-xs hover:underline"
+                            onClick={() => void archiveOne(p.id, p.name)}
+                          >
+                            آرشیو
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyId === p.id}
+                            onClick={() => void softDelete(p.id, p.name)}
+                            className="text-destructive text-xs hover:underline disabled:opacity-50"
+                          >
+                            حذف
+                          </button>
+                          <button
+                            type="button"
+                            className="text-destructive text-xs hover:underline"
+                            onClick={() => void hardDeleteOne(p.id, p.name)}
+                          >
+                            حذف دائمی
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
