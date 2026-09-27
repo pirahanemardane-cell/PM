@@ -154,7 +154,7 @@ export async function processProductImageSizes(
       }
     }
 
-    out[name] = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+    out[name] = await pipeline.webp({ quality: 82, effort: 6, smartSubsample: true }).toBuffer();
   }
 
   return out;
