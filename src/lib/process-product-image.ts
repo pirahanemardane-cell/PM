@@ -3,7 +3,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 
 const WEBP_QUALITY = 82;
-const WATERMARK_RATIO = 0.28;
+const WATERMARK_RATIO = 0.224; // ~20% smaller than 0.28
 const MARGIN_RATIO = 0.03;
 const WATERMARK_OPACITY = 0.85;
 
