@@ -8,6 +8,7 @@ import { colorNorm, colorKey } from "@/lib/variant-availability";
 
 export type GalleryImage = {
   url: string;
+  is_primary?: boolean;
   alt?: string | null;
   variant_id?: string | null;
 };
@@ -35,8 +36,13 @@ export function ProductGallery({
   const thumbs = useMemo(() => {
     const all = images.filter((i) => i.url);
     const galleryOnly = all.filter((i) => !i.variant_id);
-    // اگر همه عکس‌ها variant_id دارند، همان all را نشان بده تا خالی نشود
-    return galleryOnly.length > 0 ? galleryOnly : all;
+    const list = galleryOnly.length > 0 ? galleryOnly : all;
+    // شاخص اول، بعد گالری
+    return [...list].sort((a, b) => {
+      const ap = a.is_primary ? 0 : 1;
+      const bp = b.is_primary ? 0 : 1;
+      return ap - bp;
+    });
   }, [images]);
 
   // --- عکس واریانت رنگ فعال (فقط برای تصویر بزرگ) ---

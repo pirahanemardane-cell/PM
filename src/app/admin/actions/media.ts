@@ -403,24 +403,47 @@ export async function adminSetPrimaryProductImageAction(input: {
   const url = (input.url || "").trim();
   if (!productId || !url) return { ok: false as const, error: "invalid" as const };
 
-  // همه را غیرشاخص کن
+  // URLهای شاخص فعلی (قبل از تعویض) — بعداً حذف می‌شوند
+  const { data: oldPrimaries } = await gate.supabase
+    .from("product_images")
+    .select("id, url")
+    .eq("product_id", productId)
+    .eq("is_primary", true)
+    .is("variant_id", null);
+
+  const oldPrimaryIds = new Set(
+    (oldPrimaries ?? []).map((r: { id: string }) => r.id),
+  );
+  const oldPrimaryUrls = new Set(
+    (oldPrimaries ?? []).map((r: { url: string }) => (r.url || "").split("?")[0]),
+  );
+
+  // همه غیرشاخص
   await gate.supabase
     .from("product_images")
     .update({ is_primary: false })
     .eq("product_id", productId)
     .is("variant_id", null);
 
-  if (input.imageId) {
+  let primaryId: string | null = input.imageId?.trim() || null;
+
+  if (primaryId) {
     const { error } = await gate.supabase
       .from("product_images")
-      .update({ url, is_primary: true, product_id: productId })
-      .eq("id", input.imageId);
+      .update({
+        url,
+        is_primary: true,
+        product_id: productId,
+        variant_id: null,
+        sort_order: 0,
+      })
+      .eq("id", primaryId);
     if (error) {
       console.error("[setPrimary by id]", error);
-      return { ok: false as const, error: "update_failed" as const };
+      return { ok: false as const, error: "update_failed" as const, detail: error.message };
     }
   } else {
-    const { data: existing } = await gate.supabase
+    const { data: same } = await gate.supabase
       .from("product_images")
       .select("id")
       .eq("product_id", productId)
@@ -428,54 +451,55 @@ export async function adminSetPrimaryProductImageAction(input: {
       .is("variant_id", null)
       .limit(1)
       .maybeSingle();
-    if (existing?.id) {
+
+    if (same?.id) {
+      primaryId = same.id as string;
       await gate.supabase
         .from("product_images")
-        .update({ is_primary: true })
-        .eq("id", existing.id);
+        .update({ is_primary: true, sort_order: 0 })
+        .eq("id", primaryId);
     } else {
-      const { data: primary } = await gate.supabase
+      const { data: inserted, error } = await gate.supabase
         .from("product_images")
-        .select("id")
-        .eq("product_id", productId)
-        .eq("is_primary", true)
-        .is("variant_id", null)
-        .limit(1)
-        .maybeSingle();
-      if (primary?.id) {
-        await gate.supabase
-          .from("product_images")
-          .update({ url, is_primary: true })
-          .eq("id", primary.id);
-      } else {
-        const { error } = await gate.supabase.from("product_images").insert({
+        .insert({
           product_id: productId,
           url,
           is_primary: true,
           sort_order: 0,
           variant_id: null,
-        });
-        if (error) {
-          console.error("[setPrimary insert]", error);
-          return { ok: false as const, error: "insert_failed" as const };
-        }
+        })
+        .select("id")
+        .maybeSingle();
+      if (error) {
+        console.error("[setPrimary insert]", error);
+        return { ok: false as const, error: "insert_failed" as const, detail: error.message };
       }
+      primaryId = (inserted?.id as string) ?? null;
     }
   }
 
-  // ردیف‌های تکراری همان URL برای همین محصول را پاک کن (غیر از primary)
+  // حذف شاخص‌های قبلی از محصول — دیگر روی PDP دیده نشوند
+  const toDelete: string[] = [];
+  for (const r of oldPrimaries ?? []) {
+    const id = (r as { id: string }).id;
+    const u = ((r as { url: string }).url || "").split("?")[0];
+    if (id === primaryId) continue;
+    if (u === url.split("?")[0]) continue;
+    toDelete.push(id);
+  }
+  // ردیف تکراری همان URL جدید
   const { data: dups } = await gate.supabase
     .from("product_images")
-    .select("id, is_primary")
+    .select("id")
     .eq("product_id", productId)
     .eq("url", url)
     .is("variant_id", null);
-  if (dups && dups.length > 1) {
-    const keep = dups.find((d: any) => d.is_primary)?.id || dups[0].id;
-    const drop = dups.filter((d: any) => d.id !== keep).map((d: any) => d.id);
-    if (drop.length) {
-      await gate.supabase.from("product_images").delete().in("id", drop);
-    }
+  for (const d of dups ?? []) {
+    const id = (d as { id: string }).id;
+    if (id !== primaryId) toDelete.push(id);
+  }
+  if (toDelete.length) {
+    await gate.supabase.from("product_images").delete().in("id", [...new Set(toDelete)]);
   }
 
   try {
@@ -484,10 +508,16 @@ export async function adminSetPrimaryProductImageAction(input: {
       .select("slug")
       .eq("id", productId)
       .maybeSingle();
-    if (p?.slug) revalidatePath(`/products/${p.slug}`);
-    revalidatePath("/");
-    revalidatePath("/products");
-  } catch {}
+    if (p?.slug) {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath(`/products/${p.slug}`);
+      revalidatePath("/");
+      revalidatePath("/products");
+    }
+  } catch (e) {
+    console.warn("[setPrimary revalidate]", e);
+  }
 
-  return { ok: true as const };
+  return { ok: true as const, imageId: primaryId };
 }
+

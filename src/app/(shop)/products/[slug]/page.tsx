@@ -164,11 +164,20 @@ export default async function ProductDetailPage({ params }: Props) {
         productName={product.name}
         href={`/products/${product.slug}`}
         fallbackImage={primaryImage?.url}
-        images={(images ?? []).map((img) => ({
-          url: img.url,
-          alt: img.alt_text ?? product.name,
-          variant_id: (img as { variant_id?: string | null }).variant_id ?? null,
-        }))}
+        images={(images ?? [])
+          .slice()
+          .sort((a, b) => {
+            const ap = a.is_primary ? 0 : 1;
+            const bp = b.is_primary ? 0 : 1;
+            if (ap !== bp) return ap - bp;
+            return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+          })
+          .map((img) => ({
+            url: img.url,
+            alt: img.alt_text ?? product.name,
+            is_primary: !!img.is_primary,
+            variant_id: (img as { variant_id?: string | null }).variant_id ?? null,
+          }))}
         variants={variantOptions}
         childrenTitle={
           <>
