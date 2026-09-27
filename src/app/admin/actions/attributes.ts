@@ -2,11 +2,7 @@
 
 import { requireAdmin } from "@/lib/admin/require-admin";
 
-export type AttrOption = {
-  id: string;
-  value: string;
-  slug: string;
-};
+export type AttrOption = { id: string; value: string; slug?: string; hex?: string | null };
 
 export type AttrWithOptions = {
   id: string;
@@ -33,7 +29,7 @@ export async function adminListAttributesAction() {
     const ids = rows.map((a: { id: string }) => a.id);
     const { data: opts, error: oErr } = await gate.supabase
       .from("attribute_options")
-      .select("id, attribute_id, value, slug, sort_order")
+      .select("id, attribute_id, value, slug, sort_order, hex")
       .in("attribute_id", ids)
       .order("sort_order", { ascending: true });
     if (oErr) throw oErr;
@@ -42,6 +38,7 @@ export async function adminListAttributesAction() {
     for (const o of opts ?? []) {
       const list = byAttr.get(o.attribute_id as string) ?? [];
       list.push({
+        hex: (o as { hex?: string | null }).hex ?? null,
         id: o.id as string,
         value: String(o.value ?? ""),
         slug: String(o.slug ?? ""),
@@ -199,6 +196,7 @@ export async function adminCreateAttributeOptionAction(input: {
   attribute_id: string;
   value: string;
   slug?: string;
+  hex?: string | null;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -214,6 +212,7 @@ export async function adminCreateAttributeOptionAction(input: {
         value,
         slug,
         sort_order: 0,
+        hex: input.hex ? String(input.hex).trim() || null : null,
       })
       .select("id")
       .single();
@@ -236,6 +235,35 @@ export async function adminDeleteAttributeOptionAction(id: string) {
     if (error) throw error;
     return { ok: true as const };
   } catch {
+    return { ok: false as const, error: "server" };
+  }
+}
+
+
+export async function adminUpdateAttributeOptionAction(input: {
+  id: string;
+  value?: string;
+  hex?: string | null;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!input.id) return { ok: false as const, error: "validation" };
+  const patch: Record<string, unknown> = {};
+  if (input.value !== undefined) patch.value = String(input.value).trim();
+  if (input.hex !== undefined) {
+    const h = input.hex == null ? null : String(input.hex).trim();
+    patch.hex = h || null;
+  }
+  if (!Object.keys(patch).length) return { ok: false as const, error: "validation" };
+  try {
+    const { error } = await gate.supabase
+      .from("attribute_options")
+      .update(patch)
+      .eq("id", input.id);
+    if (error) throw error;
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminUpdateAttributeOption]", e);
     return { ok: false as const, error: "server" };
   }
 }
