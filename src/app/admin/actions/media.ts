@@ -219,3 +219,130 @@ export async function adminUpdateProductImageMetaAction(input: {
   }
   return { ok: true as const };
 }
+
+
+/** sanitize base filename: latin/digits/dash only */
+function sanitizeImageBaseName(raw: string): string | null {
+  const s = (raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^[-.]+|[-.]+$/g, "");
+  if (!s || s.length < 2 || s.length > 80) return null;
+  return s.replace(/-(thumb|small|medium|large)$/i, "") || null;
+}
+
+function parseProductImageKey(url: string): {
+  folder: string;
+  base: string;
+  sizes: Array<"thumb" | "small" | "medium" | "large">;
+} | null {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.replace(/^\//, "").split("/");
+    if (parts.length < 3) return null;
+    const file = parts[parts.length - 1] || "";
+    const m = file.match(/^(.+)-(thumb|small|medium|large)\.webp$/i);
+    if (!m) return null;
+    return {
+      folder: parts.slice(0, -1).join("/"),
+      base: m[1],
+      sizes: ["thumb", "small", "medium", "large"],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function adminRenameProductImageAction(input: {
+  id: string;
+  newBaseName: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const id = (input.id || "").trim();
+  const newBase = sanitizeImageBaseName(input.newBaseName || "");
+  if (!id) return { ok: false as const, error: "bad_id" as const };
+  if (!newBase) return { ok: false as const, error: "bad_name" as const };
+
+  const { data: row, error: qErr } = await gate.supabase
+    .from("product_images")
+    .select("id, url")
+    .eq("id", id)
+    .maybeSingle();
+  if (qErr || !row?.url) {
+    console.error("[adminRenameProductImage] select", qErr);
+    return { ok: false as const, error: "not_found" as const };
+  }
+
+  const parsed = parseProductImageKey(String(row.url));
+  if (!parsed) return { ok: false as const, error: "bad_url" as const };
+  if (parsed.base === newBase) {
+    return { ok: true as const, url: String(row.url), unchanged: true as const };
+  }
+
+  const { r2PutObject, r2DeleteObject, getPublicUrl } = await import("@/lib/r2");
+
+  const oldKeys: string[] = [];
+  let newLargeUrl = "";
+
+  for (const size of parsed.sizes) {
+    const oldKey = `${parsed.folder}/${parsed.base}-${size}.webp`;
+    const newKey = `${parsed.folder}/${newBase}-${size}.webp`;
+    oldKeys.push(oldKey);
+
+    let buf: Buffer | null = null;
+    try {
+      const res = await fetch(getPublicUrl(oldKey));
+      if (res.ok) buf = Buffer.from(await res.arrayBuffer());
+    } catch (e) {
+      console.warn("[rename] fetch old", oldKey, e);
+    }
+
+    if (!buf || buf.length === 0) {
+      if (size === "large") {
+        return { ok: false as const, error: "source_missing" as const };
+      }
+      continue;
+    }
+
+    try {
+      await r2PutObject({
+        key: newKey,
+        body: buf,
+        contentType: "image/webp",
+      });
+    } catch (e) {
+      console.error("[rename] put", newKey, e);
+      return { ok: false as const, error: "upload_failed" as const };
+    }
+
+    if (size === "large") newLargeUrl = getPublicUrl(newKey);
+  }
+
+  if (!newLargeUrl) {
+    return { ok: false as const, error: "upload_failed" as const };
+  }
+
+  const { error: uErr } = await gate.supabase
+    .from("product_images")
+    .update({ url: newLargeUrl })
+    .eq("id", id);
+  if (uErr) {
+    console.error("[adminRenameProductImage] db", uErr);
+    return { ok: false as const, error: "db_failed" as const };
+  }
+
+  for (const k of oldKeys) {
+    try {
+      await r2DeleteObject(k);
+    } catch (e) {
+      console.warn("[rename] delete old", k, e);
+    }
+  }
+
+  return { ok: true as const, url: newLargeUrl };
+}
