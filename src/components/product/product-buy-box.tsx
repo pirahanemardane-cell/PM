@@ -1,6 +1,7 @@
 "use client";
 
 import { sizeAvailable as sizeAvailableShared, sameColor, stockOf, findVariant, colorAvailable } from "@/lib/variant-availability";
+import { Price } from "@/components/ui/price";
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
@@ -299,7 +300,7 @@ export function ProductBuyBox({
         </div>
         {price != null ? (
           <p className="text-sm font-semibold">
-            {Number(price).toLocaleString("fa-IR")} تومان
+            <Price amount={Number(price)} size="pdp" />
           </p>
         ) : null}
         <p

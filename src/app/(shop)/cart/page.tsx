@@ -6,6 +6,7 @@ import { resolveColorHex } from "@/lib/colors";
 import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
 import {
+import { Price } from "@/components/ui/price";
   removeCartItemAction,
   updateCartQuantityAction,
 } from "@/app/(shop)/actions/shop";

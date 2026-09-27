@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toPersianDigits } from "@/lib/numbers";
+import { Price } from "@/components/ui/price";
 
 export type PricePoint = { price: number; recorded_at: string };
 

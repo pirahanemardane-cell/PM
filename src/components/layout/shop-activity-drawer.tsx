@@ -2,6 +2,7 @@
 import { toast } from "@/lib/toaster";
 import { resolveColorHex } from "@/lib/colors";
 import { sizeAvailable, sameColor, colorAvailable, isVariantAvailable } from "@/lib/variant-availability";
+import { Price } from "@/components/ui/price";
 
 import Link from "next/link";
 import {
@@ -105,7 +106,7 @@ export function ShopActivityDrawer({
                     {typeof p.price === "number" ? (
                       <div className="mt-0.5 space-y-0.5 text-xs">
                         <p className="text-muted-foreground">
-                          {p.price.toLocaleString("fa-IR")} تومان
+                          <Price amount={p.price} size="sm" />
                           {tab === "cart" && (p.quantity ?? 1) > 1
                             ? " × " + (p.quantity ?? 1)
                             : ""}
@@ -257,7 +258,7 @@ export function ShopActivityDrawer({
           <div className="border-border flex items-center justify-between border-t px-4 py-3">
             <span className="text-sm font-medium">جمع کل</span>
             <span className="text-sm font-bold">
-              {cartTotal.toLocaleString("fa-IR")} تومان
+              <Price amount={cartTotal} size="md" />
             </span>
           </div>
         ) : null}

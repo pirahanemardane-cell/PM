@@ -1,6 +1,7 @@
 "use client";
 
 import { normalizeIranMobile } from "@/lib/numbers";
+import { Price } from "@/components/ui/price";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -487,8 +488,8 @@ export default function CheckoutPage() {
                   ) : null}
                   {discountPreview ? (
                     <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                      {discountPreview.discountAmount.toLocaleString("fa-IR")} تومان تخفیف —
-                      قابل پرداخت: {discountPreview.finalTotal.toLocaleString("fa-IR")} تومان
+                      <Price amount={discountPreview.discountAmount} size="sm" /> تخفیف —
+                      قابل پرداخت: <Price amount={discountPreview.finalTotal} size="sm" />
                     </p>
                   ) : null}
                 </div>
@@ -532,19 +533,19 @@ export default function CheckoutPage() {
             <div className="border-border mt-4 space-y-1 border-t pt-4 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">جمع</span>
-                <span>{total.toLocaleString("fa-IR")} تومان</span>
+                <span><Price amount={total} size="md" /></span>
               </div>
               {discountPreview ? (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>تخفیف</span>
                   <span>
-                    −{discountPreview.discountAmount.toLocaleString("fa-IR")} تومان
+                    −<Price amount={discountPreview.discountAmount} size="sm" />
                   </span>
                 </div>
               ) : null}
               <div className="flex justify-between text-base font-bold">
                 <span>قابل پرداخت</span>
-                <span>{payable.toLocaleString("fa-IR")} تومان</span>
+                <span><Price amount={payable} size="md" /></span>
               </div>
             </div>
           </aside>

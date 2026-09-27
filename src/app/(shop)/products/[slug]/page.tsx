@@ -1,6 +1,7 @@
 import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
+import { Price } from "@/components/ui/price";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -28,9 +29,7 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-function formatPrice(price: number) {
-  return toPersianDigits(price.toLocaleString("en-US")) + " تومان";
-}
+function formatPrice(_p: number) { return null; }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug: rawSlug } = await params;
@@ -329,7 +328,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 undefined,
               subtitle:
                 (p as { price?: number }).price != null
-                  ? `${Number((p as { price: number }).price).toLocaleString("fa-IR")} تومان`
+                  ? null
                   : null,
             }))}
           />

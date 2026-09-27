@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { Price } from "@/components/ui/price";
 
 
 type Props = {
@@ -45,7 +46,7 @@ export function AnimatedTicket({
           <div className="flex justify-between gap-3">
             <span className="text-muted-foreground">مبلغ قابل پرداخت</span>
             <span className="font-semibold">
-              {amount.toLocaleString("fa-IR")} تومان
+              <Price amount={amount} size="sm" />
             </span>
           </div>
           <div className="flex justify-between gap-3">

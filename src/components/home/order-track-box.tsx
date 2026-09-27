@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toEnglishDigits } from "@/lib/numbers";
 import { trackOrderAction } from "@/app/(shop)/actions/shop";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { Price } from "@/components/ui/price";
 
 
 const STATUS_FA: Record<string, string> = {
@@ -107,7 +108,7 @@ export function OrderTrackBox() {
             {result.shipping_name ? ` · ${result.shipping_name}` : ""}
           </p>
           <p className="font-medium">
-            {(result.total_amount || 0).toLocaleString("fa-IR")} تومان
+            <Price amount={result.total_amount || 0} size="sm" />
           </p>
           <ul className="text-muted-foreground space-y-1 text-xs">
             {result.items.map((it) => (

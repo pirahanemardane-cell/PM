@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
+import { Price } from "@/components/ui/price";
 
 import { cn } from "@/lib/utils";
 import { toPersianDigits } from "@/lib/numbers";
@@ -28,9 +29,7 @@ type CarouselCardsProps = {
   leading?: React.ReactNode;
 };
 
-function formatPrice(price: number) {
-  return toPersianDigits(price.toLocaleString("en-US")) + " تومان";
-}
+function formatPrice(_p: number) { return null; }
 
 export function CarouselCards({
   items,
@@ -133,11 +132,11 @@ export function CarouselCards({
                       </div>
                     )}
                     <div className="flex flex-wrap items-baseline gap-2 pt-1">
-                      <span className="font-bold">{formatPrice(item.price)}</span>
+                      <Price amount={item.price} size="sm" />
                       {item.originalPrice != null &&
                         item.originalPrice > item.price && (
                           <span className="text-xs text-muted-foreground line-through">
-                            {formatPrice(item.originalPrice)}
+                            <Price amount={item.originalPrice} size="sm" strike />
                           </span>
                         )}
                     </div>

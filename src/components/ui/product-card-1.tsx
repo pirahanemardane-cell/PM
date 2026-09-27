@@ -1,6 +1,7 @@
 "use client";
 
 import {
+import { Price } from "@/components/ui/price";
   sizeAvailable as sizeAvailableShared,
   sameColor,
   imageIndexForColor,
@@ -68,9 +69,7 @@ export interface ProductCard1Props {
   className?: string;
 }
 
-function formatToman(price: number) {
-  return toPersianDigits(Math.round(price).toLocaleString("en-US")) + " تومان";
-}
+function formatToman(_price: number) { return null; } // use <Price />
 
 export function ProductCard1({
   productId,
@@ -465,11 +464,11 @@ if (res.ok === false && res.error === "login_required") {
         {/* Price */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-base font-bold tracking-tight sm:text-[17px]">
-            <span className="price font-bold">{formatToman(price)}</span>
+            <span className="price font-bold"><Price amount={price} size="sm" /></span>
           </span>
           {originalPrice != null && originalPrice > price && (
             <span className="text-muted-foreground text-xs line-through">
-              {formatToman(originalPrice)}
+              <Price amount={originalPrice} size="sm" />
             </span>
           )}
         </div>
