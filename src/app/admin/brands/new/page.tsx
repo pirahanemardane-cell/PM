@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminMediaPicker } from "@/components/admin/media-picker";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminCreateBrandAction } from "@/app/admin/actions/taxonomy";
@@ -63,6 +64,16 @@ export default function NewBrandPage() {
             dir="ltr"
             placeholder="https://..."
           />
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="mt-2 h-16 w-16 rounded-lg object-cover" />
+          ) : null}
+          <div className="mt-2">
+            <AdminMediaPicker
+              uploadLabel="آپلود یا انتخاب لوگو"
+              onSelect={(item) => setLogoUrl(item.url)}
+            />
+          </div>
         </label>
         <label className="block space-y-1 text-sm">
           <span>توضیح</span>

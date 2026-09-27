@@ -619,6 +619,16 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   }
 
 
+  function applyVariantImageFromMedia(
+    idx: number,
+    item: { url: string; id?: string },
+  ) {
+    setVariants((rows) =>
+      rows.map((r, i) => (i === idx ? { ...r, image_url: item.url } : r)),
+    );
+    setOkMsg("تصویر واریانت تنظیم شد");
+  }
+
   async function applyMainImageFromMedia(item: { url: string; id?: string }) {
     setImageUrl(item.url);
     setOkMsg("تصویر شاخص از رسانه انتخاب شد");
@@ -1152,19 +1162,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                           بدون تصویر
                         </div>
                       )}
-                      <label className="bg-muted hover:bg-muted/80 cursor-pointer rounded-lg px-3 py-1.5 text-xs">
-                        تصویر این رنگ/واریانت
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0] ?? null;
-                            void onVariantImage(idx, f);
-                            e.target.value = "";
-                          }}
+                      <div className="min-w-[220px] flex-1">
+                        <AdminMediaPicker
+                          productId={productId}
+                          uploadLabel="آپلود / انتخاب تصویر واریانت"
+                          onSelect={(item) => applyVariantImageFromMedia(idx, item)}
                         />
-                      </label>
+                      </div>
                       {v.image_url ? (
                         <button
                           type="button"

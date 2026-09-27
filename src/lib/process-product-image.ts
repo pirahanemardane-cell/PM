@@ -142,7 +142,7 @@ export async function processProductImageSizes(
             ? masterOverlay
             : await buildWatermarkOverlay(logoBuf, w);
         if (overlay) {
-          const left = Math.max(0, w - overlay.width - margin);
+          const left = margin; // بالا-چپ
           const top = margin;
           pipeline = sharp(resized.data).composite([
             { input: overlay.buf, left, top },

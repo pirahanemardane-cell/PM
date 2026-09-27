@@ -154,32 +154,55 @@ export default function AdminMediaPage() {
     );
   }
 
-  async function onUpload(file: File | null) {
-    if (!file) return;
+  async function onUpload(files: FileList | File[] | null) {
+    if (!files || (Array.isArray(files) ? files.length === 0 : files.length === 0)) return;
+    const list = Array.from(files as FileList | File[]);
     setUploading(true);
     setMsg(null);
     setError(null);
-    const fd = new FormData();
-    fd.set("file", file);
-    const res = await adminUploadProductImageAction(fd);
+    let ok = 0;
+    const errs: string[] = [];
+    for (const file of list) {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await adminUploadProductImageAction(fd);
+      if (!res.ok) {
+        errs.push(
+          file.name +
+            ":" +
+            (res.error === "too_large"
+              ? "حداکثر ۱۲ مگابایت"
+              : res.error === "not_image"
+                ? "فقط تصویر"
+                : "ناموفق"),
+        );
+        continue;
+      }
+      ok += 1;
+      if ("url" in res && res.url) setLastUploadUrl(res.url as string);
+      // فوری به لیست اضافه کن — بدون ریلود
+      const url = String((res as { url?: string }).url || "");
+      const imageId = (res as { imageId?: string }).imageId;
+      if (url) {
+        const row = {
+          id: imageId || `tmp-${Date.now()}-${ok}`,
+          url,
+          alt_text: file.name?.slice(0, 120) || null,
+          is_primary: false,
+          sort_order: 0,
+          product_id: null as string | null,
+          product_title: null as string | null,
+        };
+        setItems((prev) => [row, ...prev.filter((x) => x.url !== url)]);
+        setDraftAlt((prev) => ({ ...prev, [row.id]: row.alt_text ?? "" }));
+      }
+      if ("warning" in res && res.warning === "db_insert_failed") {
+        errs.push(file.name + ":db");
+      }
+    }
     setUploading(false);
-    if (!res.ok) {
-      setError(
-        res.error === "too_large"
-          ? "حداکثر ۱۲ مگابایت"
-          : res.error === "not_image"
-            ? "فقط تصویر"
-            : "آپلود ناموفق",
-      );
-      return;
-    }
-    if ("url" in res && res.url) setLastUploadUrl(res.url as string);
-    if ("warning" in res && res.warning === "db_insert_failed") {
-      setError("آپلود روی فضای ابری شد ولی ثبت در دیتابیس ناموفق بود");
-    } else {
-      setMsg("آپلود شد");
-    }
-    void load();
+    if (ok) setMsg(ok + " تصویر آپلود شد");
+    if (errs.length) setError(errs.slice(0, 3).join(" | "));
   }
 
   return (
@@ -204,9 +227,14 @@ export default function AdminMediaPage() {
         <input
           type="file"
           accept="image/*"
+          multiple
           disabled={uploading}
-          onChange={(e) => void onUpload(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            void onUpload(e.target.files);
+            e.target.value = "";
+          }}
         />
+        <p className="text-muted-foreground text-xs">می‌توانید چند تصویر را یکجا انتخاب کنید.</p>
         {uploading ? <LumaSpin className="h-6 w-6" /> : null}
         {lastUploadUrl ? (
           <p className="text-muted-foreground break-all text-xs" dir="ltr">
