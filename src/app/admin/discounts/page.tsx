@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveDiscountsAction,
+  adminHardDeleteDiscountsAction,
+} from "@/app/admin/actions/lifecycle";
   adminCreateDiscountAction,
   adminListDiscountsAction,
   adminSetDiscountActiveAction,
@@ -39,6 +44,8 @@ export default function AdminDiscountsPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [q, setQ] = useState("");
@@ -54,6 +61,61 @@ export default function AdminDiscountsPage() {
     once_per_user: false,
   });
 
+  
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveDiscountsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteDiscountsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "به محصول متصل است",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveDiscountsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteDiscountsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -168,6 +230,14 @@ export default function AdminDiscountsPage() {
         </div>
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
 
         <form
           onSubmit={onCreate}
@@ -298,7 +368,7 @@ export default function AdminDiscountsPage() {
               <tbody>
                 {filtered.map((d) => (
                   <tr key={d.id} className="border-border border-t">
-                    <td className="p-3 font-mono font-medium">{d.code}</td>
+                    <td className="p-3 font-mono font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(d.id)} onChange={() => toggleSelect(d.id)} /><span>{d.code}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(d.id, String(d.code || d.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(d.id, String(d.code || d.id))}>حذف دائمی</button></td>
                     <td className="p-3">
                       {d.type === "percentage" || d.type === "percent"
                         ? `${d.value}٪`

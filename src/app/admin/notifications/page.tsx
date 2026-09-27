@@ -1,11 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 import Link from "next/link";
 import { adminSendNotificationAction } from "@/app/admin/actions/notifications-admin";
 import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveNotificationsAction,
+  adminHardDeleteNotificationsAction,
+} from "@/app/admin/actions/lifecycle";
 
 export default function AdminNotificationsPage() {
   const templates = useMemo(() => (Array.isArray(PREDEFINED_NOTIFICATIONS) ? [...PREDEFINED_NOTIFICATIONS] : []), []);
@@ -45,11 +53,74 @@ export default function AdminNotificationsPage() {
 
   const selected = templates.find((t) => t.id === templateId);
 
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveNotificationsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteNotificationsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "به محصول متصل است",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveNotificationsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteNotificationsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
+
   return (
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">اعلان‌ها</h1>
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
           <p className="text-muted-foreground text-sm">
             ارسال قالب‌های از پیش‌تعریف‌شده به کاربر یا همه
           </p>

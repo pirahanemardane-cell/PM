@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveTicketsAction,
+  adminHardDeleteTicketsAction,
+} from "@/app/admin/actions/lifecycle";
   adminListTicketsAction,
   adminSetTicketStatusAction,
   adminReplyTicketAction,
@@ -36,12 +41,69 @@ export default function AdminTicketsPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "open" | "in_progress" | "closed"
   >("all");
   const [reply, setReply] = useState<Record<string, string>>({});
 
+  
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveTicketsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteTicketsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "به محصول متصل است",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveTicketsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteTicketsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -139,6 +201,14 @@ export default function AdminTicketsPage() {
       </div>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -154,7 +224,7 @@ export default function AdminTicketsPage() {
               className="border-border rounded-xl border p-4 text-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">{t.subject}</p>
+                <p className="font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(t.id)} onChange={() => toggleSelect(t.id)} /><span>{t.subject}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(t.id, String(t.subject || t.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(t.id, String(t.subject || t.id))}>حذف دائمی</button></p>
                 <select
                   className="border-input bg-background rounded-lg border px-2 py-1 text-xs"
                   value={t.status}

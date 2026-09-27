@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveStockAlertsAction,
+  adminHardDeleteStockAlertsAction,
+} from "@/app/admin/actions/lifecycle";
   adminListStockAlertsAction,
   adminSetStockAlertStatusAction,
   type AdminStockAlertRow,
@@ -22,9 +27,66 @@ export default function AdminStockAlertsPage() {
   const [items, setItems] = useState<AdminStockAlertRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveStockAlertsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteStockAlertsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "به محصول متصل است",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveStockAlertsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteStockAlertsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -92,6 +154,14 @@ export default function AdminStockAlertsPage() {
       </div>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -115,7 +185,7 @@ export default function AdminStockAlertsPage() {
             </thead>
             <tbody>
               {items.map((r) => (
-                <tr key={r.id} className="border-t align-top">
+                <tr key=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><span>{r.id}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, String(r.id || r.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, String(r.id || r.id))}>حذف دائمی</button> className="border-t align-top">
                   <td className="p-3 text-xs">
                     {r.product_id ? (
                       <Link href={`/admin/products/${r.product_id}`} className="text-primary hover:underline">

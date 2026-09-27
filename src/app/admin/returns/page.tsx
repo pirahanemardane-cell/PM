@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
 import {
+import { AdminBulkBar } from "@/components/admin/bulk-bar";
+import {
+  adminArchiveReturnsAction,
+  adminHardDeleteReturnsAction,
+} from "@/app/admin/actions/lifecycle";
   adminListReturnsAction,
   adminSetReturnStatusAction,
 } from "@/app/admin/actions/support";
@@ -41,8 +46,65 @@ export default function AdminReturnsPage() {
   const [items, setItems] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  
+  function toggleSelect(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+  async function runBulkArchive() {
+    if (!selected.length) return;
+    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
+    setBulkBusy(true);
+    const res = await adminArchiveReturnsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
+  async function runBulkHardDelete() {
+    if (!selected.length) return;
+    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteReturnsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "به محصول متصل است",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    setSelected([]);
+    void load();
+  }
+  async function archiveOne(id: string, name: string) {
+    if (!confirm(`آرشیو «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminArchiveReturnsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    void load();
+  }
+  async function hardDeleteOne(id: string, name: string) {
+    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+    setBulkBusy(true);
+    const res = await adminHardDeleteReturnsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      const map: Record<string, string> = {
+        has_orders: "در سفارش‌ها استفاده شده",
+      };
+      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
+      return;
+    }
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -108,6 +170,14 @@ export default function AdminReturnsPage() {
       </div>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        <AdminBulkBar
+          count={selected.length}
+          busy={bulkBusy}
+          onArchive={() => void runBulkArchive()}
+          onHardDelete={() => void runBulkHardDelete()}
+          onClear={() => setSelected([])}
+        />
+
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -126,7 +196,7 @@ export default function AdminReturnsPage() {
             </thead>
             <tbody>
               {items.map((r) => (
-                <tr key={r.id} className="border-t align-top">
+                <tr key=<label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><span>{r.id}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, String(r.id || r.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, String(r.id || r.id))}>حذف دائمی</button> className="border-t align-top">
                   <td className="p-3">
                     <Link
                       href={`/admin/orders/${r.order_id}`}
