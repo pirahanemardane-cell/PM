@@ -20,6 +20,7 @@ import {
 import {
   adminUploadProductImageAction,
   adminDeleteProductImageAction,
+  adminSetPrimaryProductImageAction,
 } from "@/app/admin/actions/media";
 import { AdminMediaPicker } from "@/components/admin/media-picker";
 import {
@@ -114,7 +115,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [productType, setProductType] = useState<"simple" | "variable">("simple");
   const [simpleSku, setSimpleSku] = useState("");
   const [simpleStock, setSimpleStock] = useState("0");
-  const [variants, setVariants] = useState<VRow[]>([emptyVariant()]);
+  const [variants, setVariants] = useState<VRow[]>([]);
   const [imageUrl, setImageUrl] = useState("");
   const [gallery, setGallery] = useState<{ id?: string; url: string }[]>([]);
   const [attrDefs, setAttrDefs] = useState<AttrWithOptions[]>([]);
@@ -338,7 +339,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         return "slug: حروف فارسی/لاتین، عدد و خط تیره";
       if (slugStatus === "taken") return "این slug قبلاً استفاده شده";
     }
-    if (s === 2) {
+    if (s === 2 && productType === "simple") {
       if (!(parseLocaleNumber(price) > 0)) return "قیمت اصلی معتبر نیست";
       const sp = parseLocaleNumber(salePrice);
       if (salePrice && sp > 0 && sp >= parseLocaleNumber(price))
@@ -349,6 +350,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     if (s === 6) {
       if (productType === "simple") {
         if (!(parseLocaleNumber(simpleStock) >= 0)) return "موجودی نامعتبر";
+      } else if (variants.length === 0) {
+        return null; // واریانت اختیاری
       } else if (variants.length > 0) {
         for (const v of variants) {
           if (!v.size && !v.color_name) return "هر واریانت باید سایز یا رنگ داشته باشد";
@@ -576,13 +579,18 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     setBusy(true);
     setErr("");
     setOkMsg("");
-    const res = await persistCore({ finalStatus: "draft" });
+    // محصول منتشرشده: وضعیت را حفظ کن و فقط به‌روز کن
+    const res = await persistCore(
+      status === "published"
+        ? { finalStatus: "published" }
+        : { finalStatus: "draft" },
+    );
     setBusy(false);
     if (!res.ok) {
       setErr(res.error);
       return;
     }
-    setOkMsg("پیش‌نویس ذخیره شد");
+    setOkMsg(status === "published" ? "تغییرات به‌روز شد" : "پیش‌نویس ذخیره شد");
   }
 
   async function finishPublish() {
@@ -638,16 +646,14 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     }
     setBusy(true);
     setErr("");
-    const res = await adminUpdateProductAction(id, { image_url: item.url } as never);
+    const res = await adminSetPrimaryProductImageAction({
+      productId: id,
+      url: item.url,
+      imageId: item.id || null,
+    });
     setBusy(false);
     if (!res.ok) {
-      setErr(
-        String(
-          (res as { detail?: string }).detail ||
-            (res as { error?: string }).error ||
-            "ذخیره تصویر شاخص ناموفق",
-        ),
-      );
+      setErr(String((res as { error?: string }).error || "ذخیره تصویر شاخص ناموفق"));
       return;
     }
     setOkMsg("تصویر شاخص ذخیره شد");
@@ -659,7 +665,15 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     setBusy(true);
     setErr("");
     try {
-      // اگر ردیف رسانه از قبل به این محصول لینک نیست، ردیف گالری بساز
+      setGallery((g) => {
+        if (g.some((x) => x.url === item.url)) return g;
+        return [...g, { id: item.id, url: item.url }];
+      });
+      // اگر از آپلود با productId آمده، ردیف از قبل هست — دوباره insert نکن
+      if (item.id) {
+        setOkMsg("به گالری اضافه شد");
+        return;
+      }
       const add = await adminAddProductGalleryImageAction({
         productId: id,
         url: item.url,
@@ -675,11 +689,12 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         );
         return;
       }
-      const imgId = (add as { image?: { id?: string } }).image?.id || item.id;
-      setGallery((g) => {
-        if (g.some((x) => x.url === item.url)) return g;
-        return [...g, { id: imgId, url: item.url }];
-      });
+      const imgId = (add as { image?: { id?: string } }).image?.id;
+      if (imgId) {
+        setGallery((g) =>
+          g.map((x) => (x.url === item.url ? { ...x, id: imgId } : x)),
+        );
+      }
       setOkMsg("به گالری اضافه شد");
     } finally {
       setBusy(false);
@@ -882,36 +897,68 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input
                 className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
                 value={slug}
-              onBlur={() => void checkSlug()}
+                onBlur={() => void checkSlug()}
                 onChange={(e) => {
                   setSlugTouched(true);
                   setSlug(e.target.value);
                 }}
               />
             </label>
+            <label className="block space-y-1 text-sm">
+              <span>کد محصول (SKU)</span>
+              <input
+                className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
+                value={simpleSku}
+                onChange={(e) => setSimpleSku(e.target.value)}
+                placeholder="مثلاً SHIRT-001"
+                dir="ltr"
+              />
+            </label>
           </div>
         )}
 
         {step === 2 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1 text-sm">
-              <span>قیمت اصلی (تومان)</span>
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-sm">
               <input
-                className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                inputMode="numeric"
+                type="checkbox"
+                checked={productType === "variable"}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setProductType(on ? "variable" : "simple");
+                  if (on && variants.length === 0) {
+                    /* خالی بماند تا کاربر عمداً اضافه کند */
+                  }
+                }}
               />
+              این محصول دارای واریانت است (سایز/رنگ و …)
             </label>
-            <label className="block space-y-1 text-sm">
-              <span>قیمت بعد از تخفیف (اختیاری)</span>
-              <input
-                className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                value={salePrice}
-                onChange={(e) => setSalePrice(e.target.value)}
-                inputMode="numeric"
-              />
-            </label>
+            {productType === "simple" ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block space-y-1 text-sm">
+                  <span>قیمت اصلی (تومان)</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="block space-y-1 text-sm">
+                  <span>قیمت بعد از تخفیف (اختیاری)</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                قیمت برای هر واریانت در مرحله «واریانت / موجودی» تعریف می‌شود.
+              </p>
+            )}
           </div>
         )}
 
@@ -1082,7 +1129,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 />
               ) : null}
               <AdminMediaPicker
-                productId={productId}
                 uploadLabel="آپلود تصویر شاخص"
                 onSelect={(item) => void applyMainImageFromMedia(item)}
               />
@@ -1441,7 +1487,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             disabled={busy}
             onClick={() => void saveDraft()}
           >
-            ذخیره پیش‌نویس
+            {status === "published" ? "به‌روزرسانی" : "ذخیره پیش‌نویس"}
           </button>
           {step < 9 ? (
             <button

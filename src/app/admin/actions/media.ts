@@ -208,7 +208,7 @@ export async function adminListProductImagesAction(limit = 60) {
     return { ok: false as const, error: "list_failed" };
   }
 
-  const items: MediaListItem[] = (data ?? []).map((row: any) => ({
+  const raw: MediaListItem[] = (data ?? []).map((row: any) => ({
     id: row.id,
     url: row.url,
     alt_text: row.alt_text ?? null,
@@ -220,6 +220,15 @@ export async function adminListProductImagesAction(limit = 60) {
         ? (row.products.name as string) ?? null
         : null,
   }));
+  // dedupe by url — یک ردیف در کتابخانه برای هر فایل
+  const seen = new Set<string>();
+  const items: MediaListItem[] = [];
+  for (const it of raw) {
+    const key = (it.url || "").split("?")[0];
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    items.push(it);
+  }
 
   return { ok: true as const, items };
 }
@@ -379,4 +388,106 @@ export async function adminRenameProductImageAction(input: {
   }
 
   return { ok: true as const, url: newLargeUrl };
+}
+
+
+/** تصویر شاخص را روی یک URL/id تنظیم می‌کند و بقیه را non-primary می‌کند */
+export async function adminSetPrimaryProductImageAction(input: {
+  productId: string;
+  url: string;
+  imageId?: string | null;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const productId = (input.productId || "").trim();
+  const url = (input.url || "").trim();
+  if (!productId || !url) return { ok: false as const, error: "invalid" as const };
+
+  // همه را غیرشاخص کن
+  await gate.supabase
+    .from("product_images")
+    .update({ is_primary: false })
+    .eq("product_id", productId)
+    .is("variant_id", null);
+
+  if (input.imageId) {
+    const { error } = await gate.supabase
+      .from("product_images")
+      .update({ url, is_primary: true, product_id: productId })
+      .eq("id", input.imageId);
+    if (error) {
+      console.error("[setPrimary by id]", error);
+      return { ok: false as const, error: "update_failed" as const };
+    }
+  } else {
+    const { data: existing } = await gate.supabase
+      .from("product_images")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("url", url)
+      .is("variant_id", null)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) {
+      await gate.supabase
+        .from("product_images")
+        .update({ is_primary: true })
+        .eq("id", existing.id);
+    } else {
+      const { data: primary } = await gate.supabase
+        .from("product_images")
+        .select("id")
+        .eq("product_id", productId)
+        .eq("is_primary", true)
+        .is("variant_id", null)
+        .limit(1)
+        .maybeSingle();
+      if (primary?.id) {
+        await gate.supabase
+          .from("product_images")
+          .update({ url, is_primary: true })
+          .eq("id", primary.id);
+      } else {
+        const { error } = await gate.supabase.from("product_images").insert({
+          product_id: productId,
+          url,
+          is_primary: true,
+          sort_order: 0,
+          variant_id: null,
+        });
+        if (error) {
+          console.error("[setPrimary insert]", error);
+          return { ok: false as const, error: "insert_failed" as const };
+        }
+      }
+    }
+  }
+
+  // ردیف‌های تکراری همان URL برای همین محصول را پاک کن (غیر از primary)
+  const { data: dups } = await gate.supabase
+    .from("product_images")
+    .select("id, is_primary")
+    .eq("product_id", productId)
+    .eq("url", url)
+    .is("variant_id", null);
+  if (dups && dups.length > 1) {
+    const keep = dups.find((d: any) => d.is_primary)?.id || dups[0].id;
+    const drop = dups.filter((d: any) => d.id !== keep).map((d: any) => d.id);
+    if (drop.length) {
+      await gate.supabase.from("product_images").delete().in("id", drop);
+    }
+  }
+
+  try {
+    const { data: p } = await gate.supabase
+      .from("products")
+      .select("slug")
+      .eq("id", productId)
+      .maybeSingle();
+    if (p?.slug) revalidatePath(`/products/${p.slug}`);
+    revalidatePath("/");
+    revalidatePath("/products");
+  } catch {}
+
+  return { ok: true as const };
 }
