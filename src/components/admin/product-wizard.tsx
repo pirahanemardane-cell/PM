@@ -111,10 +111,19 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [imageUrl, setImageUrl] = useState("");
   const [gallery, setGallery] = useState<{ id?: string; url: string }[]>([]);
   const [attrDefs, setAttrDefs] = useState<AttrWithOptions[]>([]);
-  const sizeOpts = (attrDefs.find((a) => a.slug === "size")?.options ?? []) as Array<{ id: string; value: string }>;
-  const colorOpts = (attrDefs.find((a) => a.slug === "color")?.options ?? []) as Array<{ id: string; value: string }>;
+  const sizeAttr = attrDefs.find((a) => a.slug === "size");
+  const colorAttr = attrDefs.find((a) => a.slug === "color");
+  const sizeOpts = (sizeAttr?.options ?? []) as Array<{ id: string; value: string; hex?: string | null }>;
+  const colorOpts = (colorAttr?.options ?? []) as Array<{ id: string; value: string; hex?: string | null }>;
   const specDefs = attrDefs.filter((a) => a.slug !== "size" && a.slug !== "color");
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
+  /** option ids chosen on step 4 for variant axes */
+  const [pickedSizeIds, setPickedSizeIds] = useState<string[]>([]);
+  const [pickedColorIds, setPickedColorIds] = useState<string[]>([]);
+  const pickedSizeOpts = sizeOpts.filter((o) => pickedSizeIds.includes(o.id));
+  const pickedColorOpts = colorOpts.filter((o) => pickedColorIds.includes(o.id));
+  const sizeChoices = pickedSizeOpts.length ? pickedSizeOpts : sizeOpts;
+  const colorChoices = pickedColorOpts.length ? pickedColorOpts : colorOpts;
   const [cats, setCats] = useState<Opt[]>([]);
   const [brands, setBrands] = useState<Opt[]>([]);
   const [tags, setTags] = useState<Opt[]>([]);
@@ -136,7 +145,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       if (c.ok) setCats((c.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
       if (b.ok) setBrands((b.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
       if (t.ok) setTags((t.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
-      if (a.ok) setAttrDefs((a.data as AttrWithOptions[]) ?? []);
+      if (a.ok) setAttrDefs((((a as { items?: AttrWithOptions[]; data?: AttrWithOptions[] }).items) ?? ((a as { data?: AttrWithOptions[] }).data) ?? []) as AttrWithOptions[]);
       if (g.ok) setGuides((g.data ?? []).map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })));
     })();
   }, []);
@@ -265,14 +274,14 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     if (s === 6) {
       if (productType === "simple") {
         if (!(parseLocaleNumber(simpleStock) >= 0)) return "موجودی نامعتبر";
-      } else {
-        if (!variants.length) return "حداقل یک واریانت";
+      } else if (variants.length > 0) {
         for (const v of variants) {
           if (!v.size && !v.color_name) return "هر واریانت باید سایز یا رنگ داشته باشد";
           if (!(parseLocaleNumber(v.price) > 0) && !(sellingPrice > 0))
             return "قیمت واریانت یا قیمت مرحله ۲ لازم است";
         }
       }
+      // متغیر بدون واریانت = Skip مجاز
     }
     if (s === 8 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
     if (s === 9 && publishMode === "schedule") {
@@ -333,11 +342,18 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         if (!upd.ok) return { ok: false as const, error: upd.error || "به‌روزرسانی ناموفق" };
       }
 
-      // attributes
-      if (Object.keys(attrValues).length) {
-        const rows = Object.entries(attrValues)
+      // attributes (specs + picked size/color options for filters)
+      {
+        const rows: Array<{ attribute_id: string; option_id: string }> = Object.entries(attrValues)
           .filter(([, v]) => v)
           .map(([attribute_id, option_id]) => ({ attribute_id, option_id }));
+        if (sizeAttr?.id) {
+          for (const oid of pickedSizeIds) rows.push({ attribute_id: sizeAttr.id, option_id: oid });
+        }
+        if (colorAttr?.id) {
+          for (const oid of pickedColorIds) rows.push({ attribute_id: colorAttr.id, option_id: oid });
+        }
+        // note: multi size/color → last write wins if sync is 1:1; sync action should replace set
         await adminSyncProductAttributesAction(id, rows as never);
       }
 
@@ -361,10 +377,12 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         vPayload = variants.map((v) => {
           const vp = parseLocaleNumber(v.price) || sp;
           const vo = parseLocaleNumber(v.original_price) || op;
+          const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
           return {
             id: v.id,
             size: v.size || null,
             color_name: v.color_name || null,
+            color_hex: hx,
             sku: v.sku || null,
             price: vp,
             original_price: vo > vp ? vo : vp,
@@ -382,7 +400,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     },
     [
       productId, name, slug, categoryId, brandId, shortDesc, description, status,
-      featured, isNew, isActive, imageUrl, selectedTags, attrValues, productType,
+      featured, isNew, isActive, imageUrl, selectedTags, attrValues, productType, pickedSizeIds, pickedColorIds, sizeAttr, colorAttr, colorOpts,
       simpleSku, simpleStock, variants, sellingPrice, originalPrice,
       sizeGuideId, publishedAt, publishMode,
     ],
@@ -710,32 +728,94 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         )}
 
         {step === 4 && (
-          <div className="space-y-3">
-            {specDefs.length === 0 ? (
+          <div className="space-y-4">
+            {!attrDefs.length ? (
               <p className="text-muted-foreground text-sm">مشخصه‌ای تعریف نشده. از ادمین → مشخصات اضافه کنید.</p>
-            ) : (
-              specDefs.map((a) => (
-                <label key={a.id} className="block space-y-1 text-sm">
-                  <span>{a.name}</span>
-                  <select
-                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                    value={attrValues[a.id] ?? ""}
-                    onChange={(e) =>
-                      setAttrValues((m) => ({ ...m, [a.id]: e.target.value }))
-                    }
-                  >
-                    <option value="">—</option>
-                    {(a.options ?? []).map((o) => (
-                      <option key={o.id} value={o.id}>
+            ) : null}
+
+            {sizeOpts.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">سایز (چندتایی — برای واریانت)</p>
+                <div className="flex flex-wrap gap-2">
+                  {sizeOpts.map((o) => {
+                    const on = pickedSizeIds.includes(o.id);
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        className={
+                          on
+                            ? "bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
+                            : "border-border rounded-lg border px-3 py-1.5 text-sm"
+                        }
+                        onClick={() =>
+                          setPickedSizeIds((ids) =>
+                            on ? ids.filter((x) => x !== o.id) : [...ids, o.id],
+                          )
+                        }
+                      >
                         {o.value}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))
-            )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {colorOpts.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">رنگ (چندتایی — برای واریانت)</p>
+                <div className="flex flex-wrap gap-2">
+                  {colorOpts.map((o) => {
+                    const on = pickedColorIds.includes(o.id);
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        className={
+                          on
+                            ? "bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm"
+                            : "border-border inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
+                        }
+                        onClick={() =>
+                          setPickedColorIds((ids) =>
+                            on ? ids.filter((x) => x !== o.id) : [...ids, o.id],
+                          )
+                        }
+                      >
+                        <span
+                          className="border-border inline-block h-3.5 w-3.5 rounded-full border"
+                          style={{ backgroundColor: o.hex || "#ccc" }}
+                        />
+                        {o.value}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {specDefs.map((a) => (
+              <label key={a.id} className="block space-y-1 text-sm">
+                <span>{a.name}</span>
+                <select
+                  className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                  value={attrValues[a.id] ?? ""}
+                  onChange={(e) =>
+                    setAttrValues((m) => ({ ...m, [a.id]: e.target.value }))
+                  }
+                >
+                  <option value="">—</option>
+                  {(a.options ?? []).map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
             <p className="text-muted-foreground text-xs">
-              با «بعدی» پیش‌نویس ساخته می‌شود تا تصاویر و واریانت ذخیره شوند.
+              سایز و رنگ انتخاب‌شده در گام واریانت استفاده می‌شوند. بقیه مشخصات روی محصول ذخیره و در فیلتر فروشگاه می‌آیند.
             </p>
           </div>
         )}
@@ -797,6 +877,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 متغیر
               </button>
             </div>
+            <p className="text-muted-foreground text-xs">
+              واریانت اجباری نیست — می‌توانید خالی بگذارید و «بعدی» بزنید (Skip).
+              گزینه‌های سایز/رنگ از انتخاب گام مشخصات محدود شده‌اند.
+            </p>
             {productType === "simple" ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block space-y-1 text-sm">
@@ -833,7 +917,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       >
                         <option value="">سایز…</option>
-                        {sizeOpts.map((o) => (
+                        {sizeChoices.map((o) => (
                           <option key={o.id} value={o.value}>
                             {o.value}
                           </option>
@@ -850,7 +934,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       >
                         <option value="">رنگ…</option>
-                        {colorOpts.map((o) => (
+                        {colorChoices.map((o) => (
                           <option key={o.id} value={o.value}>
                             {o.value}
                           </option>
@@ -899,6 +983,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                     </button>
                   </div>
                 ))}
+                <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   className="bg-muted rounded-lg px-3 py-1.5 text-sm"
@@ -911,6 +996,31 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 >
                   + واریانت
                 </button>
+                <button
+                  type="button"
+                  className="border-border rounded-lg border px-3 py-1.5 text-sm"
+                  onClick={() => {
+                    const sizes = sizeChoices.length ? sizeChoices : [{ id: "", value: "" }];
+                    const colors = colorChoices.length ? colorChoices : [{ id: "", value: "" }];
+                    const rows = [];
+                    for (const s of sizes) {
+                      for (const c of colors) {
+                        rows.push(
+                          emptyVariant({
+                            price: String(sellingPrice || ""),
+                            original: String(originalPrice || ""),
+                          }),
+                        );
+                        rows[rows.length - 1].size = s.value || "";
+                        rows[rows.length - 1].color_name = c.value || "";
+                      }
+                    }
+                    if (rows.length) setVariants(rows);
+                  }}
+                >
+                  ساخت از سایز×رنگ
+                </button>
+                </div>
               </div>
             )}
           </div>
