@@ -325,7 +325,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         status: resolvedStatus,
         is_featured: featured,
         is_new: isNew,
-        is_active: isActive,
         image_url: imageUrl || null,
         tag_ids: selectedTags,
         size_guide_id: sizeGuideId || null,

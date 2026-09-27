@@ -473,7 +473,7 @@ export async function adminUpdateProductAction(
     if (input.is_featured !== undefined) patch.is_featured = !!input.is_featured;
     if (input.is_new !== undefined) patch.is_new = !!input.is_new;
     if (input.is_bestseller !== undefined) patch.is_bestseller = !!input.is_bestseller;
-    if (input.is_active !== undefined) patch.is_active = !!input.is_active;
+    // products has no is_active column (only variants/categories/brands)
     if (input.size_guide_id !== undefined) patch.size_guide_id = input.size_guide_id || null;
     if (input.published_at !== undefined) patch.published_at = input.published_at || null;
 
