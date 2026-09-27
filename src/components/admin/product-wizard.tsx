@@ -532,7 +532,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setErr(res.error || "آپلود ناموفق");
       return;
     }
-    const url = String((res.data as { url?: string })?.url ?? "");
+    const url = String((res as { url?: string }).url ?? (res as { data?: { url?: string } }).data?.url ?? "");
     if (url) {
       setImageUrl(url);
       await adminUpdateProductAction(id, { image_url: url } as never);
@@ -540,27 +540,44 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     }
   }
 
-  async function onGalleryImage(file: File | null) {
-    if (!file) return;
+  async function onGalleryImages(files: FileList | null) {
+    if (!files || files.length === 0) return;
     const id = await ensureProductId();
     if (!id) return;
     setBusy(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("productId", id);
-    const up = await adminUploadProductImageAction(fd);
-    if (!up.ok) {
-      setBusy(false);
-      setErr(up.error || "آپلود ناموفق");
-      return;
-    }
-    const url = String((up.data as { url?: string })?.url ?? "");
-    if (url) {
-      await adminAddProductGalleryImageAction(id, url);
-      setGallery((g) => [...g, { url }]);
-      setOkMsg("به گالری اضافه شد");
+    setErr("");
+    let okCount = 0;
+    const errors: string[] = [];
+    for (const file of Array.from(files)) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("productId", id);
+      const up = await adminUploadProductImageAction(fd);
+      if (!up.ok) {
+        errors.push(file.name);
+        continue;
+      }
+      const url = String(
+        (up as { url?: string }).url ??
+          (up as { data?: { url?: string } }).data?.url ??
+          "",
+      );
+      if (!url) {
+        errors.push(file.name);
+        continue;
+      }
+      const add = await adminAddProductGalleryImageAction({ productId: id, url });
+      if (!add.ok) {
+        errors.push(file.name);
+        continue;
+      }
+      const imgId = (add as { image?: { id?: string } }).image?.id;
+      setGallery((g) => [...g, { id: imgId, url }]);
+      okCount += 1;
     }
     setBusy(false);
+    if (okCount) setOkMsg(okCount + " تصویر به گالری اضافه شد");
+    if (errors.length) setErr("خطا در: " + errors.slice(0, 3).join("، "));
   }
 
   if (loading) {
@@ -853,8 +870,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => void onGalleryImage(e.target.files?.[0] ?? null)}
+                multiple
+                onChange={(e) => {
+                  void onGalleryImages(e.target.files);
+                  e.target.value = "";
+                }}
               />
+              <p className="text-muted-foreground mt-1 text-xs">چند تصویر را یکجا انتخاب کنید.</p>
             </div>
           </div>
         )}
