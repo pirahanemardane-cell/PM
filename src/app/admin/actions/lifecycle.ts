@@ -408,3 +408,272 @@ export async function adminHardDeleteAttributesAction(ids: string[]) {
     return { ok: false as const, error: "server" as const };
   }
 }
+
+
+/* ── ops archive/hard-delete ── */
+
+export async function adminArchiveDiscountsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("discounts").update({ is_active: false }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveDiscounts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteDiscountsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    try { await gate.supabase.from("discount_uses").delete().in("discount_id", list); } catch { /* ignore */ }
+    try { await gate.supabase.from("discount_reservations").delete().in("discount_id", list); } catch { /* ignore */ }
+    const { error } = await gate.supabase.from("discounts").delete().in("id", list);
+    if (error) {
+      if (String((error as { code?: string }).code) === "23503") {
+        return { ok: false as const, error: "has_orders" as const, detail: error.message };
+      }
+      throw error;
+    }
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteDiscounts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveUsersAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids).filter((id) => id !== gate.userId);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("profiles").update({ is_active: false }).in("id", list);
+    if (error) {
+      const { error: e2 } = await gate.supabase.from("profiles").update({ role: "customer" }).in("id", list).neq("role", "superadmin");
+      if (e2) throw e2;
+    }
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveUsers]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteUsersAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids).filter((id) => id !== gate.userId);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { count, error: cErr } = await gate.supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .in("user_id", list);
+    if (cErr) throw cErr;
+    if ((count ?? 0) > 0) return { ok: false as const, error: "has_orders" as const };
+    for (const table of ["addresses", "wishlists", "carts", "reviews", "stock_alerts", "tickets"] as const) {
+      try { await gate.supabase.from(table).delete().in("user_id", list); } catch { /* ignore */ }
+    }
+    const { error } = await gate.supabase.from("profiles").delete().in("id", list);
+    if (error) {
+      if (String((error as { code?: string }).code) === "23503") {
+        return { ok: false as const, error: "has_orders" as const, detail: error.message };
+      }
+      throw error;
+    }
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteUsers]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveMediaAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("media").update({ is_active: false }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveMedia]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteMediaAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("media").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteMedia]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveReviewsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("reviews").update({ status: "hidden" }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveReviews]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteReviewsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("reviews").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteReviews]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveTicketsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("tickets").update({ status: "closed" }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveTickets]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteTicketsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    try { await gate.supabase.from("ticket_messages").delete().in("ticket_id", list); } catch { /* ignore */ }
+    const { error } = await gate.supabase.from("tickets").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteTickets]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveNotificationsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("notifications").update({ is_read: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveNotifications]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteNotificationsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("notifications").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteNotifications]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveReturnsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("return_requests").update({ status: "cancelled" }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveReturns]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteReturnsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    try { await gate.supabase.from("return_items").delete().in("return_request_id", list); } catch { /* ignore */ }
+    const { error } = await gate.supabase.from("return_requests").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteReturns]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminArchiveStockAlertsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("stock_alerts").update({ is_active: false }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminArchiveStockAlerts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminHardDeleteStockAlertsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("stock_alerts").delete().in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminHardDeleteStockAlerts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
