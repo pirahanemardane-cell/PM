@@ -21,6 +21,9 @@ type Props = {
   fallbackImage?: string | null;
   images: GalleryImage[];
   variants: BuyVariant[];
+  /** موبایل: اول صفحه (نام + بج) */
+  childrenTitle?: ReactNode;
+  /** موبایل: بعد از تصویر، قبل از Buy Box */
   childrenBeforeBuy?: ReactNode;
   childrenAfterBuy?: ReactNode;
   childrenBelowGallery?: ReactNode;
@@ -33,6 +36,7 @@ export function ProductPdpGalleryAndBuy({
   fallbackImage,
   images,
   variants,
+  childrenTitle,
   childrenBeforeBuy,
   childrenAfterBuy,
   childrenBelowGallery,
@@ -42,7 +46,6 @@ export function ProductPdpGalleryAndBuy({
 
   const [activeColor, setActiveColor] = useState<string | null>(firstColor);
 
-  // ست فوری — بدون debounce
   const onColorChange = useCallback((c: string) => {
     setActiveColor(c);
   }, []);
@@ -69,7 +72,7 @@ export function ProductPdpGalleryAndBuy({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-8 lg:items-start">
-      {/* تصویر — موبایل order-2 | دسکتاپ: تصویر + نمودار زیرش */}
+      {/* تصویر — موبایل: بعد از عنوان */}
       <div className="max-lg:order-2 min-w-0 w-full overflow-hidden">
         <ProductGallery
           productName={productName}
@@ -80,10 +83,18 @@ export function ProductPdpGalleryAndBuy({
         <div className="mt-4 hidden lg:block">{childrenBelowGallery}</div>
       </div>
 
-      {/* موبایل: contents | دسکتاپ: ستون محتوا */}
       <div className="max-lg:contents w-full max-w-xl space-y-6 lg:justify-self-start lg:max-w-none">
-        <div className="max-lg:order-1 space-y-6">{childrenBeforeBuy}</div>
-        <div className="max-lg:order-3">
+        {/* موبایل order-1: نام + بج | دسکتاپ: بالای ستون خرید */}
+        {childrenTitle ? (
+          <div className="max-lg:order-1 space-y-2">{childrenTitle}</div>
+        ) : null}
+
+        {/* موبایل order-3: خلاصه/مشخصات بعد از تصویر */}
+        {childrenBeforeBuy ? (
+          <div className="max-lg:order-3 space-y-6">{childrenBeforeBuy}</div>
+        ) : null}
+
+        <div className="max-lg:order-4">
           <ProductBuyBox
             productId={productId}
             title={productName}
@@ -93,9 +104,9 @@ export function ProductPdpGalleryAndBuy({
             onColorChange={onColorChange}
           />
         </div>
-        {/* موبایل: نمودار بعد از افزودن — دسکتاپ مخفی */}
-        <div className="max-lg:order-4 mt-4 lg:hidden">{childrenBelowGallery}</div>
-        <div className="max-lg:order-5">{childrenAfterBuy}</div>
+
+        <div className="max-lg:order-5 mt-4 lg:hidden">{childrenBelowGallery}</div>
+        <div className="max-lg:order-6">{childrenAfterBuy}</div>
       </div>
     </div>
   );

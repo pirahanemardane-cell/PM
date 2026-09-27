@@ -166,40 +166,41 @@ export default async function ProductDetailPage({ params }: Props) {
           variant_id: (img as { variant_id?: string | null }).variant_id ?? null,
         }))}
         variants={variantOptions}
+        childrenTitle={
+          <>
+            <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
+              {product.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {product.is_new ? (
+                <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                  جدید
+                </Badge>
+              ) : null}
+              {product.is_featured ? (
+                <Badge className="inline-flex h-6 items-center border-0 bg-amber-100 px-2.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                  شگفت‌انگیز
+                </Badge>
+              ) : null}
+              {product.category?.slug ? (
+                <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
+                  <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
+                    {product.category.name}
+                  </Badge>
+                </Link>
+              ) : null}
+              {product.brand?.slug ? (
+                <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
+                  <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
+                    {product.brand.name}
+                  </Badge>
+                </Link>
+              ) : null}
+            </div>
+          </>
+        }
         childrenBeforeBuy={
           <>
-            <div className="space-y-2">
-              <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
-                {product.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {product.is_new ? (
-                  <Badge className="inline-flex h-6 items-center border-0 bg-emerald-100 px-2.5 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                    جدید
-                  </Badge>
-                ) : null}
-                {product.is_featured ? (
-                  <Badge className="inline-flex h-6 items-center border-0 bg-amber-100 px-2.5 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                    شگفت‌انگیز
-                  </Badge>
-                ) : null}
-                {product.category?.slug ? (
-                  <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
-                    <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
-                      {product.category.name}
-                    </Badge>
-                  </Link>
-                ) : null}
-                {product.brand?.slug ? (
-                  <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
-                    <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
-                      {product.brand.name}
-                    </Badge>
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-            
             {product.short_description ? (
               <div className="border-border rounded-xl border bg-muted/30 p-4">
                 <p className="mb-1 text-sm font-medium text-primary">خلاصه محصول</p>
