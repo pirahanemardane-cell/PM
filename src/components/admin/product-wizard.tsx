@@ -21,6 +21,7 @@ import {
   adminUploadProductImageAction,
   adminDeleteProductImageAction,
 } from "@/app/admin/actions/media";
+import { AdminMediaPicker } from "@/components/admin/media-picker";
 import {
   adminListCategoriesAction,
   adminListBrandsAction,
@@ -617,6 +618,45 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     router.refresh();
   }
 
+
+  async function applyMainImageFromMedia(item: { url: string; id?: string }) {
+    setImageUrl(item.url);
+    setOkMsg("تصویر شاخص از رسانه انتخاب شد");
+  }
+
+  async function applyGalleryFromMedia(item: { url: string; id?: string; alt_text?: string | null }) {
+    const id = await ensureProductId();
+    if (!id) return;
+    setBusy(true);
+    setErr("");
+    try {
+      // اگر ردیف رسانه از قبل به این محصول لینک نیست، ردیف گالری بساز
+      const add = await adminAddProductGalleryImageAction({
+        productId: id,
+        url: item.url,
+        alt_text: item.alt_text ?? null,
+      });
+      if (!add.ok) {
+        setErr(
+          String(
+            (add as { detail?: string }).detail ||
+              (add as { error?: string }).error ||
+              "افزودن به گالری ناموفق",
+          ),
+        );
+        return;
+      }
+      const imgId = (add as { image?: { id?: string } }).image?.id || item.id;
+      setGallery((g) => {
+        if (g.some((x) => x.url === item.url)) return g;
+        return [...g, { id: imgId, url: item.url }];
+      });
+      setOkMsg("به گالری اضافه شد");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onMainImage(file: File | null) {
     if (!file) return;
     const id = await ensureProductId();
@@ -1001,37 +1041,46 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         )}
 
         {step === 5 && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <p className="mb-2 text-sm font-medium">تصویر شاخص</p>
               {imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt="" className="mb-2 h-32 w-32 rounded-lg object-cover" />
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="mb-2 h-32 w-32 rounded-lg object-cover"
+                />
               ) : null}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => void onMainImage(e.target.files?.[0] ?? null)}
+              <AdminMediaPicker
+                productId={productId}
+                uploadLabel="آپلود تصویر شاخص"
+                onSelect={(item) => void applyMainImageFromMedia(item)}
               />
             </div>
+
             <div>
               <p className="mb-2 text-sm font-medium">گالری</p>
-              <div className="mb-2 flex flex-wrap gap-2">
-                {gallery.map((g, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={g.id ?? i} src={g.url} alt="" className="h-20 w-20 rounded object-cover" />
-                ))}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
+              {gallery.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {gallery.map((g) => (
+                    <div key={g.id || g.url} className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={g.url}
+                        alt=""
+                        className="h-20 w-20 rounded-lg object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <AdminMediaPicker
+                productId={productId}
                 multiple
-                onChange={(e) => {
-                  void onGalleryImages(e.target.files);
-                  e.target.value = "";
-                }}
+                uploadLabel="آپلود تصاویر گالری"
+                onSelect={(item) => void applyGalleryFromMedia(item)}
               />
-              <p className="text-muted-foreground mt-1 text-xs">چند تصویر را یکجا انتخاب کنید.</p>
             </div>
           </div>
         )}
