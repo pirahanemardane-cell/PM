@@ -165,7 +165,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       const res = await adminGetProductAction(initialId);
       const payload = (res as { data?: unknown; product?: unknown }).data ?? (res as { product?: unknown }).product;
       if (!res.ok || !payload) {
-        setErr((res as { error?: string }).error || "محصول یافت نشد");
+        const detail = (res as { detail?: string }).detail;
+        setErr(detail || (res as { error?: string }).error || "محصول یافت نشد");
         setLoading(false);
         return;
       }

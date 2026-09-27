@@ -342,6 +342,7 @@ export async function adminGetProductAction(id: string) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
+    // بدون image_url روی واریانت (ستون وجود ندارد) — لود جدا برای راهنما/زمان‌بندی
     const { data, error } = await gate.supabase
       .from("products")
       .select(
@@ -349,24 +350,71 @@ export async function adminGetProductAction(id: string) {
         id, name, slug, category_id, brand_id,
         short_description, description, status,
         is_featured, is_new, is_bestseller,
-        size_guide_id, published_at,
-        product_variants ( id, sku, price, original_price, stock_quantity, size, color_name, color_hex, is_active, image_url ),
+        product_variants ( id, sku, price, original_price, stock_quantity, size, color_name, color_hex, is_active ),
         product_images ( id, url, alt_text, is_primary, sort_order, variant_id ),
         product_tag_map ( tag_id )
       `,
       )
       .eq("id", id)
       .maybeSingle();
-    if (error) throw error;
+
+    if (error) {
+      console.error("[adminGetProduct]", error);
+      return {
+        ok: false as const,
+        error: "server" as const,
+        detail: error.message,
+      };
+    }
     if (!data) return { ok: false as const, error: "not_found" };
-    const tag_ids = ((data as { product_tag_map?: { tag_id: string }[] }).product_tag_map ?? []).map((x) => x.tag_id);
-    const images = ((data as { product_images?: { id: string; url: string; is_primary?: boolean }[] }).product_images ?? []).map((im) => ({ id: im.id, url: im.url, is_primary: im.is_primary }));
+
+    // فیلدهای اختیاری migration (اگر ستون نباشد نادیده)
+    let size_guide_id: string | null = null;
+    let published_at: string | null = null;
+    try {
+      const { data: extra } = await gate.supabase
+        .from("products")
+        .select("size_guide_id, published_at")
+        .eq("id", id)
+        .maybeSingle();
+      if (extra) {
+        size_guide_id = (extra as { size_guide_id?: string | null }).size_guide_id ?? null;
+        published_at = (extra as { published_at?: string | null }).published_at ?? null;
+      }
+    } catch (e) {
+      console.warn("[adminGetProduct extra cols]", e);
+    }
+
+    const tag_ids = ((data as { product_tag_map?: { tag_id: string }[] }).product_tag_map ?? []).map(
+      (x) => x.tag_id,
+    );
+    const images = (
+      (data as { product_images?: { id: string; url: string; is_primary?: boolean }[] }).product_images ?? []
+    ).map((im) => ({ id: im.id, url: im.url, is_primary: im.is_primary }));
     const primary = images.find((i) => i.is_primary) ?? images[0];
-    const shaped = { ...data, tag_ids, images, image_url: primary?.url ?? null, variants: (data as { product_variants?: unknown }).product_variants ?? [] };
+    const variants = ((data as { product_variants?: unknown[] }).product_variants ?? []).map((v) => {
+      const row = v as Record<string, unknown>;
+      return { ...row, image_url: null };
+    });
+    const shaped = {
+      ...data,
+      size_guide_id,
+      published_at,
+      tag_ids,
+      images,
+      image_url: primary?.url ?? null,
+      variants,
+    };
     return { ok: true as const, product: shaped, data: shaped };
   } catch (e) {
     console.error("[adminGetProduct]", e);
-    return { ok: false as const, error: "server" };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message || "")
+        : e instanceof Error
+          ? e.message
+          : "";
+    return { ok: false as const, error: "server" as const, detail: msg.slice(0, 200) || undefined };
   }
 }
 
