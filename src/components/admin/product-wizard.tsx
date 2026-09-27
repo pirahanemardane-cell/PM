@@ -209,14 +209,14 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             sku: String(v.sku ?? ""),
             price: String(v.price ?? ""),
             original_price: String(v.original_price ?? ""),
-            stock: String(v.stock ?? "0"),
+            stock: String(v.stock_quantity ?? v.stock ?? "0"),
             image_url: String(v.image_url ?? ""),
           })),
         );
       } else if (vars[0]) {
         setProductType("simple");
         setSimpleSku(String(vars[0].sku ?? ""));
-        setSimpleStock(String(vars[0].stock ?? "0"));
+        setSimpleStock(String(vars[0].stock_quantity ?? vars[0].stock ?? "0"));
         setPrice(String(vars[0].price ?? ""));
         setSalePrice(String(vars[0].original_price ?? "") === String(vars[0].price ?? "") ? "" : String(vars[0].original_price ?? ""));
         // price = selling, original = higher struck-through in some schemas — map carefully
@@ -347,7 +347,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         setProductId(id);
       } else {
         const upd = await adminUpdateProductAction(id, base as Parameters<typeof adminUpdateProductAction>[1]);
-        if (!upd.ok) return { ok: false as const, error: upd.error || "به‌روزرسانی ناموفق" };
+        if (!upd.ok) return { ok: false as const, error: (upd as { detail?: string }).detail || upd.error || "به‌روزرسانی ناموفق" };
       }
 
       // attributes (specs + picked size/color options for filters)
@@ -377,7 +377,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             sku: simpleSku || null,
             price: sp,
             original_price: op > sp ? op : sp,
-            stock: parseLocaleNumber(simpleStock) || 0,
+            stock_quantity: parseLocaleNumber(simpleStock) || 0,
             image_url: null,
           },
         ];
@@ -394,15 +394,30 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             sku: v.sku || null,
             price: vp,
             original_price: vo > vp ? vo : vp,
-            stock: parseLocaleNumber(v.stock) || 0,
+            stock_quantity: parseLocaleNumber(v.stock) || 0,
             image_url: v.image_url || null,
           };
         });
       }
-      await adminSyncProductVariantsAction(id, vPayload as never);
+      const syncV = await adminSyncProductVariantsAction(id, vPayload as never);
+      if (!syncV.ok) {
+        return {
+          ok: false as const,
+          error:
+            (syncV as { detail?: string }).detail ||
+            (syncV as { error?: string }).error ||
+            "sync_variants",
+        };
+      }
 
       if (opts.finalStatus === "published" || (opts.finalStatus === undefined && st === "published")) {
-        await adminUpdateProductAction(id, { status: "published" } as never);
+        const pub = await adminUpdateProductAction(id, { status: "published" });
+        if (!pub.ok) {
+          return {
+            ok: false as const,
+            error: (pub as { detail?: string }).detail || pub.error || "publish",
+          };
+        }
       }
       return { ok: true as const, id };
     },

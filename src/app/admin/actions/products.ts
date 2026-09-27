@@ -373,8 +373,9 @@ export async function adminGetProductAction(id: string) {
 export async function adminUpdateProductAction(
   id: string,
   input: {
-    name: string;
-    category_id: string;
+    name?: string;
+    slug?: string;
+    category_id?: string | null;
     brand_id?: string | null;
     short_description?: string | null;
     description?: string | null;
@@ -382,6 +383,7 @@ export async function adminUpdateProductAction(
     is_featured?: boolean;
     is_new?: boolean;
     is_bestseller?: boolean;
+    is_active?: boolean;
     sku?: string | null;
     price?: number;
     original_price?: number | null;
@@ -392,44 +394,61 @@ export async function adminUpdateProductAction(
     image_url?: string | null;
     image_alt?: string | null;
     tag_ids?: string[];
+    size_guide_id?: string | null;
+    published_at?: string | null;
   },
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
-    const name = (input.name || "").trim();
-    if (!name || !input.category_id) {
-      return { ok: false as const, error: "validation" };
+    // partial: فقط فیلدهای ارسال‌شده
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) {
+      const name = (input.name || "").trim();
+      if (!name) return { ok: false as const, error: "validation", detail: "name" };
+      patch.name = name;
     }
-    const price = Number(input.price);
-    if (!Number.isFinite(price) || price < 0) {
-      return { ok: false as const, error: "price" };
+    if (input.slug !== undefined) {
+      const s = normalizeProductSlug((input.slug || "").trim());
+      if (s) patch.slug = s;
+    }
+    if (input.category_id !== undefined) {
+      if (!input.category_id) return { ok: false as const, error: "validation", detail: "category" };
+      patch.category_id = input.category_id;
+    }
+    if (input.brand_id !== undefined) patch.brand_id = input.brand_id || null;
+    if (input.short_description !== undefined)
+      patch.short_description = (input.short_description || "").trim() || null;
+    if (input.description !== undefined)
+      patch.description = (input.description || "").trim() || null;
+    if (input.status !== undefined) patch.status = input.status;
+    if (input.is_featured !== undefined) patch.is_featured = !!input.is_featured;
+    if (input.is_new !== undefined) patch.is_new = !!input.is_new;
+    if (input.is_bestseller !== undefined) patch.is_bestseller = !!input.is_bestseller;
+    if (input.is_active !== undefined) patch.is_active = !!input.is_active;
+    if (input.size_guide_id !== undefined) patch.size_guide_id = input.size_guide_id || null;
+    if (input.published_at !== undefined) patch.published_at = input.published_at || null;
+
+    if (Object.keys(patch).length) {
+      const { error: pErr } = await gate.supabase
+        .from("products")
+        .update(patch)
+        .eq("id", id);
+      if (pErr) {
+        console.error("[adminUpdateProduct products]", pErr);
+        return {
+          ok: false as const,
+          error: "server" as const,
+          detail: pErr.message,
+        };
+      }
     }
 
-    const { error: pErr } = await gate.supabase
-      .from("products")
-      .update({
-        name,
-        category_id: input.category_id,
-        brand_id: input.brand_id || null,
-        short_description: input.short_description?.trim() || null,
-        description: input.description?.trim() || null,
-        status: input.status ?? "draft",
-        is_featured: !!input.is_featured,
-        is_new: !!input.is_new,
-        is_bestseller: !!input.is_bestseller,
-        size_guide_id: input.size_guide_id !== undefined ? input.size_guide_id || null : undefined,
-        published_at: input.published_at !== undefined ? input.published_at || null : undefined,
-      })
-      .eq("id", id);
-    if (pErr) {
-      console.error("[adminUpdateProduct products]", pErr);
-      return {
-        ok: false as const,
-        error: "server" as const,
-        detail: pErr.message,
-      };
-    }
+    const name = String(patch.name ?? input.name ?? "").trim() || "product";
+    const price =
+      input.price !== undefined && Number.isFinite(Number(input.price))
+        ? Number(input.price)
+        : undefined;
 
     // فقط قیمت/موجودی وریانت اول — بدون size/color/sku (جلوگیری از unique)
     const { data: variants } = await gate.supabase
@@ -439,9 +458,8 @@ export async function adminUpdateProductAction(
       .order("created_at", { ascending: true })
       .limit(1);
 
-    if (variants?.[0]?.id && input.price !== undefined) {
-      const price = Number(input.price);
-      if (!Number.isFinite(price) || price < 0) {
+    if (variants?.[0]?.id && price !== undefined) {
+      if (price < 0) {
         return { ok: false as const, error: "price" };
       }
       const { error: vErr } = await gate.supabase
