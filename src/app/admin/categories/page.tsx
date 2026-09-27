@@ -192,6 +192,7 @@ export default function AdminCategoriesPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="نام دسته جدید"
+          />
           <select
             className="border-border bg-background rounded-lg border px-3 py-2 text-sm"
             value={parentId}
