@@ -25,7 +25,7 @@ type Props = {
   childrenTitle?: ReactNode;
   /** موبایل: بعد از تصویر، قبل از Buy Box */
   childrenBeforeBuy?: ReactNode;
-  /** موبایل: بعد از افزودن، قبل از نمودار | دسکتاپ: قبل از Buy Box */
+  /** موبایل: بعد از افزودن، قبل از نمودار | دسکتاپ: زیر نمودار قیمت */
   childrenSpecs?: ReactNode;
   childrenAfterBuy?: ReactNode;
   childrenBelowGallery?: ReactNode;
@@ -83,7 +83,10 @@ export function ProductPdpGalleryAndBuy({
           variants={variants}
           activeColor={activeColor}
         />
-        <div className="mt-4 hidden lg:block">{childrenBelowGallery}</div>
+        <div className="mt-4 hidden lg:block space-y-6">
+          {childrenBelowGallery}
+          {childrenSpecs}
+        </div>
       </div>
 
       <div className="max-lg:contents w-full max-w-xl space-y-6 lg:justify-self-start lg:max-w-none">
@@ -95,10 +98,6 @@ export function ProductPdpGalleryAndBuy({
         {/* موبایل order-3: خلاصه/مشخصات بعد از تصویر */}
         {childrenBeforeBuy ? (
           <div className="max-lg:order-3 space-y-6">{childrenBeforeBuy}</div>
-        ) : null}
-
-        {childrenSpecs ? (
-          <div className="hidden lg:block space-y-6">{childrenSpecs}</div>
         ) : null}
 
         <div className="max-lg:order-4">
