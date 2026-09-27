@@ -82,6 +82,8 @@ export function ProductPdpGalleryAndBuy({
           images={images}
           variants={variants}
           activeColor={activeColor}
+          productId={productId}
+          href={href}
         />
         <div className="mt-4 hidden lg:block space-y-6">
           {childrenBelowGallery}

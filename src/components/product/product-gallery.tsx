@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, ChevronRight, ChevronLeft } from "lucide-react";\nimport { ProductWishCompareStack } from "@/components/product/product-wish-compare";
 import { colorNorm, colorKey } from "@/lib/variant-availability";
 
 export type GalleryImage = {
@@ -26,11 +26,15 @@ export function ProductGallery({
   productName,
   variants = [],
   activeColor = null,
+  productId,
+  href,
 }: {
   images: GalleryImage[];
   productName: string;
   variants?: VariantLite[];
   activeColor?: string | null;
+  productId?: string;
+  href?: string;
 }) {
   // --- تامب‌نیل: فقط گالری (بدون variant_id) ---
   const thumbs = useMemo(() => {
@@ -140,25 +144,37 @@ export function ProductGallery({
   return (
     <div className="space-y-3" dir="rtl">
       {/* تصویر بزرگ */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="bg-muted relative aspect-[4/5] w-full max-w-full cursor-zoom-in overflow-hidden rounded-xl border-0 p-0 text-left lg:aspect-[1/1]"
-        aria-label="بزرگ‌نمایی تصویر"
-      >
-        <Image
-          key={main.url + String(activeColor) + String(preferThumb)}
-          src={main.url}
-          alt={main.alt ?? productName}
-          fill
-          className="object-cover object-center"
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          priority
-        />
-        <span className="bg-background/80 text-muted-foreground absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm">
-          کلیک برای مشاهده کامل
-        </span>
-      </button>
+      <div className="bg-muted relative aspect-[4/5] w-full max-w-full overflow-hidden rounded-xl lg:aspect-[1/1]">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="absolute inset-0 z-10 cursor-zoom-in border-0 p-0 text-left"
+          aria-label="بزرگ‌نمایی تصویر"
+        >
+          <Image
+            key={main.url + String(activeColor) + String(preferThumb)}
+            src={main.url}
+            alt={main.alt ?? productName}
+            fill
+            className="object-cover object-center"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+          />
+          <span className="bg-background/80 text-muted-foreground pointer-events-none absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm">
+            کلیک برای مشاهده کامل
+          </span>
+        </button>
+        {productId ? (
+          <ProductWishCompareStack
+            item={{
+              id: productId,
+              title: productName,
+              image: main.url,
+              href: href,
+            }}
+          />
+        ) : null}
+      </div>
 
       {/* تامب‌نیل‌ها — همیشه گالری، ثابت با تغییر رنگ */}
       {thumbs.length > 1 ? (

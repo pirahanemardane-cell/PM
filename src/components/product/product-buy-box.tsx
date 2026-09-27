@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
 import { createClient } from "@/lib/supabase/client";
-import { resolveColorHex } from "@/lib/colors";
+import { resolveColorHex } from "@/lib/colors";\nimport { ProductWishCompareInline } from "@/components/product/product-wish-compare";
 
 export type VariantOpt = {
   id: string;
@@ -380,17 +380,27 @@ export function ProductBuyBox({
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => void handleAdd()}
-          className={cn(
-            "bg-primary text-primary-foreground w-full rounded-xl py-3 text-sm font-medium hover:bg-primary/90",
-            loading && "opacity-60",
-          )}
-        >
-          {loading ? "…" : "افزودن به سبد"}
-        </button>
+        <div className="flex w-full items-center gap-2">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => void handleAdd()}
+            className={cn(
+              "bg-primary text-primary-foreground min-w-0 flex-1 rounded-xl py-3 text-sm font-medium hover:bg-primary/90",
+              loading && "opacity-60",
+            )}
+          >
+            {loading ? "…" : "افزودن به سبد"}
+          </button>
+          <ProductWishCompareInline
+            item={{
+              id: productId,
+              title,
+              image: image ?? undefined,
+              href: href,
+            }}
+          />
+        </div>
       )}
     </div>
   );
