@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 const FRAME_COUNT = 70;
 const SCROLL_VH = 320;
@@ -201,6 +202,20 @@ export function HeroScroll() {
       aria-label="هیرو"
       dir="rtl"
     >
+
+    <style>{`
+      @keyframes hero-scroll-bounce {
+        0%, 100% { transform: translateY(0); opacity: 0.85; }
+        50% { transform: translateY(8px); opacity: 1; }
+      }
+      .hero-scroll-hint {
+        animation: hero-scroll-bounce 1.6s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hero-scroll-hint { animation: none; }
+      }
+    `}</style>
+
       <div
         ref={stageRef}
         className="sticky top-0 left-0 w-full overflow-hidden"
@@ -276,8 +291,28 @@ export function HeroScroll() {
                 خرید آنلاین
               </Link>
             </div>
+
+
+
           </div>
         </div>
+        {/* نشانگر اسکرول — پایین استیج، فقط ابتدای هیرو */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex flex-col items-center gap-1.5 sm:bottom-8"
+          style={{
+            opacity: Math.max(0, 1 - frameIdx / 10),
+            transition: "opacity 150ms linear",
+          }}
+          aria-hidden
+        >
+          <span className="text-secondary text-[11px] font-medium tracking-wide drop-shadow-sm">
+            اسکرول کنید
+          </span>
+          <span className="hero-scroll-hint text-secondary inline-flex h-10 w-10 items-center justify-center rounded-full border border-secondary/35 bg-background/25 backdrop-blur-sm">
+            <ChevronDown className="h-5 w-5" strokeWidth={2.5} />
+          </span>
+        </div>
+
       </div>
     </section>
   );
