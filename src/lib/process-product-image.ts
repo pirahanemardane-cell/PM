@@ -3,9 +3,9 @@ import { readFile } from "fs/promises";
 import path from "path";
 
 const WEBP_QUALITY = 82;
-const WATERMARK_RATIO = 0.22;
+const WATERMARK_RATIO = 0.28;
 const MARGIN_RATIO = 0.03;
-const WATERMARK_OPACITY = 0.72;
+const WATERMARK_OPACITY = 0.85;
 
 export const PRODUCT_IMAGE_SIZES = {
   thumb: 200,
@@ -17,23 +17,42 @@ export const PRODUCT_IMAGE_SIZES = {
 export type ProductImageSizeName = keyof typeof PRODUCT_IMAGE_SIZES;
 
 async function loadWatermarkLogo(): Promise<Buffer | null> {
-  const candidates = [
-    path.join(process.cwd(), "public", "brand", "logo-light-transparent.webp"),
-    path.join(process.cwd(), "public", "brand", "logo-light.webp"),
-    path.join(process.cwd(), "brand", "logo-light-transparent.webp"),
+  // dark logo on light product photos; light logo as fallback
+  const names = [
+    "logo-dark-transparent.webp",
+    "logo-dark.webp",
+    "logo-light-transparent.webp",
+    "logo-light.webp",
   ];
+  const roots = [
+    path.join(process.cwd(), "public", "brand"),
+    path.join(process.cwd(), "brand"),
+    path.join(process.cwd(), "public"),
+  ];
+  const candidates: string[] = [];
+  for (const root of roots) {
+    for (const name of names) {
+      candidates.push(path.join(root, name));
+    }
+  }
   for (const logoPath of candidates) {
     try {
       const buf = await readFile(logoPath);
       if (buf.length > 0) {
-        console.info("[processProductImageSizes] watermark from", logoPath);
+        console.info("[processProductImageSizes] watermark from", logoPath, "bytes", buf.length);
         return buf;
       }
-    } catch {
-      // next
+    } catch (e) {
+      // try next
     }
   }
-  console.warn("[processProductImageSizes] watermark logo missing");
+  console.warn(
+    "[processProductImageSizes] watermark logo missing; cwd=",
+    process.cwd(),
+    "tried",
+    candidates.length,
+    "paths",
+  );
   return null;
 }
 
