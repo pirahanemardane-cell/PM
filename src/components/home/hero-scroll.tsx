@@ -262,12 +262,17 @@ export function HeroScroll() {
                   className="absolute inset-x-0 font-black leading-relaxed text-[#023047] dark:text-[#13ABC4]"
                   style={{
                     opacity: op,
-                    transition: "opacity 40ms linear",
+                    transition: "opacity 40ms linear, transform 120ms linear",
                     fontSize: "clamp(1.35rem, 4.2vw, 2.35rem)",
                     WebkitTextStroke: "1.25px #ffffff",
                     paintOrder: "stroke fill",
                     textShadow:
                       "0 0 6px rgba(255,255,255,0.45), 0 0 14px rgba(255,255,255,0.28), 0 0 1px rgba(255,255,255,0.85)",
+                    // آخرین اسلاید را وقتی دکمه می‌آید کمی بالا ببر تا روی هم نیفتند
+                    transform:
+                      i === 2 && buttonOpacity > 0.05
+                        ? "translateY(-2.75rem)"
+                        : "translateY(0)",
                   }}
                 >
                   <TitleContent text={slide.text} />
@@ -277,7 +282,7 @@ export function HeroScroll() {
 
             {/* دکمه از فریم ۴۸ — زیر متن آخر */}
             <div
-              className="mt-28 flex justify-center"
+              className="mt-36 flex justify-center sm:mt-40"
               style={{
                 opacity: buttonOpacity,
                 pointerEvents: buttonOpacity > 0.15 ? "auto" : "none",
@@ -296,20 +301,20 @@ export function HeroScroll() {
 
           </div>
         </div>
-        {/* نشانگر اسکرول — پایین استیج، فقط ابتدای هیرو */}
+        {/* نشانگر اسکرول — پایین استیج */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex flex-col items-center gap-1.5 sm:bottom-8"
+          className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex flex-col items-center gap-1.5 sm:bottom-7"
           style={{
-            opacity: Math.max(0, 1 - frameIdx / 10),
-            transition: "opacity 150ms linear",
+            opacity: frameIdx < 0.5 ? 1 : Math.max(0, 1 - (frameIdx - 0.5) / 9),
+            transition: "opacity 160ms linear",
           }}
           aria-hidden
         >
-          <span className="text-secondary text-[11px] font-medium tracking-wide drop-shadow-sm">
+          <span className="text-[11px] font-semibold tracking-wide text-[#023047] drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] dark:text-[#13ABC4]">
             اسکرول کنید
           </span>
-          <span className="hero-scroll-hint text-secondary inline-flex h-10 w-10 items-center justify-center rounded-full border border-secondary/35 bg-background/25 backdrop-blur-sm">
-            <ChevronDown className="h-5 w-5" strokeWidth={2.5} />
+          <span className="hero-scroll-hint inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#023047]/50 bg-white/35 text-[#023047] shadow-sm backdrop-blur-[2px] dark:border-[#13ABC4]/55 dark:bg-black/25 dark:text-[#13ABC4]">
+            <ChevronDown className="h-5 w-5" strokeWidth={2.75} />
           </span>
         </div>
 
