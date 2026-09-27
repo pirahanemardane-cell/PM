@@ -99,27 +99,17 @@ export function Footer({
           {watermarkName}
         </div>
 
-        {/* Logo + side borders: full-bleed lines that fade to transparent at page edges */}
+        {/* Logo + side borders: strong near logo, fully faded at outer edges */}
         <div className="pointer-events-none absolute bottom-12 left-0 right-0 z-10 flex w-full items-center px-0 sm:bottom-14 md:bottom-20">
-          <div
-            className="h-px min-w-0 flex-1"
-            style={{
-              background:
-                "linear-gradient(to right, transparent 0%, transparent 8%, color-mix(in oklab, var(--primary) 18%, transparent) 45%, color-mix(in oklab, var(--primary) 55%, transparent) 100%)",
-            }}
-          />
+          {/* left arm: edge (left) = transparent → logo (right) = visible */}
+          <div className="h-px min-w-0 flex-1 bg-gradient-to-r from-transparent from-0% via-transparent via-[35%] to-primary/60" />
           <div
             className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
           >
             {brandIcon}
           </div>
-          <div
-            className="h-px min-w-0 flex-1"
-            style={{
-              background:
-                "linear-gradient(to left, transparent 0%, transparent 8%, color-mix(in oklab, var(--primary) 18%, transparent) 45%, color-mix(in oklab, var(--primary) 55%, transparent) 100%)",
-            }}
-          />
+          {/* right arm: edge (right) = transparent → logo (left) = visible */}
+          <div className="h-px min-w-0 flex-1 bg-gradient-to-l from-transparent from-0% via-transparent via-[35%] to-primary/60" />
         </div>
         <div className="from-background via-background/80 to-background/40 absolute bottom-28 h-24 w-full bg-gradient-to-t blur-[1em]" />
       </footer>
