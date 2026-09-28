@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { ArrowFillButton } from "@/components/ui/arrow-fill-button";
 
 const FRAME_COUNT = 70;
 const SCROLL_VH = 320;
@@ -263,14 +263,9 @@ export function HeroScroll() {
                   style={{
                     opacity: op,
                     transition: "opacity 40ms linear, transform 120ms linear",
-                    WebkitTextStroke: "1.25px #ffffff",
-                    paintOrder: "stroke fill",
-                    textShadow:
-                      "0 0 6px rgba(255,255,255,0.45), 0 0 14px rgba(255,255,255,0.28), 0 0 1px rgba(255,255,255,0.85)",
-                    // آخرین اسلاید را وقتی دکمه می‌آید کمی بالا ببر تا روی هم نیفتند
                     transform:
                       i === 2 && buttonOpacity > 0.05
-                        ? "translateY(-2.75rem)"
+                        ? "translateY(-1.25rem)"
                         : "translateY(0)",
                   }}
                 >
@@ -281,19 +276,14 @@ export function HeroScroll() {
 
             {/* دکمه از فریم ۴۸ — زیر متن آخر */}
             <div
-              className="mt-36 flex justify-center sm:mt-40"
+              className="pointer-events-auto mt-20 flex justify-center sm:mt-24"
               style={{
                 opacity: buttonOpacity,
                 pointerEvents: buttonOpacity > 0.15 ? "auto" : "none",
                 transition: "opacity 40ms linear",
               }}
             >
-              <Link
-                href="/products"
-                className="bg-primary text-primary-foreground hover:bg-primary/80 inline-flex h-9 min-w-[10rem] items-center justify-center rounded-lg px-6 text-sm font-medium transition-all"
-              >
-                خرید آنلاین
-              </Link>
+              <ArrowFillButton href="/products" btnText="خرید آنلاین" className="pointer-events-auto" />
             </div>
 
 
