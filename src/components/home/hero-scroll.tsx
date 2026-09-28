@@ -263,6 +263,8 @@ export function HeroScroll() {
                   style={{
                     opacity: op,
                     transition: "opacity 40ms linear, transform 120ms linear",
+                    WebkitTextStroke: "1px #ffffff",
+                    paintOrder: "stroke fill",
                     transform:
                       i === 2 && buttonOpacity > 0.05
                         ? "translateY(-1.25rem)"
@@ -276,7 +278,7 @@ export function HeroScroll() {
 
             {/* دکمه از فریم ۴۸ — زیر متن آخر */}
             <div
-              className="pointer-events-auto mt-20 flex translate-y-[3px] justify-center sm:mt-24"
+              className="pointer-events-auto mt-20 flex translate-y-[8px] justify-center sm:mt-24"
               style={{
                 opacity: buttonOpacity,
                 pointerEvents: buttonOpacity > 0.15 ? "auto" : "none",
