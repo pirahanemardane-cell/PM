@@ -53,7 +53,11 @@ type Row = {
 
 function fmtWhen(iso?: string | null) {
   if (!iso) return "—";
-  try { return toPersianDigits(formatJalaliDateTime(iso)); } catch { return toPersianDigits(iso.slice(0, 16).replace('T', ' ')); }
+  try {
+    return toPersianDigits(formatJalaliDateTime(iso));
+  } catch {
+    return toPersianDigits(String(iso).slice(0, 16).replace("T", " "));
+  }
 }
 
 export default function AdminProductsPage() {
@@ -343,14 +347,14 @@ export default function AdminProductsPage() {
                   <th className="p-2 font-medium">شگفت</th>
                   <th className="p-2 font-medium">جدید</th>
                   <th className="p-2 font-medium">پرفروش</th>
-                  <th className="p-2 font-medium">تاریخ</th>
+                  <th className="p-2 font-medium">آخرین به‌روزرسانی</th>
                   <th className="p-2 font-medium">عملیات</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((p) => {
                   const nameVal = editName[p.id] ?? p.name;
-                  const when = p.published_at || p.updated_at || p.created_at;
+                  const when = p.updated_at || p.published_at || p.created_at;
                   return (
                     <tr
                       key={p.id}
@@ -531,6 +535,30 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="p-2 align-middle">
                         <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={busyId === p.id || !pending[p.id]}
+                          onClick={() => {
+                            const body = pending[p.id];
+                            if (!body) return;
+                            void (async () => {
+                              await quick(p.id, body);
+                              setPending((m) => {
+                                const n = { ...m };
+                                delete n[p.id];
+                                return n;
+                              });
+                              setEditName((m) => {
+                                const n = { ...m };
+                                delete n[p.id];
+                                return n;
+                              });
+                            })();
+                          }}
+                          className="text-secondary text-xs font-medium hover:underline disabled:opacity-40"
+                        >
+                          به‌روزرسانی
+                        </button>
                           <Link
                             href={`/admin/products/${p.id}/edit`}
                             className="text-primary text-xs hover:underline"
