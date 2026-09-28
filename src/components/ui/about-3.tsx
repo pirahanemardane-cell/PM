@@ -39,7 +39,7 @@ export function About3({
     alt: "جزئیات دوخت",
   },
   breakout = {
-    src: "/logo.png",
+    src: "/brand/logo-light-transparent.webp",
     alt: "لوگو",
     title: "اندازه درست، استایل درست",
     description:
@@ -69,18 +69,18 @@ export function About3({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <div className="bg-muted flex size-full max-h-[620px] items-center justify-center rounded-xl lg:col-span-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt={mainImage.alt} className="h-24 w-auto object-contain dark:hidden" />
+            <img src="/brand/logo-light-transparent.webp" alt={mainImage.alt} className="h-24 w-auto object-contain dark:hidden" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-dark.png" alt={mainImage.alt} className="hidden h-24 w-auto object-contain dark:block" />
+            <img src="/brand/logo-dark-transparent.webp" alt={mainImage.alt} className="hidden h-24 w-auto object-contain dark:block" />
           </div>
           <div className="flex flex-col gap-7 md:flex-row lg:flex-col">
             <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7 md:w-1/2 lg:w-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt={breakout.alt} className="ml-auto h-12 dark:hidden" />
+                <img src="/brand/logo-light-transparent.webp" alt={breakout.alt} className="ml-auto h-12 dark:hidden" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-dark.png" alt={breakout.alt} className="ml-auto hidden h-12 dark:block" />
+                <img src="/brand/logo-dark-transparent.webp" alt={breakout.alt} className="ml-auto hidden h-12 dark:block" />
               </>
               <div>
                 <p className="text-foreground mb-2 text-lg font-semibold">
@@ -99,9 +99,9 @@ export function About3({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <div className="bg-muted flex grow basis-0 items-center justify-center rounded-xl md:w-1/2 lg:min-h-[200px] lg:w-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt={secondaryImage.alt} className="h-16 w-auto object-contain dark:hidden" />
+              <img src="/brand/logo-light-transparent.webp" alt={secondaryImage.alt} className="h-16 w-auto object-contain dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.png" alt={secondaryImage.alt} className="hidden h-16 w-auto object-contain dark:block" />
+              <img src="/brand/logo-dark-transparent.webp" alt={secondaryImage.alt} className="hidden h-16 w-auto object-contain dark:block" />
             </div>
           </div>
         </div>

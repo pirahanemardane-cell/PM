@@ -285,7 +285,11 @@ export function HeroScroll() {
                 transition: "opacity 40ms linear",
               }}
             >
-              <ArrowFillButton href="/products" btnText="خرید آنلاین" className="pointer-events-auto" />
+              <ArrowFillButton
+                href="/products"
+                btnText="خرید آنلاین"
+                className="pointer-events-auto dark:[--btn-bg:#13ABC4] dark:[--btn-text:#212529] dark:[--btn-fill-bg:#212529] dark:[--btn-fill-text:#13ABC4] dark:[--btn-fill-bg-hover:#212529] dark:[--btn-fill-text-hover:#13ABC4] dark:[--btn-arrow:#13ABC4] dark:[--btn-arrow-hover:#13ABC4]"
+              />
             </div>
 
 
