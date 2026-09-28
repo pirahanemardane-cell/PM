@@ -1,0 +1,152 @@
+import { Button } from "@/components/ui/button";
+
+interface About3Props {
+  title?: string;
+  description?: string;
+  mainImage?: { src: string; alt: string };
+  secondaryImage?: { src: string; alt: string };
+  breakout?: {
+    src: string;
+    alt: string;
+    title?: string;
+    description?: string;
+    buttonText?: string;
+    buttonUrl?: string;
+  };
+  companiesTitle?: string;
+  companies?: Array<{ src: string; alt: string }>;
+  achievementsTitle?: string;
+  achievementsDescription?: string;
+  achievements?: Array<{ label: string; value: string }>;
+}
+
+const defaultAchievements = [
+  { label: "تمرکز تخصصی", value: "پیراهن" },
+  { label: "راهنمای سایز", value: "شفاف" },
+  { label: "مرجوعی آسان", value: "آسوده" },
+  { label: "پشتیبانی", value: "واقعی" },
+];
+
+export function About3({
+  title = "درباره ما",
+  description = "پیراهن مردانه؛ فروشگاه تخصصی پیراهن، کروات، پاپیون و اکسسوری — با تمرکز روی کیفیت دوخت، فیت دقیق و تجربه خرید مطمئن.",
+  mainImage = {
+    src: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=1200&q=80",
+    alt: "پیراهن مردانه",
+  },
+  secondaryImage = {
+    src: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80",
+    alt: "جزئیات دوخت",
+  },
+  breakout = {
+    src: "/logo.png",
+    alt: "لوگو",
+    title: "اندازه درست، استایل درست",
+    description:
+      "از راهنمای سایز شفاف تا تعویض آسان — هدف ما اعتماد به فیت قبل از خرید است.",
+    buttonText: "مشاهده محصولات",
+    buttonUrl: "/products",
+  },
+  companiesTitle = "تمرکز ما",
+  companies = [],
+  achievementsTitle = "آنچه برای خریدار مهم است",
+  achievementsDescription = "کیفیت دوخت، راهنمای سایز شفاف، ارسال مطمئن و پشتیبانی واقعی.",
+  achievements = defaultAchievements,
+}: About3Props = {}) {
+  return (
+    <section className="py-16 md:py-24" dir="rtl">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mb-14 grid gap-5 text-center md:grid-cols-2 md:text-right">
+          <h1 className="text-foreground text-4xl font-semibold md:text-5xl">
+            {title}
+          </h1>
+          <p className="text-muted-foreground text-base leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        <div className="grid gap-7 lg:grid-cols-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={mainImage.src}
+            alt={mainImage.alt}
+            className="size-full max-h-[620px] rounded-xl object-cover lg:col-span-2"
+          />
+          <div className="flex flex-col gap-7 md:flex-row lg:flex-col">
+            <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7 md:w-1/2 lg:w-auto">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={breakout.src} alt={breakout.alt} className="ml-auto h-12" />
+              <div>
+                <p className="text-foreground mb-2 text-lg font-semibold">
+                  {breakout.title}
+                </p>
+                <p className="text-muted-foreground">{breakout.description}</p>
+              </div>
+              <Button
+                variant="outline"
+                className="border-secondary text-secondary hover:bg-secondary/10 ml-auto"
+                asChild
+              >
+                <a href={breakout.buttonUrl}>{breakout.buttonText}</a>
+              </Button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={secondaryImage.src}
+              alt={secondaryImage.alt}
+              className="grow basis-0 rounded-xl object-cover md:w-1/2 lg:min-h-0 lg:w-auto"
+            />
+          </div>
+        </div>
+
+        {companies.length > 0 ? (
+          <div className="py-20">
+            <p className="text-center">{companiesTitle}</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-8">
+              {companies.map((company, idx) => (
+                <div className="flex items-center gap-3" key={company.src + idx}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={company.src}
+                    alt={company.alt}
+                    className="h-6 w-auto md:h-8"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="py-16 text-center">
+            <p className="text-muted-foreground text-sm">{companiesTitle}</p>
+            <p className="text-secondary mt-2 text-lg font-medium">
+              پیراهن · کروات · پاپیون · دکمه سردست
+            </p>
+          </div>
+        )}
+
+        <div className="bg-secondary/10 relative overflow-hidden rounded-xl p-10 md:p-16">
+          <div className="flex flex-col gap-4 text-center md:text-right">
+            <h2 className="text-foreground text-3xl font-semibold md:text-4xl">
+              {achievementsTitle}
+            </h2>
+            <p className="text-muted-foreground max-w-screen-sm">
+              {achievementsDescription}
+            </p>
+          </div>
+          <div className="mt-10 flex flex-wrap justify-between gap-10 text-center">
+            {achievements.map((item, idx) => (
+              <div className="flex flex-col gap-2" key={item.label + idx}>
+                <p className="text-muted-foreground text-sm">{item.label}</p>
+                <span className="text-secondary text-3xl font-semibold md:text-4xl">
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default About3;

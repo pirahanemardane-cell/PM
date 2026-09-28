@@ -1,23 +1,36 @@
 import type { Metadata } from "next";
-import { StaticPage } from "@/components/content/static-page";
+import { About3 } from "@/components/ui/about-3";
 
 export const metadata: Metadata = {
   title: "درباره ما | پیراهن مردانه",
   description:
-    "فروشگاه تخصصی پیراهن مردانه، کروات، پاپیون، دکمه سردست و اکسسوری استایل رسمی",
+    "فروشگاه تخصصی پیراهن مردانه — کیفیت دوخت، راهنمای سایز شفاف و پشتیبانی واقعی",
 };
 
 export default function AboutPage() {
   return (
-    <StaticPage title="درباره ما">
-      <p>
-        «پیراهن مردانه» فروشگاهی تخصصی برای استایل رسمی و نیمه‌رسمی آقایان است:
-        پیراهن، کروات، پاپیون، دکمه سردست و اکسسوری‌های مکمل.
-      </p>
-      <p>
-        تمرکز ما روی کیفیت دوخت، راهنمای سایز شفاف، ارسال مطمئن و پشتیبانی واقعی
-        پس از خرید است — نه فروش عمومی پوشاک.
-      </p>
-    </StaticPage>
+    <About3
+      title="درباره پیراهن مردانه"
+      description="ما روی پیراهن مردانه و اکسسوری مرتبط تمرکز کرده‌ایم تا انتخاب سایز مطمئن، کیفیت دوخت مشخص و خرید بدون سردرگمی باشد."
+      breakout={{
+        src: "/logo.png",
+        alt: "پیراهن مردانه",
+        title: "اندازه درست، استایل درست",
+        description:
+          "راهنمای سایز شفاف، تعویض آسان و پشتیبانی واقعی — برای اطمینان از فیت قبل و بعد از خرید.",
+        buttonText: "مشاهده محصولات",
+        buttonUrl: "/products",
+      }}
+      companiesTitle="دنیای تخصصی ما"
+      companies={[]}
+      achievementsTitle="آنچه برای شما می‌سازیم"
+      achievementsDescription="تمرکز عمودی روی پیراهن و اکسسوری؛ نه همه‌چیزفروشی."
+      achievements={[
+        { label: "تمرکز", value: "پیراهن" },
+        { label: "فیت", value: "دقیق" },
+        { label: "مرجوعی", value: "آسان" },
+        { label: "پشتیبانی", value: "واقعی" },
+      ]}
+    />
   );
 }

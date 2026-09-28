@@ -42,6 +42,7 @@ const NAV = [
   { href: "/admin/blog", label: "بلاگ", icon: FileText },
   { href: "/admin/reviews", label: "نظرات", icon: MessageSquare },
   { href: "/admin/tickets", label: "تیکت‌ها", icon: Ticket },
+  { href: "/admin/contact-messages", label: "پیام‌های تماس", icon: MessageSquare },
   { href: "/admin/notifications", label: "اعلان‌ها", icon: Bell },
   { href: "/admin/returns", label: "مرجوعی", icon: Package },
   { href: "/admin/stock-alerts", label: "لیست انتظار موجودی", icon: Bell },

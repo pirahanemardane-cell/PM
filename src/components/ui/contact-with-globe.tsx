@@ -299,7 +299,7 @@ export default function ContactWithGlobe({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, delay: 0.3, ease: smoothEase }}
-            className="text-muted-foreground max-w-md text-base"
+            className="text-muted-foreground max-w-4xl text-sm sm:text-base whitespace-nowrap overflow-x-auto"
           >
             {description}
           </motion.p>
@@ -374,18 +374,26 @@ export default function ContactWithGlobe({
             <FormDots />
             <form
               className="flex flex-col gap-4"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                const fd = new FormData(e.currentTarget);
-                const name = String(fd.get("name") || "");
-                const company = String(fd.get("company") || "");
-                const email = String(fd.get("email") || "");
-                const message = String(fd.get("message") || "");
-                const subject = encodeURIComponent(`پیام تماس — ${name}`);
-                const body = encodeURIComponent(
-                  `نام: ${name}\nشرکت: ${company}\nایمیل: ${email}\n\n${message}`,
-                );
-                window.location.href = `mailto:info@pirahanmardane.ir?subject=${subject}&body=${body}`;
+                const form = e.currentTarget;
+                const fd = new FormData(form);
+                const res = await fetch("/api/contact", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    name: String(fd.get("name") || ""),
+                    company: String(fd.get("company") || ""),
+                    email: String(fd.get("email") || ""),
+                    message: String(fd.get("message") || ""),
+                  }),
+                });
+                if (res.ok) {
+                  form.reset();
+                  alert("پیام شما ثبت شد.");
+                } else {
+                  alert("ثبت پیام ناموفق بود.");
+                }
               }}
             >
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
