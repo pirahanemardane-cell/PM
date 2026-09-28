@@ -24,7 +24,7 @@ export default function AboutPage() {
       companiesTitle="دنیای تخصصی ما"
       companies={[]}
       achievementsTitle="آنچه برای شما می‌سازیم"
-      achievementsDescription="تمرکز روی پیراهن و اکسسوری؛ نه همه‌چیزفروشی."
+      achievementsDescription="تمرکز روی پیراهن و اکسسوری."
       achievements={[
         { label: "تمرکز", value: "پیراهن" },
         { label: "فیت", value: "دقیق" },
