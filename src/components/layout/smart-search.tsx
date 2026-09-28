@@ -394,13 +394,15 @@ export function SmartSearch({ className }: { className?: string }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => goResults()}
-            className="bg-primary text-primary-foreground mb-4 h-10 w-full rounded-xl text-sm font-medium"
-          >
-            اعمال و جستجو
-          </button>
+          <div className="mb-4 flex justify-start">
+            <button
+              type="button"
+              onClick={() => goResults()}
+              className="bg-primary text-primary-foreground h-10 w-full rounded-xl px-6 text-sm font-semibold shadow-sm sm:w-auto sm:min-w-[11rem]"
+            >
+              اعمال و جستجو
+            </button>
+          </div>
 
 
           <div className="space-y-4">
