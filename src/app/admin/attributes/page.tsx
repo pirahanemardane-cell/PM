@@ -210,11 +210,7 @@ export default function AdminAttributesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">مشخصات محصول</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            سایز، رنگ (با کد hex و سواچ)، یقه، فیت و بقیه مشخصه‌ها اینجا تعریف
-            می‌شوند. در ویزارد محصول از همین گزینه‌ها انتخاب می‌شود.
-          </p>
-        </div>
+          </div>
         <Link
           href="/admin/products"
           className="text-muted-foreground text-sm hover:underline"

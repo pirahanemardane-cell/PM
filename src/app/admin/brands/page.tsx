@@ -166,7 +166,7 @@ export default function AdminBrandsPage() {
       <div className="w-full max-w-none">
         <AdminPageHeader
           title="برندها"
-          description="مدیریت برندهای فروشگاه — ویرایش نام"
+          description=""
           actions={
             <button
               type="button"

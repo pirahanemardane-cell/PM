@@ -78,8 +78,7 @@ export default function AdminDashboardPage() {
       <div className="w-full max-w-none space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-primary">داشبورد مدیریت</h1>
-          <p className="text-muted-foreground text-sm">نمای کلی فروشگاه — CMS</p>
-        </div>
+          </div>
 
         {error ? <p className="text-destructive text-sm">{error}</p> : null}
 

@@ -211,10 +211,7 @@ export default function AdminDiscountsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-primary">کدهای تخفیف</h1>
-            <p className="text-muted-foreground text-sm">
-              مدیریت کوپن‌ها — بازه اعتبار و فعال/غیرفعال
-            </p>
-          </div>
+            </div>
           <div className="flex gap-2">
             <button
               type="button"

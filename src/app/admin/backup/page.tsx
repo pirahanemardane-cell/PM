@@ -119,12 +119,7 @@ export default function AdminBackupPage() {
     <div className="mx-auto max-w-3xl space-y-8 p-4 md:p-6">
       <div>
         <h1 className="text-xl font-bold">بک‌آپ و بازیابی</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          خروجی JSON جداول فروشگاه (حداکثر{" "}
-          {toPersianDigits(10000)} ردیف/جدول). Restore با upsert روی{" "}
-          <span className="font-mono">id</span> — دادهٔ موجود را بازنویسی
-          می‌کند. قبل از restore حتماً یک export تازه بگیرید.
-        </p>
+        
       </div>
 
       <section className="space-y-3">

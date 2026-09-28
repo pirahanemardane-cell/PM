@@ -129,8 +129,7 @@ export default function AdminStockAlertsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">لیست انتظار موجودی</h1>
-          <p className="text-muted-foreground text-sm">درخواست‌های موجود شد خبرم کن</p>
-        </div>
+          </div>
         <div className="flex flex-wrap gap-2">
           <select
             className="border-input bg-background rounded-xl border px-3 py-2 text-sm"

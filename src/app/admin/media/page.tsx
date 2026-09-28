@@ -210,10 +210,7 @@ export default function AdminMediaPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">رسانه</h1>
-          <p className="text-muted-foreground text-sm">
-            کتابخانه تصاویر محصول — واترمارک خودکار روی آپلود جدید
-          </p>
-        </div>
+          </div>
         <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
           بازگشت به داشبورد
         </Link>

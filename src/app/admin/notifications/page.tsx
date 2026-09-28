@@ -64,10 +64,7 @@ export default function AdminNotificationsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">اعلان‌ها</h1>
-          <p className="text-muted-foreground text-sm">
-            ارسال از قالب یا نوشتن متن دستی
-          </p>
-        </div>
+          </div>
         <Link href="/admin" className="text-sm text-primary underline-offset-4 hover:underline">
           بازگشت به داشبورد
         </Link>
@@ -117,12 +114,7 @@ export default function AdminNotificationsPage() {
             onChange={(e) => setCustomBody(e.target.value)}
             placeholder="اگر عنوان و متن هر دو پر باشند، اعلان کاملاً دستی ارسال می‌شود"
           />
-          <p className="text-muted-foreground mt-1 text-xs">
-            {useCustom
-              ? "حالت: ارسال دستی (قالب نادیده گرفته می‌شود)"
-              : "حالت: ارسال از قالب انتخاب‌شده"}
-          </p>
-        </div>
+          </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium">گیرنده</label>

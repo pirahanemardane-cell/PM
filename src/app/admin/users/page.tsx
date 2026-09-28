@@ -149,10 +149,7 @@ export default function AdminUsersPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-primary">کاربران</h1>
-            <p className="text-muted-foreground text-sm">
-              نقش و مشخصات پروفایل — جستجو و فیلتر
-            </p>
-          </div>
+            </div>
           <div className="flex gap-2">
             <button
               type="button"

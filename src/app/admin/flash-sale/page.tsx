@@ -120,10 +120,7 @@ export default function AdminFlashSalePage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-primary">پیشنهاد شگفت‌انگیز</h1>
-            <p className="text-muted-foreground text-sm">
-              زمان پایان تایمر + انتخاب محصولات (فلگ ویژه)
-            </p>
-          </div>
+            </div>
           <div className="flex gap-2">
             <button
               type="button"

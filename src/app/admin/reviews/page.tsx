@@ -167,10 +167,7 @@ export default function AdminReviewsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">نظرات محصولات</h1>
-          <p className="text-muted-foreground text-sm">
-            تأیید، رد و پاسخ رسمی فروشگاه
-          </p>
-        </div>
+          </div>
         <div className="flex flex-wrap gap-2">
           <select
             value={filter}

@@ -181,9 +181,6 @@ export default function AdminBlogPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">بلاگ</h1>
-          <p className="text-muted-foreground text-sm">
-            {toPersianDigits(String(items.length))} پست
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link

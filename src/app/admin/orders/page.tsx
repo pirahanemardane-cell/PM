@@ -168,10 +168,7 @@ export default function AdminOrdersPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-primary">سفارش‌ها</h1>
-            <p className="text-muted-foreground text-sm">
-              مدیریت سفارش‌های فروشگاه
-            </p>
-          </div>
+            </div>
           <div className="flex gap-2">
             <button
               type="button"

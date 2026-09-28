@@ -170,7 +170,7 @@ export default function AdminCategoriesPage() {
       <div className="w-full max-w-none">
         <AdminPageHeader
           title="دسته‌بندی‌ها"
-          description="مدیریت دسته‌های فروشگاه — ویرایش نام و ترتیب"
+          description=""
           actions={
             <button
               type="button"

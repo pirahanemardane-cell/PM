@@ -77,10 +77,7 @@ export default function AdminAnalyticsPage() {
     <div className="space-y-6 p-6" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-primary">گزارش‌ها</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          خلاصه آمار فروشگاه (نسخه سبک؛ نمودار پیشرفته بعداً)
-        </p>
-      </div>
+        </div>
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
 

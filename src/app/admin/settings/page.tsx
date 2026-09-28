@@ -188,9 +188,6 @@ export default function AdminSettingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-primary">تنظیمات</h1>
-          <p className="text-muted-foreground text-sm">
-            محیط: <span className="font-mono">{env}</span>
-          </p>
         </div>
         <Link
           href="/admin/dashboard"

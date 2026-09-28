@@ -153,8 +153,7 @@ export default function AdminReturnsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">درخواست‌های مرجوعی</h1>
-          <p className="text-muted-foreground text-sm">وضعیت و پیگیری مرجوعی</p>
-        </div>
+          </div>
         <div className="flex gap-2">
           <button
             type="button"

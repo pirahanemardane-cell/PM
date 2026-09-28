@@ -173,8 +173,7 @@ export default function AdminBlogCategoriesPage() {
           onClear={() => setSelected([])}
         />
 
-          <p className="text-muted-foreground text-sm">مدیریت دسته‌بندی مقالات</p>
-        </div>
+          </div>
         <div className="flex gap-2">
           <Link
             href="/admin/blog"
