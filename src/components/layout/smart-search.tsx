@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X, LayoutGrid, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PriceRangeSlider } from "@/components/ui/range-slider";
 
 type SuggestProduct = {
   name: string;
@@ -479,27 +480,22 @@ export function SmartSearch({ className }: { className?: string }) {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="space-y-1 text-xs">
-                <span className="text-muted-foreground">حداقل قیمت (تومان)</span>
-                <input
-                  type="number"
-                  value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
-                  className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm"
-                  dir="rtl"
-                />
-              </label>
-              <label className="space-y-1 text-xs">
-                <span className="text-muted-foreground">حداکثر قیمت (تومان)</span>
-                <input
-                  type="number"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  className="border-input bg-background h-10 w-full rounded-xl border px-2 text-sm"
-                  dir="rtl"
-                />
-              </label>
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs font-medium">محدوده قیمت (تومان)</p>
+              <PriceRangeSlider
+                min={0}
+                max={50_000_000}
+                step={50_000}
+                defaultValue={[
+                  minPrice ? Number(minPrice) || 0 : 0,
+                  maxPrice ? Number(maxPrice) || 50_000_000 : 50_000_000,
+                ]}
+                showCards
+                onValueChange={(range) => {
+                  setMinPrice(range[0] > 0 ? String(range[0]) : "");
+                  setMaxPrice(range[1] < 50_000_000 ? String(range[1]) : "");
+                }}
+              />
             </div>
 
             <div>

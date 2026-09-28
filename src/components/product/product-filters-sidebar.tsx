@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import type { AttributeWithOptions } from "@/repositories/attribute.repository";
 import { Check } from "lucide-react";
+import { PriceRangeSlider } from "@/components/ui/range-slider";
 
 export type CategoryChip = { name: string; slug: string };
 
@@ -353,53 +354,23 @@ export function ProductFiltersSidebar(props: Props) {
 
         <div>
           <p className="mb-2 text-xs font-medium">محدوده قیمت (تومان)</p>
-          <form
-            method="get"
-            action="/products"
-            className="grid grid-cols-2 gap-2"
-            onSubmit={() => setPendingKey("price")}
-          >
-            {props.brandSlug ? (
-              <input type="hidden" name="brand" value={props.brandSlug} />
-            ) : null}
-            {props.categorySlug ? (
-              <input type="hidden" name="category" value={props.categorySlug} />
-            ) : null}
-            {props.q ? <input type="hidden" name="q" value={props.q} /> : null}
-            {props.sort && props.sort !== "newest" ? (
-              <input type="hidden" name="sort" value={props.sort} />
-            ) : null}
-            {props.featured ? (
-              <input type="hidden" name="featured" value="1" />
-            ) : null}
-            {Object.entries(current).map(([k, v]) => (
-              <input key={k} type="hidden" name={k} value={v} />
-            ))}
-            <input
-              type="number"
-              name="minPrice"
-              min={0}
-              step={10000}
-              placeholder="از"
-              defaultValue={minPrice ?? ""}
-              className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-            />
-            <input
-              type="number"
-              name="maxPrice"
-              min={0}
-              step={10000}
-              placeholder="تا"
-              defaultValue={maxPrice ?? ""}
-              className="border-input bg-background h-8 rounded-md border px-2 text-xs"
-            />
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground col-span-2 h-8 rounded-md text-xs font-medium"
-            >
-              اعمال قیمت
-            </button>
-          </form>
+          <PriceRangeSlider
+            min={0}
+            max={50_000_000}
+            step={50_000}
+            defaultValue={[minPrice && minPrice > 0 ? minPrice : 0, maxPrice && maxPrice > 0 ? maxPrice : 50_000_000]}
+            showCards
+            onValueChange={(range) => {
+              const href = buildHref(
+                {
+                  minPrice: range[0] > 0 ? range[0] : null,
+                  maxPrice: range[1] < 50_000_000 ? range[1] : null,
+                },
+                props
+              );
+              navigate(href, "price");
+            }}
+          />
         </div>
 
         {/* —— رنگ —— */}
