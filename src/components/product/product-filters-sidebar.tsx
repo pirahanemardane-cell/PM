@@ -6,7 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import type { AttributeWithOptions } from "@/repositories/attribute.repository";
 import { Check } from "lucide-react";
-import { PriceRangeSlider } from "@/components/ui/range-slider";
+import { PriceRangeSlider06 } from "@/components/ui/price-range-slider-06";
 
 export type CategoryChip = { name: string; slug: string };
 
@@ -354,12 +354,11 @@ export function ProductFiltersSidebar(props: Props) {
 
         <div>
           <p className="mb-2 text-xs font-medium">محدوده قیمت (تومان)</p>
-          <PriceRangeSlider
+          <PriceRangeSlider06
             min={0}
             max={50_000_000}
             step={50_000}
             defaultValue={[minPrice && minPrice > 0 ? minPrice : 0, maxPrice && maxPrice > 0 ? maxPrice : 50_000_000]}
-            showCards
             onValueChange={(range) => {
               const href = buildHref(
                 {

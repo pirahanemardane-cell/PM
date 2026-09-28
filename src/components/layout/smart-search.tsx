@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X, LayoutGrid, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PriceRangeSlider } from "@/components/ui/range-slider";
+import { PriceRangeSlider06 } from "@/components/ui/price-range-slider-06";
 
 type SuggestProduct = {
   name: string;
@@ -482,7 +482,7 @@ export function SmartSearch({ className }: { className?: string }) {
 
             <div className="space-y-2">
               <p className="text-muted-foreground text-xs font-medium">محدوده قیمت (تومان)</p>
-              <PriceRangeSlider
+              <PriceRangeSlider06
                 min={0}
                 max={50_000_000}
                 step={50_000}
@@ -490,7 +490,6 @@ export function SmartSearch({ className }: { className?: string }) {
                   minPrice ? Number(minPrice) || 0 : 0,
                   maxPrice ? Number(maxPrice) || 50_000_000 : 50_000_000,
                 ]}
-                showCards
                 onValueChange={(range) => {
                   setMinPrice(range[0] > 0 ? String(range[0]) : "");
                   setMaxPrice(range[1] < 50_000_000 ? String(range[1]) : "");
