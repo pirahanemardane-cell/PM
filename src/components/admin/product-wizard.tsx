@@ -1454,8 +1454,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 ))}
               </div>
               {publishMode === "schedule" ? (
-                <input type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr" className="border-input bg-background mt-2 w-full rounded-lg border px-3 py-2 font-mono text-sm" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
-                <p className="text-muted-foreground mt-1 text-[11px]">فرمت شمسی: سال/ماه/روز ساعت:دقیقه</p>
+                <div className="mt-2">
+                  <input type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr" className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
+                  <p className="text-muted-foreground mt-1 text-[11px]">فرمت شمسی: سال/ماه/روز ساعت:دقیقه</p>
+                </div>
               ) : null}
             </div>
             <label className="flex items-center gap-2 text-sm">
