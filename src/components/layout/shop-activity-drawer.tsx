@@ -103,23 +103,21 @@ export function ShopActivityDrawer({
                     <p className="truncate text-sm font-medium">
                       {p.title || "محصول"}
                     </p>
-                    {typeof p.price === "number" ? (
+                    {tab === "cart" && typeof p.price === "number" ? (
                       <div className="mt-0.5 space-y-0.5 text-xs">
                         <p className="text-muted-foreground">
                           <Price amount={p.price} size="sm" />
-                          {tab === "cart" && (p.quantity ?? 1) > 1
+                          {(p.quantity ?? 1) > 1
                             ? " × " + (p.quantity ?? 1)
                             : ""}
                         </p>
-                        {tab === "cart" ? (
-                          <p className="font-medium text-foreground">
-                            جمع:{" "}
-                            {(
-                              p.price * (p.quantity ?? 1)
-                            ).toLocaleString("fa-IR")}{" "}
-                            تومان
-                          </p>
-                        ) : null}
+                        <p className="font-medium text-foreground">
+                          جمع:{" "}
+                          {(
+                            p.price * (p.quantity ?? 1)
+                          ).toLocaleString("fa-IR")}{" "}
+                          تومان
+                        </p>
                       </div>
                     ) : null}
                     {tab === "cart" && (
