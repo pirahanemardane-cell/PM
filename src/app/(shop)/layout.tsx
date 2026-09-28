@@ -1,4 +1,5 @@
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { BackToTop } from "@/components/layout/back-to-top";
 import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -24,6 +25,7 @@ export default function ShopLayout({
           </div>
         </div>
         <SiteFooter />
+        <BackToTop />
       </div>
     </SiteLoaderProvider>
   );
