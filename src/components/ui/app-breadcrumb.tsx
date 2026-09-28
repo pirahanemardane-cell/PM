@@ -108,7 +108,7 @@ export function AppBreadcrumb({
       className={cn("bg-surface-muted border-border border-b", className)}
       dir="rtl"
     >
-      <ol className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
+      <ol className="flex w-full flex-wrap items-center gap-2 px-4 py-2.5 text-sm sm:px-6">
         <li>
           <Link href="/" className="text-muted-foreground hover:text-foreground">
             خانه
