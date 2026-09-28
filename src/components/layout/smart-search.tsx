@@ -14,6 +14,12 @@ type SuggestProduct = {
 };
 type SuggestItem = { name: string; slug: string };
 type SuggestPost = { title: string; slug: string };
+type FacetAttr = {
+  id: string;
+  name: string;
+  slug: string;
+  options: { id: string; value: string; slug: string }[];
+};
 
 const SORTS = [
   { value: "", label: "جدیدترین" },
@@ -46,6 +52,9 @@ export function SmartSearch({ className }: { className?: string }) {
   const [facetBrands, setFacetBrands] = useState<SuggestItem[]>([]);
   const [facetColors, setFacetColors] = useState<SuggestItem[]>([]);
   const [facetSizes, setFacetSizes] = useState<SuggestItem[]>([]);
+  const [facetAttrs, setFacetAttrs] = useState<FacetAttr[]>([]);
+  const [attrSel, setAttrSel] = useState<Record<string, string>>({});
+  const [moreOpen, setMoreOpen] = useState(false);
   const [facetsLoaded, setFacetsLoaded] = useState(false);
 
   const activeFilters = useMemo(() => {
@@ -56,8 +65,9 @@ export function SmartSearch({ className }: { className?: string }) {
     if (size) n++;
     if (sort) n++;
     if (minPrice || maxPrice) n++;
+    n += Object.keys(attrSel).length;
     return n;
-  }, [category, brand, color, size, sort, minPrice, maxPrice]);
+  }, [category, brand, color, size, sort, minPrice, maxPrice, attrSel]);
 
   const hasSuggest =
     products.length > 0 ||
@@ -77,12 +87,15 @@ export function SmartSearch({ className }: { className?: string }) {
       if (sort) params.set("sort", sort);
       if (minPrice) params.set("minPrice", minPrice);
       if (maxPrice) params.set("maxPrice", maxPrice);
+      for (const [k, v] of Object.entries(attrSel)) {
+        if (v) params.set(k, v);
+      }
       const qs = params.toString();
       router.push(qs ? `/products?${qs}` : "/products");
       setSuggestOpen(false);
       setFilterOpen(false);
     },
-    [q, category, brand, color, size, sort, minPrice, maxPrice, router]
+    [q, category, brand, color, size, sort, minPrice, maxPrice, attrSel, router]
   );
 
   function submit(e?: React.FormEvent) {
@@ -98,6 +111,16 @@ export function SmartSearch({ className }: { className?: string }) {
     setSort("");
     setMinPrice("");
     setMaxPrice("");
+    setAttrSel({});
+  }
+
+  function toggleAttr(slug: string, optSlug: string) {
+    setAttrSel((prev) => {
+      const next = { ...prev };
+      if (next[slug] === optSlug) delete next[slug];
+      else next[slug] = optSlug;
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -113,6 +136,7 @@ export function SmartSearch({ className }: { className?: string }) {
         setFacetBrands(data.brands ?? []);
         setFacetColors(data.colors ?? []);
         setFacetSizes(data.sizes ?? []);
+        setFacetAttrs(data.attributes ?? []);
         setFacetsLoaded(true);
       } catch {
         /* ignore */
@@ -244,7 +268,7 @@ export function SmartSearch({ className }: { className?: string }) {
       </form>
 
       {suggestOpen && q.trim().length >= 2 ? (
-        <div className="border-border bg-card fixed inset-x-0 top-[3.5rem] z-[120] max-h-[min(80vh,32rem)] overflow-y-auto rounded-none border-x-0 border-b border-t px-3 py-3 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:left-0 sm:top-[calc(100%+8px)] sm:max-h-[min(70vh,28rem)] sm:rounded-xl sm:border sm:shadow-lg">
+        <div className="border-border bg-card fixed inset-x-0 top-14 z-[120] max-h-[min(80vh,36rem)] overflow-y-auto rounded-none border-x-0 border-b border-t px-4 py-3 shadow-xl xl:top-16">
           {loading && !hasSuggest ? (
             <p className="text-muted-foreground px-4 py-6 text-center text-sm">
               در حال جستجو…
@@ -346,7 +370,8 @@ export function SmartSearch({ className }: { className?: string }) {
       ) : null}
 
       {filterOpen ? (
-        <div className="border-border bg-card fixed inset-x-0 top-[3.5rem] z-[120] max-h-[min(80vh,36rem)] overflow-y-auto rounded-none border-x-0 border-b border-t px-3 py-3 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:left-0 sm:top-[calc(100%+8px)] sm:max-h-[min(75vh,32rem)] sm:rounded-xl sm:border sm:shadow-lg">
+        <div className="border-border bg-card fixed inset-x-0 top-14 z-[120] max-h-[min(80vh,40rem)] overflow-y-auto rounded-none border-x-0 border-b border-t px-4 py-3 shadow-xl xl:top-16">
+          <div className="mx-auto w-full max-w-6xl">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium">فیلتر پیشرفته</span>
             <div className="flex items-center gap-2">
@@ -510,6 +535,52 @@ export function SmartSearch({ className }: { className?: string }) {
                 ))}
               </div>
             </div>
+
+            {facetAttrs.length > 0 ? (
+              <div className="border-border border-t pt-3">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((o) => !o)}
+                  className="hover:bg-muted flex w-full items-center justify-between rounded-md px-1 py-2 text-xs font-medium"
+                >
+                  <span className="flex items-center gap-2">
+                    فیلترهای بیشتر
+                    {Object.keys(attrSel).length > 0 ? (
+                      <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
+                        {Object.keys(attrSel).length}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="text-muted-foreground text-[10px]">
+                    {moreOpen ? "بستن" : "باز کردن"}
+                  </span>
+                </button>
+                {moreOpen ? (
+                  <div className="mt-3 space-y-4">
+                    {facetAttrs.map((attr) => (
+                      <div key={attr.id}>
+                        <p className="text-muted-foreground mb-1.5 text-xs font-medium">
+                          {attr.name}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {attr.options.map((opt) => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => toggleAttr(attr.slug, opt.slug)}
+                              className={chip(attrSel[attr.slug] === opt.slug)}
+                            >
+                              {opt.value}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
           </div>
 
         </div>
