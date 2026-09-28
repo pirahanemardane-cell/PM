@@ -96,7 +96,7 @@ function GlobeWireframe({
     (async () => {
       try {
         const res = await fetch(
-          "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+          "/geo/countries-110m.json",
         );
         const world = (await res.json()) as WorldAtlasTopology;
         setWorldData(
@@ -124,7 +124,7 @@ function GlobeWireframe({
   }, [autoRotate, autoRotateSpeed, isVisible]);
 
   useEffect(() => {
-    if (!svgRef.current || worldData.length === 0 || !isVisible) return;
+    if (!svgRef.current || !isVisible) return;
     if (dimensions.width === 0) return;
     const w = dimensions.width;
     const h = dimensions.height;
@@ -158,6 +158,7 @@ function GlobeWireframe({
       }
     }
 
+    if (worldData.length > 0) {
     svg
       .selectAll(".country")
       .data(worldData)
@@ -175,6 +176,7 @@ function GlobeWireframe({
       .attr("stroke", strokeColor)
       .attr("stroke-width", strokeWidth)
       .attr("opacity", 1);
+    }
 
     try {
       const sphere = path({ type: "Sphere" } as GeoPermissibleObjects);
@@ -341,7 +343,7 @@ export default function ContactWithGlobe({
               ))}
             </div>
 
-            <div className="relative h-52 overflow-hidden">
+            <div className="relative mt-2 h-64 w-full overflow-hidden sm:h-72">
               <GlobeWireframe
                 className="absolute top-0 left-0 aspect-square w-full max-w-full"
                 variant="wireframesolid"
