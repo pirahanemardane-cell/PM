@@ -56,22 +56,38 @@ export function About3({
   return (
     <section className="py-16 md:py-24" dir="rtl">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-14 grid gap-5 text-center md:grid-cols-2 md:text-right">
+        <div className="mb-14 text-right">
           <h1 className="text-secondary text-4xl font-thin md:text-5xl">
             {title}
           </h1>
-          <p className="text-muted-foreground text-base leading-relaxed">
-            {description}
-          </p>
+          {description ? (
+            <p className="text-muted-foreground mt-4 text-base leading-relaxed">
+              {description}
+            </p>
+          ) : null}
         </div>
 
         <div className="mx-auto max-w-xl">
           <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7">
             <div>
-              <p className="text-foreground mb-2 text-lg font-semibold">
+              <p className="text-foreground mb-3 text-lg font-semibold">
                 {breakout.title}
               </p>
-              <p className="text-muted-foreground">{breakout.description}</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-light-transparent.webp"
+                alt={breakout.alt || "لوگو"}
+                className="mb-3 h-14 w-auto object-contain dark:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/logo-dark-transparent.webp"
+                alt={breakout.alt || "لوگو"}
+                className="mb-3 hidden h-14 w-auto object-contain dark:block"
+              />
+              {breakout.description ? (
+                <p className="text-muted-foreground">{breakout.description}</p>
+              ) : null}
             </div>
             <Button
               variant="outline"

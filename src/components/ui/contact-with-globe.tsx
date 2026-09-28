@@ -275,34 +275,27 @@ export default function ContactWithGlobe({
       dir="rtl"
     >
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="mb-12 flex flex-col items-center gap-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: smoothEase }}
-            className="bg-secondary/10 border-secondary/30 inline-flex items-center rounded-full border px-4 py-1.5"
-          >
-            <span className="text-secondary text-sm font-medium">{subtitle}</span>
-          </motion.div>
+        <div className="mb-12 flex flex-col items-end gap-4 text-right">
           <motion.h1
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, delay: 0.15, ease: smoothEase }}
-            className="text-secondary text-4xl font-thin md:text-5xl lg:text-6xl"
+            className="text-secondary w-full text-right text-4xl font-thin md:text-5xl lg:text-6xl"
           >
             {title}
           </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9, delay: 0.3, ease: smoothEase }}
-            className="text-muted-foreground max-w-4xl text-sm sm:text-base whitespace-nowrap overflow-x-auto"
-          >
-            {description}
-          </motion.p>
+          {description ? (
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, delay: 0.3, ease: smoothEase }}
+              className="text-muted-foreground w-full max-w-4xl text-right text-sm sm:text-base"
+            >
+              {description}
+            </motion.p>
+          ) : null}
         </div>
 
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-10 lg:grid-cols-2">

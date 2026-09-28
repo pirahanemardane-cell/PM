@@ -11,7 +11,7 @@ export default function AboutPage() {
   return (
     <About3
       title="درباره پیراهن مردانه"
-      description="ما روی پیراهن مردانه و اکسسوری مرتبط تمرکز کرده‌ایم تا انتخاب سایز مطمئن، کیفیت دوخت مشخص و خرید بدون سردرگمی باشد."
+      description=""
       breakout={{
         src: "/logo.png",
         alt: "پیراهن مردانه",
