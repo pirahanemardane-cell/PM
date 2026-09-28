@@ -259,11 +259,10 @@ export function HeroScroll() {
               return (
                 <p
                   key={i}
-                  className="absolute inset-x-0 font-black leading-relaxed text-[#023047] dark:text-[#13ABC4]"
+                  className="absolute inset-x-0 font-black leading-relaxed text-[#023047] [-webkit-text-stroke:1px_#ffffff] dark:text-[#13ABC4] dark:[-webkit-text-stroke:1px_#212529]"
                   style={{
                     opacity: op,
                     transition: "opacity 40ms linear, transform 120ms linear",
-                    WebkitTextStroke: "1px #ffffff",
                     paintOrder: "stroke fill",
                     transform:
                       i === 2 && buttonOpacity > 0.05
