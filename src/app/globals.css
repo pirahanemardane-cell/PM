@@ -399,9 +399,9 @@ h4, .h4 { font-weight: 600 !important; }
   --popover: #2A2E32;
   --popover-foreground: #EBFFFB;
   --primary: #13ABC4;
-  --primary-foreground: #00363D;
-  --secondary: #EBFFFB;
-  --secondary-foreground: #00363D;
+  --primary-foreground: #212529;
+  --secondary: #13ABC4;
+  --secondary-foreground: #212529;
   --muted: #343A40;
   --muted-foreground: #ADB5BD;
   --accent: #004F58;
