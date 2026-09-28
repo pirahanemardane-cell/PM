@@ -57,7 +57,7 @@ export function About3({
     <section className="py-16 md:py-24" dir="rtl">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-14 grid gap-5 text-center md:grid-cols-2 md:text-right">
-          <h1 className="text-foreground text-4xl font-semibold md:text-5xl">
+          <h1 className="text-secondary text-4xl font-thin md:text-5xl">
             {title}
           </h1>
           <p className="text-muted-foreground text-base leading-relaxed">
@@ -67,15 +67,21 @@ export function About3({
 
         <div className="grid gap-7 lg:grid-cols-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mainImage.src}
-            alt={mainImage.alt}
-            className="size-full max-h-[620px] rounded-xl object-cover lg:col-span-2"
-          />
+          <div className="bg-muted flex size-full max-h-[620px] items-center justify-center rounded-xl lg:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt={mainImage.alt} className="h-24 w-auto object-contain dark:hidden" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-dark.png" alt={mainImage.alt} className="hidden h-24 w-auto object-contain dark:block" />
+          </div>
           <div className="flex flex-col gap-7 md:flex-row lg:flex-col">
             <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7 md:w-1/2 lg:w-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={breakout.src} alt={breakout.alt} className="ml-auto h-12" />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt={breakout.alt} className="ml-auto h-12 dark:hidden" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.png" alt={breakout.alt} className="ml-auto hidden h-12 dark:block" />
+              </>
               <div>
                 <p className="text-foreground mb-2 text-lg font-semibold">
                   {breakout.title}
@@ -91,11 +97,12 @@ export function About3({
               </Button>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={secondaryImage.src}
-              alt={secondaryImage.alt}
-              className="grow basis-0 rounded-xl object-cover md:w-1/2 lg:min-h-0 lg:w-auto"
-            />
+            <div className="bg-muted flex grow basis-0 items-center justify-center rounded-xl md:w-1/2 lg:min-h-[200px] lg:w-auto">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt={secondaryImage.alt} className="h-16 w-auto object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.png" alt={secondaryImage.alt} className="hidden h-16 w-auto object-contain dark:block" />
+            </div>
           </div>
         </div>
 
@@ -126,7 +133,7 @@ export function About3({
 
         <div className="bg-secondary/10 relative overflow-hidden rounded-xl p-10 md:p-16">
           <div className="flex flex-col gap-4 text-center md:text-right">
-            <h2 className="text-foreground text-3xl font-semibold md:text-4xl">
+            <h2 className="text-secondary text-3xl font-thin md:text-4xl">
               {achievementsTitle}
             </h2>
             <p className="text-muted-foreground max-w-screen-sm">

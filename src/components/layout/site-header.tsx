@@ -14,6 +14,7 @@ import { Heart, GitCompareArrows, ShoppingCart, History, Menu, X, Sun, Moon, Use
 import { cn } from "@/lib/utils"; const MAIN_NAV = [
   { href: "/", label: "خانه", mega: null as null | "categories" | "brands" | "sale" },
   { href: "/products", label: "فروشگاه", mega: null },
+  { href: "/contact", label: "تماس با ما", mega: null },
   { href: "/blog", label: "بلاگ", mega: null },
   { href: "/products", label: "دسته‌بندی‌ها", mega: "categories" as const },
   { href: "/brands", label: "برندها", mega: "brands" as const },

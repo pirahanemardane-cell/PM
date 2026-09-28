@@ -290,7 +290,7 @@ export default function ContactWithGlobe({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, delay: 0.15, ease: smoothEase }}
-            className="text-foreground text-4xl font-bold md:text-5xl lg:text-6xl"
+            className="text-secondary text-4xl font-thin md:text-5xl lg:text-6xl"
           >
             {title}
           </motion.h1>
