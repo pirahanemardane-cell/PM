@@ -10,7 +10,7 @@ const SCROLL_VH = 320;
 /** بازه‌های متن (ایندکس فریم ۰-based، مطابق اسکراب فعلی) */
 const SLIDES = [
   { start: 0, end: 23, text: "استایلی که فکر شده" },
-  { start: 24, end: 48, text: "هماهنگی از آستین تا یقه" },
+  { start: 24, end: 48, text: "انواع کیفیت و برند" },
   { start: 48, end: 69, text: "پیراهن مردانه" },
 ] as const;
 
@@ -39,11 +39,11 @@ function TitleContent({ text }: { text: string }) {
       </>
     );
   }
-  if (text === "هماهنگی از آستین تا یقه") {
+  if (text === "انواع کیفیت و برند") {
     return (
       <>
-        <span className="text-[20px] text-white md:text-[30px] lg:text-[40px]">هماهنگی از</span>{" "}
-        <span className="text-[40px] md:text-[55px] lg:text-[90px]">آستین تا یقه</span>
+        <span className="text-[20px] text-white md:text-[30px] lg:text-[40px]">انواع</span>{" "}
+        <span className="text-[40px] md:text-[55px] lg:text-[90px]">کیفیت و برند</span>
       </>
     );
   }
