@@ -278,7 +278,7 @@ export function HeroScroll() {
 
             {/* دکمه از فریم ۴۸ — زیر متن آخر */}
             <div
-              className="pointer-events-auto mt-20 flex translate-y-[8px] justify-center sm:mt-24"
+              className="pointer-events-auto mt-20 flex translate-y-[8px] justify-center sm:mt-24 sm:translate-y-[15px]"
               style={{
                 opacity: buttonOpacity,
                 pointerEvents: buttonOpacity > 0.15 ? "auto" : "none",
