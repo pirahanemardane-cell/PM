@@ -46,7 +46,7 @@ export function Footer({
             <div className="flex w-full flex-col items-center">
               <div className="flex flex-1 flex-col items-center space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-primary whitespace-nowrap text-6xl font-black tracking-tight">
+                  <span className="text-primary whitespace-nowrap text-6xl font-thin tracking-tight">
                     {brandName}
                   </span>
                 </div>
@@ -96,7 +96,7 @@ export function Footer({
           className="text-primary/35 pointer-events-none absolute bottom-8 left-1/2 z-0 max-w-[95vw] -translate-x-1/2 whitespace-nowrap px-4 text-center leading-none font-extrabold select-none sm:bottom-8 md:bottom-0"
           style={{
             fontSize: "clamp(1.35rem, 9vw, 9.5rem)",
-            letterSpacing: "0.06em",
+            letterSpacing: "-0.02em",
           }}
         >
           {watermarkName}
