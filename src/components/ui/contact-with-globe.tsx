@@ -269,19 +269,19 @@ export default function ContactWithGlobe({
   return (
     <section
       className={cn(
-        "bg-background relative w-full overflow-hidden py-16 md:py-20",
+        "bg-background relative w-full overflow-hidden py-12",
         className,
       )}
       dir="rtl"
     >
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="mb-12 flex flex-col items-end gap-4 text-right">
+        <div className="mb-8 text-right">
           <motion.h1
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, delay: 0.15, ease: smoothEase }}
-            className="text-secondary w-full text-right text-4xl font-thin md:text-5xl lg:text-6xl"
+            className="mb-6 w-full text-right text-2xl font-bold tracking-tight text-primary md:text-3xl"
           >
             {title}
           </motion.h1>
@@ -291,7 +291,7 @@ export default function ContactWithGlobe({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.9, delay: 0.3, ease: smoothEase }}
-              className="text-muted-foreground w-full max-w-4xl text-right text-sm sm:text-base"
+              className="text-muted-foreground w-full max-w-4xl text-right text-sm md:text-base"
             >
               {description}
             </motion.p>
