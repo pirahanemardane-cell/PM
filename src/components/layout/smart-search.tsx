@@ -243,7 +243,7 @@ export function SmartSearch({ className }: { className?: string }) {
               setSuggestOpen(false);
             }}
             className={cn(
-              "flex h-8 shrink-0 items-center gap-1 border-r border-border px-2 text-xs",
+              "flex h-8 shrink-0 items-center gap-1 rounded-lg border-r border-border px-2 text-xs",
               filterOpen || activeFilters
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted"
