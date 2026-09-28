@@ -35,14 +35,14 @@ function TitleContent({ text }: { text: string }) {
     return (
       <>
         <span className="text-[40px] md:text-[55px] lg:text-[90px]">استایلی</span>{" "}
-        <span className="text-[20px] text-white md:text-[30px] lg:text-[40px]">که فکر شده</span>
+        <span className="text-[20px] font-thin text-white md:text-[30px] lg:text-[40px]">که فکر شده</span>
       </>
     );
   }
   if (text === "انواع کیفیت و برند") {
     return (
       <>
-        <span className="text-[20px] text-white md:text-[30px] lg:text-[40px]">انواع</span>{" "}
+        <span className="text-[20px] font-thin text-white md:text-[30px] lg:text-[40px]">انواع</span>{" "}
         <span className="text-[40px] md:text-[55px] lg:text-[90px]">کیفیت و برند</span>
       </>
     );
