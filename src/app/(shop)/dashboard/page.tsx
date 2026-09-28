@@ -1419,7 +1419,7 @@ useEffect(() => {
                               : ""}
                           </p>
                           <p className="text-xs">
-                            {(p.price ?? 0).toLocaleString("fa-IR")} تومان
+                            {tab === "cart" ? `${tab === "cart" ? `${(p.price ?? 0).toLocaleString("fa-IR")} تومان` : ""}` : null}
                           </p>
                         </div>
                       </div>
