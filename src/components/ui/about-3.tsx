@@ -65,44 +65,21 @@ export function About3({
           </p>
         </div>
 
-        <div className="grid gap-7 lg:grid-cols-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <div className="bg-muted flex size-full max-h-[620px] items-center justify-center rounded-xl lg:col-span-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-light-transparent.webp" alt={mainImage.alt} className="h-24 w-auto object-contain dark:hidden" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-dark-transparent.webp" alt={mainImage.alt} className="hidden h-24 w-auto object-contain dark:block" />
-          </div>
-          <div className="flex flex-col gap-7 md:flex-row lg:flex-col">
-            <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7 md:w-1/2 lg:w-auto">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/logo-light-transparent.webp" alt={breakout.alt} className="ml-auto h-12 dark:hidden" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/logo-dark-transparent.webp" alt={breakout.alt} className="ml-auto hidden h-12 dark:block" />
-              </>
-              <div>
-                <p className="text-foreground mb-2 text-lg font-semibold">
-                  {breakout.title}
-                </p>
-                <p className="text-muted-foreground">{breakout.description}</p>
-              </div>
-              <Button
-                variant="outline"
-                className="border-secondary text-secondary hover:bg-secondary/10 ml-auto"
-                asChild
-              >
-                <a href={breakout.buttonUrl}>{breakout.buttonText}</a>
-              </Button>
+        <div className="mx-auto max-w-xl">
+          <div className="bg-secondary/10 border-secondary/20 flex flex-col justify-between gap-6 rounded-xl border p-7">
+            <div>
+              <p className="text-foreground mb-2 text-lg font-semibold">
+                {breakout.title}
+              </p>
+              <p className="text-muted-foreground">{breakout.description}</p>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div className="bg-muted flex grow basis-0 items-center justify-center rounded-xl md:w-1/2 lg:min-h-[200px] lg:w-auto">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/logo-light-transparent.webp" alt={secondaryImage.alt} className="h-16 w-auto object-contain dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/logo-dark-transparent.webp" alt={secondaryImage.alt} className="hidden h-16 w-auto object-contain dark:block" />
-            </div>
+            <Button
+              variant="outline"
+              className="border-secondary text-secondary hover:bg-secondary/10 ml-auto"
+              asChild
+            >
+              <a href={breakout.buttonUrl}>{breakout.buttonText}</a>
+            </Button>
           </div>
         </div>
 
