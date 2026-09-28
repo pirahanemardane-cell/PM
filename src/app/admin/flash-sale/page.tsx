@@ -1,4 +1,5 @@
 "use client";
+import { toJalaliInputValue, jalaliInputToIso } from "@/lib/dates/jalali";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -64,7 +65,7 @@ export default function AdminFlashSalePage() {
     setItems((prod.items as Row[]) ?? []);
 
     if (settings.ok) {
-      setEndsLocal(toLocalInputValue(settings.endsAt));
+      setEndsLocal(toJalaliInputValue(settings.endsAt));
       setTableMissing(Boolean((settings as { tableMissing?: boolean }).tableMissing));
     }
   }, []);
@@ -103,7 +104,7 @@ export default function AdminFlashSalePage() {
     e.preventDefault();
     setSavingEnds(true);
     setError(null);
-    const iso = endsLocal ? new Date(endsLocal).toISOString() : null;
+    const iso = endsLocal ? jalaliInputToIso(endsLocal) : null;
     const res = await adminSetFlashSaleEndsAtAction(iso);
     setSavingEnds(false);
     if (!res.ok) {
@@ -159,7 +160,7 @@ export default function AdminFlashSalePage() {
                 تاریخ و ساعت پایان
               </span>
               <input
-                type="datetime-local"
+                type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr"
                 value={endsLocal}
                 onChange={(e) => setEndsLocal(e.target.value)}
                 className="border-input bg-background h-10 rounded-xl border px-3 text-sm"

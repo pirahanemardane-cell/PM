@@ -1,4 +1,5 @@
 "use client";
+import { toJalaliInputValue, jalaliInputToIso } from "@/lib/dates/jalali";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -191,7 +192,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setImageUrl(String(p.image_url ?? ""));
       setSizeGuideId(String(p.size_guide_id ?? "") || "");
       {
-        const pa = p.published_at ? String(p.published_at) : "";
+        const pa = p.published_at ? toJalaliInputValue(p.published_at) : "";
         if (pa) {
           const d = new Date(pa);
           if (!Number.isNaN(d.getTime())) {
@@ -378,7 +379,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         resolvedPublishedAt = new Date().toISOString();
       } else if (publishMode === "schedule" && publishedAt) {
         resolvedStatus = "published";
-        const d = new Date(publishedAt);
+        const iso = jalaliInputToIso(publishedAt);
+        const d = iso ? new Date(iso) : new Date(NaN);
         resolvedPublishedAt = Number.isNaN(d.getTime()) ? null : d.toISOString();
       } else if (publishMode === "draft") {
         resolvedStatus = "draft";
@@ -1452,7 +1454,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 ))}
               </div>
               {publishMode === "schedule" ? (
-                <input type="datetime-local" className="border-input bg-background mt-2 w-full rounded-lg border px-3 py-2" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
+                <input type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr" className="border-input bg-background mt-2 w-full rounded-lg border px-3 py-2 font-mono text-sm" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
+                <p className="text-muted-foreground mt-1 text-[11px]">فرمت شمسی: سال/ماه/روز ساعت:دقیقه</p>
               ) : null}
             </div>
             <label className="flex items-center gap-2 text-sm">

@@ -13,7 +13,7 @@ import {
   adminSetDiscountActiveAction,
 } from "@/app/admin/actions/discounts";
 import { LumaSpin } from "@/components/ui/luma-spin";
-import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { formatJalaliDate, formatJalaliDateTime, jalaliInputToIso } from "@/lib/dates/jalali";
 
 
 type Row = {
@@ -174,9 +174,9 @@ export default function AdminDiscountsPage() {
         : 0,
       max_uses: form.max_uses ? Number(form.max_uses) : null,
       starts_at: form.starts_at
-        ? new Date(form.starts_at).toISOString()
+        ? jalaliInputToIso(form.starts_at)
         : null,
-      ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
+      ends_at: form.ends_at ? jalaliInputToIso(form.ends_at) : null,
       once_per_user: form.once_per_user,
     });
     setCreating(false);
@@ -301,7 +301,7 @@ export default function AdminDiscountsPage() {
           <label className="text-muted-foreground flex flex-col gap-1 text-xs">
             شروع اعتبار
             <input
-              type="datetime-local"
+              type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr"
               value={form.starts_at}
               onChange={(e) =>
                 setForm((f) => ({ ...f, starts_at: e.target.value }))
@@ -312,7 +312,7 @@ export default function AdminDiscountsPage() {
           <label className="text-muted-foreground flex flex-col gap-1 text-xs">
             پایان اعتبار
             <input
-              type="datetime-local"
+              type="text" inputMode="numeric" placeholder="1404/07/06 15:30" dir="ltr"
               value={form.ends_at}
               onChange={(e) =>
                 setForm((f) => ({ ...f, ends_at: e.target.value }))
