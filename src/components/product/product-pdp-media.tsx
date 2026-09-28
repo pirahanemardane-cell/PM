@@ -76,7 +76,7 @@ export function ProductPdpGalleryAndBuy({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-8 lg:items-start">
       {/* تصویر — موبایل: بعد از عنوان */}
-      <div className="max-lg:order-2 min-w-0 w-full overflow-hidden">
+      <div className="max-lg:order-2 min-w-0 w-full overflow-hidden max-lg:mb-2">
         <ProductGallery
           productName={productName}
           images={images}
@@ -86,7 +86,7 @@ export function ProductPdpGalleryAndBuy({
           href={href}
         />
         <div className="mt-4 hidden lg:block space-y-6">
-          {childrenBelowGallery}
+          <div className="mt-6 md:mt-5">{childrenBelowGallery}</div>
           {childrenSpecs}
         </div>
       </div>
@@ -99,7 +99,7 @@ export function ProductPdpGalleryAndBuy({
 
         {/* موبایل order-3: خلاصه/مشخصات بعد از تصویر */}
         {childrenBeforeBuy ? (
-          <div className="max-lg:order-3 space-y-6">{childrenBeforeBuy}</div>
+          <div className="max-lg:order-3 max-lg:mt-6 space-y-6 lg:mt-0">{childrenBeforeBuy}</div>
         ) : null}
 
         <div className="max-lg:order-4">
@@ -116,7 +116,7 @@ export function ProductPdpGalleryAndBuy({
         {childrenSpecs ? (
           <div className="max-lg:order-5 space-y-6 lg:hidden">{childrenSpecs}</div>
         ) : null}
-        <div className="max-lg:order-6 mt-4 lg:hidden">{childrenBelowGallery}</div>
+        <div className="max-lg:order-6 mt-6 lg:hidden"><div className="mt-6 md:mt-5">{childrenBelowGallery}</div></div>
         <div className="max-lg:order-7">{childrenAfterBuy}</div>
       </div>
     </div>

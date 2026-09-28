@@ -154,7 +154,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
 <ProductPdpGalleryAndBuy
         childrenBelowGallery={
-          <div className="mt-4">
+          <div className="mt-6 md:mt-5">
             <PriceHistory points={priceHistory} />
           </div>
         }
