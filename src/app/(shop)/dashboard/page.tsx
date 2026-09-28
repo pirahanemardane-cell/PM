@@ -1419,7 +1419,7 @@ useEffect(() => {
                               : ""}
                           </p>
                           <p className="text-xs">
-                            {tab === "cart" ? `${tab === "cart" ? `${(p.price ?? 0).toLocaleString("fa-IR")} تومان` : ""}` : null}
+                            {tab === "cart" ? `${(p.price ?? 0).toLocaleString("fa-IR")} تومان` : null}
                           </p>
                         </div>
                       </div>
@@ -1483,11 +1483,6 @@ useEffect(() => {
                         )}
                         <div className="min-w-0 text-right">
                           <p className="truncate font-medium">{p.title}</p>
-                          <p className="text-xs">
-                            {typeof p.price === "number"
-                              ? `${p.price.toLocaleString("fa-IR")} تومان`
-                              : ""}
-                          </p>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
