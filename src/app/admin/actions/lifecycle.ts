@@ -28,22 +28,25 @@ export async function adminArchiveProductsAction(ids: string[]) {
   }
 }
 
-/** Permanent delete — blocked if order_items reference the product */
+/** Permanent delete — حتی اگر در سفارش باشد (لینک order_items قطع می‌شود) */
 export async function adminHardDeleteProductsAction(ids: string[]) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   const list = cleanIds(ids);
   if (!list.length) return { ok: false as const, error: "empty" as const };
   try {
-    const { count, error: cErr } = await gate.supabase
-      .from("order_items")
-      .select("id", { count: "exact", head: true })
+    const { data: variants } = await gate.supabase
+      .from("product_variants")
+      .select("id")
       .in("product_id", list);
-    if (cErr) throw cErr;
-    if ((count ?? 0) > 0) {
+    const variantIds = (variants ?? []).map((v: { id: string }) => v.id);
+
+    // قطع ارجاع از سفارش‌ها (تاریخچه سفارش می‌ماند)
+    await gate.supabase.from("order_items").update({ product_id: null }).in("product_id", list);
+    if (variantIds.length) {
+      await gate.supabase.from("order_items").update({ variant_id: null }).in("variant_id", variantIds);
     }
 
-    // children (best-effort; ignore missing tables)
     for (const table of [
       "product_tag_map",
       "product_attribute_values",
@@ -51,6 +54,7 @@ export async function adminHardDeleteProductsAction(ids: string[]) {
       "stock_alerts",
       "wishlists",
       "cart_items",
+      "reviews",
       "product_variants",
     ]) {
       await gate.supabase.from(table).delete().in("product_id", list);
