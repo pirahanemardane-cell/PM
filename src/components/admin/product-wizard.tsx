@@ -379,7 +379,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       }
     }
     if (s === 8 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
-    if (s === 9 && publishMode === "schedule") {
+    if (s === 8 && publishMode === "schedule") {
       if (!publishedAt.trim()) return "تاریخ زمان‌بندی الزامی است";
     }
     return null;
@@ -1411,7 +1411,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           >
             {status === "published" ? "به‌روزرسانی" : "ذخیره پیش‌نویس"}
           </button>
-          {step < 9 ? (
+          {step < 8 ? (
             <button
               type="button"
               className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"
