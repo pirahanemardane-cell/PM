@@ -257,17 +257,13 @@ export function ProductBuyBox({
                 type="button"
                 onClick={() => { setSelectedColor(c.name); onColorChange?.(c.name); }}
                 className={cn(
-                  "border-border inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs shadow-sm",
+                  "border-border h-8 w-8 shrink-0 rounded-full border shadow-sm",
                   selectedColor === c.name && "border-primary ring-primary ring-2 ring-offset-2",
                 )}
+                style={{ backgroundColor: c.hex || "#e5e5e5" }}
                 title={c.name}
-              >
-                <span
-                  className="border-border h-4 w-4 shrink-0 rounded-full border"
-                  style={{ backgroundColor: c.hex || "#e5e5e5" }}
-                />
-                <span>{c.name}</span>
-              </button>
+                aria-label={c.name}
+              />
             ))}
           </div>
         </div>
@@ -320,23 +316,23 @@ export function ProductBuyBox({
             +
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
           {price != null && hasDiscount ? (
             <Price amount={originalPrice!} size="sm" strike className="text-muted-foreground" />
           ) : null}
           {price != null ? (
-            <p className="text-sm font-semibold">
+            <span className="text-sm font-semibold">
               <Price amount={Number(price)} size="pdp" />
-            </p>
+            </span>
           ) : null}
-          <p
+          <span
             className={cn(
-              "text-xs whitespace-nowrap",
+              "text-xs",
               outOfStock ? "text-destructive" : "text-muted-foreground",
             )}
           >
             {outOfStock ? "ناموجود" : `موجودی: ${stock.toLocaleString("fa-IR")}`}
-          </p>
+          </span>
         </div>
       </div>
 
