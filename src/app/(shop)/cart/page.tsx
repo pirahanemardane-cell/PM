@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Price } from "@/components/ui/price";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -10,6 +9,7 @@ import { useUnifiedCart } from "@/lib/use-unified-cart";
 import {
   removeCartItemAction,
   updateCartQuantityAction,
+  swapCartVariantAction,
 } from "@/app/(shop)/actions/shop";
 import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
@@ -22,9 +22,11 @@ export default function CartPage() {
   const localCart = useShopStore((s) => s.cart);
   const removeFromCart = useShopStore((s) => s.removeFromCart);
   const setCartQuantity = useShopStore((s) => s.setCartQuantity);
+  const updateCartItem = useShopStore((s) => s.updateCartItem);
   const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } =
     useUnifiedCart();
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
   const lines = useMemo(() => {
     if (isLoggedIn && unifiedLines.length > 0) {
@@ -39,6 +41,9 @@ export default function CartPage() {
         size: l.size,
         color: l.color,
         colorHex: l.colorHex,
+        colors: l.colors ?? [],
+        sizes: l.sizes ?? [],
+        variantOptions: l.variantOptions ?? [],
       }));
     }
     return localCart.map((p) => ({
@@ -52,6 +57,14 @@ export default function CartPage() {
       size: p.size,
       color: p.color?.startsWith("#") ? undefined : p.color,
       colorHex: p.color?.startsWith("#") ? p.color : undefined,
+      colors: p.colors ?? [],
+      sizes: p.sizes ?? [],
+      variantOptions: [] as {
+        color?: string;
+        colorHex?: string;
+        size?: string;
+        stock: number;
+      }[],
     }));
   }, [isLoggedIn, unifiedLines, localCart]);
 
@@ -63,6 +76,7 @@ export default function CartPage() {
   async function changeQty(line: (typeof lines)[number], next: number) {
     const q = Math.max(1, Math.min(99, Math.floor(next)));
     setBusyKey(line.key);
+    setMsg(null);
     try {
       if (isLoggedIn && line.variantId) {
         const res = await updateCartQuantityAction(line.variantId, q);
@@ -77,6 +91,7 @@ export default function CartPage() {
 
   async function removeLine(line: (typeof lines)[number]) {
     setBusyKey(line.key);
+    setMsg(null);
     try {
       if (isLoggedIn && line.variantId) {
         await removeCartItemAction(line.variantId);
@@ -92,13 +107,107 @@ export default function CartPage() {
     }
   }
 
+  async function changeVariant(
+    line: (typeof lines)[number],
+    patch: { size?: string; colorHex?: string; color?: string },
+  ) {
+    const nextSize = patch.size !== undefined ? patch.size : line.size;
+    const nextHex =
+      patch.colorHex !== undefined
+        ? patch.colorHex
+        : line.colorHex || (line.color?.startsWith("#") ? line.color : undefined);
+    const nextColorName =
+      patch.color !== undefined
+        ? patch.color
+        : line.color && !line.color.startsWith("#")
+          ? line.color
+          : undefined;
+
+    // اگر همان ترکیب فعلی بود، کاری نکن
+    const sameSize = (nextSize || "") === (line.size || "");
+    const sameColor =
+      (nextHex || nextColorName || "").replace(/^#/, "").toLowerCase() ===
+      (line.colorHex || line.color || "").replace(/^#/, "").toLowerCase();
+    if (sameSize && sameColor) return;
+
+    setBusyKey(line.key);
+    setMsg(null);
+    try {
+      if (isLoggedIn && line.variantId && line.productId) {
+        const res = await swapCartVariantAction({
+          oldVariantId: line.variantId,
+          productId: line.productId,
+          colorHex: nextHex || nextColorName || null,
+          size: nextSize || null,
+          quantity: line.quantity,
+        });
+        if (!res.ok) {
+          if (res.error?.startsWith("insufficient_stock")) {
+            setMsg("موجودی این ترکیب کافی نیست.");
+          } else if (res.error === "variant_not_found") {
+            setMsg("این ترکیب رنگ/سایز موجود نیست.");
+          } else {
+            setMsg("تغییر رنگ/سایز ممکن نشد.");
+          }
+          return;
+        }
+        window.dispatchEvent(new Event("pm:cart-changed"));
+      } else {
+        // سبد محلی (مهمان)
+        updateCartItem(line.key, {
+          size: nextSize,
+          color: nextHex || nextColorName,
+        });
+      }
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  function availableSizes(line: (typeof lines)[number]): string[] {
+    if (line.sizes?.length) return line.sizes;
+    if (line.variantOptions?.length) {
+      return [
+        ...new Set(
+          line.variantOptions
+            .map((o) => (o.size || "").trim())
+            .filter(Boolean),
+        ),
+      ];
+    }
+    return line.size ? [line.size] : [];
+  }
+
+  function availableColors(line: (typeof lines)[number]): string[] {
+    if (line.colors?.length) return line.colors;
+    if (line.variantOptions?.length) {
+      const keys: string[] = [];
+      for (const o of line.variantOptions) {
+        const k = (o.colorHex || o.color || "").trim();
+        if (!k) continue;
+        if (
+          !keys.some(
+            (x) =>
+              x.replace(/^#/, "").toLowerCase() ===
+              k.replace(/^#/, "").toLowerCase(),
+          )
+        ) {
+          keys.push(k);
+        }
+      }
+      return keys;
+    }
+    const cur = line.colorHex || line.color;
+    return cur ? [cur] : [];
+  }
+
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-10" dir="rtl">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            اقلام انتخاب‌شده قبل از تسویه حساب
+            اقلام انتخاب‌شده — می‌توانید رنگ، سایز و تعداد را تغییر دهید
           </p>
         </div>
         <Link
@@ -108,6 +217,12 @@ export default function CartPage() {
           ادامه خرید
         </Link>
       </div>
+
+      {msg ? (
+        <p className="text-destructive border-destructive/30 bg-destructive/5 rounded-xl border px-3 py-2 text-sm">
+          {msg}
+        </p>
+      ) : null}
 
       {lines.length === 0 ? (
         <div className="border-border bg-card rounded-2xl border px-6 py-16 text-center">
@@ -125,15 +240,27 @@ export default function CartPage() {
             {lines.map((p) => {
               const qty = Number(p.quantity ?? 1);
               const busy = busyKey === p.key;
+              const sizes = availableSizes(p);
+              const colors = availableColors(p);
+              const currentColorKey = (
+                p.colorHex ||
+                p.color ||
+                ""
+              ).replace(/^#/, "").toLowerCase();
+
               return (
                 <li key={p.key} className="flex gap-3 p-4">
                   <div className="bg-muted h-20 w-20 shrink-0 overflow-hidden rounded-xl">
                     {p.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.image} alt="" className="h-full w-full object-cover" />
+                      <img
+                        src={p.image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
                     ) : null}
                   </div>
-                  <div className="min-w-0 flex-1 space-y-1 text-right">
+                  <div className="min-w-0 flex-1 space-y-2 text-right">
                     <p className="text-sm font-medium">{p.title}</p>
                     <p className="text-muted-foreground text-xs">
                       {fmtPrice(Number(p.price))}
@@ -142,25 +269,73 @@ export default function CartPage() {
                     <p className="text-xs font-medium">
                       جمع: {fmtPrice(Number(p.price) * qty)}
                     </p>
-                    {(p.colorHex || p.color || p.size) && (
-                      <div className="flex flex-wrap justify-end gap-2 text-[11px]">
-                        {(p.colorHex || p.color) && (
-                          <span className="inline-flex items-center gap-1">
-                            <span
-                              className="inline-block h-3.5 w-3.5 rounded-full border"
-                              style={{
-                                backgroundColor: resolveColorHex(
-                                  p.colorHex || p.color,
-                                ),
-                              }}
-                            />
-                            رنگ
-                          </span>
-                        )}
-                        {p.size ? <span>سایز: {p.size}</span> : null}
+
+                    {/* رنگ */}
+                    {colors.length > 0 ? (
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-[11px]">رنگ</p>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {colors.map((c) => {
+                            const hex = resolveColorHex(c) || c;
+                            const key = c.replace(/^#/, "").toLowerCase();
+                            const active = key === currentColorKey;
+                            return (
+                              <button
+                                key={c}
+                                type="button"
+                                disabled={busy}
+                                title={c}
+                                onClick={() =>
+                                  void changeVariant(p, {
+                                    colorHex: c.startsWith("#") ? c : hex,
+                                    color: c.startsWith("#") ? undefined : c,
+                                  })
+                                }
+                                className={`h-7 w-7 rounded-full border-2 transition ${
+                                  active
+                                    ? "border-primary ring-2 ring-primary/30"
+                                    : "border-border hover:border-primary/50"
+                                } disabled:opacity-40`}
+                                style={{ backgroundColor: hex || c }}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-end gap-2 pt-2">
+                    ) : null}
+
+                    {/* سایز */}
+                    {sizes.length > 0 ? (
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-[11px]">سایز</p>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          {sizes.map((sz) => {
+                            const active =
+                              (sz || "").toUpperCase() ===
+                              (p.size || "").toUpperCase();
+                            return (
+                              <button
+                                key={sz}
+                                type="button"
+                                disabled={busy}
+                                onClick={() =>
+                                  void changeVariant(p, { size: sz })
+                                }
+                                className={`h-8 min-w-[2.25rem] rounded-lg border px-2 text-xs font-medium transition ${
+                                  active
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border hover:border-primary/50"
+                                } disabled:opacity-40`}
+                              >
+                                {sz}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-end gap-2 pt-1">
                       <div className="border-border flex items-center rounded-lg border">
                         <button
                           type="button"
