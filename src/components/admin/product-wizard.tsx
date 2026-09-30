@@ -204,42 +204,48 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       }
       const tagIds = (p.tag_ids as string[]) || [];
       setSelectedTags(tagIds);
-      const vars = (p.variants as Array<Record<string, unknown>>) || [];
-      if (vars.length > 1 || (vars[0] && (vars[0].size || vars[0].color_name))) {
+      const varsAll = (p.variants as Array<Record<string, unknown>>) || [];
+      // فقط واریانت‌های فعال؛ اگر هیچ فعالی نبود همه را بگیر (حالت بازیابی)
+      const varsActive = varsAll.filter((v) => v.is_active !== false);
+      const vars = varsActive.length ? varsActive : varsAll;
+      const imgsEarly =
+        (p.images as Array<{ url?: string; variant_id?: string | null }>) || [];
+      const byVariant = new Map<string, string>();
+      for (const im of imgsEarly) {
+        if (im.variant_id && im.url) byVariant.set(String(im.variant_id), String(im.url));
+      }
+      const hasSized = vars.some((v) => v.size || v.color_name);
+      if (hasSized || vars.length > 1) {
         setProductType("variable");
-        {
-          const imgsEarly =
-            (p.images as Array<{ url?: string; variant_id?: string | null }>) || [];
-          const byVariant = new Map<string, string>();
-          for (const im of imgsEarly) {
-            if (im.variant_id && im.url) byVariant.set(String(im.variant_id), String(im.url));
-          }
-          setVariants(
-            vars.map((v) => {
+        setVariants(
+          vars
+            .filter((v) => v.size || v.color_name || vars.length === 1)
+            .map((v) => {
               const vid = v.id ? String(v.id) : undefined;
+              const pr = Number(v.price ?? 0);
+              const op = Number(v.original_price ?? 0);
+              // در UI: original_price = قیمت اصلی، price = قیمت بعد از تخفیف
+              const main = op > pr && op > 0 ? op : pr > 0 ? pr : op;
+              const sale = op > pr && pr > 0 ? pr : "";
               return {
                 key: String(v.id ?? `e-${Math.random()}`),
                 id: vid,
                 size: String(v.size ?? ""),
                 color_name: String(v.color_name ?? ""),
                 sku: String(v.sku ?? ""),
-                price: String(v.price ?? ""),
-                original_price: String(v.original_price ?? ""),
+                price: sale !== "" ? String(sale) : "",
+                original_price: main > 0 ? String(main) : String(v.original_price ?? v.price ?? ""),
                 stock: String(v.stock_quantity ?? v.stock ?? "0"),
                 image_url: String(
                   (vid && byVariant.get(vid)) || v.image_url || "",
                 ),
               };
             }),
-          );
-        }
+        );
       } else if (vars[0]) {
         setProductType("variable");
         setSimpleSku(String(vars[0].sku ?? ""));
         setSimpleStock(String(vars[0].stock_quantity ?? vars[0].stock ?? "0"));
-        setPrice(String(vars[0].price ?? ""));
-        setSalePrice(String(vars[0].original_price ?? "") === String(vars[0].price ?? "") ? "" : String(vars[0].original_price ?? ""));
-        // price = selling, original = higher struck-through in some schemas — map carefully
         const pr = Number(vars[0].price);
         const op = Number(vars[0].original_price);
         if (op && op > pr) {
@@ -249,6 +255,25 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           setPrice(String(vars[0].price ?? ""));
           setSalePrice("");
         }
+        // واریانت ساده را هم در لیست نگه دار تا با ذخیره بعدی پاک نشود
+        const vid = vars[0].id ? String(vars[0].id) : undefined;
+        setVariants([
+          {
+            key: String(vars[0].id ?? `e-${Math.random()}`),
+            id: vid,
+            size: "",
+            color_name: "",
+            sku: String(vars[0].sku ?? ""),
+            price: "",
+            original_price: String(
+              op && op > pr ? op : vars[0].price ?? "",
+            ),
+            stock: String(vars[0].stock_quantity ?? vars[0].stock ?? "0"),
+            image_url: String(
+              (vid && byVariant.get(vid)) || vars[0].image_url || "",
+            ),
+          },
+        ]);
       }
       const imgs =
         (p.images as Array<{

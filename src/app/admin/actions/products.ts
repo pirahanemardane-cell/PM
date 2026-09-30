@@ -424,8 +424,8 @@ export async function adminGetProductAction(id: string) {
       (x) => x.tag_id,
     );
     const images = (
-      (data as { product_images?: { id: string; url: string; is_primary?: boolean }[] }).product_images ?? []
-    ).map((im) => ({ id: im.id, url: im.url, is_primary: im.is_primary }));
+      (data as { product_images?: { id: string; url: string; is_primary?: boolean; variant_id?: string | null }[] }).product_images ?? []
+    ).map((im) => ({ id: im.id, url: im.url, is_primary: im.is_primary, variant_id: im.variant_id ?? null }));
     const primary = images.find((i) => i.is_primary) ?? images[0];
     const variants = ((data as { product_variants?: unknown[] }).product_variants ?? []).map((v) => {
       const row = v as Record<string, unknown>;
@@ -533,15 +533,24 @@ export async function adminUpdateProductAction(
         ? Number(input.price)
         : undefined;
 
-    // فقط قیمت/موجودی وریانت اول — بدون size/color/sku (جلوگیری از unique)
-    const { data: variants } = await gate.supabase
+    // فقط اگر محصول هنوز «تک‌واریانت ساده» است (بدون سایز/رنگ) قیمت را روی همان یکی بنویس.
+    // اگر واریانت سایز/رنگ‌دار وجود دارد، هرگز این‌جا دست نزن — sync جداگانه مسئول است.
+    const { data: allVars } = await gate.supabase
       .from("product_variants")
-      .select("id")
+      .select("id, size, color_name, is_active")
       .eq("product_id", id)
-      .order("created_at", { ascending: true })
-      .limit(1);
+      .order("created_at", { ascending: true });
 
-    if (variants?.[0]?.id && price !== undefined) {
+    const hasSized = (allVars ?? []).some(
+      (v: { size?: string | null; color_name?: string | null }) =>
+        !!(v.size || v.color_name),
+    );
+    const firstSimple = (allVars ?? []).find(
+      (v: { size?: string | null; color_name?: string | null }) =>
+        !v.size && !v.color_name,
+    );
+
+    if (!hasSized && firstSimple?.id && price !== undefined) {
       if (price < 0) {
         return { ok: false as const, error: "price" };
       }
@@ -557,7 +566,7 @@ export async function adminUpdateProductAction(
           stock_quantity: Math.max(0, Number(input.stock_quantity ?? 0) || 0),
           is_active: true,
         })
-        .eq("id", variants[0].id);
+        .eq("id", firstSimple.id);
       if (vErr) {
         console.error("[adminUpdateProduct variant]", vErr);
         return {
@@ -966,7 +975,13 @@ export async function adminSyncProductVariantsAction(
       console.error("[linkVariantImages sync]", e);
     }
 
-    return { ok: true as const };
+    try {
+      await revalidateProductPaths(gate.supabase, productId);
+    } catch (re) {
+      console.warn("[sync revalidate]", re);
+    }
+
+    return { ok: true as const, count: resolved.length };
   } catch (e) {
     console.error("[adminSyncProductVariants]", e);
     const msg =
