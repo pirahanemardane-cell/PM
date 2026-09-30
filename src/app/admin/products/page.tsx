@@ -216,7 +216,17 @@ export default function AdminProductsPage() {
       return;
     }
     setItems((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...flags } : p)),
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = { ...p, ...flags };
+        if (flags.status === "archived") {
+          next.deleted_at = next.deleted_at || new Date().toISOString();
+          next.status = "archived";
+        } else if (flags.status === "draft" || flags.status === "published") {
+          next.deleted_at = null;
+        }
+        return next;
+      }),
     );
   }
 

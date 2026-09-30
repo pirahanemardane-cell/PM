@@ -158,7 +158,16 @@ export async function adminSetProductFlagsAction(
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
-    const { error } = await gate.supabase.from("products").update(patch).eq("id", id);
+    const body: Record<string, unknown> = { ...patch };
+    // همگام‌سازی deleted_at با وضعیت
+    if (patch.status === "archived") {
+      body.deleted_at = new Date().toISOString();
+      body.status = "archived";
+    } else if (patch.status === "draft" || patch.status === "published") {
+      body.deleted_at = null;
+      body.status = patch.status;
+    }
+    const { error } = await gate.supabase.from("products").update(body).eq("id", id);
     if (error) throw error;
     return { ok: true as const };
   } catch {
