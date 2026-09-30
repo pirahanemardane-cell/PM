@@ -11,7 +11,6 @@ import {
 import {
   adminListProductsAction,
   adminUpdateProductFlagsAction,
-  adminSoftDeleteProductAction,
   adminListCategoriesAction,
   adminListBrandsAction,
   adminQuickUpdateProductAction,
@@ -238,19 +237,6 @@ export default function AdminProductsPage() {
     setItems((prev) => prev.map((p) => (p.id === id ? { ...p, oos: out } : p)));
   }
 
-  async function softDelete(id: string, name: string) {
-    if (!confirm(`«${name}» حذف شود؟ (حذف نرم — قابل بازیابی از دیتابیس)`)) {
-      return;
-    }
-    setBusyId(id);
-    const res = await adminSoftDeleteProductAction(id);
-    setBusyId(null);
-    if (!res.ok) {
-      setError("حذف ناموفق بود");
-      return;
-    }
-    setItems((prev) => prev.filter((p) => p.id !== id));
-  }
 
   return (
     <div className="bg-background min-h-screen p-6" dir="rtl">
@@ -571,11 +557,10 @@ export default function AdminProductsPage() {
                           </Link>
                           <button
                             type="button"
-                            disabled={busyId === p.id}
-                            onClick={() => void softDelete(p.id, p.name)}
-                            className="text-destructive text-xs hover:underline disabled:opacity-50"
+                            className="text-muted-foreground text-xs hover:underline"
+                            onClick={() => void archiveOne(p.id, p.name)}
                           >
-                            حذف
+                            آرشیو
                           </button>
                           <button
                             type="button"
