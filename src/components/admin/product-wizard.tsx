@@ -1198,7 +1198,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       />
                       <input
-                        className="border-input bg-background w-28 rounded border px-2 py-1 text-sm"
+                        className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
                         placeholder="قیمت اصلی"
                         inputMode="numeric"
                         value={v.original_price}
@@ -1213,9 +1213,11 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       />
                       <input
-                        placeholder="قیمت بعد از تخفیف"
                         className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
-                        value={v.price} title="قیمت بعد از تخفیف"
+                        placeholder="قیمت بعد از تخفیف"
+                        inputMode="numeric"
+                        value={v.price}
+                        title="قیمت بعد از تخفیف"
                         onChange={(e) => {
                           const val = e.target.value;
                           setVariants((rows) =>
@@ -1244,44 +1246,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                     </button>
                   </div>
                 ))}
-                <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="bg-muted rounded-lg px-3 py-1.5 text-sm"
-                  onClick={() =>
-                    setVariants((rows) => [
-                      ...rows,
-                      emptyVariant({ price: String(sellingPrice || ""), original: String(originalPrice || "") }),
-                    ])
-                  }
-                >
-                  + واریانت
-                </button>
-                <button
-                  type="button"
-                  className="border-border rounded-lg border px-3 py-1.5 text-sm"
-                  onClick={() => {
-                    const sizes = sizeChoices.length ? sizeChoices : [{ id: "", value: "" }];
-                    const colors = colorChoices.length ? colorChoices : [{ id: "", value: "" }];
-                    const rows = [];
-                    for (const s of sizes) {
-                      for (const c of colors) {
-                        rows.push(
-                          emptyVariant({
-                            price: String(sellingPrice || ""),
-                            original: String(originalPrice || ""),
-                          }),
-                        );
-                        rows[rows.length - 1].size = s.value || "";
-                        rows[rows.length - 1].color_name = c.value || "";
-                      }
-                    }
-                    if (rows.length) setVariants(rows);
-                  }}
-                >
-                  ساخت از سایز×رنگ
-                </button>
-                </div>
               </div>
             }
           </div>
