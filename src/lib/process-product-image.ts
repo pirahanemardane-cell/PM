@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const WEBP_QUALITY = 100;
+const WEBP_QUALITY = 82;
 const WATERMARK_RATIO = 0.14; // smaller mark on product photos
 const MARGIN_RATIO = 0.03;
 const WATERMARK_OPACITY = 0.40;
@@ -17,11 +17,11 @@ const WATERMARK_PUBLIC_URL =
     : `https://pirahanmardane.ir/brand/${WATERMARK_FILE}`;
 
 export const PRODUCT_IMAGE_SIZES = {
-  thumb: 800,
-  small: 800,
+  thumb: 320,
+  small: 480,
   medium: 800,
-  large: 800,
-} as const as const;
+  large: 1200,
+} as const;
 
 export type ProductImageSizeName = keyof typeof PRODUCT_IMAGE_SIZES;
 
@@ -130,7 +130,7 @@ export async function processProductImageSizes(
     number,
   ][]) {
     // همه خروجی‌ها مربع ۸۰۰×۸۰۰ (center cover)
-    const side = 800;
+    const side = maxW;
 
     // 1) base: cover → 800×800 + mild sharpen (فقط عکس، نه لوگو)
     const resized = await sharp(rotated)
@@ -170,11 +170,11 @@ export async function processProductImageSizes(
     // 3) WebP بالاترین کیفیت عملی (nearLossless + effort max)
     out[name] = await pipeline
       .webp({
-        quality: 100,
-        alphaQuality: 100,
+        quality: 82,
+        alphaQuality: 90,
         effort: 6,
         smartSubsample: true,
-        nearLossless: true,
+        nearLossless: false,
       })
       .toBuffer();
   }

@@ -1,17 +1,50 @@
 import { createClient } from "@/lib/supabase/server";
 
-/** ثبت نقطهٔ قیمت — خطا نباید جریان اصلی را بشکند */
+export function averageVariantPrice(
+  variants:
+    | Array<{ price?: number | null; sale_price?: number | null; status?: string | null }>
+    | null
+    | undefined,
+): number | null {
+  const list = Array.isArray(variants) ? variants : [];
+  const prices: number[] = [];
+  for (const v of list) {
+    const st = String(v?.status ?? "").toLowerCase();
+    if (st === "inactive" || st === "disabled") continue;
+    const sale = Number(v?.sale_price);
+    const base = Number(v?.price);
+    const p =
+      Number.isFinite(sale) && sale > 0
+        ? sale
+        : Number.isFinite(base) && base > 0
+          ? base
+          : NaN;
+    if (Number.isFinite(p) && p > 0) prices.push(p);
+  }
+  if (!prices.length) return null;
+  return prices.reduce((a, b) => a + b, 0) / prices.length;
+}
+
 export async function recordProductPrice(opts: {
   productId: string;
   variantId?: string | null;
-  price: number;
+  price?: number | null;
+  variants?: Array<{
+    price?: number | null;
+    sale_price?: number | null;
+    status?: string | null;
+  }> | null;
   supabase?: Awaited<ReturnType<typeof createClient>>;
 }) {
   try {
-    const price = Number(opts.price);
+    let price = Number(opts.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      const avg = averageVariantPrice(opts.variants);
+      if (avg == null) return;
+      price = avg;
+    }
     if (!opts.productId || !Number.isFinite(price) || price < 0) return;
     const supabase = opts.supabase ?? (await createClient());
-    // فقط اگر آخرین قیمت فرق دارد ثبت کن
     const { data: last } = await supabase
       .from("product_price_history")
       .select("price")
@@ -31,7 +64,7 @@ export async function recordProductPrice(opts: {
   }
 }
 
-export async function getProductPriceHistory(productId: string, limit = 30) {
+export async function getProductPriceHistory(productId: string, limit = 60) {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
