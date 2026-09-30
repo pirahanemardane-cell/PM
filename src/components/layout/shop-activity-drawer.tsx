@@ -122,29 +122,167 @@ export function ShopActivityDrawer({
                     ) : null}
                     {tab === "cart" && (
                       <div className="mt-2 space-y-2">
-                        {(p.colorHex || p.color || p.size) ? (
-                            <div className="mt-1.5 flex flex-wrap items-center justify-end gap-2 text-[11px] text-muted-foreground">
-                              {(p.colorHex || p.color) ? (
-                                <span className="inline-flex items-center gap-1.5">
+                        {(() => {
+                          const line = p as {
+                            colors?: string[];
+                            sizes?: string[];
+                            colorHex?: string;
+                            color?: string;
+                            size?: string;
+                            variantId?: string;
+                            productId?: string;
+                            id?: string;
+                            quantity?: number;
+                            source?: string;
+                            variantOptions?: { color?: string; colorHex?: string; size?: string; stock: number }[];
+                          };
+                          const colors: string[] =
+                            line.colors?.length
+                              ? line.colors
+                              : line.variantOptions?.length
+                                ? [
+                                    ...new Set(
+                                      line.variantOptions
+                                        .map((o) => (o.colorHex || o.color || "").trim())
+                                        .filter(Boolean),
+                                    ),
+                                  ]
+                                : line.colorHex || line.color
+                                  ? [line.colorHex || line.color!]
+                                  : [];
+                          const sizes: string[] =
+                            line.sizes?.length
+                              ? line.sizes
+                              : line.variantOptions?.length
+                                ? [
+                                    ...new Set(
+                                      line.variantOptions
+                                        .map((o) => (o.size || "").trim())
+                                        .filter(Boolean),
+                                    ),
+                                  ]
+                                : line.size
+                                  ? [line.size]
+                                  : [];
+                          const currentKey = (line.colorHex || line.color || "")
+                            .replace(/^#/, "")
+                            .toLowerCase();
+
+                          async function swap(patch: { size?: string; colorHex?: string; color?: string }) {
+                            const nextSize = patch.size !== undefined ? patch.size : line.size;
+                            const nextHex =
+                              patch.colorHex !== undefined
+                                ? patch.colorHex
+                                : line.colorHex || (line.color?.startsWith("#") ? line.color : undefined);
+                            const nextName =
+                              patch.color !== undefined
+                                ? patch.color
+                                : line.color && !line.color.startsWith("#")
+                                  ? line.color
+                                  : undefined;
+                            if (isLoggedIn && line.variantId && (line.productId || line.id)) {
+                              const res = await swapCartVariantAction({
+                                oldVariantId: line.variantId,
+                                productId: line.productId || line.id!,
+                                colorHex: nextHex || nextName || null,
+                                size: nextSize || null,
+                                quantity: line.quantity ?? 1,
+                              });
+                              if (!res.ok) {
+                                toast.error(
+                                  res.error === "variant_not_found"
+                                    ? "این ترکیب موجود نیست"
+                                    : res.error?.startsWith("insufficient_stock")
+                                      ? "موجودی کافی نیست"
+                                      : "تغییر ممکن نشد",
+                                );
+                                return;
+                              }
+                              window.dispatchEvent(new Event("pm:cart-changed"));
+                              toast.success("سبد به‌روز شد");
+                            } else {
+                              const pid = line.productId || line.id;
+                              if (!pid) return;
+                              const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
+                              updateCartItem(key, {
+                                size: nextSize,
+                                color: nextHex || nextName,
+                              });
+                            }
+                          }
+
+                          return (
+                            <div className="mt-1.5 space-y-1.5">
+                              {colors.length > 0 ? (
+                                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                                  {colors.map((c) => {
+                                    const hex = resolveColorHex(c) || c;
+                                    const key = c.replace(/^#/, "").toLowerCase();
+                                    const active = key === currentKey;
+                                    return (
+                                      <button
+                                        key={c}
+                                        type="button"
+                                        title={c}
+                                        onClick={() =>
+                                          void swap({
+                                            colorHex: c.startsWith("#") ? c : hex,
+                                            color: c.startsWith("#") ? undefined : c,
+                                          })
+                                        }
+                                        className={`h-5 w-5 rounded-full border-2 ${
+                                          active
+                                            ? "border-primary ring-1 ring-primary/40"
+                                            : "border-black/15"
+                                        }`}
+                                        style={{ backgroundColor: hex || c }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ) : (line.colorHex || line.color) ? (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                                   <span
-                                    className="inline-block h-4 w-4 rounded-full border border-black/20 shadow-sm"
+                                    className="inline-block h-4 w-4 rounded-full border border-black/20"
                                     style={{
                                       backgroundColor: resolveColorHex(
-                                        p.colorHex || p.color,
+                                        line.colorHex || line.color,
                                       ),
                                     }}
-                                    title={String(p.colorHex || p.color)}
                                   />
-                                  <span>رنگ انتخاب‌شده</span>
+                                  رنگ
                                 </span>
                               ) : null}
-                              {p.size ? (
-                                <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 font-medium text-foreground">
-                                  سایز: {p.size}
+                              {sizes.length > 0 ? (
+                                <div className="flex flex-wrap items-center justify-end gap-1">
+                                  {sizes.map((sz) => {
+                                    const active =
+                                      (sz || "").toUpperCase() ===
+                                      (line.size || "").toUpperCase();
+                                    return (
+                                      <button
+                                        key={sz}
+                                        type="button"
+                                        onClick={() => void swap({ size: sz })}
+                                        className={`h-7 min-w-[1.75rem] rounded-md border px-1.5 text-[11px] font-medium ${
+                                          active
+                                            ? "border-primary bg-primary text-primary-foreground"
+                                            : "border-border bg-muted/40"
+                                        }`}
+                                      >
+                                        {sz}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : line.size ? (
+                                <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium">
+                                  سایز: {line.size}
                                 </span>
                               ) : null}
                             </div>
-                          ) : null}
+                          );
+                        })()}
                         <div className="flex items-center justify-between gap-2">
                           <button
                             type="button"

@@ -154,13 +154,17 @@ export default function CheckoutPage() {
   const [reserveExpiresAt, setReserveExpiresAt] = useState<string | null>(null);
   const [reserveHint, setReserveHint] = useState<string | null>(null);
 
+  async function reloadCart() {
+    const res = await getCartAction();
+    if (res.ok) setItems(res.items);
+    setLoading(false);
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await getCartAction();
+      await reloadCart();
       if (cancelled) return;
-      if (res.ok) setItems(res.items);
-      setLoading(false);
 
       const r = await reserveCheckoutStockAction();
       if (cancelled) return;
@@ -181,9 +185,24 @@ export default function CheckoutPage() {
       });
     }, 120_000);
 
+    function onCartChanged() {
+      if (orderPlacedRef.current) return;
+      void reloadCart();
+    }
+    function onFocus() {
+      if (orderPlacedRef.current) return;
+      void reloadCart();
+    }
+    window.addEventListener("pm:cart-changed", onCartChanged);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
     return () => {
       cancelled = true;
       window.clearInterval(iv);
+      window.removeEventListener("pm:cart-changed", onCartChanged);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
       if (!orderPlacedRef.current) {
         void releaseCheckoutReservationAction();
       }
