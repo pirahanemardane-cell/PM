@@ -5,17 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { RT } from "@/lib/realtime/events";
 
-/** debounce جدا برای هر نوع event — کاتالوگ کندتر، سبد سریع‌تر */
 function useSmartDispatch() {
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-
   useEffect(() => {
     return () => {
       timers.current.forEach(clearTimeout);
       timers.current.clear();
     };
   }, []);
-
   return useCallback((eventName: string, ms = 400) => {
     const prev = timers.current.get(eventName);
     if (prev) clearTimeout(prev);
@@ -31,10 +28,7 @@ function useSmartDispatch() {
   }, []);
 }
 
-/**
- * تنها نقطه Realtime سایت — یک WebSocket / یک channel
- * به‌جای ۱۰+ کانال جدا (علت اصلی کندی پنل‌ها)
- */
+/** یک WebSocket — نه ۱۰ کانال جدا */
 export function RealtimeBridge() {
   const refreshCart = useServerCartStore((s) => s.refresh);
   const [userId, setUserId] = useState<string | null>(null);
@@ -76,45 +70,36 @@ export function RealtimeBridge() {
   }, []);
 
   const onCart = useCallback(() => {
-    // سبد: debounce کوتاه + یک refresh
     if (cartTimer.current) clearTimeout(cartTimer.current);
     cartTimer.current = setTimeout(() => {
       void refreshCart();
       dispatch(RT.cart, 0);
-    }, 200);
+    }, 250);
   }, [refreshCart, dispatch]);
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase.channel("pm:site-rt-v1");
+    const channel = supabase.channel("pm:site-rt-v2");
 
-    // سبد
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "cart_items" },
       () => onCart(),
     );
 
-    // علاقه‌مندی — فقط وقتی لاگین
     if (userId) {
       channel.on(
         "postgres_changes" as any,
         { event: "*", schema: "public", table: "wishlists" },
-        () => dispatch(RT.wishlist, 300),
+        () => dispatch(RT.wishlist, 400),
       );
     }
 
-    // سفارش‌ها
     if (isAdmin) {
       channel.on(
         "postgres_changes" as any,
         { event: "*", schema: "public", table: "orders" },
-        () => dispatch(RT.orders, 350),
-      );
-      channel.on(
-        "postgres_changes" as any,
-        { event: "*", schema: "public", table: "order_items" },
-        () => dispatch(RT.orders, 350),
+        () => dispatch(RT.orders, 400),
       );
     } else if (userId) {
       channel.on(
@@ -125,35 +110,20 @@ export function RealtimeBridge() {
           table: "orders",
           filter: `user_id=eq.${userId}`,
         },
-        () => dispatch(RT.orders, 350),
+        () => dispatch(RT.orders, 400),
       );
     }
 
-    // موجودی / کاتالوگ — debounce بلند تا پنل ادمین قفل نشود
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "product_variants" },
-      () => dispatch(RT.stock, 900),
+      () => dispatch(RT.stock, 1000),
     );
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "products" },
-      () => dispatch(RT.catalog, 900),
+      () => dispatch(RT.catalog, 1000),
     );
-
-    channel.on(
-      "postgres_changes" as any,
-      { event: "*", schema: "public", table: "reviews" },
-      () => dispatch(RT.reviews, 600),
-    );
-
-    if (userId) {
-      channel.on(
-        "postgres_changes" as any,
-        { event: "*", schema: "public", table: "return_requests" },
-        () => dispatch(RT.support, 500),
-      );
-    }
 
     channel.subscribe();
 

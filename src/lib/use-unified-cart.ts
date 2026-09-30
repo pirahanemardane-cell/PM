@@ -11,6 +11,7 @@ function mapLocal(cart: ShopProduct[]): UnifiedCartLine[] {
   return cart.map((p) => ({
     key: `${p.id}|${p.color ?? ""}|${p.size ?? ""}`,
     productId: p.id,
+    variantId: p.variantId,
     title: p.title || "محصول",
     price: p.price ?? 0,
     quantity: p.quantity ?? 1,
@@ -47,6 +48,7 @@ export function useUnifiedCart() {
     else clearServer();
   }, [userId, refresh, clearServer]);
 
+  // رفرش از event فقط اگر لازم — debounce کوتاه
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     function onChange() {
@@ -54,7 +56,7 @@ export function useUnifiedCart() {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         void refresh();
-      }, 150);
+      }, 400);
     }
     window.addEventListener("pm:cart-changed", onChange);
     return () => {
@@ -63,7 +65,6 @@ export function useUnifiedCart() {
     };
   }, [userId, refresh]);
 
-  // فقط وقتی سرور واقعاً اقلام دارد local را پاک کن
   useEffect(() => {
     if (userId && linesServer.length > 0 && localCart.length > 0) {
       clearLocal();
@@ -72,13 +73,11 @@ export function useUnifiedCart() {
 
   const isLoggedIn = Boolean(userId);
 
-  // اگر لاگین و سرور خالی ولی local پر → local نشان بده (تا getCart/add درست شود)
   let lines: UnifiedCartLine[];
   if (isLoggedIn) {
     if (linesServer.length > 0) {
       lines = linesServer.map((l) => ({ ...l, source: "server" as const }));
     } else if (localCart.length > 0) {
-      // حتی حین loading — optimistic از local
       lines = mapLocal(localCart);
     } else {
       lines = [];

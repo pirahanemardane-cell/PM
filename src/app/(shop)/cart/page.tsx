@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { resolveColorHex } from "@/lib/colors";
 import {
   sizeAvailable,
@@ -59,13 +59,15 @@ export default function CartPage() {
   const removeFromCart = useShopStore((s) => s.removeFromCart);
   const setCartQuantity = useShopStore((s) => s.setCartQuantity);
   const updateCartItem = useShopStore((s) => s.updateCartItem);
+  const setQuantityOptimistic = useServerCartStore((s) => s.setQuantityOptimistic);
+  const removeOptimistic = useServerCartStore((s) => s.removeOptimistic);
   const refreshServer = useServerCartStore((s) => s.refresh);
-  const setLines = useServerCartStore((s) => s.setLines);
-  const serverLines = useServerCartStore((s) => s.lines);
   const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } =
     useUnifiedCart();
-  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
   const [msg, setMsg] = useState<string | null>(null);
+  // صف تعداد: کلیک‌های پشت‌سرهم روی همان خط
+  const pendingQty = useRef<Record<string, number>>({});
 
   const lines = useMemo(() => {
     if (isLoggedIn && unifiedLines.length > 0) {
@@ -103,63 +105,85 @@ export default function CartPage() {
       ? unifiedTotal
       : lines.reduce((s, x) => s + Number(x.price) * Number(x.quantity ?? 1), 0);
 
-  function patchServerQty(variantId: string, q: number) {
-    setLines(
-      serverLines
-        .map((l) =>
-          l.variantId === variantId
-            ? { ...l, quantity: Math.max(1, q) }
-            : l,
-        )
-        .filter((l) => (l.quantity ?? 1) > 0),
-    );
+  function setBusy(key: string, v: boolean) {
+    setBusyMap((m) => ({ ...m, [key]: v }));
   }
 
-  async function changeQty(line: (typeof lines)[number], next: number) {
-    const q = Math.max(0, Math.min(99, Math.floor(next)));
-    if (q < 1) {
+  async function changeQty(line: (typeof lines)[number], delta: number) {
+    const id = line.variantId || line.key;
+    const current =
+      pendingQty.current[id] ??
+      line.quantity ??
+      1;
+    const next = Math.max(0, Math.min(99, current + delta));
+    pendingQty.current[id] = next;
+
+    if (next < 1) {
+      delete pendingQty.current[id];
       await removeLine(line);
       return;
     }
-    setBusyKey(line.key);
+
     setMsg(null);
-    const prev = line.quantity;
+    // فوری UI
+    if (isLoggedIn && line.variantId) {
+      setQuantityOptimistic(line.variantId, next);
+    } else {
+      setCartQuantity(line.key, next);
+    }
+
+    setBusy(line.key, true);
     try {
       if (isLoggedIn && line.variantId) {
-        patchServerQty(line.variantId, q);
-        const res = await updateCartQuantityAction(line.variantId, q);
+        // آخرین مقدار در صف را بفرست
+        const target = pendingQty.current[id] ?? next;
+        const res = await updateCartQuantityAction(line.variantId, target);
         if (!res.ok) {
-          patchServerQty(line.variantId, prev);
-          setMsg("تغییر تعداد ممکن نشد (موجودی یا سرور).");
-          return;
+          setMsg(
+            res.error?.startsWith("insufficient_stock")
+              ? "موجودی کافی نیست"
+              : "تغییر تعداد ممکن نشد",
+          );
+          void refreshServer();
         }
+        // بدون refresh اجباری — optimistic کافی است؛ realtime/event بعداً sync می‌کند
         window.dispatchEvent(new Event("pm:cart-changed"));
-        void refreshServer();
-      } else {
-        setCartQuantity(line.key, q);
       }
     } catch {
-      if (line.variantId) patchServerQty(line.variantId, prev);
-      setMsg("خطا در تغییر تعداد.");
+      setMsg("خطا در تغییر تعداد");
+      void refreshServer();
     } finally {
-      setBusyKey(null);
+      setBusy(line.key, false);
+      // اگر کاربر در حین await دوباره کلیک کرده، یک بار دیگر sync
+      const latest = pendingQty.current[id];
+      if (
+        isLoggedIn &&
+        line.variantId &&
+        latest != null &&
+        latest !== next &&
+        latest >= 1
+      ) {
+        setQuantityOptimistic(line.variantId, latest);
+        void updateCartQuantityAction(line.variantId, latest).then((r) => {
+          if (!r.ok) void refreshServer();
+        });
+      }
     }
   }
 
   async function removeLine(line: (typeof lines)[number]) {
-    setBusyKey(line.key);
+    setBusy(line.key, true);
     setMsg(null);
     try {
       if (isLoggedIn && line.variantId) {
-        setLines(serverLines.filter((l) => l.variantId !== line.variantId));
+        removeOptimistic(line.variantId);
         const res = await removeCartItemAction(line.variantId);
         if (!res.ok) {
           void refreshServer();
-          setMsg("حذف ممکن نشد.");
+          setMsg("حذف ممکن نشد");
           return;
         }
         window.dispatchEvent(new Event("pm:cart-changed"));
-        void refreshServer();
       } else {
         removeFromCart(line.productId, {
           size: line.size,
@@ -167,7 +191,7 @@ export default function CartPage() {
         });
       }
     } finally {
-      setBusyKey(null);
+      setBusy(line.key, false);
     }
   }
 
@@ -197,7 +221,7 @@ export default function CartPage() {
       }
     }
 
-    setBusyKey(line.key);
+    setBusy(line.key, true);
     setMsg(null);
     try {
       if (isLoggedIn && line.variantId && line.productId) {
@@ -214,7 +238,7 @@ export default function CartPage() {
               ? "این ترکیب تعریف نشده است."
               : res.error?.startsWith("insufficient_stock")
                 ? "موجودی کافی نیست."
-                : "تغییر رنگ/سایز ممکن نشد.",
+                : "تغییر ممکن نشد.",
           );
           return;
         }
@@ -227,7 +251,7 @@ export default function CartPage() {
         });
       }
     } finally {
-      setBusyKey(null);
+      setBusy(line.key, false);
     }
   }
 
@@ -237,7 +261,7 @@ export default function CartPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            رنگ، سایز و تعداد را می‌توانید همین‌جا تغییر دهید
+            رنگ، سایز و تعداد — فوری به‌روز می‌شود
           </p>
         </div>
         <Link
@@ -269,7 +293,7 @@ export default function CartPage() {
           <ul className="border-border divide-y rounded-2xl border">
             {lines.map((p) => {
               const qty = Number(p.quantity ?? 1);
-              const busy = busyKey === p.key;
+              const busy = !!busyMap[p.key];
               const opts = p.variantOptions;
               const likes = toLikes(opts);
               const colors = colorsFromOpts(opts);
@@ -312,15 +336,11 @@ export default function CartPage() {
                                 key={c}
                                 type="button"
                                 disabled={busy || !ok}
-                                title={
-                                  ok
-                                    ? c
-                                    : "این رنگ با سایز فعلی تعریف نشده"
-                                }
+                                title={ok ? c : "ترکیب تعریف‌نشده"}
                                 onClick={() =>
                                   ok && void changeVariant(p, { colorKey: c })
                                 }
-                                className={`h-7 w-7 rounded-full border-2 transition ${
+                                className={`h-7 w-7 rounded-full border-2 ${
                                   active
                                     ? "border-primary ring-2 ring-primary/30"
                                     : "border-border"
@@ -331,16 +351,6 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
-                    ) : currentColor ? (
-                      <span className="inline-flex items-center gap-1 text-[11px]">
-                        <span
-                          className="inline-block h-3.5 w-3.5 rounded-full border"
-                          style={{
-                            backgroundColor: resolveColorHex(currentColor),
-                          }}
-                        />
-                        رنگ
-                      </span>
                     ) : null}
 
                     {sizes.length > 0 ? (
@@ -357,15 +367,11 @@ export default function CartPage() {
                                 key={sz}
                                 type="button"
                                 disabled={busy || !ok}
-                                title={
-                                  ok
-                                    ? sz
-                                    : `سایز ${sz} برای این رنگ تعریف نشده`
-                                }
+                                title={ok ? sz : `سایز ${sz} ناموجود`}
                                 onClick={() =>
                                   ok && void changeVariant(p, { size: sz })
                                 }
-                                className={`h-8 min-w-[2.25rem] rounded-lg border px-2 text-xs font-medium transition ${
+                                className={`h-8 min-w-[2.25rem] rounded-lg border px-2 text-xs font-medium ${
                                   active && ok
                                     ? "border-primary bg-primary text-primary-foreground"
                                     : "border-border"
@@ -381,17 +387,14 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
-                    ) : currentSize ? (
-                      <span className="text-[11px]">سایز: {currentSize}</span>
                     ) : null}
 
                     <div className="flex items-center justify-end gap-2 pt-1">
                       <div className="border-border flex items-center rounded-lg border">
                         <button
                           type="button"
-                          disabled={busy}
-                          className="h-8 w-8 disabled:opacity-40"
-                          onClick={() => void changeQty(p, qty - 1)}
+                          className="h-8 w-8"
+                          onClick={() => void changeQty(p, -1)}
                         >
                           −
                         </button>
@@ -400,16 +403,14 @@ export default function CartPage() {
                         </span>
                         <button
                           type="button"
-                          disabled={busy}
-                          className="h-8 w-8 disabled:opacity-40"
-                          onClick={() => void changeQty(p, qty + 1)}
+                          className="h-8 w-8"
+                          onClick={() => void changeQty(p, +1)}
                         >
                           +
                         </button>
                       </div>
                       <button
                         type="button"
-                        disabled={busy}
                         className="text-destructive text-xs"
                         onClick={() => void removeLine(p)}
                       >
