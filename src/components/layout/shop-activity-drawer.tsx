@@ -134,67 +134,77 @@ export function ShopActivityDrawer({
                             id?: string;
                             quantity?: number;
                             source?: string;
-                            variantOptions?: { color?: string; colorHex?: string; size?: string; stock: number }[];
+                            variantOptions?: {
+                              color?: string;
+                              colorHex?: string;
+                              size?: string;
+                              stock: number;
+                            }[];
                           };
-                          const colors: string[] =
-                            line.colors?.length
-                              ? line.colors
-                              : line.variantOptions?.length
-                                ? [
-                                    ...new Set(
-                                      line.variantOptions
-                                        .map((o) => (o.colorHex || o.color || "").trim())
-                                        .filter(Boolean),
-                                    ),
-                                  ]
-                                : line.colorHex || line.color
-                                  ? [line.colorHex || line.color!]
-                                  : [];
-                          const sizes: string[] =
-                            line.sizes?.length
-                              ? line.sizes
-                              : line.variantOptions?.length
-                                ? [
-                                    ...new Set(
-                                      line.variantOptions
-                                        .map((o) => (o.size || "").trim())
-                                        .filter(Boolean),
-                                    ),
-                                  ]
-                                : line.size
-                                  ? [line.size]
-                                  : [];
-                          const currentKey = (line.colorHex || line.color || "")
-                            .replace(/^#/, "")
-                            .toLowerCase();
+                          const opts = line.variantOptions ?? [];
+                          const likes = opts.map((o, i) => ({
+                            id: String(i),
+                            size: o.size || null,
+                            color: o.colorHex || o.color || null,
+                            stock: o.stock,
+                          }));
+                          const colors: string[] = [];
+                          for (const o of opts) {
+                            const k = (o.colorHex || o.color || "").trim();
+                            if (
+                              k &&
+                              !colors.some(
+                                (x) =>
+                                  x.replace(/^#/, "").toLowerCase() ===
+                                  k.replace(/^#/, "").toLowerCase(),
+                              )
+                            ) {
+                              colors.push(k);
+                            }
+                          }
+                          if (!colors.length && (line.colorHex || line.color)) {
+                            colors.push(line.colorHex || line.color!);
+                          }
+                          const sizes = [
+                            ...new Set(
+                              opts
+                                .map((o) => (o.size || "").trim())
+                                .filter(Boolean),
+                            ),
+                          ];
+                          if (!sizes.length && line.size) sizes.push(line.size);
+                          const currentColor = line.colorHex || line.color || null;
+                          const currentSize = line.size || null;
 
-                          async function swap(patch: { size?: string; colorHex?: string; color?: string }) {
-                            const nextSize = patch.size !== undefined ? patch.size : line.size;
-                            const nextHex =
-                              patch.colorHex !== undefined
-                                ? patch.colorHex
-                                : line.colorHex || (line.color?.startsWith("#") ? line.color : undefined);
-                            const nextName =
-                              patch.color !== undefined
-                                ? patch.color
-                                : line.color && !line.color.startsWith("#")
-                                  ? line.color
-                                  : undefined;
-                            if (isLoggedIn && line.variantId && (line.productId || line.id)) {
+                          async function swap(patch: {
+                            size?: string;
+                            colorKey?: string;
+                          }) {
+                            const nextColor =
+                              patch.colorKey !== undefined
+                                ? patch.colorKey
+                                : currentColor;
+                            const nextSize =
+                              patch.size !== undefined
+                                ? patch.size
+                                : currentSize;
+                            if (
+                              isLoggedIn &&
+                              line.variantId &&
+                              (line.productId || line.id)
+                            ) {
                               const res = await swapCartVariantAction({
                                 oldVariantId: line.variantId,
                                 productId: line.productId || line.id!,
-                                colorHex: nextHex || nextName || null,
-                                size: nextSize || null,
+                                colorHex: nextColor,
+                                size: nextSize,
                                 quantity: line.quantity ?? 1,
                               });
                               if (!res.ok) {
                                 toast.error(
                                   res.error === "variant_not_found"
-                                    ? "این ترکیب موجود نیست"
-                                    : res.error?.startsWith("insufficient_stock")
-                                      ? "موجودی کافی نیست"
-                                      : "تغییر ممکن نشد",
+                                    ? "این ترکیب تعریف نشده"
+                                    : "تغییر ممکن نشد",
                                 );
                                 return;
                               }
@@ -205,11 +215,13 @@ export function ShopActivityDrawer({
                               if (!pid) return;
                               const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
                               updateCartItem(key, {
-                                size: nextSize,
-                                color: nextHex || nextName,
+                                size: nextSize || undefined,
+                                color: nextColor || undefined,
                               });
                             }
                           }
+
+                          if (!colors.length && !sizes.length) return null;
 
                           return (
                             <div className="mt-1.5 space-y-1.5">
@@ -217,57 +229,68 @@ export function ShopActivityDrawer({
                                 <div className="flex flex-wrap items-center justify-end gap-1.5">
                                   {colors.map((c) => {
                                     const hex = resolveColorHex(c) || c;
-                                    const key = c.replace(/^#/, "").toLowerCase();
-                                    const active = key === currentKey;
+                                    const active = sameColor(c, currentColor);
+                                    const ok = colorAvailable(
+                                      c,
+                                      likes,
+                                      currentSize,
+                                    );
                                     return (
                                       <button
                                         key={c}
                                         type="button"
-                                        title={c}
+                                        disabled={!ok}
+                                        title={
+                                          ok
+                                            ? c
+                                            : "این رنگ با سایز فعلی تعریف نشده"
+                                        }
                                         onClick={() =>
-                                          void swap({
-                                            colorHex: c.startsWith("#") ? c : hex,
-                                            color: c.startsWith("#") ? undefined : c,
-                                          })
+                                          ok && void swap({ colorKey: c })
                                         }
                                         className={`h-5 w-5 rounded-full border-2 ${
                                           active
                                             ? "border-primary ring-1 ring-primary/40"
                                             : "border-black/15"
-                                        }`}
+                                        } ${!ok ? "cursor-not-allowed opacity-30" : ""}`}
                                         style={{ backgroundColor: hex || c }}
                                       />
                                     );
                                   })}
                                 </div>
-                              ) : (line.colorHex || line.color) ? (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                  <span
-                                    className="inline-block h-4 w-4 rounded-full border border-black/20"
-                                    style={{
-                                      backgroundColor: resolveColorHex(
-                                        line.colorHex || line.color,
-                                      ),
-                                    }}
-                                  />
-                                  رنگ
-                                </span>
                               ) : null}
                               {sizes.length > 0 ? (
                                 <div className="flex flex-wrap items-center justify-end gap-1">
                                   {sizes.map((sz) => {
                                     const active =
                                       (sz || "").toUpperCase() ===
-                                      (line.size || "").toUpperCase();
+                                      (currentSize || "").toUpperCase();
+                                    const ok = sizeAvailable(
+                                      sz,
+                                      likes,
+                                      currentColor,
+                                    );
                                     return (
                                       <button
                                         key={sz}
                                         type="button"
-                                        onClick={() => void swap({ size: sz })}
+                                        disabled={!ok}
+                                        title={
+                                          ok
+                                            ? sz
+                                            : `سایز ${sz} برای این رنگ تعریف نشده`
+                                        }
+                                        onClick={() =>
+                                          ok && void swap({ size: sz })
+                                        }
                                         className={`h-7 min-w-[1.75rem] rounded-md border px-1.5 text-[11px] font-medium ${
-                                          active
+                                          active && ok
                                             ? "border-primary bg-primary text-primary-foreground"
                                             : "border-border bg-muted/40"
+                                        } ${
+                                          !ok
+                                            ? "cursor-not-allowed opacity-35 line-through decoration-muted-foreground/60"
+                                            : ""
                                         }`}
                                       >
                                         {sz}
@@ -275,10 +298,6 @@ export function ShopActivityDrawer({
                                     );
                                   })}
                                 </div>
-                              ) : line.size ? (
-                                <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium">
-                                  سایز: {line.size}
-                                </span>
                               ) : null}
                             </div>
                           );
