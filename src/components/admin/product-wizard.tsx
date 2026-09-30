@@ -906,16 +906,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 }}
               />
             </label>
-            <label className="block space-y-1 text-sm">
-              <span>کد محصول (SKU)</span>
-              <input
-                className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
-                value={simpleSku}
-                onChange={(e) => setSimpleSku(e.target.value)}
-                placeholder="مثلاً SHIRT-001"
-                dir="ltr"
-              />
-            </label>
           </div>
         )}
 
@@ -1194,14 +1184,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             </p>
             {productType === "simple" ? (
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block space-y-1 text-sm">
-                  <span>SKU</span>
-                  <input
-                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                    value={simpleSku}
-                    onChange={(e) => setSimpleSku(e.target.value)}
-                  />
-                </label>
                 <label className="block space-y-1 text-sm">
                   <span>موجودی</span>
                   <input
