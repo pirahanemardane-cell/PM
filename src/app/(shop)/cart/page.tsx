@@ -45,12 +45,12 @@ function sizesFromOpts(opts: VOpt[]): string[] {
   return [...new Set(opts.map((o) => (o.size || "").trim()).filter(Boolean))];
 }
 
-function toVariantLikes(opts: VOpt[]) {
+function toLikes(opts: VOpt[]) {
   return opts.map((o, i) => ({
     id: String(i),
     size: o.size || null,
     color: o.colorHex || o.color || null,
-    stock: o.stock,
+    stock: Number(o.stock ?? 0),
   }));
 }
 
@@ -59,9 +59,9 @@ export default function CartPage() {
   const removeFromCart = useShopStore((s) => s.removeFromCart);
   const setCartQuantity = useShopStore((s) => s.setCartQuantity);
   const updateCartItem = useShopStore((s) => s.updateCartItem);
-  const setQuantityOptimistic = useServerCartStore((s) => s.setQuantityOptimistic);
-  const removeOptimistic = useServerCartStore((s) => s.removeOptimistic);
   const refreshServer = useServerCartStore((s) => s.refresh);
+  const setLines = useServerCartStore((s) => s.setLines);
+  const serverLines = useServerCartStore((s) => s.lines);
   const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } =
     useUnifiedCart();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -103,6 +103,18 @@ export default function CartPage() {
       ? unifiedTotal
       : lines.reduce((s, x) => s + Number(x.price) * Number(x.quantity ?? 1), 0);
 
+  function patchServerQty(variantId: string, q: number) {
+    setLines(
+      serverLines
+        .map((l) =>
+          l.variantId === variantId
+            ? { ...l, quantity: Math.max(1, q) }
+            : l,
+        )
+        .filter((l) => (l.quantity ?? 1) > 0),
+    );
+  }
+
   async function changeQty(line: (typeof lines)[number], next: number) {
     const q = Math.max(0, Math.min(99, Math.floor(next)));
     if (q < 1) {
@@ -114,16 +126,11 @@ export default function CartPage() {
     const prev = line.quantity;
     try {
       if (isLoggedIn && line.variantId) {
-        // فوری در UI
-        setQuantityOptimistic(line.variantId, q);
+        patchServerQty(line.variantId, q);
         const res = await updateCartQuantityAction(line.variantId, q);
         if (!res.ok) {
-          setQuantityOptimistic(line.variantId, prev);
-          setMsg(
-            res.error === "server"
-              ? "تغییر تعداد ممکن نشد (موجودی یا سرور)."
-              : String(res.error),
-          );
+          patchServerQty(line.variantId, prev);
+          setMsg("تغییر تعداد ممکن نشد (موجودی یا سرور).");
           return;
         }
         window.dispatchEvent(new Event("pm:cart-changed"));
@@ -132,7 +139,7 @@ export default function CartPage() {
         setCartQuantity(line.key, q);
       }
     } catch {
-      if (line.variantId) setQuantityOptimistic(line.variantId, prev);
+      if (line.variantId) patchServerQty(line.variantId, prev);
       setMsg("خطا در تغییر تعداد.");
     } finally {
       setBusyKey(null);
@@ -144,7 +151,7 @@ export default function CartPage() {
     setMsg(null);
     try {
       if (isLoggedIn && line.variantId) {
-        removeOptimistic(line.variantId);
+        setLines(serverLines.filter((l) => l.variantId !== line.variantId));
         const res = await removeCartItemAction(line.variantId);
         if (!res.ok) {
           void refreshServer();
@@ -169,7 +176,7 @@ export default function CartPage() {
     patch: { size?: string; colorKey?: string },
   ) {
     const opts = line.variantOptions;
-    const likes = toVariantLikes(opts);
+    const likes = toLikes(opts);
     const nextColor =
       patch.colorKey !== undefined
         ? patch.colorKey
@@ -178,14 +185,14 @@ export default function CartPage() {
       patch.size !== undefined ? patch.size : line.size || null;
 
     if (opts.length) {
-      const okCombo = likes.some((v) => {
+      const ok = likes.some((v) => {
         const colorOk =
           !nextColor || !v.color || sameColor(v.color, nextColor);
         const sizeOk = !nextSize || !v.size || v.size === nextSize;
         return colorOk && sizeOk && (v.stock ?? 0) > 0;
       });
-      if (!okCombo) {
-        setMsg("این ترکیب رنگ/سایز برای این محصول تعریف نشده یا موجود نیست.");
+      if (!ok) {
+        setMsg("این ترکیب رنگ/سایز تعریف نشده یا موجود نیست.");
         return;
       }
     }
@@ -206,13 +213,13 @@ export default function CartPage() {
             res.error === "variant_not_found"
               ? "این ترکیب تعریف نشده است."
               : res.error?.startsWith("insufficient_stock")
-                ? "موجودی این ترکیب کافی نیست."
-                : "تغییر ممکن نشد.",
+                ? "موجودی کافی نیست."
+                : "تغییر رنگ/سایز ممکن نشد.",
           );
           return;
         }
         window.dispatchEvent(new Event("pm:cart-changed"));
-        void refreshServer();
+        await refreshServer();
       } else {
         updateCartItem(line.key, {
           size: nextSize || undefined,
@@ -230,7 +237,7 @@ export default function CartPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            تعداد، رنگ و سایز را می‌توانید تغییر دهید
+            رنگ، سایز و تعداد را می‌توانید همین‌جا تغییر دهید
           </p>
         </div>
         <Link
@@ -264,7 +271,7 @@ export default function CartPage() {
               const qty = Number(p.quantity ?? 1);
               const busy = busyKey === p.key;
               const opts = p.variantOptions;
-              const likes = toVariantLikes(opts);
+              const likes = toLikes(opts);
               const colors = colorsFromOpts(opts);
               const sizes = sizesFromOpts(opts);
               const currentColor = p.colorHex || p.color || null;
@@ -305,7 +312,11 @@ export default function CartPage() {
                                 key={c}
                                 type="button"
                                 disabled={busy || !ok}
-                                title={ok ? c : "این رنگ با سایز فعلی تعریف نشده"}
+                                title={
+                                  ok
+                                    ? c
+                                    : "این رنگ با سایز فعلی تعریف نشده"
+                                }
                                 onClick={() =>
                                   ok && void changeVariant(p, { colorKey: c })
                                 }
@@ -320,6 +331,16 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
+                    ) : currentColor ? (
+                      <span className="inline-flex items-center gap-1 text-[11px]">
+                        <span
+                          className="inline-block h-3.5 w-3.5 rounded-full border"
+                          style={{
+                            backgroundColor: resolveColorHex(currentColor),
+                          }}
+                        />
+                        رنگ
+                      </span>
                     ) : null}
 
                     {sizes.length > 0 ? (
@@ -360,6 +381,8 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
+                    ) : currentSize ? (
+                      <span className="text-[11px]">سایز: {currentSize}</span>
                     ) : null}
 
                     <div className="flex items-center justify-end gap-2 pt-1">
@@ -368,7 +391,6 @@ export default function CartPage() {
                           type="button"
                           disabled={busy}
                           className="h-8 w-8 disabled:opacity-40"
-                          aria-label="کاهش تعداد"
                           onClick={() => void changeQty(p, qty - 1)}
                         >
                           −
@@ -380,7 +402,6 @@ export default function CartPage() {
                           type="button"
                           disabled={busy}
                           className="h-8 w-8 disabled:opacity-40"
-                          aria-label="افزایش تعداد"
                           onClick={() => void changeQty(p, qty + 1)}
                         >
                           +
