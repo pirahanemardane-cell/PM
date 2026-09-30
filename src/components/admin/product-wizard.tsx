@@ -530,21 +530,29 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           };
         })
         .filter(Boolean) as Array<Record<string, unknown>>;
+      // پیش‌نویس / مراحل میانی: بدون واریانت هم OK — فقط موقع انتشار اجباری است
+      const mustHaveVariants =
+        opts.finalStatus === "published" ||
+        (opts.finalStatus === undefined && st === "published");
       if (!vPayload.length) {
-        return {
-          ok: false as const,
-          error: "حداقل یک واریانت با سایز/رنگ و قیمت معتبر لازم است",
-        };
-      }
-      const syncV = await adminSyncProductVariantsAction(id, vPayload as never);
-      if (!syncV.ok) {
-        return {
-          ok: false as const,
-          error:
-            (syncV as { detail?: string }).detail ||
-            (syncV as { error?: string }).error ||
-            "sync_variants",
-        };
+        if (mustHaveVariants) {
+          return {
+            ok: false as const,
+            error: "حداقل یک واریانت با سایز/رنگ و قیمت معتبر لازم است",
+          };
+        }
+        // draft: از sync واریانت رد شو
+      } else {
+        const syncV = await adminSyncProductVariantsAction(id, vPayload as never);
+        if (!syncV.ok) {
+          return {
+            ok: false as const,
+            error:
+              (syncV as { detail?: string }).detail ||
+              (syncV as { error?: string }).error ||
+              "sync_variants",
+          };
+        }
       }
 
       if (opts.finalStatus === "published" || (opts.finalStatus === undefined && st === "published")) {
