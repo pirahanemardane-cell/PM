@@ -114,14 +114,12 @@ export async function adminListProductsAction(
 
     const status = (opts?.status || "").trim();
     if (status === "archived") {
-      // بایگانی: status=archived یا soft-delete شده
+      // فقط بایگانی
       query = query.or("status.eq.archived,deleted_at.not.is.null");
     } else if (status && ["draft", "published"].includes(status)) {
       query = query.eq("status", status as "draft" | "published").is("deleted_at", null);
-    } else {
-      // پیش‌فرض: فقط فعال‌ها (نه آرشیو)
-      query = query.is("deleted_at", null).neq("status", "archived");
     }
+    // else: همه وضعیت‌ها — پیش‌نویس + منتشر + بایگانی
     const q = (opts?.q || "").trim();
     if (q) {
       query = query.or(`name.ilike.%${q}%,slug.ilike.%${q}%`);

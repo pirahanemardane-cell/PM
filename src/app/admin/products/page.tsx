@@ -36,6 +36,7 @@ type Row = {
   name: string;
   slug: string;
   status: string;
+  deleted_at?: string | null;
   is_featured: boolean;
   is_new: boolean;
   is_bestseller: boolean;
@@ -384,7 +385,14 @@ export default function AdminProductsPage() {
                   return (
                     <tr
                       key={p.id}
-                      className="border-border border-t whitespace-nowrap"
+                      className={
+                        "border-border border-t whitespace-nowrap " +
+                        (p.status === "archived" || p.deleted_at
+                          ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80"
+                          : p.status === "draft"
+                            ? "bg-slate-50/60 dark:bg-slate-900/20"
+                            : "")
+                      }
                     >
                       <td className="p-2 align-middle">
                         <input
@@ -505,7 +513,7 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="p-2 align-middle">
                         <select
-                          value={p.status}
+                          value={p.deleted_at ? "archived" : p.status}
                           disabled={busyId === p.id}
                           onChange={(e) =>
                             void patch(p.id, {
@@ -515,7 +523,14 @@ export default function AdminProductsPage() {
                                 | "archived",
                             })
                           }
-                          className="border-input bg-background h-8 rounded-lg border px-1 text-xs"
+                          className={
+                            "h-8 rounded-lg border px-1 text-xs " +
+                            (p.status === "archived" || p.deleted_at
+                              ? "border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100"
+                              : p.status === "draft"
+                                ? "border-slate-300 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                : "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100")
+                          }
                         >
                           {STATUSES.map((s) => (
                             <option key={s} value={s}>
