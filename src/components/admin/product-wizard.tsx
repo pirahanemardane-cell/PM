@@ -1250,23 +1250,66 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                           </option>
                         ))}
                       </select>
-                      <select
-                        className="border-input bg-background min-w-[5.5rem] rounded-lg border px-2 py-1.5 text-sm"
-                        value={v.color_name}
-                        onChange={(e) => {
-                          const color_name = e.target.value;
-                          setVariants((rows) =>
-                            rows.map((r, i) => (i === idx ? { ...r, color_name } : r)),
-                          );
-                        }}
-                      >
-                        <option value="">رنگ…</option>
-                        {colorOpts.map((o) => (
-                          <option key={o.id} value={o.value}>
-                            {o.value}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative min-w-[9rem]">
+                      <details className="group">
+                        <summary className="border-input bg-background flex cursor-pointer list-none items-center gap-2 rounded-lg border px-2 py-1.5 text-sm [&::-webkit-details-marker]:hidden">
+                          {v.color_name ? (
+                            <>
+                              <span
+                                className="border-border h-3.5 w-3.5 shrink-0 rounded-full border"
+                                style={{
+                                  backgroundColor:
+                                    colorOpts.find((o) => o.value === v.color_name)?.hex ||
+                                    "#e5e5e5",
+                                }}
+                              />
+                              <span className="truncate">{v.color_name}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">رنگ…</span>
+                          )}
+                        </summary>
+                        <div className="border-border bg-background absolute z-30 mt-1 max-h-52 w-full min-w-[10rem] overflow-auto rounded-lg border py-1 shadow-md">
+                          <button
+                            type="button"
+                            className="hover:bg-muted flex w-full items-center gap-2 px-2 py-1.5 text-right text-sm"
+                            onClick={(e) => {
+                              const d = (e.currentTarget as HTMLElement).closest("details");
+                              if (d) d.removeAttribute("open");
+                              setVariants((rows) =>
+                                rows.map((r, i) =>
+                                  i === idx ? { ...r, color_name: "" } : r,
+                                ),
+                              );
+                            }}
+                          >
+                            <span className="text-muted-foreground">—</span>
+                          </button>
+                          {colorOpts.map((o) => (
+                            <button
+                              key={o.id}
+                              type="button"
+                              className="hover:bg-muted flex w-full items-center gap-2 px-2 py-1.5 text-right text-sm"
+                              onClick={(e) => {
+                                const d = (e.currentTarget as HTMLElement).closest("details");
+                                if (d) d.removeAttribute("open");
+                                setVariants((rows) =>
+                                  rows.map((r, i) =>
+                                    i === idx ? { ...r, color_name: o.value } : r,
+                                  ),
+                                );
+                              }}
+                            >
+                              <span
+                                className="border-border inline-block h-3.5 w-3.5 shrink-0 rounded-full border"
+                                style={{ backgroundColor: o.hex || "#e5e5e5" }}
+                              />
+                              <span>{o.value}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </details>
+                    </div>
                       <input
                         placeholder="SKU"
                         className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
