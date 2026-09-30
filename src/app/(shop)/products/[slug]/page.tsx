@@ -18,7 +18,7 @@ import { PriceHistory } from "@/components/product/price-history";
 import { ProductPdpGalleryAndBuy } from "@/components/product/product-pdp-media";
 import { ProductSpecs } from "@/components/product/product-specs";
 import { getProductSpecRows } from "@/lib/product-specs";
-import { getProductPriceHistory } from "@/lib/price-history";
+import { getProductPriceHistory, averageVariantPrice } from "@/lib/price-history";
 import { resolveColorHex } from "@/lib/colors";
 import { loadSizeGuideForProduct } from "@/lib/size-guide/load";
 import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
@@ -149,7 +149,24 @@ export default async function ProductDetailPage({ params }: Props) {
     product.category_id ?? product.category?.id ?? null,
     8,
   );
-  const priceHistory = await getProductPriceHistory(String(product.id), 40);
+  const priceHistoryRaw = await getProductPriceHistory(String(product.id), 40);
+  const currentAvg = averageVariantPrice(
+    (activeVariants ?? []).map((v) => ({
+      price: Number((v as { price?: number }).price ?? 0),
+      original_price: Number((v as { original_price?: number | null }).original_price ?? 0) || null,
+      is_active: (v as { is_active?: boolean }).is_active !== false,
+    })),
+  );
+  const priceHistory =
+    currentAvg != null
+      ? [
+          ...priceHistoryRaw,
+          {
+            price: currentAvg,
+            recorded_at: new Date().toISOString(),
+          },
+        ]
+      : priceHistoryRaw;
   const specRows = await getProductSpecRows(String(product.id));
 
   return (

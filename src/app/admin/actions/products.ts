@@ -651,18 +651,18 @@ export async function adminUpdateProductAction(
     }
 
     try {
-      const { data: vrow } = await gate.supabase
+      const { data: allVars } = await gate.supabase
         .from("product_variants")
-        .select("id")
-        .eq("product_id", id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .select("id, price, original_price, is_active")
+        .eq("product_id", id);
       const { recordProductPrice } = await import("@/lib/price-history");
       await recordProductPrice({
         productId: id,
-        variantId: (vrow as { id?: string } | null)?.id ?? null,
-        price,
+        variants: (allVars ?? []) as {
+          price?: number | null;
+          original_price?: number | null;
+          is_active?: boolean | null;
+        }[],
         supabase: gate.supabase,
       });
     } catch {
@@ -989,7 +989,26 @@ export async function adminSyncProductVariantsAction(
     }
 
     try {
-      await revalidateProductPaths(gate.supabase, productId);
+      await 
+    try {
+      const { data: allVars } = await gate.supabase
+        .from("product_variants")
+        .select("id, price, original_price, is_active")
+        .eq("product_id", productId);
+      await recordProductPrice({
+        productId,
+        variants: (allVars ?? []) as {
+          price?: number | null;
+          original_price?: number | null;
+          is_active?: boolean | null;
+        }[],
+        supabase: gate.supabase,
+      });
+    } catch (e) {
+      console.error("[sync recordProductPrice]", e);
+    }
+
+    revalidateProductPaths(gate.supabase, productId);
     } catch (re) {
       console.warn("[sync revalidate]", re);
     }
