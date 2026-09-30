@@ -16,7 +16,12 @@ export type ServerCartLine = {
   colorHex?: string;
   colors?: string[];
   sizes?: string[];
-  variantOptions?: { color?: string; colorHex?: string; size?: string; stock: number }[];
+  variantOptions?: {
+    color?: string;
+    colorHex?: string;
+    size?: string;
+    stock: number;
+  }[];
   slug?: string;
 };
 
@@ -26,10 +31,14 @@ type ServerCartState = {
   hydrated: boolean;
   refresh: () => Promise<void>;
   setLines: (lines: ServerCartLine[]) => void;
+  setQuantityOptimistic: (variantId: string, quantity: number) => void;
+  removeOptimistic: (variantId: string) => void;
   clear: () => void;
 };
 
-function mapItems(items: NonNullable<Awaited<ReturnType<typeof getCartAction>>["items"]>): ServerCartLine[] {
+function mapItems(
+  items: NonNullable<Awaited<ReturnType<typeof getCartAction>>["items"]>,
+): ServerCartLine[] {
   return (items ?? []).map((l) => ({
     key: l.variantId || l.itemId,
     productId: l.productId,
@@ -50,12 +59,25 @@ function mapItems(items: NonNullable<Awaited<ReturnType<typeof getCartAction>>["
 
 let inflight: Promise<void> | null = null;
 
-export const useServerCartStore = create<ServerCartState>((set) => ({
+export const useServerCartStore = create<ServerCartState>((set, get) => ({
   lines: [],
   loading: false,
   hydrated: false,
   setLines: (lines) => set({ lines, hydrated: true }),
   clear: () => set({ lines: [], hydrated: true }),
+  setQuantityOptimistic: (variantId, quantity) => {
+    const q = Math.max(0, Math.floor(Number(quantity) || 0));
+    set({
+      lines: get()
+        .lines.map((l) =>
+          l.variantId === variantId ? { ...l, quantity: Math.max(1, q) } : l,
+        )
+        .filter((l) => (l.quantity ?? 1) > 0 && !(l.variantId === variantId && q < 1)),
+    });
+  },
+  removeOptimistic: (variantId) => {
+    set({ lines: get().lines.filter((l) => l.variantId !== variantId) });
+  },
   refresh: async () => {
     if (inflight) return inflight;
     set({ loading: true });

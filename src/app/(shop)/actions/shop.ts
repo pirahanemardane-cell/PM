@@ -163,13 +163,25 @@ export async function updateCartQuantityAction(
   quantity: number
 ) {
   try {
+    if (!variantId) return { ok: false as const, error: "missing_variant" };
     const cartId = await resolveCartId();
+    if (!cartId) return { ok: false as const, error: "no_cart" };
     const cartRepo = new CartRepository();
-    await cartRepo.setQuantity(cartId, variantId, quantity);
+    const q = Math.max(0, Math.min(99, Math.floor(Number(quantity) || 0)));
+    await cartRepo.setQuantity(cartId, variantId, q);
     return { ok: true as const };
   } catch (e) {
     console.error("[updateCartQty]", e);
-    return { ok: false as const, error: "server" };
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message: string }).message)
+        : e instanceof Error
+          ? e.message
+          : "server";
+    if (msg.startsWith("insufficient_stock")) {
+      return { ok: false as const, error: msg };
+    }
+    return { ok: false as const, error: msg || "server" };
   }
 }
 

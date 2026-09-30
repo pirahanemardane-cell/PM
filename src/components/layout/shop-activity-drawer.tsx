@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/drawer";
 import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
+import { useServerCartStore } from "@/lib/server-cart-store";
 import { removeCartItemAction, updateCartQuantityAction, swapCartVariantAction } from "@/app/(shop)/actions/shop";
 import { X } from "lucide-react";
 import { NotificationsPanel } from "@/components/notifications/notifications-panel";
@@ -41,6 +42,9 @@ export function ShopActivityDrawer({
 }) {
   const cart = useShopStore((s) => s.cart);
   const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } = useUnifiedCart();
+  const setQuantityOptimistic = useServerCartStore((s) => s.setQuantityOptimistic);
+  const removeOptimistic = useServerCartStore((s) => s.removeOptimistic);
+  const refreshServer = useServerCartStore((s) => s.refresh);
   const wishlist = useShopStore((s) => s.wishlist);
   const compare = useShopStore((s) => s.compare);
   const recent = useShopStore((s) => s.recentlyViewed);
@@ -339,20 +343,27 @@ export function ShopActivityDrawer({
                               type="button"
                               className="border-border h-7 w-7 rounded-md border text-sm"
                               onClick={async () => {
-                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string };
-                                const q = (p.quantity ?? 1) - 1;
-                                if (isLoggedIn && (line.source === "server" || line.variantId) && line.variantId) {
+                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string; color?: string; size?: string };
+                                const q = Math.max(0, (p.quantity ?? 1) - 1);
+                                if (isLoggedIn && line.variantId) {
                                   if (q < 1) {
+                                    removeOptimistic(line.variantId);
                                     await removeCartItemAction(line.variantId);
-                                    window.dispatchEvent(new Event("pm:cart-changed"));
                                   } else {
-                                    await updateCartQuantityAction(line.variantId, q);
-                                    window.dispatchEvent(new Event("pm:cart-changed"));
+                                    setQuantityOptimistic(line.variantId, q);
+                                    const res = await updateCartQuantityAction(line.variantId, q);
+                                    if (!res.ok) {
+                                      void refreshServer();
+                                      toast.error("تغییر تعداد ممکن نشد");
+                                      return;
+                                    }
                                   }
+                                  window.dispatchEvent(new Event("pm:cart-changed"));
+                                  void refreshServer();
                                 } else {
                                   const pid = line.productId || line.id || (p as { id?: string }).id;
                                   const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                  if (q < 1) removeFromCart(pid!);
+                                  if (q < 1) removeFromCart(pid!, { color: p.color, size: p.size });
                                   else setCartQuantity(key, q);
                                 }
                               }}
@@ -367,10 +378,17 @@ export function ShopActivityDrawer({
                               className="border-border h-7 w-7 rounded-md border text-sm"
                               onClick={async () => {
                                 const line = p as { variantId?: string; source?: string; productId?: string; id?: string };
-                                const q = (p.quantity ?? 1) + 1;
-                                if (isLoggedIn && (line.source === "server" || line.variantId) && line.variantId) {
-                                  await updateCartQuantityAction(line.variantId, q);
+                                const q = Math.min(99, (p.quantity ?? 1) + 1);
+                                if (isLoggedIn && line.variantId) {
+                                  setQuantityOptimistic(line.variantId, q);
+                                  const res = await updateCartQuantityAction(line.variantId, q);
+                                  if (!res.ok) {
+                                    void refreshServer();
+                                    toast.error("تغییر تعداد ممکن نشد (موجودی؟)");
+                                    return;
+                                  }
                                   window.dispatchEvent(new Event("pm:cart-changed"));
+                                  void refreshServer();
                                 } else {
                                   const pid = line.productId || line.id || (p as { id?: string }).id;
                                   const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;

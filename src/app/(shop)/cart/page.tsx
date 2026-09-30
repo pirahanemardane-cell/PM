@@ -1,6 +1,5 @@
 "use client";
 
-import { Price } from "@/components/ui/price";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { resolveColorHex } from "@/lib/colors";
@@ -11,6 +10,7 @@ import {
   colorNorm,
 } from "@/lib/variant-availability";
 import { useShopStore } from "@/lib/shop-store";
+import { useServerCartStore } from "@/lib/server-cart-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
 import {
   removeCartItemAction,
@@ -31,7 +31,6 @@ function fmtPrice(n: number) {
   return toPersianDigits(Math.round(n).toLocaleString("en-US")) + " تومان";
 }
 
-/** لیست رنگ‌های یکتا فقط از variantOptions واقعی */
 function colorsFromOpts(opts: VOpt[]): string[] {
   const out: string[] = [];
   for (const o of opts) {
@@ -42,14 +41,10 @@ function colorsFromOpts(opts: VOpt[]): string[] {
   return out;
 }
 
-/** لیست سایزهای یکتا فقط از variantOptions واقعی */
 function sizesFromOpts(opts: VOpt[]): string[] {
-  return [
-    ...new Set(opts.map((o) => (o.size || "").trim()).filter(Boolean)),
-  ];
+  return [...new Set(opts.map((o) => (o.size || "").trim()).filter(Boolean))];
 }
 
-/** تبدیل به شکل VariantLike برای sizeAvailable / colorAvailable */
 function toVariantLikes(opts: VOpt[]) {
   return opts.map((o, i) => ({
     id: String(i),
@@ -64,6 +59,9 @@ export default function CartPage() {
   const removeFromCart = useShopStore((s) => s.removeFromCart);
   const setCartQuantity = useShopStore((s) => s.setCartQuantity);
   const updateCartItem = useShopStore((s) => s.updateCartItem);
+  const setQuantityOptimistic = useServerCartStore((s) => s.setQuantityOptimistic);
+  const removeOptimistic = useServerCartStore((s) => s.removeOptimistic);
+  const refreshServer = useServerCartStore((s) => s.refresh);
   const { lines: unifiedLines, total: unifiedTotal, isLoggedIn } =
     useUnifiedCart();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -106,16 +104,36 @@ export default function CartPage() {
       : lines.reduce((s, x) => s + Number(x.price) * Number(x.quantity ?? 1), 0);
 
   async function changeQty(line: (typeof lines)[number], next: number) {
-    const q = Math.max(1, Math.min(99, Math.floor(next)));
+    const q = Math.max(0, Math.min(99, Math.floor(next)));
+    if (q < 1) {
+      await removeLine(line);
+      return;
+    }
     setBusyKey(line.key);
     setMsg(null);
+    const prev = line.quantity;
     try {
       if (isLoggedIn && line.variantId) {
+        // فوری در UI
+        setQuantityOptimistic(line.variantId, q);
         const res = await updateCartQuantityAction(line.variantId, q);
-        if (res.ok) window.dispatchEvent(new Event("pm:cart-changed"));
+        if (!res.ok) {
+          setQuantityOptimistic(line.variantId, prev);
+          setMsg(
+            res.error === "server"
+              ? "تغییر تعداد ممکن نشد (موجودی یا سرور)."
+              : String(res.error),
+          );
+          return;
+        }
+        window.dispatchEvent(new Event("pm:cart-changed"));
+        void refreshServer();
       } else {
         setCartQuantity(line.key, q);
       }
+    } catch {
+      if (line.variantId) setQuantityOptimistic(line.variantId, prev);
+      setMsg("خطا در تغییر تعداد.");
     } finally {
       setBusyKey(null);
     }
@@ -126,8 +144,15 @@ export default function CartPage() {
     setMsg(null);
     try {
       if (isLoggedIn && line.variantId) {
-        await removeCartItemAction(line.variantId);
+        removeOptimistic(line.variantId);
+        const res = await removeCartItemAction(line.variantId);
+        if (!res.ok) {
+          void refreshServer();
+          setMsg("حذف ممکن نشد.");
+          return;
+        }
         window.dispatchEvent(new Event("pm:cart-changed"));
+        void refreshServer();
       } else {
         removeFromCart(line.productId, {
           size: line.size,
@@ -152,7 +177,6 @@ export default function CartPage() {
     const nextSize =
       patch.size !== undefined ? patch.size : line.size || null;
 
-    // فقط اگر این ترکیب در واریانت‌های تعریف‌شده باشد
     if (opts.length) {
       const okCombo = likes.some((v) => {
         const colorOk =
@@ -188,6 +212,7 @@ export default function CartPage() {
           return;
         }
         window.dispatchEvent(new Event("pm:cart-changed"));
+        void refreshServer();
       } else {
         updateCartItem(line.key, {
           size: nextSize || undefined,
@@ -205,7 +230,7 @@ export default function CartPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            فقط رنگ و سایزهایی که برای هر محصول تعریف شده‌اند قابل انتخاب‌اند
+            تعداد، رنگ و سایز را می‌توانید تغییر دهید
           </p>
         </div>
         <Link
@@ -267,7 +292,6 @@ export default function CartPage() {
                       جمع: {fmtPrice(Number(p.price) * qty)}
                     </p>
 
-                    {/* رنگ — فقط از واریانت‌های تعریف‌شده */}
                     {colors.length > 0 ? (
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-[11px]">رنگ</p>
@@ -281,11 +305,7 @@ export default function CartPage() {
                                 key={c}
                                 type="button"
                                 disabled={busy || !ok}
-                                title={
-                                  ok
-                                    ? c
-                                    : `این رنگ با سایز ${currentSize || "—"} تعریف نشده`
-                                }
+                                title={ok ? c : "این رنگ با سایز فعلی تعریف نشده"}
                                 onClick={() =>
                                   ok && void changeVariant(p, { colorKey: c })
                                 }
@@ -300,19 +320,8 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
-                    ) : currentColor ? (
-                      <span className="inline-flex items-center gap-1 text-[11px]">
-                        <span
-                          className="inline-block h-3.5 w-3.5 rounded-full border"
-                          style={{
-                            backgroundColor: resolveColorHex(currentColor),
-                          }}
-                        />
-                        رنگ
-                      </span>
                     ) : null}
 
-                    {/* سایز — فقط سایزهای معتبر برای رنگ فعلی */}
                     {sizes.length > 0 ? (
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-[11px]">سایز</p>
@@ -351,27 +360,27 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
-                    ) : currentSize ? (
-                      <span className="text-[11px]">سایز: {currentSize}</span>
                     ) : null}
 
                     <div className="flex items-center justify-end gap-2 pt-1">
                       <div className="border-border flex items-center rounded-lg border">
                         <button
                           type="button"
-                          disabled={busy || qty <= 1}
+                          disabled={busy}
                           className="h-8 w-8 disabled:opacity-40"
+                          aria-label="کاهش تعداد"
                           onClick={() => void changeQty(p, qty - 1)}
                         >
                           −
                         </button>
-                        <span className="min-w-[1.5rem] text-center text-sm">
+                        <span className="min-w-[1.5rem] text-center text-sm tabular-nums">
                           {toPersianDigits(String(qty))}
                         </span>
                         <button
                           type="button"
                           disabled={busy}
                           className="h-8 w-8 disabled:opacity-40"
+                          aria-label="افزایش تعداد"
                           onClick={() => void changeQty(p, qty + 1)}
                         >
                           +
