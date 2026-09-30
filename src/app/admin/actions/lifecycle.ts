@@ -41,11 +41,12 @@ export async function adminHardDeleteProductsAction(ids: string[]) {
       .in("product_id", list);
     const variantIds = (variants ?? []).map((v: { id: string }) => v.id);
 
-    // قطع ارجاع از سفارش‌ها (تاریخچه سفارش می‌ماند)
-    await gate.supabase.from("order_items").update({ product_id: null }).in("product_id", list);
+    // حذف لینک از سفارش‌ها (FK اجباری است؛ null ممکن نیست)
     if (variantIds.length) {
-      await gate.supabase.from("order_items").update({ variant_id: null }).in("variant_id", variantIds);
+      await gate.supabase.from("order_items").delete().in("variant_id", variantIds);
+      await gate.supabase.from("cart_items").delete().in("variant_id", variantIds);
     }
+    await gate.supabase.from("order_items").delete().in("product_id", list);
 
     for (const table of [
       "product_tag_map",
