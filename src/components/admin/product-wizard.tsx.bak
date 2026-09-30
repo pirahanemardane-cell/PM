@@ -112,7 +112,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [featured, setFeatured] = useState(false);
   const [isNew, setIsNew] = useState(true);
   const [isActive, setIsActive] = useState(true);
-  const [productType, setProductType] = useState<"simple" | "variable">("variable");
+  const [productType, setProductType] = useState<"simple" | "variable">("simple");
   const [simpleSku, setSimpleSku] = useState("");
   const [simpleStock, setSimpleStock] = useState("0");
   const [variants, setVariants] = useState<VRow[]>([]);
@@ -234,7 +234,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           );
         }
       } else if (vars[0]) {
-        setProductType("variable");
+        setProductType("simple");
         setSimpleSku(String(vars[0].sku ?? ""));
         setSimpleStock(String(vars[0].stock_quantity ?? vars[0].stock ?? "0"));
         setPrice(String(vars[0].price ?? ""));
@@ -339,22 +339,30 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         return "slug: حروف فارسی/لاتین، عدد و خط تیره";
       if (slugStatus === "taken") return "این slug قبلاً استفاده شده";
     }
-    if (s === 3 && !categoryId) return "دسته الزامی است";
-    if (s === 5 && !imageUrl) return "تصویر شاخص الزامی است";
+    if (s === 2 && !categoryId) return "دسته الزامی است";
+    if (s === 4 && !imageUrl) return "تصویر شاخص الزامی است";
     if (s === 5) {
-      if (!variants.length) return "حداقل یک واریانت لازم است";
-      for (const v of variants) {
-        if (!v.size && !v.color_name) return "هر واریانت باید سایز یا رنگ داشته باشد";
-        const sale = parseLocaleNumber(v.price);
-        const original = parseLocaleNumber(v.original_price);
-        const main = original > 0 ? original : sale;
-        if (!(main > 0)) return "هر واریانت باید قیمت اصلی داشته باشد";
-        if (sale > 0 && original > 0 && sale >= original)
+      if (productType === "simple") {
+        if (!(parseLocaleNumber(price) > 0)) return "قیمت اصلی معتبر نیست";
+        const sp = parseLocaleNumber(salePrice);
+        if (salePrice && sp > 0 && sp >= parseLocaleNumber(price))
           return "قیمت بعد از تخفیف باید کمتر از قیمت اصلی باشد";
+        if (!(parseLocaleNumber(simpleStock) >= 0)) return "موجودی نامعتبر";
+      } else if (variants.length === 0) {
+        return null;
+      } else if (variants.length > 0) {
+        for (const v of variants) {
+          if (!v.size && !v.color_name) return "هر واریانت باید سایز یا رنگ داشته باشد";
+          const vp = parseLocaleNumber(v.price);
+          const vo = parseLocaleNumber(v.original_price);
+          if (!(vp > 0) && !(vo > 0)) return "هر واریانت باید قیمت داشته باشد";
+          if (vo > 0 && vp > 0 && vp >= vo)
+            return "قیمت بعد از تخفیف باید کمتر از قیمت اصلی باشد";
+        }
       }
     }
-    if (s === 8 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
-    if (s === 9 && publishMode === "schedule") {
+    if (s === 7 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
+    if (s === 8 && publishMode === "schedule") {
       if (!publishedAt.trim()) return "تاریخ زمان‌بندی الزامی است";
     }
     return null;
@@ -439,25 +447,39 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       const sp = sellingPrice;
       const op = originalPrice;
       let vPayload: Array<Record<string, unknown>>;
-      vPayload = variants.map((v) => {
-        const sale = parseLocaleNumber(v.price);
-        const original = parseLocaleNumber(v.original_price);
-        // original = قیمت اصلی؛ price = قیمت فروش (بعد از تخفیف اگر پر شده)
-        const main = original > 0 ? original : sale;
-        const sell = sale > 0 && original > 0 && sale < original ? sale : main;
-        const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
-        return {
-          id: v.id,
-          size: v.size || null,
-          color_name: v.color_name || null,
-          color_hex: hx,
-          sku: v.sku || null,
-          price: sell,
-          original_price: main > sell ? main : sell,
-          stock_quantity: parseLocaleNumber(v.stock) || 0,
-          image_url: v.image_url || null,
-        };
-      });
+      if (productType === "simple") {
+        vPayload = [
+          {
+            size: null,
+            color_name: null,
+            sku: simpleSku || null,
+            price: sp,
+            original_price: op > sp ? op : sp,
+            stock_quantity: parseLocaleNumber(simpleStock) || 0,
+            image_url: null,
+          },
+        ];
+      } else {
+        vPayload = variants.map((v) => {
+          const vo = parseLocaleNumber(v.original_price);
+          const vpRaw = parseLocaleNumber(v.price);
+          const main = vo > 0 ? vo : vpRaw;
+          const sale = vpRaw > 0 ? vpRaw : main;
+          const selling = sale > 0 && main > 0 && sale < main ? sale : main;
+          const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
+          return {
+            id: v.id,
+            size: v.size || null,
+            color_name: v.color_name || null,
+            color_hex: hx,
+            sku: v.sku || null,
+            price: selling,
+            original_price: main > selling ? main : selling,
+            stock_quantity: parseLocaleNumber(v.stock) || 0,
+            image_url: v.image_url || null,
+          };
+        });
+      }
       const syncV = await adminSyncProductVariantsAction(id, vPayload as never);
       if (!syncV.ok) {
         return {
@@ -582,13 +604,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setStep(1);
       return;
     }
-    const v = validateStep(8);
+    const v = validateStep(9);
     if (v) {
       setErr(v);
       return;
     }
     // re-validate critical steps
-    for (const s of [1, 2, 3, 4, 5, 7, 8] as const) {
+    for (const s of [1, 2, 3, 5, 6, 8]) {
       const e = validateStep(s);
       if (e) {
         setErr(`مرحله ${s}: ${e}`);
@@ -813,7 +835,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
     <div className="mx-auto max-w-3xl space-y-4 p-4" dir="rtl">
       <Toolbar
         title={productId ? "ویرایش محصول" : "محصول جدید"}
-        description="ویزارد ۸مرحله‌ای ساخت و ویرایش"
+        description="ویزارد ۹مرحله‌ای ساخت و ویرایش"
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -886,8 +908,19 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                 }}
               />
             </label>
+            <label className="block space-y-1 text-sm">
+              <span>کد محصول (SKU)</span>
+              <input
+                className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
+                value={simpleSku}
+                onChange={(e) => setSimpleSku(e.target.value)}
+                placeholder="مثلاً SHIRT-001"
+                dir="ltr"
+              />
+            </label>
           </div>
         )}
+
 
         {step === 2 && (
           <div className="space-y-3">
@@ -1089,24 +1122,87 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
 
         {step === 5 && (
           <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={
+                  productType === "simple"
+                    ? "bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
+                    : "bg-muted rounded-lg px-3 py-1.5 text-sm"
+                }
+                onClick={() => setProductType("simple")}
+              >
+                ساده
+              </button>
+              <button
+                type="button"
+                className={
+                  productType === "variable"
+                    ? "bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
+                    : "bg-muted rounded-lg px-3 py-1.5 text-sm"
+                }
+                onClick={() => setProductType("variable")}
+              >
+                متغیر
+              </button>
+            </div>
             <p className="text-muted-foreground text-xs">
-              برای هر ترکیب سایز/رنگ یک ردیف بسازید. قیمت اصلی و در صورت نیاز قیمت بعد از تخفیف را وارد کنید.
-              گزینه‌های سایز/رنگ از گام مشخصات می‌آیند.
+              واریانت اجباری نیست — می‌توانید خالی بگذارید و «بعدی» بزنید (Skip).
+              گزینه‌های سایز/رنگ از انتخاب گام مشخصات محدود شده‌اند.
             </p>
-            <button
-              type="button"
-              className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
-              onClick={() =>
-                setVariants((rows) => [
-                  ...rows,
-                  emptyVariant(),
-                ])
-              }
-            >
-              + افزودن واریانت
-            </button>
-
-            {
+            {productType === "variable" ? (
+              <button
+                type="button"
+                className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
+                onClick={() =>
+                  setVariants((rows) => [
+                    ...rows,
+                    emptyVariant({ price: String(sellingPrice || ""), original: String(originalPrice || "") }),
+                  ])
+                }
+              >
+                + افزودن ردیف واریانت
+              </button>
+            ) : null}
+            {productType === "simple" ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block space-y-1 text-sm">
+                  <span>قیمت اصلی (تومان)</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="block space-y-1 text-sm">
+                  <span>قیمت بعد از تخفیف (اختیاری)</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="block space-y-1 text-sm">
+                  <span>SKU</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={simpleSku}
+                    onChange={(e) => setSimpleSku(e.target.value)}
+                  />
+                </label>
+                <label className="block space-y-1 text-sm">
+                  <span>موجودی</span>
+                  <input
+                    className="border-input bg-background w-full rounded-lg border px-3 py-2"
+                    value={simpleStock}
+                    onChange={(e) => setSimpleStock(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </label>
+              </div>
+            ) : (
               <div className="space-y-3">
                 {variants.map((v, idx) => (
                   <div key={v.key} className="border-border space-y-2 rounded-lg border p-3">
@@ -1198,30 +1294,28 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       />
                       <input
-                        className="border-input bg-background w-28 rounded border px-2 py-1 text-sm"
                         placeholder="قیمت اصلی"
-                        inputMode="numeric"
+                        className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
                         value={v.original_price}
-                        title="قیمت اصلی"
                         onChange={(e) => {
                           const val = e.target.value;
                           setVariants((rows) =>
-                            rows.map((r, i) =>
-                              i === idx ? { ...r, original_price: val } : r,
-                            ),
+                            rows.map((r, i) => (i === idx ? { ...r, original_price: val } : r)),
                           );
                         }}
+                        inputMode="numeric"
                       />
                       <input
-                        placeholder="قیمت بعد از تخفیف"
+                        placeholder="قیمت بعد تخفیف"
                         className="border-input bg-background rounded-lg border px-2 py-1.5 text-sm"
-                        value={v.price} title="قیمت بعد از تخفیف"
+                        value={v.price}
                         onChange={(e) => {
                           const val = e.target.value;
                           setVariants((rows) =>
                             rows.map((r, i) => (i === idx ? { ...r, price: val } : r)),
                           );
                         }}
+                        inputMode="numeric"
                       />
                       <input
                         placeholder="موجودی"
@@ -1233,6 +1327,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                             rows.map((r, i) => (i === idx ? { ...r, stock: val } : r)),
                           );
                         }}
+                        inputMode="numeric"
                       />
                     </div>
                     <button
@@ -1244,46 +1339,9 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                     </button>
                   </div>
                 ))}
-                <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="bg-muted rounded-lg px-3 py-1.5 text-sm"
-                  onClick={() =>
-                    setVariants((rows) => [
-                      ...rows,
-                      emptyVariant({ price: String(sellingPrice || ""), original: String(originalPrice || "") }),
-                    ])
-                  }
-                >
-                  + واریانت
-                </button>
-                <button
-                  type="button"
-                  className="border-border rounded-lg border px-3 py-1.5 text-sm"
-                  onClick={() => {
-                    const sizes = sizeChoices.length ? sizeChoices : [{ id: "", value: "" }];
-                    const colors = colorChoices.length ? colorChoices : [{ id: "", value: "" }];
-                    const rows = [];
-                    for (const s of sizes) {
-                      for (const c of colors) {
-                        rows.push(
-                          emptyVariant({
-                            price: String(sellingPrice || ""),
-                            original: String(originalPrice || ""),
-                          }),
-                        );
-                        rows[rows.length - 1].size = s.value || "";
-                        rows[rows.length - 1].color_name = c.value || "";
-                      }
-                    }
-                    if (rows.length) setVariants(rows);
-                  }}
-                >
-                  ساخت از سایز×رنگ
-                </button>
-                </div>
+
               </div>
-            }
+            )}
           </div>
         )}
 
@@ -1403,7 +1461,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           >
             {status === "published" ? "به‌روزرسانی" : "ذخیره پیش‌نویس"}
           </button>
-          {step < 9 ? (
+          {step < 8 ? (
             <button
               type="button"
               className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"
