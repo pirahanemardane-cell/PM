@@ -1041,70 +1041,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             {!attrDefs.length ? (
               <p className="text-muted-foreground text-sm">مشخصه‌ای تعریف نشده. از ادمین → مشخصات اضافه کنید.</p>
             ) : null}
-
-            {sizeOpts.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">سایز (چندتایی — برای واریانت)</p>
-                <div className="flex flex-wrap gap-2">
-                  {sizeOpts.map((o) => {
-                    const on = pickedSizeIds.includes(o.id);
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        className={
-                          on
-                            ? "bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-sm"
-                            : "border-border rounded-lg border px-3 py-1.5 text-sm"
-                        }
-                        onClick={() =>
-                          setPickedSizeIds((ids) =>
-                            on ? ids.filter((x) => x !== o.id) : [...ids, o.id],
-                          )
-                        }
-                      >
-                        {o.value}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {colorOpts.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">رنگ (چندتایی — برای واریانت)</p>
-                <div className="flex flex-wrap gap-2">
-                  {colorOpts.map((o) => {
-                    const on = pickedColorIds.includes(o.id);
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        className={
-                          on
-                            ? "bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm"
-                            : "border-border inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm"
-                        }
-                        onClick={() =>
-                          setPickedColorIds((ids) =>
-                            on ? ids.filter((x) => x !== o.id) : [...ids, o.id],
-                          )
-                        }
-                      >
-                        <span
-                          className="border-border inline-block h-3.5 w-3.5 rounded-full border"
-                          style={{ backgroundColor: o.hex || "#ccc" }}
-                        />
-                        {o.value}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {specDefs.map((a) => (
+{specDefs.map((a) => (
               <label key={a.id} className="block space-y-1 text-sm">
                 <span>{a.name}</span>
                 <select
@@ -1124,7 +1061,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               </label>
             ))}
             <p className="text-muted-foreground text-xs">
-              سایز و رنگ انتخاب‌شده در گام واریانت استفاده می‌شوند. بقیه مشخصات روی محصول ذخیره و در فیلتر فروشگاه می‌آیند.
+              سایز و رنگ را در گام واریانت برای هر ردیف انتخاب کنید. بقیه مشخصات روی محصول ذخیره و در فیلتر فروشگاه می‌آیند.
             </p>
           </div>
         )}
@@ -1177,7 +1114,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           <div className="space-y-4">
             <p className="text-muted-foreground text-xs">
               برای هر ترکیب سایز/رنگ یک ردیف بسازید. قیمت اصلی و در صورت نیاز قیمت بعد از تخفیف را وارد کنید.
-              گزینه‌های سایز/رنگ از گام مشخصات می‌آیند.
+              سایز و رنگ هر ردیف را از لیست زیر انتخاب کنید.
             </p>
             <button
               type="button"
