@@ -150,23 +150,36 @@ export default async function ProductDetailPage({ params }: Props) {
     8,
   );
   const priceHistoryRaw = await getProductPriceHistory(String(product.id), 40);
-  const currentAvg = averageVariantPrice(
-    (activeVariants ?? []).map((v) => ({
+  // میانگین از همه واریانت‌هایی که قیمت معتبر دارند (حتی اگر is_active null باشد)
+  const variantsForAvg = (product.variants ?? []).filter(
+    (v) => (v as { is_active?: boolean | null }).is_active !== false,
+  );
+  let currentAvg = averageVariantPrice(
+    variantsForAvg.map((v) => ({
       price: Number((v as { price?: number }).price ?? 0),
-      original_price: Number((v as { original_price?: number | null }).original_price ?? 0) || null,
-      is_active: (v as { is_active?: boolean }).is_active !== false,
+      original_price:
+        Number((v as { original_price?: number | null }).original_price ?? 0) ||
+        null,
+      is_active: (v as { is_active?: boolean | null }).is_active !== false,
     })),
   );
+  // fallback: از variantOptions که روی صفحه برای خرید استفاده می‌شود
+  if (currentAvg == null && variantOptions.length) {
+    const ops = variantOptions
+      .map((v) => Number(v.price))
+      .filter((p) => Number.isFinite(p) && p > 0);
+    if (ops.length) currentAvg = ops.reduce((a, b) => a + b, 0) / ops.length;
+  }
   const priceHistory =
     currentAvg != null
       ? [
-          ...priceHistoryRaw,
+          ...priceHistoryRaw.filter((p) => p.price > 0),
           {
             price: currentAvg,
             recorded_at: new Date().toISOString(),
           },
         ]
-      : priceHistoryRaw;
+      : priceHistoryRaw.filter((p) => p.price > 0);
   const specRows = await getProductSpecRows(String(product.id));
 
   return (

@@ -8,7 +8,7 @@ type VariantLike = {
   status?: string | null;
 };
 
-/** میانگین قیمت واریانت‌های فعال (قیمت فروش، نه قیمت ساده محصول) */
+/** میانگین قیمت واریانت‌هایی که قیمت معتبر (>0) دارند */
 export function averageVariantPrice(
   variants: VariantLike[] | null | undefined,
 ): number | null {
@@ -32,10 +32,6 @@ export function averageVariantPrice(
   return prices.reduce((a, b) => a + b, 0) / prices.length;
 }
 
-/**
- * ثبت نقطهٔ نمودار قیمت = همیشه میانگین واریانت‌های فعال.
- * اگر variants پاس نشود، از DB می‌خواند.
- */
 export async function recordProductPrice(opts: {
   productId: string;
   variantId?: string | null;
@@ -64,7 +60,8 @@ export async function recordProductPrice(opts: {
         : Number.isFinite(fallback) && fallback > 0
           ? fallback
           : NaN;
-    if (!Number.isFinite(price) || price < 0) return;
+    // هرگز صفر یا منفی ثبت نکن
+    if (!Number.isFinite(price) || price <= 0) return;
 
     const { data: last } = await supabase
       .from("product_price_history")
@@ -99,10 +96,13 @@ export async function getProductPriceHistory(productId: string, limit = 60) {
       console.error("[getProductPriceHistory]", error.message);
       return [] as { price: number; recorded_at: string }[];
     }
-    return (data ?? []).map((r) => ({
-      price: Number((r as { price: number }).price),
-      recorded_at: String((r as { recorded_at: string }).recorded_at),
-    }));
+    // نقاط صفر/نامعتبر را حذف کن (داده‌های قدیمی خراب)
+    return (data ?? [])
+      .map((r) => ({
+        price: Number((r as { price: number }).price),
+        recorded_at: String((r as { recorded_at: string }).recorded_at),
+      }))
+      .filter((p) => Number.isFinite(p.price) && p.price > 0);
   } catch {
     return [] as { price: number; recorded_at: string }[];
   }
