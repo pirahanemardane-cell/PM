@@ -4,6 +4,12 @@ import { Price } from "@/components/ui/price";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { resolveColorHex } from "@/lib/colors";
+import {
+  sizeAvailable,
+  colorAvailable,
+  sameColor,
+  colorNorm,
+} from "@/lib/variant-availability";
 import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
 import {
@@ -14,8 +20,43 @@ import {
 import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
+type VOpt = {
+  color?: string;
+  colorHex?: string;
+  size?: string;
+  stock: number;
+};
+
 function fmtPrice(n: number) {
   return toPersianDigits(Math.round(n).toLocaleString("en-US")) + " تومان";
+}
+
+/** لیست رنگ‌های یکتا فقط از variantOptions واقعی */
+function colorsFromOpts(opts: VOpt[]): string[] {
+  const out: string[] = [];
+  for (const o of opts) {
+    const k = (o.colorHex || o.color || "").trim();
+    if (!k) continue;
+    if (!out.some((x) => colorNorm(x) === colorNorm(k))) out.push(k);
+  }
+  return out;
+}
+
+/** لیست سایزهای یکتا فقط از variantOptions واقعی */
+function sizesFromOpts(opts: VOpt[]): string[] {
+  return [
+    ...new Set(opts.map((o) => (o.size || "").trim()).filter(Boolean)),
+  ];
+}
+
+/** تبدیل به شکل VariantLike برای sizeAvailable / colorAvailable */
+function toVariantLikes(opts: VOpt[]) {
+  return opts.map((o, i) => ({
+    id: String(i),
+    size: o.size || null,
+    color: o.colorHex || o.color || null,
+    stock: o.stock,
+  }));
 }
 
 export default function CartPage() {
@@ -41,9 +82,7 @@ export default function CartPage() {
         size: l.size,
         color: l.color,
         colorHex: l.colorHex,
-        colors: l.colors ?? [],
-        sizes: l.sizes ?? [],
-        variantOptions: l.variantOptions ?? [],
+        variantOptions: (l.variantOptions ?? []) as VOpt[],
       }));
     }
     return localCart.map((p) => ({
@@ -57,14 +96,7 @@ export default function CartPage() {
       size: p.size,
       color: p.color?.startsWith("#") ? undefined : p.color,
       colorHex: p.color?.startsWith("#") ? p.color : undefined,
-      colors: p.colors ?? [],
-      sizes: p.sizes ?? [],
-      variantOptions: [] as {
-        color?: string;
-        colorHex?: string;
-        size?: string;
-        stock: number;
-      }[],
+      variantOptions: [] as VOpt[],
     }));
   }, [isLoggedIn, unifiedLines, localCart]);
 
@@ -109,26 +141,30 @@ export default function CartPage() {
 
   async function changeVariant(
     line: (typeof lines)[number],
-    patch: { size?: string; colorHex?: string; color?: string },
+    patch: { size?: string; colorKey?: string },
   ) {
-    const nextSize = patch.size !== undefined ? patch.size : line.size;
-    const nextHex =
-      patch.colorHex !== undefined
-        ? patch.colorHex
-        : line.colorHex || (line.color?.startsWith("#") ? line.color : undefined);
-    const nextColorName =
-      patch.color !== undefined
-        ? patch.color
-        : line.color && !line.color.startsWith("#")
-          ? line.color
-          : undefined;
+    const opts = line.variantOptions;
+    const likes = toVariantLikes(opts);
+    const nextColor =
+      patch.colorKey !== undefined
+        ? patch.colorKey
+        : line.colorHex || line.color || null;
+    const nextSize =
+      patch.size !== undefined ? patch.size : line.size || null;
 
-    // اگر همان ترکیب فعلی بود، کاری نکن
-    const sameSize = (nextSize || "") === (line.size || "");
-    const sameColor =
-      (nextHex || nextColorName || "").replace(/^#/, "").toLowerCase() ===
-      (line.colorHex || line.color || "").replace(/^#/, "").toLowerCase();
-    if (sameSize && sameColor) return;
+    // فقط اگر این ترکیب در واریانت‌های تعریف‌شده باشد
+    if (opts.length) {
+      const okCombo = likes.some((v) => {
+        const colorOk =
+          !nextColor || !v.color || sameColor(v.color, nextColor);
+        const sizeOk = !nextSize || !v.size || v.size === nextSize;
+        return colorOk && sizeOk && (v.stock ?? 0) > 0;
+      });
+      if (!okCombo) {
+        setMsg("این ترکیب رنگ/سایز برای این محصول تعریف نشده یا موجود نیست.");
+        return;
+      }
+    }
 
     setBusyKey(line.key);
     setMsg(null);
@@ -137,68 +173,30 @@ export default function CartPage() {
         const res = await swapCartVariantAction({
           oldVariantId: line.variantId,
           productId: line.productId,
-          colorHex: nextHex || nextColorName || null,
-          size: nextSize || null,
+          colorHex: nextColor,
+          size: nextSize,
           quantity: line.quantity,
         });
         if (!res.ok) {
-          if (res.error?.startsWith("insufficient_stock")) {
-            setMsg("موجودی این ترکیب کافی نیست.");
-          } else if (res.error === "variant_not_found") {
-            setMsg("این ترکیب رنگ/سایز موجود نیست.");
-          } else {
-            setMsg("تغییر رنگ/سایز ممکن نشد.");
-          }
+          setMsg(
+            res.error === "variant_not_found"
+              ? "این ترکیب تعریف نشده است."
+              : res.error?.startsWith("insufficient_stock")
+                ? "موجودی این ترکیب کافی نیست."
+                : "تغییر ممکن نشد.",
+          );
           return;
         }
         window.dispatchEvent(new Event("pm:cart-changed"));
       } else {
-        // سبد محلی (مهمان)
         updateCartItem(line.key, {
-          size: nextSize,
-          color: nextHex || nextColorName,
+          size: nextSize || undefined,
+          color: nextColor || undefined,
         });
       }
     } finally {
       setBusyKey(null);
     }
-  }
-
-  function availableSizes(line: (typeof lines)[number]): string[] {
-    if (line.sizes?.length) return line.sizes;
-    if (line.variantOptions?.length) {
-      return [
-        ...new Set(
-          line.variantOptions
-            .map((o) => (o.size || "").trim())
-            .filter(Boolean),
-        ),
-      ];
-    }
-    return line.size ? [line.size] : [];
-  }
-
-  function availableColors(line: (typeof lines)[number]): string[] {
-    if (line.colors?.length) return line.colors;
-    if (line.variantOptions?.length) {
-      const keys: string[] = [];
-      for (const o of line.variantOptions) {
-        const k = (o.colorHex || o.color || "").trim();
-        if (!k) continue;
-        if (
-          !keys.some(
-            (x) =>
-              x.replace(/^#/, "").toLowerCase() ===
-              k.replace(/^#/, "").toLowerCase(),
-          )
-        ) {
-          keys.push(k);
-        }
-      }
-      return keys;
-    }
-    const cur = line.colorHex || line.color;
-    return cur ? [cur] : [];
   }
 
   return (
@@ -207,7 +205,7 @@ export default function CartPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            اقلام انتخاب‌شده — می‌توانید رنگ، سایز و تعداد را تغییر دهید
+            فقط رنگ و سایزهایی که برای هر محصول تعریف شده‌اند قابل انتخاب‌اند
           </p>
         </div>
         <Link
@@ -240,13 +238,12 @@ export default function CartPage() {
             {lines.map((p) => {
               const qty = Number(p.quantity ?? 1);
               const busy = busyKey === p.key;
-              const sizes = availableSizes(p);
-              const colors = availableColors(p);
-              const currentColorKey = (
-                p.colorHex ||
-                p.color ||
-                ""
-              ).replace(/^#/, "").toLowerCase();
+              const opts = p.variantOptions;
+              const likes = toVariantLikes(opts);
+              const colors = colorsFromOpts(opts);
+              const sizes = sizesFromOpts(opts);
+              const currentColor = p.colorHex || p.color || null;
+              const currentSize = p.size || null;
 
               return (
                 <li key={p.key} className="flex gap-3 p-4">
@@ -270,41 +267,52 @@ export default function CartPage() {
                       جمع: {fmtPrice(Number(p.price) * qty)}
                     </p>
 
-                    {/* رنگ */}
+                    {/* رنگ — فقط از واریانت‌های تعریف‌شده */}
                     {colors.length > 0 ? (
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-[11px]">رنگ</p>
                         <div className="flex flex-wrap justify-end gap-1.5">
                           {colors.map((c) => {
                             const hex = resolveColorHex(c) || c;
-                            const key = c.replace(/^#/, "").toLowerCase();
-                            const active = key === currentColorKey;
+                            const active = sameColor(c, currentColor);
+                            const ok = colorAvailable(c, likes, currentSize);
                             return (
                               <button
                                 key={c}
                                 type="button"
-                                disabled={busy}
-                                title={c}
+                                disabled={busy || !ok}
+                                title={
+                                  ok
+                                    ? c
+                                    : `این رنگ با سایز ${currentSize || "—"} تعریف نشده`
+                                }
                                 onClick={() =>
-                                  void changeVariant(p, {
-                                    colorHex: c.startsWith("#") ? c : hex,
-                                    color: c.startsWith("#") ? undefined : c,
-                                  })
+                                  ok && void changeVariant(p, { colorKey: c })
                                 }
                                 className={`h-7 w-7 rounded-full border-2 transition ${
                                   active
                                     ? "border-primary ring-2 ring-primary/30"
-                                    : "border-border hover:border-primary/50"
-                                } disabled:opacity-40`}
+                                    : "border-border"
+                                } ${!ok ? "cursor-not-allowed opacity-30" : ""}`}
                                 style={{ backgroundColor: hex || c }}
                               />
                             );
                           })}
                         </div>
                       </div>
+                    ) : currentColor ? (
+                      <span className="inline-flex items-center gap-1 text-[11px]">
+                        <span
+                          className="inline-block h-3.5 w-3.5 rounded-full border"
+                          style={{
+                            backgroundColor: resolveColorHex(currentColor),
+                          }}
+                        />
+                        رنگ
+                      </span>
                     ) : null}
 
-                    {/* سایز */}
+                    {/* سایز — فقط سایزهای معتبر برای رنگ فعلی */}
                     {sizes.length > 0 ? (
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-[11px]">سایز</p>
@@ -312,20 +320,30 @@ export default function CartPage() {
                           {sizes.map((sz) => {
                             const active =
                               (sz || "").toUpperCase() ===
-                              (p.size || "").toUpperCase();
+                              (currentSize || "").toUpperCase();
+                            const ok = sizeAvailable(sz, likes, currentColor);
                             return (
                               <button
                                 key={sz}
                                 type="button"
-                                disabled={busy}
+                                disabled={busy || !ok}
+                                title={
+                                  ok
+                                    ? sz
+                                    : `سایز ${sz} برای این رنگ تعریف نشده`
+                                }
                                 onClick={() =>
-                                  void changeVariant(p, { size: sz })
+                                  ok && void changeVariant(p, { size: sz })
                                 }
                                 className={`h-8 min-w-[2.25rem] rounded-lg border px-2 text-xs font-medium transition ${
-                                  active
+                                  active && ok
                                     ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-border hover:border-primary/50"
-                                } disabled:opacity-40`}
+                                    : "border-border"
+                                } ${
+                                  !ok
+                                    ? "cursor-not-allowed opacity-35 line-through"
+                                    : ""
+                                }`}
                               >
                                 {sz}
                               </button>
@@ -333,6 +351,8 @@ export default function CartPage() {
                           })}
                         </div>
                       </div>
+                    ) : currentSize ? (
+                      <span className="text-[11px]">سایز: {currentSize}</span>
                     ) : null}
 
                     <div className="flex items-center justify-end gap-2 pt-1">

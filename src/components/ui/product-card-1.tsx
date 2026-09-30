@@ -502,25 +502,30 @@ if (res.ok === false && res.error === "login_required") {
 
         {sizes.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {sizes.slice(0, 6).map((size) => (
+            {sizes.slice(0, 6).map((size) => {
+              const ok = sizeAvailable(size);
+              return (
               <button
                 key={size}
                 type="button"
+                disabled={!ok}
+                title={ok ? size : `سایز ${size} برای این رنگ تعریف نشده`}
                 className={cn(
                   "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
-                  selectedSize === size
+                  selectedSize === size && ok
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 text-foreground"
+                    : "bg-muted/70 text-foreground",
+                  !ok && "cursor-not-allowed opacity-35 line-through"
                 )}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setSelectedSize(size);
+                  if (ok) setSelectedSize(size);
                 }}
               >
                 {size}
               </button>
-            ))}
+            );})}
           </div>
         )}
       </CardContent>
