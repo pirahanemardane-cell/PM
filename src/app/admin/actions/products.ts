@@ -989,8 +989,6 @@ export async function adminSyncProductVariantsAction(
     }
 
     try {
-      await 
-    try {
       const { data: allVars } = await gate.supabase
         .from("product_variants")
         .select("id, price, original_price, is_active")
@@ -1008,7 +1006,8 @@ export async function adminSyncProductVariantsAction(
       console.error("[sync recordProductPrice]", e);
     }
 
-    revalidateProductPaths(gate.supabase, productId);
+    try {
+      await revalidateProductPaths(gate.supabase, productId);
     } catch (re) {
       console.warn("[sync revalidate]", re);
     }
