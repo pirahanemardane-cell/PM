@@ -53,9 +53,8 @@ const STEPS = [
   { id: 3, title: "مشخصات" },
   { id: 4, title: "رسانه" },
   { id: 5, title: "واریانت / موجودی" },
-  { id: 6, title: "راهنمای سایز" },
-  { id: 7, title: "توضیحات" },
-  { id: 8, title: "انتشار" },
+  { id: 6, title: "توضیحات" },
+  { id: 7, title: "انتشار" },
 ] as const;
 
 function emptyVariant(seed?: { price?: string; original?: string }): VRow {
@@ -412,8 +411,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           return "قیمت بعد از تخفیف باید کمتر از قیمت اصلی باشد";
       }
     }
-    if (s === 8 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
-    if (s === 8 && publishMode === "schedule") {
+    if (s === 6 && !shortDesc.trim()) return "توضیح کوتاه الزامی است";
+    if (s === 6 && publishMode === "schedule") {
       if (!publishedAt.trim()) return "تاریخ زمان‌بندی الزامی است";
     }
     return null;
@@ -634,7 +633,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         setOkMsg("مشخصات ذخیره شد");
       }
     }
-    if (step < 8) setStep((s) => s + 1);
+    if (step < 7) setStep((s) => s + 1);
   }
 
   function goPrev() {
@@ -668,13 +667,13 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       setStep(1);
       return;
     }
-    const v = validateStep(8);
+    const v = validateStep(6);
     if (v) {
       setErr(v);
       return;
     }
     // re-validate critical steps
-    for (const s of [1, 2, 3, 4, 5, 7, 8] as const) {
+    for (const s of [1, 2, 3, 4, 5, 6, 7] as const) {
       const e = validateStep(s);
       if (e) {
         setErr(`مرحله ${s}: ${e}`);
@@ -725,6 +724,46 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       return;
     }
     setOkMsg("تصویر شاخص ذخیره شد");
+  }
+
+
+  async function removeMainImage() {
+    if (!imageUrl) return;
+    setBusy(true);
+    setErr("");
+    try {
+      await adminDeleteProductImageAction({ url: imageUrl });
+      if (productId) {
+        await adminUpdateProductAction(productId, { image_url: null } as never);
+      }
+      setImageUrl("");
+      setOkMsg("تصویر شاخص حذف شد");
+    } catch (e) {
+      setErr("حذف تصویر شاخص ناموفق");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeGalleryImage(g: { id?: string; url: string }) {
+    setBusy(true);
+    setErr("");
+    try {
+      const res = await adminDeleteProductImageAction({
+        url: g.url,
+        imageId: g.id || null,
+      });
+      if (!res.ok) {
+        setErr(String((res as { error?: string }).error || "حذف ناموفق"));
+        return;
+      }
+      setGallery((list) => list.filter((x) => x.url !== g.url && x.id !== g.id));
+      setOkMsg("از گالری حذف شد");
+    } catch {
+      setErr("حذف از گالری ناموفق");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function applyGalleryFromMedia(item: { url: string; id?: string; alt_text?: string | null }) {
@@ -1071,12 +1110,22 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             <div>
               <p className="mb-2 text-sm font-medium">تصویر شاخص</p>
               {imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageUrl}
-                  alt=""
-                  className="mb-2 h-32 w-32 rounded-lg object-cover"
-                />
+                <div className="mb-2 flex items-start gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    className="h-32 w-32 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="text-destructive text-xs underline"
+                    disabled={busy}
+                    onClick={() => void removeMainImage()}
+                  >
+                    حذف تصویر شاخص
+                  </button>
+                </div>
               ) : null}
               <AdminMediaPicker
                 uploadLabel="آپلود تصویر شاخص"
@@ -1096,6 +1145,15 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         alt=""
                         className="h-20 w-20 rounded-lg object-cover"
                       />
+                      <button
+                        type="button"
+                        className="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] leading-none"
+                        title="حذف"
+                        disabled={busy}
+                        onClick={() => void removeGalleryImage(g)}
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1277,29 +1335,6 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         {step === 6 && (
           <div className="space-y-3">
             <label className="block space-y-1 text-sm">
-              <span>راهنمای سایز</span>
-              <select
-                className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                value={sizeGuideId}
-                onChange={(e) => setSizeGuideId(e.target.value)}
-              >
-                <option value="">پیش‌فرض دسته / سراسری</option>
-                {guides.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="text-muted-foreground text-xs">
-              اگر خالی بماند، ابتدا راهنمای همان دسته و سپس راهنمای سراسری استفاده می‌شود.
-            </p>
-          </div>
-        )}
-
-        {step === 7 && (
-          <div className="space-y-3">
-            <label className="block space-y-1 text-sm">
               <span>توضیح کوتاه</span>
               <textarea
                 className="border-input bg-background min-h-[80px] w-full rounded-lg border px-3 py-2"
@@ -1318,7 +1353,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           </div>
         )}
 
-        {step === 8 && (
+        {step === 7 && (
           <div className="space-y-3">
             <label className="block space-y-1 text-sm">
               <span>وضعیت</span>
@@ -1390,7 +1425,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
           >
             {status === "published" ? "به‌روزرسانی" : "ذخیره پیش‌نویس"}
           </button>
-          {step < 8 ? (
+          {step < 7 ? (
             <button
               type="button"
               className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"

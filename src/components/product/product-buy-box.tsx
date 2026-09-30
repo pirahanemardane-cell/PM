@@ -92,12 +92,14 @@ export function ProductBuyBox({
   );
   const colors = useMemo(() => {
     const seen = new Set<string>();
-    const out: string[] = [];
+    const out: { name: string; hex: string }[] = [];
     for (const v of variants) {
-      const hex = resolveColorHex(v.color, null);
-      if (!hex || seen.has(hex.toLowerCase())) continue;
-      seen.add(hex.toLowerCase());
-      out.push(hex);
+      const name = String(v.color || "").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ name, hex: resolveColorHex(v.color, null) || "" });
     }
     return out;
   }, [variants]);
@@ -105,7 +107,7 @@ export function ProductBuyBox({
   const [selectedSize, setSelectedSize] = useState<string | null>(
     sizes.length === 1 ? sizes[0]! : null,
   );
-  const [selectedColor, setSelectedColor] = useState<string>(colors[0] ?? "");
+  const [selectedColor, setSelectedColor] = useState<string>(colors[0]?.name ?? "");
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
@@ -201,7 +203,7 @@ export function ProductBuyBox({
         price: price ?? undefined,
         color: selectedColor || undefined,
         size: selectedSize || undefined,
-        colors: colors.length ? colors : undefined,
+        colors: colors.length ? colors.map((c) => c.name) : undefined,
         sizes: sizes.length ? sizes : undefined,
         quantity: qty,
         variantId: match.id,
@@ -251,23 +253,20 @@ export function ProductBuyBox({
           <div className="flex flex-wrap gap-2">
             {colors.map((c) => (
               <button
-                key={c}
+                key={c.name}
                 type="button"
-                onClick={() => { setSelectedColor(c); onColorChange?.(c); }}
+                onClick={() => { setSelectedColor(c.name); onColorChange?.(c.name); }}
                 className={cn(
-                  "border-border h-8 min-w-8 rounded-full border border-border px-2 text-xs shadow-sm",
-                  selectedColor === c && "border-primary ring-primary ring-2 ring-offset-2",
+                  "border-border inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs shadow-sm",
+                  selectedColor === c.name && "border-primary ring-primary ring-2 ring-offset-2",
                 )}
-                style={
-                  c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c)
-                    ? {
-                        backgroundColor: resolveColorHex(c),
-                      }
-                    : undefined
-                }
-                title={c}
+                title={c.name}
               >
-                {c.startsWith("#") || /^[0-9a-fA-F]{3,8}$/.test(c) ? "" : c}
+                <span
+                  className="border-border h-4 w-4 shrink-0 rounded-full border"
+                  style={{ backgroundColor: c.hex || "#e5e5e5" }}
+                />
+                <span>{c.name}</span>
               </button>
             ))}
           </div>
