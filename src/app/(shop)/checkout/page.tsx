@@ -1,10 +1,10 @@
 "use client";
 
-
 import { Price } from "@/components/ui/price";
 import { normalizeIranMobile } from "@/lib/numbers";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   createOrderAction,
   getCartAction,
@@ -19,10 +19,51 @@ import {
 } from "@/app/(shop)/actions/stock-reservations";
 import { useShopStore } from "@/lib/shop-store";
 import { LumaSpin } from "@/components/ui/luma-spin";
-import { AnimatedTicket } from "@/components/ui/ticket-confirmation-card";
+import { toPersianDigits } from "@/lib/numbers";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4 | 5;
+type PayStatus = "success" | "pending" | "failed";
+type ShipMethod = "post" | "tipax" | "peyk" | "pickup";
 
+const STEPS: { n: Step; label: string }[] = [
+  { n: 1, label: "تأیید سبد" },
+  { n: 2, label: "اطلاعات گیرنده" },
+  { n: 3, label: "نحوه ارسال" },
+  { n: 4, label: "پرداخت" },
+  { n: 5, label: "نتیجه" },
+];
+
+const SHIP_OPTIONS: {
+  id: ShipMethod;
+  title: string;
+  desc: string;
+  fee: number;
+}[] = [
+  {
+    id: "post",
+    title: "پست پیشتاز",
+    desc: "۲ تا ۴ روز کاری",
+    fee: 45000,
+  },
+  {
+    id: "tipax",
+    title: "تیپاکس",
+    desc: "۱ تا ۳ روز کاری",
+    fee: 65000,
+  },
+  {
+    id: "peyk",
+    title: "پیک موتوری (تهران)",
+    desc: "همان روز / روز بعد",
+    fee: 85000,
+  },
+  {
+    id: "pickup",
+    title: "تحویل حضوری",
+    desc: "از فروشگاه — رایگان",
+    fee: 0,
+  },
+];
 
 function mapCheckoutError(code: string | undefined): string {
   if (!code) return "ثبت سفارش ناموفق بود.";
@@ -51,6 +92,11 @@ function mapCheckoutError(code: string | undefined): string {
   return "ثبت سفارش ناموفق بود. دوباره تلاش کنید.";
 }
 
+function shortTrack(id: string) {
+  const clean = (id || "").replace(/-/g, "").slice(0, 12).toUpperCase();
+  return clean || id;
+}
+
 export default function CheckoutPage() {
   const clearCartLocal = useShopStore((s) => s.clearCart);
 
@@ -61,10 +107,17 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState<Step>(1);
   const [payMethod, setPayMethod] = useState<"cod" | "online">("cod");
-  const [doneOrder, setDoneOrder] = useState<{ id: string; total: number } | null>(null);
+  const [shipMethod, setShipMethod] = useState<ShipMethod>("post");
+  const [payStatus, setPayStatus] = useState<PayStatus | null>(null);
+  const [doneOrder, setDoneOrder] = useState<{
+    id: string;
+    total: number;
+    track: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     phone: "",
     address: "",
     city: "",
@@ -109,7 +162,6 @@ export default function CheckoutPage() {
       if (res.ok) setItems(res.items);
       setLoading(false);
 
-      // رزرو ۱۵دقیقه‌ای موجودی فقط در checkout
       const r = await reserveCheckoutStockAction();
       if (cancelled) return;
       if (r.ok) {
@@ -132,7 +184,6 @@ export default function CheckoutPage() {
     return () => {
       cancelled = true;
       window.clearInterval(iv);
-      // ترک بدون ثبت سفارش → آزادسازی (بعد از موفقیت سفارش نه)
       if (!orderPlacedRef.current) {
         void releaseCheckoutReservationAction();
       }
@@ -149,9 +200,13 @@ export default function CheckoutPage() {
     postal_code: string | null;
   }) {
     setSelectedAddressId(a.id);
+    const parts = (a.full_name || "").trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
     setForm((f) => ({
       ...f,
-      name: a.full_name || f.name,
+      firstName: firstName || f.firstName,
+      lastName: lastName || f.lastName,
       phone: a.phone || f.phone,
       address: a.address_line || f.address,
       city: a.city || f.city,
@@ -171,54 +226,104 @@ export default function CheckoutPage() {
     })();
   }, []);
 
-  const total = useMemo(
+  const subtotal = useMemo(
     () => items.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
     [items],
   );
-  const payable = discountPreview?.finalTotal ?? total;
+  const shipFee = SHIP_OPTIONS.find((s) => s.id === shipMethod)?.fee ?? 0;
+  const afterDiscount = discountPreview?.finalTotal ?? subtotal;
+  const payable = Math.max(0, afterDiscount + shipFee);
 
-  function goStep2() {
+  function fullName() {
+    return `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+  }
+
+  function goFrom1() {
     setError(null);
-    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      setError("نام، موبایل و آدرس الزامی است.");
+    if (!items.length) {
+      setError("سبد خرید خالی است.");
       return;
     }
     setStep(2);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  function goFrom2() {
     setError(null);
-    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      setError("نام، موبایل و آدرس الزامی است.");
-      setStep(1);
+    if (
+      !form.firstName.trim() ||
+      !form.lastName.trim() ||
+      !form.phone.trim() ||
+      !form.address.trim() ||
+      !form.postal.trim()
+    ) {
+      setError("نام، نام خانوادگی، موبایل، آدرس و کد پستی الزامی است.");
       return;
     }
+    if (!normalizeIranMobile(form.phone.trim())) {
+      setError("شماره موبایل نامعتبر است.");
+      return;
+    }
+    setStep(3);
+  }
+
+  function goFrom3() {
+    setError(null);
+    if (!shipMethod) {
+      setError("روش ارسال را انتخاب کنید.");
+      return;
+    }
+    setStep(4);
+  }
+
+  async function handlePay() {
+    setError(null);
     setSubmitting(true);
+    setPayStatus(null);
+
+    if (payMethod === "online") {
+      // درگاه هنوز وصل نیست → معلق با کد پیگیری موقت بعد از ثبت سفارش
+    }
+
     const res = await createOrderAction({
-      name: form.name.trim(),
+      name: fullName(),
       phone: normalizeIranMobile(form.phone.trim()) || form.phone.trim(),
       address: form.address.trim(),
       city: form.city.trim() || undefined,
       postal: form.postal.trim() || undefined,
-      note: form.note.trim() || undefined,
+      note:
+        [
+          form.note.trim(),
+          `ارسال: ${SHIP_OPTIONS.find((s) => s.id === shipMethod)?.title ?? shipMethod}`,
+          `پرداخت: ${payMethod === "cod" ? "در محل" : "آنلاین"}`,
+        ]
+          .filter(Boolean)
+          .join(" | ") || undefined,
       discountCode: (discountPreview?.code || discountCode).trim() || undefined,
     });
     setSubmitting(false);
+
     if (!res.ok) {
       if (res.error === "login_required") {
         window.location.href = "/ورود?next=/checkout";
         return;
       }
+      setPayStatus("failed");
       setError(mapCheckoutError(res.error));
+      setStep(5);
       return;
     }
+
     orderPlacedRef.current = true;
     clearCartLocal();
+    const track = shortTrack(res.orderId);
     setDoneOrder({
       id: res.orderId,
-      total: discountPreview?.finalTotal ?? total,
+      total: payable,
+      track,
     });
+    // COD = موفق (پرداخت هنگام تحویل) | آنلاین = معلق تا تأیید درگاه
+    setPayStatus(payMethod === "cod" ? "success" : "pending");
+    setStep(5);
   }
 
   if (loading) {
@@ -229,8 +334,19 @@ export default function CheckoutPage() {
     );
   }
 
+  if (!items.length && !doneOrder && step !== 5) {
+    return (
+      <div className="w-full max-w-none space-y-4 px-4 py-16 text-center" dir="rtl">
+        <p>سبد خرید خالی است.</p>
+        <Link href="/products" className="text-primary underline">
+          بازگشت به فروشگاه
+        </Link>
+      </div>
+    );
+  }
+
   const reserveBanner =
-    reserveHint && !doneOrder ? (
+    reserveHint && step < 5 ? (
       <p className="text-muted-foreground border-border bg-muted/40 mb-4 rounded-xl border px-3 py-2 text-xs">
         {reserveHint}
         {reserveExpiresAt ? (
@@ -247,51 +363,22 @@ export default function CheckoutPage() {
       </p>
     ) : null;
 
-  if (!items.length && !doneOrder) {
-    return (
-      <div className="w-full max-w-none space-y-4 px-4 py-16 text-center" dir="rtl">
-        <p>سبد خرید خالی است.</p>
-        <Link href="/products" className="text-primary underline">
-          بازگشت به فروشگاه
-        </Link>
-      </div>
-    );
-  }
-
-  if (doneOrder) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center p-4" dir="rtl">
-        <AnimatedTicket
-          ticketId={doneOrder.id}
-          amount={doneOrder.total}
-          cardHolder={payMethod === "cod" ? "پرداخت در محل" : "پرداخت آنلاین"}
-        />
-      </div>
-    );
-  }
-
-  const steps = [
-    { n: 1 as const, label: "آدرس" },
-    { n: 2 as const, label: "پرداخت" },
-    { n: 3 as const, label: "مرور و ثبت" },
-  ];
-
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
-      {reserveBanner}
       <div className="w-full max-w-none px-4 py-8">
+        {reserveBanner}
         <h1 className="mb-6 text-xl font-bold text-primary">تسویه حساب</h1>
 
-        {/* progress */}
-        <div className="mb-8 flex items-center justify-center gap-2">
-          {steps.map((s, i) => (
-            <div key={s.n} className="flex items-center gap-2">
+        {/* نوار ۵ مرحله */}
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+          {STEPS.map((s, i) => (
+            <div key={s.n} className="flex items-center gap-1 sm:gap-2">
               <button
                 type="button"
                 onClick={() => {
-                  if (s.n < step) setStep(s.n);
+                  if (s.n < step && step < 5) setStep(s.n);
                 }}
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium ${
+                className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-xs sm:text-sm font-medium ${
                   step === s.n
                     ? "bg-primary text-primary-foreground"
                     : step > s.n
@@ -299,23 +386,104 @@ export default function CheckoutPage() {
                       : "bg-muted text-muted-foreground"
                 }`}
               >
-                {s.n}
+                {toPersianDigits(String(s.n))}
               </button>
-              <span className="text-muted-foreground hidden text-sm sm:inline">{s.label}</span>
-              {i < steps.length - 1 ? (
-                <span className="bg-border mx-1 h-px w-6 sm:w-10" />
+              <span className="text-muted-foreground hidden text-xs sm:inline md:text-sm">
+                {s.label}
+              </span>
+              {i < STEPS.length - 1 ? (
+                <span className="bg-border mx-0.5 h-px w-4 sm:w-8" />
               ) : null}
             </div>
           ))}
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="border-border bg-card space-y-4 rounded-2xl border p-6 shadow-sm">
-            {error ? <p className="text-destructive text-sm">{error}</p> : null}
+        <div className="grid gap-8 lg:grid-cols-5">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-5 shadow-sm lg:col-span-3">
+            {error && step !== 5 ? (
+              <p className="text-destructive text-sm">{error}</p>
+            ) : null}
 
+            {/* ۱ — تأیید اقلام */}
             {step === 1 ? (
               <>
-                <h2 className="font-semibold text-primary">آدرس تحویل</h2>
+                <h2 className="font-semibold text-primary">۱. تأیید آیتم‌های سبد</h2>
+                <p className="text-muted-foreground text-xs">
+                  تعداد، رنگ و سایز انتخاب‌شده را بررسی کنید.
+                </p>
+                <ul className="space-y-3">
+                  {items.map((it) => (
+                    <li
+                      key={it.itemId || it.variantId}
+                      className="border-border flex gap-3 rounded-xl border p-3"
+                    >
+                      <div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-lg">
+                        {it.image ? (
+                          <Image
+                            src={it.image}
+                            alt={it.title}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0 flex-1 text-sm">
+                        <p className="font-medium text-primary">{it.title}</p>
+                        <div className="text-muted-foreground mt-1 flex flex-wrap gap-2 text-xs">
+                          {it.size ? (
+                            <span className="bg-muted rounded-md px-2 py-0.5">
+                              سایز: {it.size}
+                            </span>
+                          ) : null}
+                          {it.color || it.colorHex ? (
+                            <span className="bg-muted inline-flex items-center gap-1 rounded-md px-2 py-0.5">
+                              رنگ:
+                              {it.colorHex ? (
+                                <span
+                                  className="inline-block h-3 w-3 rounded-full border"
+                                  style={{ background: it.colorHex }}
+                                />
+                              ) : null}
+                              {it.color || it.colorHex}
+                            </span>
+                          ) : null}
+                          <span className="bg-muted rounded-md px-2 py-0.5">
+                            تعداد: {toPersianDigits(String(it.quantity))}
+                          </span>
+                        </div>
+                        <p className="mt-1 font-medium">
+                          <Price
+                            amount={Number(it.price) * Number(it.quantity)}
+                            size="sm"
+                          />
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-2 pt-2">
+                  <Link
+                    href="/cart"
+                    className="border-border flex h-11 flex-1 items-center justify-center rounded-xl border text-sm"
+                  >
+                    ویرایش سبد
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={goFrom1}
+                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
+                  >
+                    ادامه — اطلاعات گیرنده
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {/* ۲ — اطلاعات فردی */}
+            {step === 2 ? (
+              <>
+                <h2 className="font-semibold text-primary">۲. اطلاعات گیرنده</h2>
                 {savedAddresses.length > 0 ? (
                   <div className="space-y-2">
                     <p className="text-muted-foreground text-xs">آدرس‌های ذخیره‌شده</p>
@@ -342,46 +510,134 @@ export default function CheckoutPage() {
                   </div>
                 ) : null}
 
-                {(
-                  [
-                    ["name", "نام و نام خانوادگی", "text"],
-                    ["phone", "موبایل", "tel"],
-                    ["address", "آدرس", "text"],
-                    ["city", "شهر", "text"],
-                    ["postal", "کد پستی", "text"],
-                    ["note", "توضیحات (اختیاری)", "text"],
-                  ] as const
-                ).map(([key, label, type]) => (
-                  <label key={key} className="block space-y-1 text-sm">
-                    <span>{label}</span>
-                    <input
-                      type={type}
-                      value={form[key]}
-                      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                      className="border-input bg-background h-10 w-full rounded-xl border px-3"
-                      dir="rtl"
-                    />
-                  </label>
-                ))}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(
+                    [
+                      ["firstName", "نام", "text"],
+                      ["lastName", "نام خانوادگی", "text"],
+                      ["phone", "شماره تماس", "tel"],
+                      ["postal", "کد پستی", "text"],
+                      ["city", "شهر", "text"],
+                    ] as const
+                  ).map(([key, label, type]) => (
+                    <label key={key} className="block space-y-1 text-sm">
+                      <span>{label}</span>
+                      <input
+                        type={type}
+                        value={form[key]}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, [key]: e.target.value }))
+                        }
+                        className="border-input bg-background h-10 w-full rounded-xl border px-3"
+                        dir="rtl"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <label className="block space-y-1 text-sm">
+                  <span>آدرس کامل</span>
+                  <textarea
+                    value={form.address}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, address: e.target.value }))
+                    }
+                    rows={3}
+                    className="border-input bg-background w-full rounded-xl border px-3 py-2"
+                    dir="rtl"
+                  />
+                </label>
+                <label className="block space-y-1 text-sm">
+                  <span>توضیحات (اختیاری)</span>
+                  <input
+                    type="text"
+                    value={form.note}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, note: e.target.value }))
+                    }
+                    className="border-input bg-background h-10 w-full rounded-xl border px-3"
+                    dir="rtl"
+                  />
+                </label>
 
-                <button
-                  type="button"
-                  onClick={goStep2}
-                  className="bg-primary text-primary-foreground h-11 w-full rounded-xl text-sm font-medium"
-                >
-                  ادامه — روش پرداخت
-                </button>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="border-border h-11 flex-1 rounded-xl border text-sm"
+                  >
+                    بازگشت
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goFrom2}
+                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
+                  >
+                    ادامه — نحوه ارسال
+                  </button>
+                </div>
               </>
             ) : null}
 
-            {step === 2 ? (
+            {/* ۳ — ارسال */}
+            {step === 3 ? (
               <>
-                <h2 className="font-semibold text-primary">روش پرداخت</h2>
+                <h2 className="font-semibold text-primary">۳. نحوه ارسال</h2>
+                <div className="space-y-2">
+                  {SHIP_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setShipMethod(opt.id)}
+                      className={`flex w-full items-center justify-between rounded-xl border p-4 text-right text-sm ${
+                        shipMethod === opt.id
+                          ? "border-primary bg-primary/5 font-medium"
+                          : "border-border"
+                      }`}
+                    >
+                      <span>
+                        <span className="block">{opt.title}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {opt.desc}
+                        </span>
+                      </span>
+                      <span className="shrink-0">
+                        {opt.fee === 0 ? (
+                          "رایگان"
+                        ) : (
+                          <Price amount={opt.fee} size="sm" />
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="border-border h-11 flex-1 rounded-xl border text-sm"
+                  >
+                    بازگشت
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goFrom3}
+                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
+                  >
+                    ادامه — پرداخت
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {/* ۴ — پرداخت */}
+            {step === 4 ? (
+              <>
+                <h2 className="font-semibold text-primary">۴. پرداخت</h2>
                 <div className="space-y-2">
                   {(
                     [
-                      ["cod", "پرداخت در محل"],
-                      ["online", "پرداخت آنلاین (به‌زودی)"],
+                      ["cod", "پرداخت در محل (هنگام تحویل)"],
+                      ["online", "پرداخت آنلاین"],
                     ] as const
                   ).map(([id, label]) => (
                     <button
@@ -395,47 +651,16 @@ export default function CheckoutPage() {
                       }`}
                     >
                       {label}
+                      {id === "online" ? (
+                        <span className="text-muted-foreground mt-1 block text-xs">
+                          پس از ثبت، وضعیت پرداخت «معلق» می‌ماند تا درگاه تأیید کند.
+                        </span>
+                      ) : null}
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="border-border h-11 flex-1 rounded-xl border text-sm"
-                  >
-                    بازگشت
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep(3)}
-                    className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
-                  >
-                    ادامه — مرور
-                  </button>
-                </div>
-              </>
-            ) : null}
 
-            {step === 3 ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <h2 className="font-semibold text-primary">مرور و ثبت</h2>
-                <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
-                  <p>
-                    <span className="text-muted-foreground">گیرنده: </span>
-                    {form.name} — {form.phone}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">آدرس: </span>
-                    {form.city} {form.address}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">پرداخت: </span>
-                    {payMethod === "cod" ? "در محل" : "آنلاین"}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
+                <div className="space-y-2 pt-2">
                   <p className="text-sm font-medium">کد تخفیف</p>
                   <div className="flex gap-2">
                     <input
@@ -456,7 +681,10 @@ export default function CheckoutPage() {
                       onClick={async () => {
                         setDiscountLoading(true);
                         setDiscountError(null);
-                        const res = await validateDiscountAction(discountCode, total);
+                        const res = await validateDiscountAction(
+                          discountCode,
+                          subtotal,
+                        );
                         setDiscountLoading(false);
                         if (!res.ok) {
                           setDiscountPreview(null);
@@ -488,64 +716,188 @@ export default function CheckoutPage() {
                   ) : null}
                   {discountPreview ? (
                     <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                      <Price amount={discountPreview.discountAmount} size="sm" /> تخفیف —
-                      قابل پرداخت: <Price amount={discountPreview.finalTotal} size="sm" />
+                      <Price amount={discountPreview.discountAmount} size="sm" />{" "}
+                      تخفیف اعمال شد
                     </p>
                   ) : null}
+                </div>
+
+                <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">گیرنده: </span>
+                    {fullName()} — {form.phone}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">آدرس: </span>
+                    {form.city} {form.address}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">ارسال: </span>
+                    {SHIP_OPTIONS.find((s) => s.id === shipMethod)?.title}
+                  </p>
+                  <p className="font-bold">
+                    قابل پرداخت: <Price amount={payable} size="md" />
+                  </p>
                 </div>
 
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(3)}
                     className="border-border h-11 flex-1 rounded-xl border text-sm"
                   >
                     بازگشت
                   </button>
                   <button
-                    type="submit"
+                    type="button"
                     disabled={submitting}
+                    onClick={() => void handlePay()}
                     className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium disabled:opacity-60"
                   >
-                    {submitting ? "در حال ثبت…" : "ثبت نهایی سفارش"}
+                    {submitting ? "در حال ثبت…" : "ثبت و پرداخت"}
                   </button>
                 </div>
-              </form>
+              </>
+            ) : null}
+
+            {/* ۵ — گزارش پرداخت */}
+            {step === 5 ? (
+              <div className="space-y-4 text-center">
+                <h2 className="font-semibold text-primary">۵. گزارش پرداخت</h2>
+                {payStatus === "success" ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-900 dark:bg-emerald-950/40">
+                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                      پرداخت / ثبت موفق
+                    </p>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      سفارش شما با موفقیت ثبت شد.
+                      {payMethod === "cod"
+                        ? " مبلغ هنگام تحویل دریافت می‌شود."
+                        : ""}
+                    </p>
+                  </div>
+                ) : null}
+                {payStatus === "pending" ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900 dark:bg-amber-950/40">
+                    <p className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                      پرداخت معلق
+                    </p>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      سفارش ثبت شد؛ منتظر تأیید پرداخت آنلاین بمانید.
+                    </p>
+                  </div>
+                ) : null}
+                {payStatus === "failed" ? (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 dark:border-rose-900 dark:bg-rose-950/40">
+                    <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
+                      ناموفق
+                    </p>
+                    <p className="text-destructive mt-2 text-sm">
+                      {error || "ثبت یا پرداخت انجام نشد."}
+                    </p>
+                  </div>
+                ) : null}
+
+                {doneOrder ? (
+                  <div className="border-border bg-muted/30 space-y-2 rounded-xl border p-4 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">کد پیگیری: </span>
+                      <span className="font-mono text-base font-bold tracking-wider">
+                        {doneOrder.track}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground text-xs break-all">
+                      شناسه سفارش: {doneOrder.id}
+                    </p>
+                    <p>
+                      مبلغ: <Price amount={doneOrder.total} size="md" />
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  {payStatus === "failed" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep(4);
+                        setError(null);
+                        setPayStatus(null);
+                      }}
+                      className="bg-primary text-primary-foreground h-11 flex-1 rounded-xl text-sm font-medium"
+                    >
+                      تلاش دوباره
+                    </button>
+                  ) : (
+                    <Link
+                      href="/dashboard/orders"
+                      className="bg-primary text-primary-foreground flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-medium"
+                    >
+                      پیگیری سفارش
+                    </Link>
+                  )}
+                  <Link
+                    href="/products"
+                    className="border-border flex h-11 flex-1 items-center justify-center rounded-xl border text-sm"
+                  >
+                    بازگشت به فروشگاه
+                  </Link>
+                </div>
+              </div>
             ) : null}
           </div>
 
-          {/* خلاصه سبد */}
-          <aside className="border-border bg-card h-fit rounded-2xl border p-6 shadow-sm">
-            <h2 className="mb-4 font-semibold text-primary">سبد خرید</h2>
+          {/* خلاصه */}
+          <aside className="border-border bg-card h-fit rounded-2xl border p-5 shadow-sm lg:col-span-2">
+            <h2 className="mb-4 font-semibold text-primary">خلاصه سفارش</h2>
             <ul className="space-y-3">
               {items.map((it) => (
-                <li key={it.itemId || it.variantId} className="flex justify-between gap-3 text-sm">
-                  <span>
-                    {it.title}
-                    <span className="text-muted-foreground"> × {it.quantity}</span>
+                <li
+                  key={it.itemId || it.variantId}
+                  className="flex justify-between gap-2 text-sm"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate">{it.title}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {[it.size, it.color, `×${it.quantity}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
                   </span>
                   <span className="shrink-0">
-                    {(Number(it.price) * Number(it.quantity)).toLocaleString("fa-IR")}
+                    <Price
+                      amount={Number(it.price) * Number(it.quantity)}
+                      size="sm"
+                    />
                   </span>
                 </li>
               ))}
             </ul>
             <div className="border-border mt-4 space-y-1 border-t pt-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">جمع</span>
-                <span><Price amount={total} size="md" /></span>
+                <span className="text-muted-foreground">جمع کالا</span>
+                <Price amount={subtotal} size="sm" />
               </div>
               {discountPreview ? (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>تخفیف</span>
                   <span>
-                    −<Price amount={discountPreview.discountAmount} size="sm" />
+                    −
+                    <Price amount={discountPreview.discountAmount} size="sm" />
                   </span>
                 </div>
               ) : null}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">ارسال</span>
+                {shipFee === 0 ? (
+                  <span>رایگان</span>
+                ) : (
+                  <Price amount={shipFee} size="sm" />
+                )}
+              </div>
               <div className="flex justify-between text-base font-bold">
                 <span>قابل پرداخت</span>
-                <span><Price amount={payable} size="md" /></span>
+                <Price amount={payable} size="md" />
               </div>
             </div>
           </aside>
