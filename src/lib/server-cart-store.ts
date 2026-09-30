@@ -58,6 +58,7 @@ function mapItems(
 }
 
 let inflight: Promise<void> | null = null;
+let lastRefreshAt = 0;
 
 export const useServerCartStore = create<ServerCartState>((set, get) => ({
   lines: [],
@@ -72,23 +73,32 @@ export const useServerCartStore = create<ServerCartState>((set, get) => ({
         .lines.map((l) =>
           l.variantId === variantId ? { ...l, quantity: Math.max(1, q) } : l,
         )
-        .filter((l) => (l.quantity ?? 1) > 0 && !(l.variantId === variantId && q < 1)),
+        .filter(
+          (l) =>
+            (l.quantity ?? 1) > 0 &&
+            !(l.variantId === variantId && q < 1),
+        ),
     });
   },
   removeOptimistic: (variantId) => {
     set({ lines: get().lines.filter((l) => l.variantId !== variantId) });
   },
   refresh: async () => {
+    // جلوگیری از رفرش پشت‌سرهم (مثلاً realtime + دکمه)
+    const now = Date.now();
     if (inflight) return inflight;
+    if (now - lastRefreshAt < 120 && get().hydrated) return;
+
     set({ loading: true });
     inflight = (async () => {
       try {
         const res = await getCartAction();
+        lastRefreshAt = Date.now();
         if (res.ok) set({ lines: mapItems(res.items), hydrated: true });
         else set({ lines: [], hydrated: true });
       } catch (e) {
         console.error("[server-cart refresh]", e);
-        set({ lines: [], hydrated: true });
+        set({ hydrated: true });
       } finally {
         set({ loading: false });
         inflight = null;

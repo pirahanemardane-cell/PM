@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRealtimeTable } from "@/hooks/use-realtime-table";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { RT } from "@/lib/realtime/events";
 
-function useDebouncedDispatch(ms = 400) {
+/** debounce جدا برای هر نوع event — کاتالوگ کندتر، سبد سریع‌تر */
+function useSmartDispatch() {
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
@@ -16,7 +16,7 @@ function useDebouncedDispatch(ms = 400) {
     };
   }, []);
 
-  return useCallback((eventName: string) => {
+  return useCallback((eventName: string, ms = 400) => {
     const prev = timers.current.get(eventName);
     if (prev) clearTimeout(prev);
     timers.current.set(
@@ -28,18 +28,19 @@ function useDebouncedDispatch(ms = 400) {
         }
       }, ms),
     );
-  }, [ms]);
+  }, []);
 }
 
 /**
- * تنها نقطه Realtime سایت.
- * تغییر DB → event → صفحات باز با load() خودشان به‌روز می‌شوند (بدون reload).
+ * تنها نقطه Realtime سایت — یک WebSocket / یک channel
+ * به‌جای ۱۰+ کانال جدا (علت اصلی کندی پنل‌ها)
  */
 export function RealtimeBridge() {
   const refreshCart = useServerCartStore((s) => s.refresh);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const dispatch = useDebouncedDispatch(400);
+  const dispatch = useSmartDispatch();
+  const cartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,78 +76,92 @@ export function RealtimeBridge() {
   }, []);
 
   const onCart = useCallback(() => {
-    void refreshCart();
-    dispatch(RT.cart);
+    // سبد: debounce کوتاه + یک refresh
+    if (cartTimer.current) clearTimeout(cartTimer.current);
+    cartTimer.current = setTimeout(() => {
+      void refreshCart();
+      dispatch(RT.cart, 0);
+    }, 200);
   }, [refreshCart, dispatch]);
 
-  const onOrders = useCallback(() => dispatch(RT.orders), [dispatch]);
-  const onWishlist = useCallback(() => dispatch(RT.wishlist), [dispatch]);
-  const onStock = useCallback(() => dispatch(RT.stock), [dispatch]);
-  const onCatalog = useCallback(() => dispatch(RT.catalog), [dispatch]);
-  const onReviews = useCallback(() => dispatch(RT.reviews), [dispatch]);
-  const onSupport = useCallback(() => dispatch(RT.support), [dispatch]);
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase.channel("pm:site-rt-v1");
 
-  // سبد
-  useRealtimeTable({ table: "cart_items", enabled: true, onPayload: onCart });
-  useRealtimeTable({ table: "carts", enabled: true, onPayload: onCart });
+    // سبد
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "cart_items" },
+      () => onCart(),
+    );
 
-  // علاقه‌مندی
-  useRealtimeTable({
-    table: "wishlists",
-    enabled: Boolean(userId),
-    onPayload: onWishlist,
-  });
+    // علاقه‌مندی — فقط وقتی لاگین
+    if (userId) {
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "wishlists" },
+        () => dispatch(RT.wishlist, 300),
+      );
+    }
 
-  // سفارش — مشتری فقط مال خودش
-  useRealtimeTable({
-    table: "orders",
-    filter: userId ? `user_id=eq.${userId}` : undefined,
-    enabled: Boolean(userId) && !isAdmin,
-    onPayload: onOrders,
-  });
-  useRealtimeTable({
-    table: "order_items",
-    enabled: Boolean(userId) && !isAdmin,
-    onPayload: onOrders,
-  });
+    // سفارش‌ها
+    if (isAdmin) {
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "orders" },
+        () => dispatch(RT.orders, 350),
+      );
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "order_items" },
+        () => dispatch(RT.orders, 350),
+      );
+    } else if (userId) {
+      channel.on(
+        "postgres_changes" as any,
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => dispatch(RT.orders, 350),
+      );
+    }
 
-  // سفارش — ادمین همه
-  useRealtimeTable({
-    table: "orders",
-    enabled: isAdmin,
-    onPayload: onOrders,
-  });
-  useRealtimeTable({
-    table: "order_items",
-    enabled: isAdmin,
-    onPayload: onOrders,
-  });
+    // موجودی / کاتالوگ — debounce بلند تا پنل ادمین قفل نشود
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "product_variants" },
+      () => dispatch(RT.stock, 900),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "products" },
+      () => dispatch(RT.catalog, 900),
+    );
 
-  // موجودی واریانت + کاتالوگ
-  useRealtimeTable({
-    table: "product_variants",
-    enabled: true,
-    onPayload: onStock,
-  });
-  useRealtimeTable({
-    table: "products",
-    enabled: true,
-    onPayload: onCatalog,
-  });
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "reviews" },
+      () => dispatch(RT.reviews, 600),
+    );
 
-  // نظرات
-  useRealtimeTable({
-    table: "reviews",
-    enabled: true,
-    onPayload: onReviews,
-  });
+    if (userId) {
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "return_requests" },
+        () => dispatch(RT.support, 500),
+      );
+    }
 
-  // مرجوعی + تیکت
-  useRealtimeTable({
-    table: "return_requests",
-    enabled: Boolean(userId),
-    onPayload: onSupport,
-  });
+    channel.subscribe();
+
+    return () => {
+      if (cartTimer.current) clearTimeout(cartTimer.current);
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, isAdmin, onCart, dispatch]);
 
   return null;
 }

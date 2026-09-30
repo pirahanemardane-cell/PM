@@ -1,7 +1,11 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function requireAdmin() {
+/**
+ * در یک request فقط یک‌بار اجرا می‌شود (layout + page هر دو صدا بزنند → یک round-trip)
+ */
+export const requireAdmin = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -10,7 +14,6 @@ export async function requireAdmin() {
     return { ok: false as const, error: "login_required" as const };
   }
 
-  // نقش از profiles (با service تا RLS مانع نشود)
   const admin = createServiceClient();
   const { data: profile, error } = await admin
     .from("profiles")
@@ -30,6 +33,6 @@ export async function requireAdmin() {
   return {
     ok: true as const,
     userId: user.id,
-    supabase: admin, // service role — عبور از RLS برای CMS
+    supabase: admin,
   };
-}
+});

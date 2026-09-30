@@ -54,7 +54,7 @@ export function useUnifiedCart() {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         void refresh();
-      }, 300);
+      }, 150);
     }
     window.addEventListener("pm:cart-changed", onChange);
     return () => {

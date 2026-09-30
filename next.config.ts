@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   compress: true,
+  poweredByHeader: false,
+  // صفحات پنل dynamic می‌مانند؛ فقط overhead کمتر
+
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
