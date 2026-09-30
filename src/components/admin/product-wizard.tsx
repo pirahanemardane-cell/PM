@@ -464,25 +464,44 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
       const sp = sellingPrice;
       const op = originalPrice;
       let vPayload: Array<Record<string, unknown>>;
-      vPayload = variants.map((v) => {
-        const sale = parseLocaleNumber(v.price);
-        const original = parseLocaleNumber(v.original_price);
-        // original = قیمت اصلی؛ price = قیمت فروش (بعد از تخفیف اگر پر شده)
-        const main = original > 0 ? original : sale;
-        const sell = sale > 0 && original > 0 && sale < original ? sale : main;
-        const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
+      vPayload = variants
+        .map((v) => {
+          const sale = parseLocaleNumber(v.price);
+          const original = parseLocaleNumber(v.original_price);
+          // original = قیمت اصلی؛ price = قیمت فروش (بعد از تخفیف اگر پر شده)
+          const main =
+            Number.isFinite(original) && original > 0
+              ? original
+              : Number.isFinite(sale) && sale > 0
+                ? sale
+                : 0;
+          const sell =
+            Number.isFinite(sale) && sale > 0 && original > 0 && sale < original
+              ? sale
+              : main;
+          if (!(main > 0) && !(sell > 0)) return null;
+          if (!v.size && !v.color_name) return null;
+          const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
+          return {
+            id: v.id,
+            size: v.size || null,
+            color_name: v.color_name || null,
+            color_hex: hx,
+            sku: v.sku || null,
+            price: sell > 0 ? sell : main,
+            original_price: main > sell ? main : sell > 0 ? sell : main,
+            stock_quantity: parseLocaleNumber(v.stock) || 0,
+            image_url: v.image_url || null,
+            is_active: true,
+          };
+        })
+        .filter(Boolean) as Array<Record<string, unknown>>;
+      if (!vPayload.length) {
         return {
-          id: v.id,
-          size: v.size || null,
-          color_name: v.color_name || null,
-          color_hex: hx,
-          sku: v.sku || null,
-          price: sell,
-          original_price: main > sell ? main : sell,
-          stock_quantity: parseLocaleNumber(v.stock) || 0,
-          image_url: v.image_url || null,
+          ok: false as const,
+          error: "حداقل یک واریانت با سایز/رنگ و قیمت معتبر لازم است",
         };
-      });
+      }
       const syncV = await adminSyncProductVariantsAction(id, vPayload as never);
       if (!syncV.ok) {
         return {

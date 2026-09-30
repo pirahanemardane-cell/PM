@@ -739,25 +739,38 @@ export async function adminSyncProductVariantsAction(
 
   try {
     const cleaned = (variants ?? [])
-      .map((v) => ({
-        id: (v.id || "").trim() || undefined,
-        size: (v.size || "").trim() || null,
-        color_name: (v.color_name || "").trim() || null,
-        color_hex: (v.color_hex || "").trim() || null,
-        sku: (v.sku || "").trim() || null,
-        price: Number(v.price),
-        original_price:
+      .map((v) => {
+        const rawPrice = Number(v.price);
+        const rawOriginal =
           v.original_price != null && Number.isFinite(Number(v.original_price))
             ? Number(v.original_price)
-            : null,
-        stock_quantity: Math.max(0, Number(v.stock_quantity ?? 0) || 0),
-        is_active: v.is_active !== false,
-        image_url: (v.image_url || "").trim() || null,
-      }))
+            : null;
+        // اگر price نامعتبر بود از original_price استفاده کن
+        let price = Number.isFinite(rawPrice) && rawPrice >= 0 ? rawPrice : NaN;
+        if (!Number.isFinite(price) && rawOriginal != null && rawOriginal >= 0) {
+          price = rawOriginal;
+        }
+        return {
+          id: (v.id || "").trim() || undefined,
+          size: (v.size || "").trim() || null,
+          color_name: (v.color_name || "").trim() || null,
+          color_hex: (v.color_hex || "").trim() || null,
+          sku: (v.sku || "").trim() || null,
+          price,
+          original_price: rawOriginal,
+          stock_quantity: Math.max(0, Number(v.stock_quantity ?? 0) || 0),
+          is_active: v.is_active !== false,
+          image_url: (v.image_url || "").trim() || null,
+        };
+      })
       .filter((v) => Number.isFinite(v.price) && v.price >= 0);
 
     if (!cleaned.length) {
-      return { ok: false as const, error: "variants_required" };
+      return {
+        ok: false as const,
+        error: "variants_required" as const,
+        detail: "حداقل یک واریانت با قیمت معتبر لازم است",
+      };
     }
 
     // SKU تکراری در payload → null
