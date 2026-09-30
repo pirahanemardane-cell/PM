@@ -319,6 +319,40 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   }, [initialId]);
 
 
+
+  // همگام‌سازی سایز/رنگ انتخاب‌شده با مقادیر واقعی واریانت‌ها (بعد از ریلود خالی نماند)
+  useEffect(() => {
+    if (!variants.length) return;
+    if (sizeOpts.length) {
+      const vals = new Set(
+        variants.map((v) => String(v.size || "").trim()).filter(Boolean),
+      );
+      if (vals.size) {
+        setPickedSizeIds((prev) => {
+          const fromVars = sizeOpts
+            .filter((o) => vals.has(String(o.value).trim()))
+            .map((o) => o.id);
+          const merged = Array.from(new Set([...prev, ...fromVars]));
+          return merged.length ? merged : prev;
+        });
+      }
+    }
+    if (colorOpts.length) {
+      const vals = new Set(
+        variants.map((v) => String(v.color_name || "").trim()).filter(Boolean),
+      );
+      if (vals.size) {
+        setPickedColorIds((prev) => {
+          const fromVars = colorOpts
+            .filter((o) => vals.has(String(o.value).trim()))
+            .map((o) => o.id);
+          const merged = Array.from(new Set([...prev, ...fromVars]));
+          return merged.length ? merged : prev;
+        });
+      }
+    }
+  }, [variants, sizeOpts, colorOpts]);
+
   useEffect(() => {
     if (!loadedAttrRows.length || !attrDefs.length) return;
     const sizeId = attrDefs.find((a) => a.slug === "size")?.id;
@@ -1207,7 +1241,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       >
                         <option value="">سایز…</option>
-                        {sizeChoices.map((o) => (
+                        {sizeOpts.map((o) => (
                           <option key={o.id} value={o.value}>
                             {o.value}
                           </option>
@@ -1224,7 +1258,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                         }}
                       >
                         <option value="">رنگ…</option>
-                        {colorChoices.map((o) => (
+                        {colorOpts.map((o) => (
                           <option key={o.id} value={o.value}>
                             {o.value}
                           </option>

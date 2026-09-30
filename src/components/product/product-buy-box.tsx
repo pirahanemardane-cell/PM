@@ -321,24 +321,24 @@ export function ProductBuyBox({
             +
           </button>
         </div>
-        {price != null ? (
-          <div className="flex flex-col items-end gap-0.5">
-            {hasDiscount ? (
-              <Price amount={originalPrice!} size="sm" strike className="text-muted-foreground" />
-            ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {price != null && hasDiscount ? (
+            <Price amount={originalPrice!} size="sm" strike className="text-muted-foreground" />
+          ) : null}
+          {price != null ? (
             <p className="text-sm font-semibold">
               <Price amount={Number(price)} size="pdp" />
             </p>
-          </div>
-        ) : null}
-        <p
-          className={cn(
-            "text-xs",
-            outOfStock ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {outOfStock ? "ناموجود" : `موجودی: ${stock.toLocaleString("fa-IR")}`}
-        </p>
+          ) : null}
+          <p
+            className={cn(
+              "text-xs whitespace-nowrap",
+              outOfStock ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
+            {outOfStock ? "ناموجود" : `موجودی: ${stock.toLocaleString("fa-IR")}`}
+          </p>
+        </div>
       </div>
 
       {outOfStock ? (
