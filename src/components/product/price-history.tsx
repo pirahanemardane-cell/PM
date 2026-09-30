@@ -1,9 +1,8 @@
 "use client";
 
-
-import { Price } from "@/components/ui/price";
 import { useMemo, useState } from "react";
 import { toPersianDigits } from "@/lib/numbers";
+
 export type PricePoint = { price: number; recorded_at: string };
 
 function fmtPrice(n: number) {
@@ -33,29 +32,48 @@ const RANGES: { key: RangeKey; label: string; days: number | null }[] = [
   { key: "all", label: "همه", days: null },
 ];
 
+/** قرمز پاستیلی = گران‌تر | سبز پاستیلی = ارزان‌تر */
 const PASTEL_UP = "#fda4af";
 const PASTEL_DOWN = "#6ee7b7";
 const PASTEL_FLAT = "#94a3b8";
+const FILL_UP = "rgba(253,164,175,0.28)";
+const FILL_DOWN = "rgba(110,231,183,0.28)";
+const FILL_FLAT = "rgba(148,163,184,0.18)";
 
 export function PriceHistory({ points }: { points: PricePoint[] }) {
   const [range, setRange] = useState<RangeKey>("all");
 
   const filtered = useMemo(() => {
     if (!points.length) return [];
-    const sorted = [...points].sort(
-      (a, b) =>
-        new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
-    );
+    const sorted = [...points]
+      .filter((p) => Number.isFinite(p.price) && p.price > 0)
+      .sort(
+        (a, b) =>
+          new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
+      );
+
+    // حذف نقاط تکراری پشت‌سرهم (همان قیمت)
+    const deduped: PricePoint[] = [];
+    for (const p of sorted) {
+      const last = deduped[deduped.length - 1];
+      if (last && Math.abs(last.price - p.price) < 0.01) {
+        // آخرین زمان را نگه دار
+        deduped[deduped.length - 1] = p;
+        continue;
+      }
+      deduped.push(p);
+    }
+
     const cfg = RANGES.find((r) => r.key === range);
-    if (!cfg?.days) return sorted;
+    if (!cfg?.days) return deduped;
     const cutoff = Date.now() - cfg.days * 86400000;
-    const sliced = sorted.filter(
+    const sliced = deduped.filter(
       (p) => new Date(p.recorded_at).getTime() >= cutoff,
     );
-    return sliced.length ? sliced : sorted.slice(-1);
+    return sliced.length ? sliced : deduped.slice(-1);
   }, [points, range]);
 
-  if (!points.length) return null;
+  if (!filtered.length) return null;
 
   const prices = filtered.map((p) => p.price);
   const min = Math.min(...prices);
@@ -64,18 +82,25 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
   const first = filtered[0]!;
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const priceSpan = max - min || 1;
-  const prev = filtered.length >= 2 ? filtered[filtered.length - 2]! : first;
-  // رنگ بر اساس نقطهٔ آخر نسبت به نقطهٔ قبلی (نه اول بازه)
-  const delta = last.price - prev.price;
 
-  const trendUp = delta > 0.5;
-  const trendDown = delta < -0.5;
+  // روند: نقطه آخر نسبت به اولین نقطهٔ بازه (اگر فقط یک نقطه → flat)
+  // اگر چند نقطه، نسبت به نقطهٔ قبلیِ متفاوت
+  const prev =
+    filtered.length >= 2 ? filtered[filtered.length - 2]! : first;
+  const delta = last.price - prev.price;
+  // روند کلی بازه هم برای رنگ قوی‌تر
+  const overallDelta = last.price - first.price;
+  const effectiveDelta =
+    filtered.length >= 2
+      ? Math.abs(delta) >= 0.5
+        ? delta
+        : overallDelta
+      : 0;
+
+  const trendUp = effectiveDelta > 0.5;
+  const trendDown = effectiveDelta < -0.5;
   const stroke = trendUp ? PASTEL_UP : trendDown ? PASTEL_DOWN : PASTEL_FLAT;
-  const fillArea = trendUp
-    ? "rgba(253,164,175,0.28)"
-    : trendDown
-      ? "rgba(110,231,183,0.28)"
-      : "rgba(148,163,184,0.18)";
+  const fillArea = trendUp ? FILL_UP : trendDown ? FILL_DOWN : FILL_FLAT;
 
   const W = 400;
   const H = 200;
@@ -163,7 +188,9 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
         </div>
         <div className="bg-muted/40 rounded-xl px-2 py-2.5">
           <p className="text-muted-foreground mb-0.5">آخرین</p>
-          <p className="font-semibold">{fmtPrice(last.price)}</p>
+          <p className="font-semibold" style={{ color: stroke }}>
+            {fmtPrice(last.price)}
+          </p>
         </div>
       </div>
 
@@ -217,7 +244,7 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
               key={i}
               cx={c.x}
               cy={c.y}
-              r={i === coords.length - 1 ? 4 : 2.5}
+              r={i === coords.length - 1 ? 4.5 : 2.5}
               fill={stroke}
             />
           ))}
@@ -243,11 +270,11 @@ export function PriceHistory({ points }: { points: PricePoint[] }) {
 
       <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs">
         <span>
-          {Math.abs(delta) < 1
+          {Math.abs(effectiveDelta) < 1
             ? "نقطهٔ آخر نسبت به قبل تغییر محسوسی ندارد."
-            : delta < 0
-              ? `کاهش ${fmtPrice(Math.abs(delta))} نسبت به نقطهٔ قبلی`
-              : `افزایش ${fmtPrice(delta)} نسبت به نقطهٔ قبلی`}
+            : effectiveDelta < 0
+              ? `کاهش ${fmtPrice(Math.abs(effectiveDelta))} نسبت به قبل`
+              : `افزایش ${fmtPrice(effectiveDelta)} نسبت به قبل`}
         </span>
         <span>میانگین: {fmtPrice(avg)}</span>
       </div>
