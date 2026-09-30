@@ -21,8 +21,12 @@ export type VariantOpt = {
   size?: string | null;
   color?: string | null;
   price?: number;
+  original_price?: number | null;
   stock?: number;
 };
+
+/** alias used by pdp-media */
+export type BuyVariant = VariantOpt;
 
 type Props = {
   productId: string;
@@ -113,23 +117,41 @@ export function ProductBuyBox({
   const [guestPhone, setGuestPhone] = useState("");
 
   const match = useMemo(() => {
-    return (
-      variants.find((v) => {
-        const sizeOk = !sizes.length || v.size === selectedSize;
-        const colorOk =
-          !colors.length ||
-          !selectedColor ||
-          v.color === selectedColor ||
-          (v.color &&
-            selectedColor &&
-            v.color.replace(/^#/, "").toLowerCase() ===
-              selectedColor.replace(/^#/, "").toLowerCase());
-        return sizeOk && colorOk;
-      }) ?? variants[0]
-    );
+    const colorEq = (a?: string | null, b?: string | null) => {
+      if (!a || !b) return false;
+      return a.trim().replace(/^#/, "").toLowerCase() === b.trim().replace(/^#/, "").toLowerCase();
+    };
+    // اول: سایز+رنگ دقیق
+    const exact = variants.find((v) => {
+      const sizeOk = !sizes.length || (!!selectedSize && v.size === selectedSize);
+      const colorOk =
+        !colors.length ||
+        !selectedColor ||
+        colorEq(v.color, selectedColor);
+      return sizeOk && colorOk;
+    });
+    if (exact) return exact;
+    // اگر سایز هنوز انتخاب نشده: اولین واریانت همان رنگ (برای قیمت زنده)
+    if (selectedColor && colors.length) {
+      const byColor = variants.find((v) => colorEq(v.color, selectedColor));
+      if (byColor) return byColor;
+    }
+    // اگر فقط سایز انتخاب شده
+    if (selectedSize && sizes.length) {
+      const bySize = variants.find((v) => v.size === selectedSize);
+      if (bySize) return bySize;
+    }
+    return variants[0];
   }, [variants, selectedSize, selectedColor, sizes.length, colors.length]);
 
   const price = match?.price;
+  const originalPrice = match?.original_price != null ? Number(match.original_price) : null;
+  const hasDiscount =
+    originalPrice != null &&
+    Number.isFinite(originalPrice) &&
+    Number.isFinite(Number(price)) &&
+    originalPrice > Number(price) &&
+    Number(price) > 0;
   const stock = Number(match?.stock ?? 0);
   const outOfStock = stock <= 0;
 
@@ -300,9 +322,14 @@ export function ProductBuyBox({
           </button>
         </div>
         {price != null ? (
-          <p className="text-sm font-semibold">
-            <Price amount={Number(price)} size="pdp" />
-          </p>
+          <div className="flex flex-col items-end gap-0.5">
+            {hasDiscount ? (
+              <Price amount={originalPrice!} size="sm" strike className="text-muted-foreground" />
+            ) : null}
+            <p className="text-sm font-semibold">
+              <Price amount={Number(price)} size="pdp" />
+            </p>
+          </div>
         ) : null}
         <p
           className={cn(

@@ -1427,7 +1427,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               disabled={busy}
               onClick={() => void finishPublish()}
             >
-              {status === "published" ? "انتشار و پایان" : "ذخیره و پایان"}
+              {status === "published" ? "به‌روزرسانی" : "انتشار"}
             </button>
           )}
         </div>

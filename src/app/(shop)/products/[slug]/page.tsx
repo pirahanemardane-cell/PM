@@ -132,11 +132,14 @@ export default async function ProductDetailPage({ params }: Props) {
     } else if (typeof c.color === "string") {
       colorVal = c.color;
     }
+    const op = Number((v as { original_price?: number | null }).original_price ?? 0);
+    const pr = Number((v as { price?: number }).price ?? 0);
     return {
       id: (v as { id: string }).id,
       size: sizeName,
       color: colorVal,
-      price: Number((v as { price?: number }).price ?? 0),
+      price: pr,
+      original_price: op > pr && op > 0 ? op : null,
       stock: Number((v as { stock_quantity?: number }).stock_quantity ?? 0),
     };
   });
