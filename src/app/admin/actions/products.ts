@@ -107,15 +107,20 @@ export async function adminListProductsAction(
     let query = gate.supabase
       .from("products")
       .select(
-        "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, updated_at, published_at, category_id, brand_id, category:categories(id, name), brand:brands(id, name), product_images(id, url, is_primary, sort_order)",
+        "id, name, slug, status, is_featured, is_new, is_bestseller, created_at, updated_at, published_at, category_id, brand_id, deleted_at, category:categories(id, name), brand:brands(id, name), product_images(id, url, is_primary, sort_order)",
       )
-      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(Math.min(200, Math.max(1, Number(limit) || 100)));
 
     const status = (opts?.status || "").trim();
-    if (status && ["draft", "published", "archived"].includes(status)) {
-      query = query.eq("status", status as "draft" | "published" | "archived");
+    if (status === "archived") {
+      // بایگانی: status=archived یا soft-delete شده
+      query = query.or("status.eq.archived,deleted_at.not.is.null");
+    } else if (status && ["draft", "published"].includes(status)) {
+      query = query.eq("status", status as "draft" | "published").is("deleted_at", null);
+    } else {
+      // پیش‌فرض: فقط فعال‌ها (نه آرشیو)
+      query = query.is("deleted_at", null).neq("status", "archived");
     }
     const q = (opts?.q || "").trim();
     if (q) {
@@ -729,6 +734,25 @@ export async function adminSoftDeleteProductAction(id: string) {
 /** همگام‌سازی وریانت‌ها: upsert + حذف آن‌هایی که در لیست نیستند + تصویر واریانت */
 /** همگام‌سازی وریانت‌ها — بدون حذف کور؛ فقط upsert + لینک تصویر */
 /** همگام‌سازی وریانت‌ها — match با id یا size+color؛ بدون duplicate */
+/** بازگردانی از بایگانی */
+export async function adminRestoreProductsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = Array.from(new Set((ids || []).map((x) => String(x || "").trim()).filter(Boolean)));
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase
+      .from("products")
+      .update({ deleted_at: null, status: "draft" })
+      .in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreProducts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
 export async function adminSyncProductVariantsAction(
   productId: string,
   variants: AdminVariantInput[],

@@ -8,6 +8,7 @@ import {
   adminArchiveProductsAction,
   adminHardDeleteProductsAction,
 } from "@/app/admin/actions/lifecycle";
+import { adminRestoreProductsAction } from "@/app/admin/actions/products";
 import {
   adminListProductsAction,
   adminUpdateProductFlagsAction,
@@ -142,6 +143,31 @@ export default function AdminProductsPage() {
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }
+    void load();
+  }
+
+  async function restoreOne(id: string, name: string) {
+    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+    setBulkBusy(true);
+    const res = await adminRestoreProductsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError("بازگردانی ناموفق");
+      return;
+    }
+    void load();
+  }
+  async function runBulkRestore() {
+    if (!selected.length) return;
+    if (!confirm("بازگردانی موارد انتخاب‌شده از بایگانی؟")) return;
+    setBulkBusy(true);
+    const res = await adminRestoreProductsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError("بازگردانی ناموفق");
+      return;
+    }
+    setSelected([]);
     void load();
   }
 
@@ -296,9 +322,10 @@ export default function AdminProductsPage() {
           total={items.length}
           onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
+          onArchive={() => void (statusFilter === "archived" ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
+          archiveLabel={statusFilter === "archived" ? "بازگردانی" : "آرشیو"}
         />
 
         {loading ? (
@@ -555,13 +582,23 @@ export default function AdminProductsPage() {
                           >
                             مشاهده
                           </Link>
-                          <button
-                            type="button"
-                            className="text-muted-foreground text-xs hover:underline"
-                            onClick={() => void archiveOne(p.id, p.name)}
-                          >
-                            آرشیو
-                          </button>
+                          {statusFilter === "archived" || p.status === "archived" ? (
+                            <button
+                              type="button"
+                              className="text-primary text-xs hover:underline"
+                              onClick={() => void restoreOne(p.id, p.name)}
+                            >
+                              بازگردانی
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-muted-foreground text-xs hover:underline"
+                              onClick={() => void archiveOne(p.id, p.name)}
+                            >
+                              آرشیو
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="text-destructive text-xs hover:underline"
