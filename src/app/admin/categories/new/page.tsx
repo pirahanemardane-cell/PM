@@ -23,8 +23,12 @@ export default function NewCategoryPage() {
   return (
     <CatalogWizard
       kind="category"
-      createAction={adminCreateCategoryAction}
       parentOptions={parents}
+      saveAction={async (input) => {
+        const res = await adminCreateCategoryAction(input);
+        if (!res.ok) return res;
+        return { ok: true as const, id: res.id };
+      }}
     />
   );
 }

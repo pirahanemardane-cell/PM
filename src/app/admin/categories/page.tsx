@@ -360,6 +360,12 @@ export default function AdminPage() {
                     </td>
                     <td className="p-2 align-middle">
                       <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/admin/categories/${r.id}/edit`}
+                          className="text-sky-700 text-xs hover:underline dark:text-sky-400"
+                        >
+                          ویرایش
+                        </Link>
                         {!r.is_active ? (
                           <button
                             type="button"

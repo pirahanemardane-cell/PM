@@ -195,3 +195,40 @@ export async function adminUpdateBrandAction(
     return { ok: false as const, error: "server" };
   }
 }
+
+
+export async function adminGetCategoryAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { data, error } = await gate.supabase
+      .from("categories")
+      .select("id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return { ok: false as const, error: "not_found" as const };
+    return { ok: true as const, item: data };
+  } catch (e) {
+    console.error("[adminGetCategory]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminGetBrandAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { data, error } = await gate.supabase
+      .from("brands")
+      .select("id, name, slug, is_active, image_url, short_description, description")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return { ok: false as const, error: "not_found" as const };
+    return { ok: true as const, item: data };
+  } catch (e) {
+    console.error("[adminGetBrand]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}

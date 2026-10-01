@@ -1,13 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MediaPicker } from "@/components/admin/media-picker";
+import { AdminMediaPicker } from "@/components/admin/media-picker";
+import { LumaSpin } from "@/components/ui/luma-spin";
 
 export type CatalogKind = "category" | "brand" | "tag";
 
-type CreateFn = (input: {
+export type CatalogItem = {
+  id: string;
+  name: string;
+  slug: string;
+  is_active?: boolean;
+  image_url?: string | null;
+  short_description?: string | null;
+  description?: string | null;
+  parent_id?: string | null;
+};
+
+type SaveFn = (input: {
   name: string;
   slug?: string;
   image_url?: string | null;
@@ -15,7 +27,7 @@ type CreateFn = (input: {
   description?: string | null;
   is_active?: boolean;
   parent_id?: string | null;
-}) => Promise<{ ok: true; id: string } | { ok: false; error: string }>;
+}) => Promise<{ ok: true; id?: string } | { ok: false; error: string }>;
 
 const STEPS = [
   { id: 1, title: "هویت" },
@@ -36,37 +48,70 @@ function slugify(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
-const LABELS: Record<CatalogKind, { title: string; listHref: string; nameLabel: string }> = {
-  category: { title: "دسته جدید", listHref: "/admin/categories", nameLabel: "نام دسته" },
-  brand: { title: "برند جدید", listHref: "/admin/brands", nameLabel: "نام برند" },
-  tag: { title: "برچسب جدید", listHref: "/admin/tags", nameLabel: "نام برچسب" },
+const LABELS: Record<CatalogKind, { titleNew: string; titleEdit: string; listHref: string; nameLabel: string }> = {
+  category: {
+    titleNew: "دسته جدید",
+    titleEdit: "ویرایش دسته",
+    listHref: "/admin/categories",
+    nameLabel: "نام دسته",
+  },
+  brand: {
+    titleNew: "برند جدید",
+    titleEdit: "ویرایش برند",
+    listHref: "/admin/brands",
+    nameLabel: "نام برند",
+  },
+  tag: {
+    titleNew: "برچسب جدید",
+    titleEdit: "ویرایش برچسب",
+    listHref: "/admin/tags",
+    nameLabel: "نام برچسب",
+  },
 };
 
 export function CatalogWizard({
   kind,
-  createAction,
+  saveAction,
+  initial,
   parentOptions,
+  loadingInitial,
 }: {
   kind: CatalogKind;
-  createAction: CreateFn;
+  saveAction: SaveFn;
+  initial?: CatalogItem | null;
   parentOptions?: { id: string; name: string }[];
+  loadingInitial?: boolean;
 }) {
   const router = useRouter();
   const meta = LABELS[kind];
+  const isEdit = !!initial?.id;
+
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [okMsg, setOkMsg] = useState("");
+  const [showMedia, setShowMedia] = useState(false);
 
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [parentId, setParentId] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [shortDesc, setShortDesc] = useState("");
-  const [description, setDescription] = useState("");
-  const [isActive, setIsActive] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(!!initial?.slug);
+  const [parentId, setParentId] = useState(initial?.parent_id ?? "");
+  const [imageUrl, setImageUrl] = useState(initial?.image_url ?? "");
+  const [shortDesc, setShortDesc] = useState(initial?.short_description ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [isActive, setIsActive] = useState(initial?.is_active !== false);
+
+  useEffect(() => {
+    if (!initial) return;
+    setName(initial.name ?? "");
+    setSlug(initial.slug ?? "");
+    setSlugTouched(true);
+    setParentId(initial.parent_id ?? "");
+    setImageUrl(initial.image_url ?? "");
+    setShortDesc(initial.short_description ?? "");
+    setDescription(initial.description ?? "");
+    setIsActive(initial.is_active !== false);
+  }, [initial]);
 
   const autoSlug = useMemo(() => slugify(name), [name]);
   const displaySlug = slugTouched ? slug : autoSlug;
@@ -84,7 +129,10 @@ export function CatalogWizard({
     setErr("");
     setOkMsg("");
     const v = validate(step);
-    if (v) { setErr(v); return; }
+    if (v) {
+      setErr(v);
+      return;
+    }
     if (!slugTouched) setSlug(autoSlug);
     if (step < 4) setStep((x) => x + 1);
   }
@@ -97,11 +145,15 @@ export function CatalogWizard({
   async function finish() {
     for (const s of [1, 2, 3, 4] as const) {
       const e = validate(s);
-      if (e) { setErr(e); setStep(s); return; }
+      if (e) {
+        setErr(e);
+        setStep(s);
+        return;
+      }
     }
     setBusy(true);
     setErr("");
-    const res = await createAction({
+    const res = await saveAction({
       name: name.trim(),
       slug: displaySlug.trim(),
       image_url: imageUrl || null,
@@ -112,7 +164,13 @@ export function CatalogWizard({
     });
     setBusy(false);
     if (!res.ok) {
-      setErr(res.error === "bad_name" ? "نام نامعتبر" : res.error === "bad_slug" || res.error === "server" ? "خطا — شاید slug تکراری باشد" : String(res.error));
+      setErr(
+        res.error === "bad_name"
+          ? "نام نامعتبر"
+          : res.error === "not_found"
+            ? "مورد یافت نشد"
+            : "خطا در ذخیره — شاید slug تکراری باشد",
+      );
       return;
     }
     setOkMsg("ذخیره شد");
@@ -120,11 +178,21 @@ export function CatalogWizard({
     router.refresh();
   }
 
+  if (loadingInitial) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <LumaSpin />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background min-h-screen space-y-4 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">{meta.title}</h1>
+          <h1 className="text-2xl font-bold text-primary">
+            {isEdit ? meta.titleEdit : meta.titleNew}
+          </h1>
           <div className="mt-1 flex flex-wrap gap-3 text-sm">
             {okMsg ? <span className="text-green-700 dark:text-green-400">{okMsg}</span> : null}
             {err ? <span className="text-destructive">{err}</span> : null}
@@ -144,10 +212,17 @@ export function CatalogWizard({
               <li key={s.id}>
                 <button
                   type="button"
-                  onClick={() => { if (s.id <= step) { setStep(s.id); setErr(""); } }}
+                  onClick={() => {
+                    setStep(s.id);
+                    setErr("");
+                  }}
                   className={[
                     "rounded-lg px-3 py-1.5 text-xs transition",
-                    active ? "bg-primary text-primary-foreground" : done ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : done
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:bg-muted/60",
                   ].join(" ")}
                 >
                   {s.id}. {s.title}
@@ -179,7 +254,10 @@ export function CatalogWizard({
                 className="border-input bg-background w-full rounded-lg border px-3 py-2 font-mono text-sm"
                 dir="ltr"
                 value={displaySlug}
-                onChange={(e) => { setSlugTouched(true); setSlug(e.target.value); }}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(e.target.value);
+                }}
               />
             </label>
             {kind === "category" && parentOptions && parentOptions.length > 0 ? (
@@ -187,13 +265,17 @@ export function CatalogWizard({
                 <span>دسته والد (اختیاری)</span>
                 <select
                   className="border-input bg-background w-full rounded-lg border px-3 py-2"
-                  value={parentId}
+                  value={parentId || ""}
                   onChange={(e) => setParentId(e.target.value)}
                 >
                   <option value="">بدون والد (ریشه)</option>
-                  {parentOptions.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  {parentOptions
+                    .filter((p) => p.id !== initial?.id)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
                 </select>
               </label>
             ) : null}
@@ -206,7 +288,7 @@ export function CatalogWizard({
             {imageUrl ? (
               <div className="flex items-start gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="" className="h-28 w-28 rounded-xl object-cover border" />
+                <img src={imageUrl} alt="" className="h-28 w-28 rounded-xl border object-cover" />
                 <button
                   type="button"
                   className="text-destructive text-sm underline"
@@ -216,38 +298,18 @@ export function CatalogWizard({
                 </button>
               </div>
             ) : null}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm"
-                onClick={() => setPickerOpen(true)}
-              >
-                انتخاب از رسانه
-              </button>
-              <label className="border-border cursor-pointer rounded-xl border px-4 py-2 text-sm">
-                آپلود فایل
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    const url = URL.createObjectURL(f);
-                    // برای سادگی: URL محلی نمایش؛ ذخیره نهایی با URL رسانه
-                    setErr("لطفاً از «انتخاب از رسانه» استفاده کنید تا URL دائمی ذخیره شود.");
-                    void url;
-                  }}
-                />
-              </label>
-            </div>
-            {pickerOpen ? (
-              <MediaPicker
-                open={pickerOpen}
-                onClose={() => setPickerOpen(false)}
+            <button
+              type="button"
+              className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm"
+              onClick={() => setShowMedia((v) => !v)}
+            >
+              {showMedia ? "بستن رسانه" : "انتخاب / آپلود از رسانه"}
+            </button>
+            {showMedia ? (
+              <AdminMediaPicker
                 onSelect={(item) => {
                   setImageUrl(item.url);
-                  setPickerOpen(false);
+                  setShowMedia(false);
                   setOkMsg("تصویر انتخاب شد");
                 }}
               />
@@ -285,13 +347,21 @@ export function CatalogWizard({
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="h-4 w-4"
               />
-              <span>فعال / منتشر (اگر خاموش باشد، در بایگانی قرار می‌گیرد)</span>
+              <span>فعال / منتشر</span>
             </label>
-            <div className="bg-muted/40 rounded-xl p-3 text-sm space-y-1">
-              <p><span className="text-muted-foreground">نام:</span> {name || "—"}</p>
-              <p><span className="text-muted-foreground">slug:</span> <span className="font-mono" dir="ltr">{displaySlug || "—"}</span></p>
-              <p><span className="text-muted-foreground">تصویر:</span> {imageUrl ? "دارد" : "ندارد"}</p>
-              <p><span className="text-muted-foreground">توضیح کوتاه:</span> {shortDesc ? "دارد" : "ندارد"}</p>
+            <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
+              <p>
+                <span className="text-muted-foreground">نام:</span> {name || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">slug:</span>{" "}
+                <span className="font-mono" dir="ltr">
+                  {displaySlug || "—"}
+                </span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">تصویر:</span> {imageUrl ? "دارد" : "ندارد"}
+              </p>
             </div>
             <button
               type="button"
@@ -299,7 +369,7 @@ export function CatalogWizard({
               onClick={() => void finish()}
               className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm font-medium disabled:opacity-50"
             >
-              {busy ? "در حال ذخیره…" : "ذخیره و انتشار"}
+              {busy ? "در حال ذخیره…" : isEdit ? "ذخیره تغییرات" : "ذخیره و انتشار"}
             </button>
           </div>
         )}

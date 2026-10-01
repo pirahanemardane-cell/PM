@@ -22,7 +22,7 @@ export async function adminListProductTagsAction() {
   try {
     const { data, error } = await gate.supabase
       .from("product_tags")
-      .select("id, name, slug, is_active, created_at")
+      .select("id, name, slug, is_active, image_url, short_description, description, created_at")
       .order("name");
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
@@ -81,7 +81,14 @@ export async function adminToggleProductTagAction(id: string, is_active: boolean
 
 export async function adminUpdateProductTagAction(
   id: string,
-  patch: { name?: string; slug?: string },
+  patch: {
+    name?: string;
+    slug?: string;
+    is_active?: boolean;
+    image_url?: string | null;
+    short_description?: string | null;
+    description?: string | null;
+  },
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -96,6 +103,10 @@ export async function adminUpdateProductTagAction(
       const slug = patch.slug.trim();
       if (slug) body.slug = slug;
     }
+    if (patch.is_active !== undefined) body.is_active = patch.is_active;
+    if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
+    if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
+    if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
     if (!Object.keys(body).length) return { ok: true as const };
     const { error } = await gate.supabase.from("product_tags").update(body).eq("id", id);
     if (error) throw error;
@@ -106,7 +117,7 @@ export async function adminUpdateProductTagAction(
   }
 }
 
-export async function adminDeleteProductTagAction(id: string) {
+export async function adminDeleteProductTagActionexport async function adminDeleteProductTagAction(id: string) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
@@ -173,5 +184,24 @@ export async function adminToggleBlogTagAction(id: string, is_active: boolean) {
     return { ok: true as const };
   } catch {
     return { ok: false as const, error: "server" };
+  }
+}
+
+
+export async function adminGetProductTagAction(id: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { data, error } = await gate.supabase
+      .from("product_tags")
+      .select("id, name, slug, is_active, image_url, short_description, description")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return { ok: false as const, error: "not_found" as const };
+    return { ok: true as const, item: data };
+  } catch (e) {
+    console.error("[adminGetProductTag]", e);
+    return { ok: false as const, error: "server" as const };
   }
 }
