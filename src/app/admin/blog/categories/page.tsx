@@ -11,44 +11,40 @@ import {
 import {
   adminListBlogCategoriesAction,
   adminCreateBlogCategoryAction,
-  adminToggleBlogCategoryAction,
 } from "@/app/admin/actions/blog";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
-type Cat = {
+type Row = {
   id: string;
   name: string;
   slug: string;
   is_active: boolean;
   sort_order?: number;
+  parent_id?: string | null;
 };
 
-export default function AdminBlogCategoriesPage() {
-  const [items, setItems] = useState<Cat[]>([]);
+export default function AdminPage() {
+  const [items, setItems] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "active" | "archived">("");
+  const [name, setName] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  
   function toggleSelectAll(ids: string[]) {
     setSelected((prev) =>
-      prev.length === ids.length && ids.every((id) => prev.includes(id))
-        ? []
-        : [...ids],
+      prev.length === ids.length && ids.every((id) => prev.includes(id)) ? [] : [...ids],
     );
   }
   function toggleSelect(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
+
   async function runBulkArchive() {
     if (!selected.length) return;
     if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
@@ -67,8 +63,12 @@ export default function AdminBlogCategoriesPage() {
     setBulkBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
-        has_products: "به محصول متصل است",
-        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "هنوز محصول وابسته دارد",
+        has_children: "زیردسته دارد",
+        has_orders: "سفارش ثبت‌شده دارد",
+        forbidden: "دسترسی کافی نیست",
+        empty: "موردی انتخاب نشده",
+        server: "خطای سرور",
       };
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
@@ -76,32 +76,32 @@ export default function AdminBlogCategoriesPage() {
     setSelected([]);
     void load();
   }
-  async function archiveOne(id: string, name: string) {
-    if (!confirm(`آرشیو «${name}»؟`)) return;
+  async function archiveOne(id: string, n: string) {
+    if (!confirm(`آرشیو «${n}»؟`)) return;
     setBulkBusy(true);
     const res = await adminArchiveBlogCategoriesAction([id]);
     setBulkBusy(false);
     if (!res.ok) { setError("آرشیو ناموفق"); return; }
     void load();
   }
-  async function hardDeleteOne(id: string, name: string) {
-    if (!confirm(`حذف دائمی «${name}»؟`)) return;
+  async function hardDeleteOne(id: string, n: string) {
+    if (!confirm(`حذف دائمی «${n}»؟`)) return;
     setBulkBusy(true);
     const res = await adminHardDeleteBlogCategoriesAction([id]);
     setBulkBusy(false);
     if (!res.ok) {
       const map: Record<string, string> = {
-        has_products: "به محصول متصل است",
-        has_orders: "در سفارش‌ها استفاده شده",
+        has_products: "هنوز محصول وابسته دارد",
+        has_children: "زیردسته دارد",
+        server: "خطای سرور",
       };
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }
     void load();
   }
-
-  async function restoreOne(id: string, name: string) {
-    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+  async function restoreOne(id: string, n: string) {
+    if (!confirm(`بازگردانی «${n}» از بایگانی؟`)) return;
     setBulkBusy(true);
     const res = await adminRestoreBlogCategoriesAction([id]);
     setBulkBusy(false);
@@ -118,76 +118,138 @@ export default function AdminBlogCategoriesPage() {
     setSelected([]);
     void load();
   }
+
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
+    setError(null);
     const res = await adminListBlogCategoriesAction();
     setLoading(false);
     if (!res.ok) {
-      setErr(
-        res.error === "login_required"
-          ? "ورود لازم است"
-          : res.error === "forbidden"
-            ? "دسترسی ادمین ندارید"
-            : "خطا در بارگذاری",
+      setError(
+        res.error === "login_required" ? "ورود لازم است"
+          : res.error === "forbidden" ? "دسترسی ادمین ندارید"
+          : "خطا در بارگذاری",
       );
       setItems([]);
       return;
     }
-    setItems((res.items as Cat[]) ?? []);
+    setItems((res.items as Row[]) ?? []);
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
-  const filtered = useMemo(() => {
+  const visible = useMemo(() => {
+    let list = items;
+    if (showArchived || statusFilter === "archived") list = list.filter((x) => !x.is_active);
+    else if (statusFilter === "active") list = list.filter((x) => x.is_active);
     const s = q.trim().toLowerCase();
-    if (!s) return items;
-    return items.filter(
-      (c) =>
-        c.name.toLowerCase().includes(s) ||
-        (c.slug || "").toLowerCase().includes(s),
-    );
-  }, [items, q]);
+    if (s) list = list.filter((x) => x.name.toLowerCase().includes(s) || (x.slug || "").toLowerCase().includes(s));
+    return list;
+  }, [items, q, showArchived, statusFilter]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    setBusy(true);
-    setErr(null);
+    setCreating(true);
+    setError(null);
     const res = await adminCreateBlogCategoryAction({ name: name.trim() });
-    setBusy(false);
+    setCreating(false);
     if (!res.ok) {
-      setErr(res.error === "name_required" ? "نام الزامی است" : "ایجاد ناموفق");
+      setError(res.error === "bad_name" || res.error === "name_required" ? "نام نامعتبر" : "ایجاد ناموفق");
       return;
     }
     setName("");
     void load();
   }
 
-  async function toggle(id: string, next: boolean) {
-    setBusyId(id);
-    const res = await adminToggleBlogCategoryAction(id, next);
-    setBusyId(null);
-    if (!res.ok) {
-      setErr("تغییر وضعیت ناموفق");
-      return;
-    }
-    setItems((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, is_active: next } : c)),
-    );
-  }
-
   return (
-    <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">دسته‌های بلاگ</h1>
+    <div className="bg-background min-h-screen p-6" dir="rtl">
+      <div className="w-full max-w-none space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-primary">
+              {showArchived ? "بایگانی دسته‌های بلاگ" : "دسته‌های بلاگ"}
+            </h1>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowArchived((v) => !v); setStatusFilter(""); setSelected([]); }}
+              className={
+                showArchived
+                  ? "bg-amber-600 text-white rounded-xl px-4 py-2 text-sm font-medium"
+                  : "border-border rounded-xl border px-4 py-2 text-sm"
+              }
+            >
+              {showArchived ? "خروج از بایگانی" : "بایگانی"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="border-border rounded-xl border px-4 py-2 text-sm"
+            >
+              تازه‌سازی
+            </button>
+            <Link href="/admin/blog" className="border-border rounded-xl border px-4 py-2 text-sm">مقالات</Link>
+            <Link
+              href="/admin/dashboard"
+              className="border-border rounded-xl border px-4 py-2 text-sm"
+            >
+              داشبورد
+            </Link>
+          </div>
+        </div>
+
+        <form
+          onSubmit={onCreate}
+          className="border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-4"
+        >
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="نام دسته جدید"
+            className="border-input bg-background h-10 min-w-[12rem] flex-1 rounded-xl border px-3 text-sm"
+            required
+          />
+          <button
+            type="submit"
+            disabled={creating}
+            className="bg-primary text-primary-foreground h-10 rounded-xl px-5 text-sm font-medium disabled:opacity-60"
+          >
+            {creating ? "…" : "افزودن"}
+          </button>
+        </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="جستجو نام یا اسلاگ…"
+            className="border-input bg-background h-10 min-w-[200px] flex-1 rounded-xl border px-3 text-sm"
+          />
+          <select
+            value={showArchived ? "archived" : statusFilter}
+            onChange={(e) => {
+              const v = e.target.value as "" | "active" | "archived";
+              setStatusFilter(v === "archived" ? "archived" : v);
+              setShowArchived(v === "archived");
+              setSelected([]);
+            }}
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
+          >
+            <option value="">همه وضعیت‌ها</option>
+            <option value="active">فعال</option>
+            <option value="archived">بایگانی</option>
+          </select>
+        </div>
+
+        {error ? <p className="text-destructive text-sm">{error}</p> : null}
+
         <AdminBulkBar
           count={selected.length}
-          total={items.length}
-          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
+          total={visible.length}
+          onSelectAll={() => toggleSelectAll(visible.map((x) => x.id))}
           busy={bulkBusy}
           onArchive={() => void (showArchived ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
@@ -195,99 +257,94 @@ export default function AdminBlogCategoriesPage() {
           archiveLabel={showArchived ? "بازگردانی" : "آرشیو"}
         />
 
+        {loading ? (
+          <div className="flex justify-center py-16"><LumaSpin /></div>
+        ) : visible.length === 0 ? (
+          <div className="border-border rounded-2xl border py-16 text-center">
+            <p className="text-muted-foreground text-sm">دسته‌ای یافت نشد.</p>
           </div>
-        <div className="flex gap-2">
-          <Link
-            href="/admin/blog"
-            className="border-border rounded-xl border px-4 py-2 text-sm"
-          >
-            مقالات
-          </Link>
-          <Link
-            href="/admin/dashboard"
-            className="border-border rounded-xl border px-4 py-2 text-sm"
-          >
-            داشبورد
-          </Link>
-        </div>
+        ) : (
+          <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
+            <table className="w-full min-w-[700px] text-right text-sm">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr className="whitespace-nowrap">
+                  <th className="p-2 font-medium"> </th>
+                  <th className="p-2 font-medium">نام</th>
+                  <th className="p-2 font-medium">اسلاگ</th>
+                  <th className="p-2 font-medium">وضعیت</th>
+                  <th className="p-2 font-medium">عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((r) => (
+                  <tr
+                    key={r.id}
+                    className={
+                      "border-border border-t whitespace-nowrap " +
+                      (!r.is_active ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80" : "")
+                    }
+                  >
+                    <td className="p-2 align-middle">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(r.id)}
+                        onChange={() => toggleSelect(r.id)}
+                        className="h-4 w-4"
+                      />
+                    </td>
+                    <td className="p-2 align-middle">
+<span className="text-sm font-medium">{r.name}</span>
+                    </td>
+                    <td className="text-muted-foreground p-2 align-middle font-mono text-xs" dir="ltr">
+                      {r.slug}
+                    </td>
+                    <td className="p-2 align-middle">
+                      <span
+                        className={
+                          "inline-flex rounded-lg border px-2 py-1 text-xs " +
+                          (r.is_active
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100"
+                            : "border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100")
+                        }
+                      >
+                        {r.is_active ? "فعال" : "بایگانی"}
+                      </span>
+                    </td>
+                    <td className="p-2 align-middle">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {!r.is_active ? (
+                          <button
+                            type="button"
+                            className="text-primary text-xs hover:underline"
+                            onClick={() => void restoreOne(r.id, r.name)}
+                          >
+                            بازگردانی
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-muted-foreground text-xs hover:underline"
+                            onClick={() => void archiveOne(r.id, r.name)}
+                          >
+                            آرشیو
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="text-destructive text-xs hover:underline"
+                          onClick={() => void hardDeleteOne(r.id, r.name)}
+                        >
+                          حذف دائمی
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      <form
-        onSubmit={onCreate}
-        className="border-border flex flex-wrap items-end gap-2 rounded-2xl border p-4"
-      >
-        <label className="block min-w-[12rem] flex-1 space-y-1 text-sm">
-          <span className="text-muted-foreground">نام دسته جدید</span>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border-border bg-background w-full rounded-xl border px-3 py-2"
-            placeholder="مثلاً راهنمای خرید"
-            required
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={busy}
-          className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {busy ? "…" : "افزودن"}
-        </button>
-      </form>
-
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="جستجو نام یا اسلاگ"
-        className="border-border bg-background w-full max-w-md rounded-xl border px-3 py-2 text-sm"
-      />
-
-      {err ? <p className="text-destructive text-sm">{err}</p> : null}
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <LumaSpin />
-        </div>
-      ) : (
-        <div className="table-scroll border-border overflow-x-auto rounded-xl border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-3 text-right">نام</th>
-                <th className="p-3 text-right">اسلاگ</th>
-                <th className="p-3 text-right">فعال</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c) => (
-                <tr key={c.id} className="border-t">
-                  <td className="p-3 font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(c.id)} onChange={() => toggleSelect(c.id)} /><span>{c.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(c.id, c.name)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(c.id, c.name)}>حذف دائمی</button></td>
-                  <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
-                    {c.slug}
-                  </td>
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      disabled={busyId === c.id}
-                      onClick={() => void toggle(c.id, !c.is_active)}
-                      className="border rounded-lg px-2 py-1 text-xs disabled:opacity-50"
-                    >
-                      {c.is_active ? "فعال" : "غیرفعال"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!filtered.length ? (
-                <tr>
-                  <td colSpan={3} className="text-muted-foreground p-6 text-center">
-                    دسته‌ای نیست
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
