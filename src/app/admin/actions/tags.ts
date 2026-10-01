@@ -117,7 +117,7 @@ export async function adminUpdateProductTagAction(
   }
 }
 
-export async function adminDeleteProductTagActionexport async function adminDeleteProductTagAction(id: string) {
+export async function adminDeleteProductTagAction(id: string) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
