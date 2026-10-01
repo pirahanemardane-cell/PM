@@ -384,9 +384,13 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-surface-muted min-h-screen" dir="rtl">
-      <div className="w-full max-w-none px-4 py-8">
+      <div className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
         {reserveBanner}
-        <h1 className="mb-6 text-xl font-bold text-primary">تسویه حساب</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
+            تسویه حساب
+          </h1>
+        </div>
 
         {/* نوار ۵ مرحله */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-1 sm:gap-2">

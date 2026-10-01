@@ -256,10 +256,12 @@ export default function CartPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-10" dir="rtl">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <main className="w-full max-w-none mx-auto space-y-6 px-4 py-8 md:py-12" dir="rtl">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">سبد خرید</h1>
+          <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
+            سبد خرید
+          </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             رنگ، سایز و تعداد — فوری به‌روز می‌شود
           </p>

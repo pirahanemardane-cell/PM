@@ -25,13 +25,12 @@ export default async function BlogIndexPage() {
   }[];
 
   return (
-    <div className="w-full max-w-none space-y-8 p-6" dir="rtl">
-      <header>
-        <h1 className="text-3xl font-bold text-primary">بلاگ</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          
-        </p>
-      </header>
+    <main className="w-full max-w-none mx-auto space-y-8 px-4 py-8 md:py-12" dir="rtl">
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
+          بلاگ
+        </h1>
+      </div>
 
       {!items.length ? (
         <p className="text-muted-foreground text-sm"></p>
@@ -76,6 +75,6 @@ export default async function BlogIndexPage() {
           ))}
         </ul>
       )}
-    </div>
+    </main>
   );
 }

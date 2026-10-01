@@ -180,7 +180,7 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold md:text-3xl text-primary">{brand.name}</h1>
+        <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">{brand.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {toPersianDigits(String(total))} محصول
         </p>

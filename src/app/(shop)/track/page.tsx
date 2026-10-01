@@ -139,9 +139,11 @@ function TrackForm() {
 
 export default function TrackOrderPage() {
   return (
-    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-10" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">پیگیری سفارش</h1>
+    <main className="w-full max-w-none mx-auto space-y-6 px-4 py-8 md:py-12" dir="rtl">
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
+          پیگیری سفارش
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           با شناسه سفارش از وضعیت خرید خود مطلع شوید.
         </p>

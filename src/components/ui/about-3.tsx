@@ -54,14 +54,14 @@ export function About3({
   achievements = defaultAchievements,
 }: About3Props = {}) {
   return (
-    <section className="py-12 md:py-12" dir="rtl">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+    <section className="py-8 md:py-12" dir="rtl">
+      <div className="mx-auto w-full max-w-none px-4">
         <div className="mb-8 text-right">
-          <h1 className="mb-6 text-2xl font-bold tracking-tight text-primary md:text-3xl">
+          <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">
             {title}
           </h1>
           {description ? (
-            <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
+            <p className="text-muted-foreground mt-1 text-sm">
               {description}
             </p>
           ) : null}
