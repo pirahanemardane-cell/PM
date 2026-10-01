@@ -29,8 +29,8 @@ import {
   setDefaultAddressAction,
   listWishlistAction,
   toggleWishlistAction,
-  type CartLineDTO
-}   filterLiveProductIdsAction,
+  filterLiveProductIdsAction,
+  type CartLineDTO,
 } from "@/app/(shop)/actions/shop";
 import {
   listMyTicketsAction,

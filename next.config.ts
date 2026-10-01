@@ -5,6 +5,23 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // صفحات پنل dynamic می‌مانند؛ فقط overhead کمتر
 
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-label",
+      "@radix-ui/react-slider",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-navigation-menu",
+      "date-fns",
+      "date-fns-jalali",
+    ],
+  },
+
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
