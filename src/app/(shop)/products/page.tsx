@@ -11,6 +11,8 @@ import { facetSlugsForCategory } from "@/lib/facet-map";
 import { toPersianDigits } from "@/lib/numbers";
 import { Suspense } from "react";
 
+// ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — فیلترها و ظاهر دست‌نخورده
+export const revalidate = 60;
 export const metadata: Metadata = {
   title: "محصولات",
   description: "لیست محصولات فروشگاه تخصصی پیراهن مردانه",

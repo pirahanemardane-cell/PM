@@ -18,7 +18,8 @@ import { CarouselLinks } from "@/components/ui/carousel-cards";
 import { ProductCarousel } from "@/components/ui/product-carousel";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 
-export const dynamic = "force-dynamic";
+// ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — ظاهر و هیرو دست‌نخورده
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "فروشگاه تخصصی پیراهن مردانه",

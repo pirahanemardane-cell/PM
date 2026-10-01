@@ -2,8 +2,8 @@ import { Price } from "@/components/ui/price";
 import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — ظاهر و عملکرد دست‌نخورده
+export const revalidate = 60;
 
 import Image from "next/image";
 import Link from "next/link";
