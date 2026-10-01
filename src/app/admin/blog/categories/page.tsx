@@ -6,6 +6,7 @@ import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
   adminArchiveBlogCategoriesAction,
   adminHardDeleteBlogCategoriesAction,
+  adminRestoreBlogCategoriesAction,
 } from "@/app/admin/actions/lifecycle";
 import {
   adminListBlogCategoriesAction,
@@ -26,6 +27,7 @@ export default function AdminBlogCategoriesPage() {
   const [items, setItems] = useState<Cat[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -95,6 +97,25 @@ export default function AdminBlogCategoriesPage() {
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }
+    void load();
+  }
+
+  async function restoreOne(id: string, name: string) {
+    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogCategoriesAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    void load();
+  }
+  async function runBulkRestore() {
+    if (!selected.length) return;
+    if (!confirm("بازگردانی موارد انتخاب‌شده از بایگانی؟")) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogCategoriesAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    setSelected([]);
     void load();
   }
   const load = useCallback(async () => {
@@ -168,9 +189,10 @@ export default function AdminBlogCategoriesPage() {
           total={items.length}
           onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
+          onArchive={() => void (showArchived ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
+          archiveLabel={showArchived ? "بازگردانی" : "آرشیو"}
         />
 
           </div>

@@ -6,6 +6,7 @@ import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
   adminArchiveBlogTagsAction,
   adminHardDeleteBlogTagsAction,
+  adminRestoreBlogTagsAction,
 } from "@/app/admin/actions/lifecycle";
 import {
   adminListBlogTagsAction,
@@ -18,6 +19,7 @@ export default function AdminBlogTagsPage() {
   const [items, setItems] = useState<Tag[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   
@@ -83,6 +85,25 @@ export default function AdminBlogTagsPage() {
     }
     void load();
   }
+
+  async function restoreOne(id: string, name: string) {
+    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogTagsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    void load();
+  }
+  async function runBulkRestore() {
+    if (!selected.length) return;
+    if (!confirm("بازگردانی موارد انتخاب‌شده از بایگانی؟")) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogTagsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
   async function load() {
     const res = await adminListBlogTagsAction();
     if (res.ok) setItems(res.items as Tag[]);
@@ -101,9 +122,10 @@ export default function AdminBlogTagsPage() {
           total={items.length}
           onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
+          onArchive={() => void (showArchived ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
+          archiveLabel={showArchived ? "بازگردانی" : "آرشیو"}
         />
 
         <Link
@@ -124,8 +146,8 @@ export default function AdminBlogTagsPage() {
           </thead>
           <tbody>
             {items.map((t) => (
-              <tr key={t.id} className="border-t">
-                <td className="p-3 font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(t.id)} onChange={() => toggleSelect(t.id)} /><span>{t.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(t.id, t.name)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(t.id, t.name)}>حذف دائمی</button></td>
+              <tr key={t.id} className={"border-t " + (!t.is_active ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80" : "")}>
+                <td className="p-3 font-medium"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(t.id)} onChange={() => toggleSelect(t.id)} /><span>{t.name}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void (showArchived || !t.is_active ? restoreOne(t.id, t.name) : archiveOne(t.id, t.name))}>{showArchived || !t.is_active ? "بازگردانی" : "آرشیو"}</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(t.id, t.name)}>حذف دائمی</button></td>
                 <td className="text-muted-foreground p-3 font-mono text-xs">{t.slug}</td>
                 <td className="p-3">
                   <button

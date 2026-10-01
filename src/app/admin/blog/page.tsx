@@ -6,6 +6,7 @@ import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
   adminArchiveBlogPostsAction,
   adminHardDeleteBlogPostsAction,
+  adminRestoreBlogPostsAction,
 } from "@/app/admin/actions/lifecycle";
 import {
   adminListBlogPostsAction,
@@ -31,6 +32,7 @@ export default function AdminBlogPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "archived">("all");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -98,6 +100,25 @@ export default function AdminBlogPage() {
       setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
       return;
     }
+    void load();
+  }
+
+  async function restoreOne(id: string, name: string) {
+    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogPostsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    void load();
+  }
+  async function runBulkRestore() {
+    if (!selected.length) return;
+    if (!confirm("بازگردانی موارد انتخاب‌شده از بایگانی؟")) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBlogPostsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    setSelected([]);
     void load();
   }
   const load = useCallback(async () => {
@@ -180,9 +201,20 @@ export default function AdminBlogPage() {
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">بلاگ</h1>
+          <h1 className="text-2xl font-bold text-primary">{showArchived ? "بایگانی بلاگ" : "بلاگ"}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => { setShowArchived((v) => !v); setSelected([]); setStatusFilter(showArchived ? "all" : "archived"); }}
+            className={
+              showArchived
+                ? "bg-amber-600 text-white rounded-xl px-4 py-2 text-sm font-medium"
+                : "border-border rounded-xl border px-4 py-2 text-sm"
+            }
+          >
+            {showArchived ? "خروج از بایگانی" : "بایگانی"}
+          </button>
           <Link
             href="/admin/blog/categories"
             className="border-border rounded-xl border px-4 py-2 text-sm"
@@ -251,9 +283,10 @@ export default function AdminBlogPage() {
           total={items.length}
           onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
+          onArchive={() => void (showArchived ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
+          archiveLabel={showArchived ? "بازگردانی" : "آرشیو"}
         />
 
 
@@ -274,8 +307,8 @@ export default function AdminBlogPage() {
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-t">
-                  <td className="p-3 font-medium"><Link href={`/admin/blog/${p.id}/edit`} className="hover:underline"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggleSelect(p.id)} /><span>{p.title}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(p.id, p.title)}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(p.id, p.title)}>حذف دائمی</button></Link></td>
+                <tr key={p.id} className={"border-t " + (p.status === "archived" ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80" : p.status === "draft" ? "bg-slate-50/60 dark:bg-slate-900/20" : "")}>
+                  <td className="p-3 font-medium"><Link href={`/admin/blog/${p.id}/edit`} className="hover:underline"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggleSelect(p.id)} /><span>{p.title}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void (p.status === "archived" ? restoreOne(p.id, p.title) : archiveOne(p.id, p.title))}>{p.status === "archived" ? "بازگردانی" : "آرشیو"}</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(p.id, p.title)}>حذف دائمی</button></Link></td>
                   <td className="text-muted-foreground p-3 font-mono text-xs" dir="ltr">
                     {p.slug}
                   </td>

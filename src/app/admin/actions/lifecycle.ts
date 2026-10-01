@@ -700,3 +700,96 @@ export async function adminHardDeleteStockAlertsAction(ids: string[]) {
     return { ok: false as const, error: "server" as const };
   }
 }
+
+/* ───────── Restore (بازگردانی از بایگانی) ───────── */
+
+export async function adminRestoreCategoriesAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("categories").update({ is_active: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreCategories]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminRestoreBrandsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("brands").update({ is_active: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreBrands]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminRestoreProductTagsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("product_tags").update({ is_active: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreProductTags]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminRestoreBlogPostsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("blog_posts").update({ status: "draft" }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreBlogPosts]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminRestoreBlogCategoriesAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("blog_categories").update({ is_active: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreBlogCategories]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+
+export async function adminRestoreBlogTagsAction(ids: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const list = cleanIds(ids);
+  if (!list.length) return { ok: false as const, error: "empty" as const };
+  try {
+    const { error } = await gate.supabase.from("blog_tags").update({ is_active: true }).in("id", list);
+    if (error) throw error;
+    return { ok: true as const, count: list.length };
+  } catch (e) {
+    console.error("[adminRestoreBlogTags]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
+

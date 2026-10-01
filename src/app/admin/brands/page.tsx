@@ -5,6 +5,7 @@ import { AdminBulkBar } from "@/components/admin/bulk-bar";
 import {
   adminArchiveBrandsAction,
   adminHardDeleteBrandsAction,
+  adminRestoreBrandsAction,
 } from "@/app/admin/actions/lifecycle";
 import {
   adminCreateBrandAction,
@@ -27,6 +28,7 @@ export default function AdminBrandsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -106,6 +108,25 @@ export default function AdminBrandsPage() {
     }
     void load();
   }
+
+  async function restoreOne(id: string, name: string) {
+    if (!confirm(`بازگردانی «${name}» از بایگانی؟`)) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBrandsAction([id]);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    void load();
+  }
+  async function runBulkRestore() {
+    if (!selected.length) return;
+    if (!confirm("بازگردانی موارد انتخاب‌شده از بایگانی؟")) return;
+    setBulkBusy(true);
+    const res = await adminRestoreBrandsAction(selected);
+    setBulkBusy(false);
+    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    setSelected([]);
+    void load();
+  }
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -165,16 +186,29 @@ export default function AdminBrandsPage() {
     <div className="p-6" dir="rtl">
       <div className="w-full max-w-none">
         <AdminPageHeader
-          title="برندها"
+          title={showArchived ? "بایگانی برندها" : "برندها"}
           description=""
           actions={
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="border-border rounded-xl border px-4 py-2 text-sm"
-            >
-              تازه‌سازی
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowArchived((v) => !v); setSelected([]); }}
+                className={
+                  showArchived
+                    ? "bg-amber-600 text-white rounded-xl px-4 py-2 text-sm font-medium"
+                    : "border-border rounded-xl border px-4 py-2 text-sm"
+                }
+              >
+                {showArchived ? "خروج از بایگانی" : "بایگانی"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="border-border rounded-xl border px-4 py-2 text-sm"
+              >
+                تازه‌سازی
+              </button>
+            </div>
           }
         />
 
@@ -205,9 +239,10 @@ export default function AdminBrandsPage() {
           total={items.length}
           onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
           busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
+          onArchive={() => void (showArchived ? runBulkRestore() : runBulkArchive())}
           onHardDelete={() => void runBulkHardDelete()}
           onClear={() => setSelected([])}
+          archiveLabel={showArchived ? "بازگردانی" : "آرشیو"}
         />
 
         {loading ? (
@@ -229,13 +264,13 @@ export default function AdminBrandsPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((r) => (
-                  <tr key={r.id} className="border-border border-t">
+                {(showArchived ? items.filter((x) => !x.is_active) : items).map((r) => (
+                  <tr key={r.id} className={"border-border border-t " + (!r.is_active ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80" : "")}>
                     <td className="p-3">
                       <div className="flex flex-col gap-1">
                         <span className="inline-flex items-center gap-1">
                           <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} />
-                          <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, r.name)}>آرشیو</button>
+                          <button type="button" className="text-muted-foreground text-xs" onClick={() => void (showArchived || !r.is_active ? restoreOne(r.id, r.name) : archiveOne(r.id, r.name))}>{showArchived || !r.is_active ? "بازگردانی" : "آرشیو"}</button>
                           <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, r.name)}>حذف دائمی</button>
                         </span>
                         <input
