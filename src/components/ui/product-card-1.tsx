@@ -256,7 +256,7 @@ export function ProductCard1({
       )}
     >
       {/* Image */}
- <div className="m-0 p-0 relative - h-[220px] w-full overflow-hidden bg-neutral-200">
+ <div className="m-0 p-0 relative aspect-[3/4] w-full overflow-hidden bg-neutral-100">
 
         {/* Like + Compare — left column only */}
         <div className="pointer-events-auto absolute top-2 left-2 z-30 flex w-9 flex-col items-center gap-1.5 sm:top-3 sm:left-3 sm:w-10 sm:gap-2">
@@ -402,7 +402,7 @@ if (res.ok === false && res.error === "login_required") {
             key={currentImageIndex}
             src={safeImages[currentImageIndex]}
             alt={name}
-            className="z-0 absolute inset-0 h-full w-full object-cover object-top"
+            className="z-0 absolute inset-0 h-full w-full object-contain object-center"
             
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
