@@ -30,6 +30,7 @@ import {
   listWishlistAction,
   toggleWishlistAction,
   type CartLineDTO
+}   filterLiveProductIdsAction,
 } from "@/app/(shop)/actions/shop";
 import {
   listMyTicketsAction,
@@ -162,6 +163,25 @@ export default function BuyerDashboardPage() {
   const wishlist = useShopStore((s) => s.wishlist);
   const compare = useShopStore((s) => s.compare);
   const recent = useShopStore((s) => s.recentlyViewed);
+
+  // حذف محصولات پاک‌شده از بازدید اخیر
+  useEffect(() => {
+    const list = useShopStore.getState().recentlyViewed || [];
+    if (!list.length) return;
+    const ids = list.map((x) => x.id).filter(Boolean);
+    void filterLiveProductIdsAction(ids).then((res) => {
+      if (!res.ok) return;
+      const live = new Set(res.ids);
+      const next = list.filter((x) => live.has(x.id));
+      if (next.length !== list.length) {
+        useShopStore.setState({ recentlyViewed: next });
+        try {
+          localStorage.setItem("pm-recently-viewed", JSON.stringify(next));
+        } catch {}
+      }
+    });
+  }, []);
+
   const removeFromCart = useShopStore((s) => s.removeFromCart);
   const toggleWishlist = useShopStore((s) => s.toggleWishlist);
   const toggleCompare = useShopStore((s) => s.toggleCompare);

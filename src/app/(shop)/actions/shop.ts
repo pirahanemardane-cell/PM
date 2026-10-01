@@ -1006,3 +1006,28 @@ export async function deleteMyAccountAction() {
     return { ok: false as const, error: "server" };
   }
 }
+
+
+/** فقط محصولات منتشر و غیرحذف‌شده — برای بازدید اخیر */
+export async function filterLiveProductIdsAction(ids: string[]) {
+  try {
+    const clean = [...new Set((ids || []).filter(Boolean))].slice(0, 40);
+    if (!clean.length) return { ok: true as const, ids: [] as string[] };
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("id")
+      .in("id", clean)
+      .eq("status", "published")
+      .is("deleted_at", null);
+    if (error) {
+      console.error("[filterLiveProductIds]", error);
+      return { ok: false as const, ids: [] as string[], error: "db" };
+    }
+    const live = new Set((data ?? []).map((r: { id: string }) => r.id));
+    return { ok: true as const, ids: clean.filter((id) => live.has(id)) };
+  } catch (e) {
+    console.error("[filterLiveProductIds]", e);
+    return { ok: false as const, ids: [] as string[], error: "server" };
+  }
+}
