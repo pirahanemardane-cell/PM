@@ -35,6 +35,10 @@ export async function adminListProductTagsAction() {
 export async function adminCreateProductTagAction(input: {
   name: string;
   slug?: string;
+  image_url?: string | null;
+  short_description?: string | null;
+  description?: string | null;
+  is_active?: boolean;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -44,7 +48,11 @@ export async function adminCreateProductTagAction(input: {
   try {
     const { data, error } = await gate.supabase
       .from("product_tags")
-      .insert({ name, slug })
+      .insert({ name, slug,
+        image_url: (input.image_url || "").trim() || null,
+        short_description: (input.short_description || "").trim() || null,
+        description: (input.description || "").trim() || null,
+      })
       .select("id")
       .single();
     if (error) throw error;

@@ -21,7 +21,7 @@ export async function adminListCategoriesAction() {
     const { data, error } = await gate.supabase
       .from("categories")
       .select(
-        "id, name, slug, parent_id, sort_order, is_active, created_at",
+        "id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description, created_at",
       )
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true });
@@ -38,6 +38,10 @@ export async function adminCreateCategoryAction(input: {
   slug?: string;
   sort_order?: number;
   parent_id?: string | null;
+  image_url?: string | null;
+  short_description?: string | null;
+  description?: string | null;
+  is_active?: boolean;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -54,8 +58,11 @@ export async function adminCreateCategoryAction(input: {
         name,
         slug,
         sort_order: input.sort_order ?? 0,
-        is_active: true,
+        is_active: input.is_active !== false,
         parent_id: input.parent_id || null,
+        image_url: (input.image_url || "").trim() || null,
+        short_description: (input.short_description || "").trim() || null,
+        description: (input.description || "").trim() || null,
       })
       .select("id")
       .single();
@@ -75,6 +82,9 @@ export async function adminUpdateCategoryAction(
     is_active?: boolean;
     sort_order?: number;
     parent_id?: string | null;
+    image_url?: string | null;
+    short_description?: string | null;
+    description?: string | null;
   },
 ) {
   const gate = await requireAdmin();
@@ -86,6 +96,9 @@ export async function adminUpdateCategoryAction(
     if (patch.is_active !== undefined) body.is_active = patch.is_active;
     if (patch.sort_order !== undefined) body.sort_order = patch.sort_order;
     if (patch.parent_id !== undefined) body.parent_id = patch.parent_id || null;
+    if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
+    if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
+    if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
     if (!Object.keys(body).length) return { ok: true as const };
 
     const { error } = await gate.supabase
@@ -108,7 +121,7 @@ export async function adminListBrandsAction() {
   try {
     const { data, error } = await gate.supabase
       .from("brands")
-      .select("id, name, slug, is_active, created_at")
+      .select("id, name, slug, is_active, image_url, short_description, description, created_at")
       .order("name", { ascending: true });
     if (error) throw error;
     return { ok: true as const, items: data ?? [] };
@@ -121,6 +134,10 @@ export async function adminListBrandsAction() {
 export async function adminCreateBrandAction(input: {
   name: string;
   slug?: string;
+  image_url?: string | null;
+  short_description?: string | null;
+  description?: string | null;
+  is_active?: boolean;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -133,7 +150,14 @@ export async function adminCreateBrandAction(input: {
   try {
     const { data, error } = await gate.supabase
       .from("brands")
-      .insert({ name, slug, is_active: true })
+      .insert({
+        name,
+        slug,
+        is_active: input.is_active !== false,
+        image_url: (input.image_url || "").trim() || null,
+        short_description: (input.short_description || "").trim() || null,
+        description: (input.description || "").trim() || null,
+      })
       .select("id")
       .single();
     if (error) throw error;
@@ -146,7 +170,7 @@ export async function adminCreateBrandAction(input: {
 
 export async function adminUpdateBrandAction(
   id: string,
-  patch: { name?: string; slug?: string; is_active?: boolean },
+  patch: { name?: string; slug?: string; is_active?: boolean; image_url?: string | null; short_description?: string | null; description?: string | null },
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -155,6 +179,9 @@ export async function adminUpdateBrandAction(
     if (patch.name !== undefined) body.name = patch.name.trim();
     if (patch.slug !== undefined) body.slug = patch.slug.trim();
     if (patch.is_active !== undefined) body.is_active = patch.is_active;
+    if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
+    if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
+    if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
     if (!Object.keys(body).length) return { ok: true as const };
 
     const { error } = await gate.supabase
