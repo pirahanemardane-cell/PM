@@ -4,6 +4,18 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some(
+      (c) =>
+        c.name.includes("auth-token") ||
+        c.name.startsWith("sb-") ||
+        c.name.includes("supabase"),
+    );
+  if (!hasAuthCookie) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -25,7 +37,6 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // مهم: بدون این، session در Server Action گاهی null می‌شود
   await supabase.auth.getUser();
 
   return supabaseResponse;

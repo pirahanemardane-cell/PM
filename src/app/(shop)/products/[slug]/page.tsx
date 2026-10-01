@@ -8,7 +8,7 @@ export const revalidate = 60;
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ProductService } from "@/services/product.service";
+import { getCachedProductBySlug } from "@/lib/cache/product";
 import { toPersianDigits } from "@/lib/numbers";
 import { Badge } from "@/components/ui/badge";
 import { ProductBuyBox } from "@/components/product/product-buy-box";
@@ -33,8 +33,7 @@ function formatPrice(_p: number) { return null; }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug: rawSlug } = await params;
   const slug = normalizeProductSlug(rawSlug);
-  const service = new ProductService();
-  const result = await service.getProductBySlug(slug);
+  const result = await getCachedProductBySlug(slug);
 
   if (!result.success || !result.data) {
     return { title: "محصول یافت نشد" };
@@ -50,8 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailPage({ params }: Props) {
   const { slug: rawSlug } = await params;
   const slug = normalizeProductSlug(rawSlug);
-  const service = new ProductService();
-  const result = await service.getProductBySlug(slug);
+  const result = await getCachedProductBySlug(slug);
 
   if (!result.success || !result.data) {
     notFound();
