@@ -265,3 +265,45 @@ export async function adminUpdateBlogPostAction(
     return { ok: false as const, error: msg };
   }
 }
+
+
+/* ── tags ── */
+
+export async function adminListBlogTagsAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
+  try {
+    const { data, error } = await gate.supabase
+      .from("blog_tags")
+      .select("id, name, slug, is_active, created_at")
+      .order("name");
+    if (error) throw error;
+    return { ok: true as const, items: data ?? [] };
+  } catch (e) {
+    console.error("[adminListBlogTags]", e);
+    return { ok: false as const, error: "server", items: [] };
+  }
+}
+
+export async function adminCreateBlogTagAction(input: {
+  name: string;
+  slug?: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const name = (input.name || "").trim();
+  if (!name) return { ok: false as const, error: "name_required" };
+  const slug = (input.slug || "").trim() || slugify(name);
+  try {
+    const { data, error } = await gate.supabase
+      .from("blog_tags")
+      .insert({ name, slug })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { ok: true as const, id: data.id };
+  } catch (e) {
+    console.error("[adminCreateBlogTag]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
