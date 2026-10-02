@@ -29,9 +29,15 @@ export async function GET() {
             href: "/brands/" + b.slug,
           }))
         : [];
-    return NextResponse.json({ categories, brands });
+    return NextResponse.json(
+      { categories, brands },
+      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+    );
   } catch (e) {
     console.error("[nav/mega]", e);
-    return NextResponse.json({ categories: [], brands: [] });
+    return NextResponse.json(
+      { categories: [], brands: [] },
+      { headers: { "Cache-Control": "public, s-maxage=30" } },
+    );
   }
 }

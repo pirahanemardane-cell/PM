@@ -58,13 +58,20 @@ export async function GET() {
       })
       .filter((a) => a.options.length > 0);
 
-    return NextResponse.json({
-      categories: cats.data ?? [],
-      brands: brands.data ?? [],
-      colors: colors.data ?? [],
-      sizes: sizes.data ?? [],
-      attributes,
-    });
+    return NextResponse.json(
+      {
+        categories: cats.data ?? [],
+        brands: brands.data ?? [],
+        colors: colors.data ?? [],
+        sizes: sizes.data ?? [],
+        attributes,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+        },
+      },
+    );
   } catch (e) {
     console.error("facets", e);
     return NextResponse.json(
