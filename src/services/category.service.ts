@@ -11,7 +11,8 @@ export class CategoryService extends BaseService {
       const data = await this.repo.findRoots();
       return this.success(data);
     } catch (e) {
-      console.error("[CategoryService.getRoots]", e);
+      const dig = e && typeof e === "object" && "digest" in e ? String((e as { digest?: string }).digest || "") : "";
+      if (dig !== "DYNAMIC_SERVER_USAGE") console.error("[CategoryService.getRoots]", e);
       return this.failure("خطا در دریافت دسته‌بندی‌ها");
     }
   }

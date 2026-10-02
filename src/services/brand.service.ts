@@ -16,7 +16,8 @@ export class BrandService extends BaseService {
       const data = await this.repo.findAllActive();
       return this.success(data);
     } catch (e) {
-      console.error("[BrandService.getActive]", e);
+      const dig = e && typeof e === "object" && "digest" in e ? String((e as { digest?: string }).digest || "") : "";
+      if (dig !== "DYNAMIC_SERVER_USAGE") console.error("[BrandService.getActive]", e);
       return this.failure("خطا در دریافت برندها");
     }
   }

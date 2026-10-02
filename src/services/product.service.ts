@@ -18,7 +18,8 @@ export class ProductService extends BaseService {
       const result = await this.repo.findPublished(parsed.data as ProductFilterInput);
       return this.success(result);
     } catch (e) {
-      console.error("[ProductService.getPublishedProducts]", e);
+      const dig = e && typeof e === "object" && "digest" in e ? String((e as { digest?: string }).digest || "") : "";
+      if (dig !== "DYNAMIC_SERVER_USAGE") console.error("[ProductService.getPublishedProducts]", e);
       return this.failure("خطا در دریافت محصولات");
     }
   }
