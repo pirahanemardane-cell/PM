@@ -1,17 +1,14 @@
-# Gitleaks config — extends official default rules
-# https://github.com/gitleaks/gitleaks
-
+# Gitleaks config
 title = "pirahanmardane"
 
 [extend]
 useDefault = true
 
 [allowlist]
-description = "false positives / generated"
+description = "false positives"
 paths = [
-  package-lock.json,
-  public/fonts/.*,
-  public/hero/.*,
-  public/brand/.*,
-  \.next/.*,
+  "package-lock.json",
+  "public/fonts",
+  "public/hero",
+  "public/brand",
 ]
