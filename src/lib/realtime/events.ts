@@ -6,4 +6,8 @@ export const RT = {
   catalog: "pm:catalog-changed",
   reviews: "pm:reviews-changed",
   support: "pm:support-changed",
+  returns: "pm:returns-changed",
+  notifications: "pm:notifications-changed",
 } as const;
+
+export type RtEvent = (typeof RT)[keyof typeof RT];

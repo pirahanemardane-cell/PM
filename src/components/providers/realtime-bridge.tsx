@@ -28,10 +28,7 @@ function useSmartDispatch() {
   }, []);
 }
 
-/**
- * یک WebSocket مرکزی برای کل سایت
- * جداول: cart_items, wishlists, orders, product_variants, products, reviews
- */
+/** یک WebSocket مرکزی — Realtime سراسری فروشگاه + ادمین */
 export function RealtimeBridge() {
   const refreshCart = useServerCartStore((s) => s.refresh);
   const [userId, setUserId] = useState<string | null>(null);
@@ -82,16 +79,14 @@ export function RealtimeBridge() {
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase.channel("pm:site-rt-v3");
+    const channel = supabase.channel("pm:site-rt-v4");
 
-    // سبد
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "cart_items" },
       () => onCart(),
     );
 
-    // علاقه‌مندی
     if (userId) {
       channel.on(
         "postgres_changes" as any,
@@ -100,12 +95,21 @@ export function RealtimeBridge() {
       );
     }
 
-    // سفارش‌ها
     if (isAdmin) {
       channel.on(
         "postgres_changes" as any,
         { event: "*", schema: "public", table: "orders" },
         () => dispatch(RT.orders, 400),
+      );
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "return_requests" },
+        () => dispatch(RT.returns, 500),
+      );
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "contact_messages" },
+        () => dispatch(RT.support, 500),
       );
     } else if (userId) {
       channel.on(
@@ -118,9 +122,18 @@ export function RealtimeBridge() {
         },
         () => dispatch(RT.orders, 400),
       );
+      channel.on(
+        "postgres_changes" as any,
+        {
+          event: "*",
+          schema: "public",
+          table: "return_requests",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => dispatch(RT.returns, 500),
+      );
     }
 
-    // موجودی و کاتالوگ
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "product_variants" },
@@ -131,24 +144,42 @@ export function RealtimeBridge() {
       { event: "*", schema: "public", table: "products" },
       () => dispatch(RT.catalog, 1000),
     );
-
-    // نظرات
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "reviews" },
       () => dispatch(RT.reviews, 800),
     );
 
-    // پیام‌های پشتیبانی (اگر جدول باشد؛ خطا نمی‌دهد اگر publication نباشد)
-    channel.on(
-      "postgres_changes" as any,
-      { event: "*", schema: "public", table: "contact_messages" },
-      () => dispatch(RT.support, 1000),
-    );
+    if (userId) {
+      channel.on(
+        "postgres_changes" as any,
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => dispatch(RT.notifications, 300),
+      );
+    }
 
     channel.subscribe();
 
+    // وقتی تب دوباره فعال می‌شود، یک سیگنال نرم برای همگام‌سازی
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        dispatch(RT.catalog, 0);
+        dispatch(RT.stock, 0);
+        if (userId) {
+          dispatch(RT.cart, 0);
+          dispatch(RT.orders, 0);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
+      document.removeEventListener("visibilitychange", onVisible);
       if (cartTimer.current) clearTimeout(cartTimer.current);
       void supabase.removeChannel(channel);
     };

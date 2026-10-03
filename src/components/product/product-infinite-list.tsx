@@ -8,6 +8,8 @@ import {
 } from "@/app/(shop)/products/actions";
 import { ProductCard } from "./product-card";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 type Props = {
   initialProducts: ProductWithRelations[];
@@ -54,6 +56,46 @@ export function ProductInfiniteList({
     setHasMore(initialHasMore);
     setError(null);
   }, [initialProducts, initialPage, initialHasMore]);
+
+  const reloadFirstPage = useCallback(() => {
+    startTransition(async () => {
+      const result = await loadProductsPage({
+        page: 1,
+        pageSize: 12,
+        categorySlug,
+        brandSlug,
+        q,
+        sort,
+        featured,
+        attrs,
+        colorId,
+        sizeId,
+        minPrice,
+        maxPrice,
+      });
+      if (result.success) {
+        setProducts(result.products);
+        setPage(1);
+        setHasMore(result.hasMore);
+        setError(null);
+      }
+    });
+  }, [
+    categorySlug,
+    brandSlug,
+    q,
+    sort,
+    featured,
+    attrs,
+    colorId,
+    sizeId,
+    minPrice,
+    maxPrice,
+  ]);
+
+  useRtEvent(RT.catalog, () => {
+    reloadFirstPage();
+  });
 
   const loadMore = useCallback(() => {
     if (!hasMore || loadingRef.current) return;

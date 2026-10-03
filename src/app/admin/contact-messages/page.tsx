@@ -2,6 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { formatJalaliDateTime } from "@/lib/dates/jalali";
 import { toPersianDigits } from "@/lib/numbers";
 import { ContactMessageActions } from "./actions-client";
+import { ContactMessagesRealtimeRefresh } from "./realtime-refresh";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,9 @@ export default async function ContactMessagesAdminPage() {
 
   if (error) {
     return (
+    <>
+      <ContactMessagesRealtimeRefresh />
+
       <div className="p-6 text-sm text-destructive" dir="rtl">
         خطا در بارگذاری پیام‌ها: {error.message}
         <p className="text-muted-foreground mt-2 text-xs">
@@ -101,5 +105,6 @@ export default async function ContactMessagesAdminPage() {
         </table>
       </div>
     </div>
+    </>
   );
 }

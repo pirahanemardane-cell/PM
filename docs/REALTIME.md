@@ -1,26 +1,33 @@
-# Realtime — پیراهن مردانه
+# Realtime — وضعیت کامل
 
-## معماری
-- یک کانال مرکزی: `RealtimeBridge` در root layout
-- رویدادهای پنجره‌ای: `src/lib/realtime/events.ts` (`RT.*`)
-- شنونده UI: `useRtEvent(RT.xxx, callback)`
-- اشتراک مستقیم جدول (در صورت نیاز): `useRealtimeTable`
+## کانال مرکزی
+`RealtimeBridge` در root layout — کانال `pm:site-rt-v4`
 
-## جداول تحت نظر
-| جدول | رویداد | مصرف‌کننده نمونه |
-|------|--------|------------------|
-| cart_items | RT.cart | سبد / هدر |
-| wishlists | RT.wishlist | علاقه‌مندی |
-| orders | RT.orders | سفارش کاربر / ادمین |
-| product_variants | RT.stock | PDP BuyBox |
-| products | RT.catalog | لیست‌ها |
-| reviews | RT.reviews | نظرات PDP |
-| contact_messages | RT.support | پشتیبانی ادمین |
+## رویدادها (`RT`)
+| کلید | event | منبع جدول |
+|------|-------|-----------|
+| cart | pm:cart-changed | cart_items |
+| wishlist | pm:wishlist-changed | wishlists |
+| orders | pm:orders-changed | orders |
+| stock | pm:stock-changed | product_variants |
+| catalog | pm:catalog-changed | products |
+| reviews | pm:reviews-changed | reviews |
+| support | pm:support-changed | contact_messages |
+| returns | pm:returns-changed | return_requests |
+| notifications | pm:notifications-changed | notifications |
 
-## کار دستی (یک‌بار)
-در Supabase → SQL Editor فایل `031_realtime_publication.sql` را اجرا کن.
+## مصرف‌کننده‌ها
+- سبد: refresh در Bridge + store
+- موجودی PDP: ProductBuyBox ← RT.stock
+- نظرات PDP: ProductReviews ← RT.reviews
+- لیست محصولات: ProductInfiniteList ← RT.catalog
+- سفارش ادمین: listener روی pm:orders-changed
+- نظرات ادمین: useRtEvent(RT.reviews)
+- پیام تماس ادمین: ContactMessagesRealtimeRefresh ← RT.support
+- اعلان‌ها: کانال اختصاصی + RT.notifications
 
-## تست سریع
-1. دو تب باز کن (یکی ادمین، یکی فروشگاه)
-2. stock یک واریانت را در ادمین عوض کن → PDP بدون رفرش باید به‌روز شود
-3. آیتم به سبد اضافه کن → هدر/سبد باید بدون رفرش به‌روز شود
+## Publication
+همه جداول لازم باید در `supabase_realtime` باشند (تأیید شده).
+
+## Fallback
+با `visibilitychange` وقتی تب دوباره فعال می‌شود، سیگنال همگام‌سازی نرم ارسال می‌شود.

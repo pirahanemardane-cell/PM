@@ -7,6 +7,8 @@ import {
 } from "@/app/(shop)/actions/reviews";
 import { ComposerInput } from "@/components/ui/composer-input";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 
 type Review = {
@@ -35,6 +37,10 @@ export function ProductReviews({ productId }: { productId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRtEvent(RT.reviews, () => {
+    void load();
+  });
 
   async function onSend(body: string) {
     setBusy(true);
