@@ -28,7 +28,10 @@ function useSmartDispatch() {
   }, []);
 }
 
-/** یک WebSocket — نه ۱۰ کانال جدا */
+/**
+ * یک WebSocket مرکزی برای کل سایت
+ * جداول: cart_items, wishlists, orders, product_variants, products, reviews
+ */
 export function RealtimeBridge() {
   const refreshCart = useServerCartStore((s) => s.refresh);
   const [userId, setUserId] = useState<string | null>(null);
@@ -79,14 +82,16 @@ export function RealtimeBridge() {
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase.channel("pm:site-rt-v2");
+    const channel = supabase.channel("pm:site-rt-v3");
 
+    // سبد
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "cart_items" },
       () => onCart(),
     );
 
+    // علاقه‌مندی
     if (userId) {
       channel.on(
         "postgres_changes" as any,
@@ -95,6 +100,7 @@ export function RealtimeBridge() {
       );
     }
 
+    // سفارش‌ها
     if (isAdmin) {
       channel.on(
         "postgres_changes" as any,
@@ -114,15 +120,30 @@ export function RealtimeBridge() {
       );
     }
 
+    // موجودی و کاتالوگ
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "product_variants" },
-      () => dispatch(RT.stock, 1000),
+      () => dispatch(RT.stock, 800),
     );
     channel.on(
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "products" },
       () => dispatch(RT.catalog, 1000),
+    );
+
+    // نظرات
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "reviews" },
+      () => dispatch(RT.reviews, 800),
+    );
+
+    // پیام‌های پشتیبانی (اگر جدول باشد؛ خطا نمی‌دهد اگر publication نباشد)
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "contact_messages" },
+      () => dispatch(RT.support, 1000),
     );
 
     channel.subscribe();
