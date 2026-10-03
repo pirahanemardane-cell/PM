@@ -314,6 +314,22 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         }
         setAttrValues(map);
       }
+      setSeo(
+        emptySeoValue({
+          metaTitle: String(p.meta_title ?? ""),
+          metaDescription: String(p.meta_description ?? ""),
+          focusKeyphrases: Array.isArray(p.focus_keyphrases) ? (p.focus_keyphrases as string[]) : [],
+          ogTitle: String(p.og_title ?? ""),
+          ogDescription: String(p.og_description ?? ""),
+          ogImageUrl: String(p.og_image_url ?? ""),
+          twitterTitle: String(p.twitter_title ?? ""),
+          twitterDescription: String(p.twitter_description ?? ""),
+          robotsIndex: p.robots_index !== false,
+          robotsFollow: p.robots_follow !== false,
+          isCornerstone: !!p.is_cornerstone,
+          canonicalUrl: String(p.canonical_url ?? ""),
+        }),
+      );
       setProductId(initialId);
       setLoading(false);
     })();

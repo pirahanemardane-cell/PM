@@ -11,14 +11,17 @@ import { ProductFiltersMobile } from "@/components/product/product-filters-mobil
 import { facetSlugsForCategory } from "@/lib/facet-map";
 import { toPersianDigits } from "@/lib/numbers";
 import { Suspense } from "react";
+import { metadataFromSeoPage } from "@/lib/seo/page-settings";
 
 export const dynamic = "force-dynamic";
 
 // ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — فیلترها و ظاهر دست‌نخورده
-export const metadata: Metadata = {
-  title: "محصولات",
-  description: "لیست محصولات فروشگاه تخصصی پیراهن مردانه",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataFromSeoPage("shop_plp", {
+    title: "محصولات",
+    description: "لیست محصولات فروشگاه تخصصی پیراهن مردانه",
+  });
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

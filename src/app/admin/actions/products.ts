@@ -448,12 +448,13 @@ export async function adminGetProductAction(id: string) {
     try {
       const { data: extra } = await gate.supabase
         .from("products")
-        .select("size_guide_id, published_at")
+        .select("size_guide_id, published_at, meta_title, meta_description, focus_keyphrases, og_title, og_description, og_image_url, twitter_title, twitter_description, robots_index, robots_follow, is_cornerstone, canonical_url")
         .eq("id", id)
         .maybeSingle();
       if (extra) {
         size_guide_id = (extra as { size_guide_id?: string | null }).size_guide_id ?? null;
         published_at = (extra as { published_at?: string | null }).published_at ?? null;
+        Object.assign(data as object, extra);
       }
     } catch (e) {
       console.warn("[adminGetProduct extra cols]", e);

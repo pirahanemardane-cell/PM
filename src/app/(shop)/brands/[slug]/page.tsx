@@ -42,9 +42,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!result.success || !result.data) {
     return { title: "برند" };
   }
+  const d = result.data as {
+    name: string;
+    description?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    robots_index?: boolean | null;
+  };
   return {
-    title: result.data.name,
-    description: result.data.description ?? `محصولات برند ${result.data.name}`,
+    title: d.meta_title || d.name,
+    description: d.meta_description || d.description || `محصولات برند ${d.name}`,
+    robots: d.robots_index === false ? { index: false, follow: true } : undefined,
   };
 }
 

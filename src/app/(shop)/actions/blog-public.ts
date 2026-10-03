@@ -27,7 +27,7 @@ export async function getPublishedPostBySlugAction(slug: string) {
     const { data, error } = await supabase
       .from("blog_posts")
       .select(
-        "id, title, slug, excerpt, body, cover_url, published_at, category:blog_categories(name, slug)",
+        "id, title, slug, excerpt, body, cover_url, published_at, meta_title, meta_description, og_title, og_description, og_image_url, robots_index, robots_follow, canonical_url, category:blog_categories(name, slug)",
       )
       .eq("slug", slug)
       .eq("status", "published")

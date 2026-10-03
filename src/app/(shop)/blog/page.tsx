@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { listPublishedPostsAction } from "@/app/(shop)/actions/blog-public";
 import { LiveBlogList } from "@/components/shop/live-blog-list";
+import { metadataFromSeoPage } from "@/lib/seo/page-settings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "بلاگ",
-  description: "مقالات فروشگاه پیراهن مردانه",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return metadataFromSeoPage("blog_plp", {
+    title: "بلاگ",
+    description: "مقالات فروشگاه پیراهن مردانه",
+  });
+}
 
 export default async function BlogIndexPage() {
   const res = await listPublishedPostsAction();

@@ -17,10 +17,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const res = await getPublishedPostBySlugAction(slug);
   if (!res.ok || !res.post) return { title: "مقاله" };
-  const p = res.post as { title: string; excerpt: string | null };
+  const p = res.post as {
+    title: string;
+    excerpt: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    og_title?: string | null;
+    og_description?: string | null;
+    og_image_url?: string | null;
+    robots_index?: boolean | null;
+    robots_follow?: boolean | null;
+    canonical_url?: string | null;
+    cover_url?: string | null;
+  };
+  const title = p.meta_title || p.title;
+  const description = p.meta_description || p.excerpt || undefined;
   return {
-    title: p.title,
-    description: p.excerpt ?? undefined,
+    title,
+    description,
+    alternates: p.canonical_url ? { canonical: p.canonical_url } : undefined,
+    robots: {
+      index: p.robots_index !== false,
+      follow: p.robots_follow !== false,
+    },
+    openGraph: {
+      title: p.og_title || title,
+      description: p.og_description || description,
+      images: (p.og_image_url || p.cover_url) ? [{ url: (p.og_image_url || p.cover_url)! }] : undefined,
+    },
   };
 }
 

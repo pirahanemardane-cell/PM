@@ -39,10 +39,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "محصول یافت نشد" };
   }
 
-  const p = result.data;
+  const p = result.data as typeof result.data & {
+    meta_title?: string | null;
+    meta_description?: string | null;
+    og_title?: string | null;
+    og_description?: string | null;
+    og_image_url?: string | null;
+    robots_index?: boolean | null;
+    robots_follow?: boolean | null;
+    canonical_url?: string | null;
+  };
+  const title = p.meta_title || p.name;
+  const description = p.meta_description || p.short_description || undefined;
   return {
-    title: p.meta_title ?? p.name,
-    description: p.meta_description ?? p.short_description ?? undefined,
+    title,
+    description,
+    alternates: p.canonical_url ? { canonical: p.canonical_url } : undefined,
+    robots: {
+      index: p.robots_index !== false,
+      follow: p.robots_follow !== false,
+    },
+    openGraph: {
+      title: p.og_title || title,
+      description: p.og_description || description,
+      images: p.og_image_url ? [{ url: p.og_image_url }] : undefined,
+    },
   };
 }
 
