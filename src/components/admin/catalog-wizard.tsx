@@ -377,6 +377,18 @@ export function CatalogWizard({
         )}
       </div>
 
+
+      <SeoAnalysisPanel
+        pageName={name}
+        slug={displaySlug}
+        shortDescription={shortDesc}
+        body={description}
+        imageUrl={imageUrl || ""}
+        forceNoindex={kind === "tag"}
+        value={seo}
+        onChange={setSeo}
+      />
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

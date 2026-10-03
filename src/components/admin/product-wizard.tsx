@@ -1460,19 +1460,21 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
               فعال در فروشگاه
             </label>
-            <SeoAnalysisPanel
-              pageName={name}
-              slug={slug}
-              shortDescription={shortDesc}
-              body={description}
-              imageUrl={imageUrl}
-              forceNoindex={false}
-              value={seo}
-              onChange={setSeo}
-            />
                       </div>
         )}
       </div>
+
+
+      <SeoAnalysisPanel
+        pageName={name}
+        slug={slug}
+        shortDescription={shortDesc}
+        body={description}
+        imageUrl={imageUrl}
+        forceNoindex={false}
+        value={seo}
+        onChange={setSeo}
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <button
