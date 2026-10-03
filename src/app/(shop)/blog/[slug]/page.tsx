@@ -7,6 +7,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlugAction } from "@/app/(shop)/actions/blog-public";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { JsonLd } from "@/components/seo/json-ld";
+import { articleSchema, breadcrumbSchema } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +64,25 @@ export default async function BlogPostPage({ params }: Props) {
     category?: { name: string } | null;
   };
 
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
   return (
     <article className="w-full max-w-none space-y-6 p-6" dir="rtl">
+      <JsonLd
+        data={[
+          articleSchema({
+            title: post.title,
+            slug,
+            description: post.excerpt,
+            image: post.cover_url,
+            datePublished: post.published_at,
+          }),
+          breadcrumbSchema([
+            { name: "خانه", url: siteBase + "/" },
+            { name: "بلاگ", url: siteBase + "/blog" },
+            { name: post.title, url: siteBase + "/blog/" + slug },
+          ]),
+        ]}
+      />
       <Link href="/blog" className="text-primary text-sm underline">
         ← بازگشت به بلاگ
       </Link>

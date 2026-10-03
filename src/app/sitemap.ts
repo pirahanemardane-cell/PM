@@ -37,36 +37,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       await Promise.all([
         supabase
           .from("products")
-          .select("slug, updated_at, published_at")
+          .select("slug, updated_at, published_at, robots_index")
           .eq("status", "published")
           .is("deleted_at", null)
           .or(`published_at.is.null,published_at.lte.${now}`)
           .limit(5000),
         supabase
           .from("categories")
-          .select("slug, updated_at, created_at")
+          .select("slug, updated_at, created_at, robots_index")
           .eq("is_active", true)
           .limit(1000),
         supabase
           .from("brands")
-          .select("slug, updated_at, created_at")
+          .select("slug, updated_at, created_at, robots_index")
           .eq("is_active", true)
           .limit(1000),
         supabase
           .from("blog_posts")
-          .select("slug, updated_at, published_at")
+          .select("slug, updated_at, published_at, robots_index")
           .eq("status", "published")
           .limit(2000),
       ]);
 
-    const productEntries: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
+    const productEntries: MetadataRoute.Sitemap = (products ?? []).filter((p) => (p as { robots_index?: boolean }).robots_index !== false).map((p) => ({
       url: `${siteUrl}/products/${p.slug}`,
       lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
       changeFrequency: "weekly",
       priority: 0.8,
     }));
 
-    const categoryEntries: MetadataRoute.Sitemap = (categories ?? []).map((c) => ({
+    const categoryEntries: MetadataRoute.Sitemap = (categories ?? []).filter((c) => (c as { robots_index?: boolean }).robots_index !== false).map((c) => ({
       url: `${siteUrl}/categories/${c.slug}`,
       lastModified: c.updated_at
         ? new Date(c.updated_at)
@@ -77,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    const brandEntries: MetadataRoute.Sitemap = (brands ?? []).map((b) => ({
+    const brandEntries: MetadataRoute.Sitemap = (brands ?? []).filter((b) => (b as { robots_index?: boolean }).robots_index !== false).map((b) => ({
       url: `${siteUrl}/brands/${b.slug}`,
       lastModified: b.updated_at
         ? new Date(b.updated_at)
@@ -88,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.65,
     }));
 
-    const postEntries: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
+    const postEntries: MetadataRoute.Sitemap = (posts ?? []).filter((post) => (post as { robots_index?: boolean }).robots_index !== false).map((post) => ({
       url: `${siteUrl}/blog/${post.slug}`,
       lastModified: post.updated_at
         ? new Date(post.updated_at)

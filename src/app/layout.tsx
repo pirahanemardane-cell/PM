@@ -5,6 +5,8 @@ import "./globals.css";
 import { AppToaster } from "@/components/ui/app-toaster";
 import { RealtimeBridge } from "@/components/providers/realtime-bridge";
 import { WishlistSync } from "@/components/providers/wishlist-sync";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
 
@@ -104,6 +106,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#023047" />
       </head>
       <body className="min-h-screen font-sans antialiased max-w-full" suppressHydrationWarning>
+        <JsonLd data={[organizationSchema(), websiteSchema()]} />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

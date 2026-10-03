@@ -21,6 +21,8 @@ import { resolveColorHex } from "@/lib/colors";
 import { loadSizeGuideForProduct } from "@/lib/size-guide/load";
 import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
 import { normalizeProductSlug } from "@/lib/product-slug";
+import { JsonLd } from "@/components/seo/json-ld";
+import { productSchema, breadcrumbSchema } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +79,7 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const product = result.data;
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
   const sizeGuide = await loadSizeGuideForProduct({
     sizeGuideId: (product as { size_guide_id?: string | null }).size_guide_id,
     categoryId: (product as { category_id?: string | null }).category_id,
@@ -273,7 +276,38 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             ) : null}
 
-            <TrackRecentlyViewed
+            
+      <JsonLd
+        data={[
+          productSchema({
+            name: product.name,
+            slug: product.slug,
+            description: product.short_description || product.description,
+            images: (product.images ?? []).map((im: { url: string }) => im.url).filter(Boolean),
+            brandName: (product as { brand?: { name?: string } | null }).brand?.name ?? null,
+            categoryName: (product as { category?: { name?: string } | null }).category?.name ?? null,
+            price: minPrice,
+            availability:
+              activeVariants.some((v: { stock_quantity?: number | null }) => Number(v.stock_quantity ?? 0) > 0)
+                ? "InStock"
+                : "OutOfStock",
+          }),
+          breadcrumbSchema([
+            { name: "خانه", url: siteBase + "/" },
+            { name: "محصولات", url: siteBase + "/products" },
+            {
+              name: (product as { category?: { name?: string } | null }).category?.name || "دسته",
+              url:
+                siteBase +
+                "/categories/" +
+                ((product as { category?: { slug?: string } | null }).category?.slug || ""),
+            },
+            { name: product.name, url: siteBase + "/products/" + product.slug },
+          ]),
+        ]}
+      />
+
+      <TrackRecentlyViewed
               id={String(product.id)}
               title={String(product.name ?? "")}
               price={Number((product as { price?: number }).price ?? 0)}

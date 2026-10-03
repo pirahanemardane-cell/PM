@@ -1,0 +1,130 @@
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
+
+export function organizationSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE}/#organization`,
+    name: "پیراهن مردانه",
+    url: SITE,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE}/icon.png`,
+    },
+    sameAs: [] as string[],
+  };
+}
+
+export function websiteSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE}/#website`,
+    url: SITE,
+    name: "پیراهن مردانه",
+    inLanguage: "fa-IR",
+    publisher: { "@id": `${SITE}/#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE}/products?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
+export type BreadcrumbItem = { name: string; url: string };
+
+export function breadcrumbSchema(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: it.url.startsWith("http") ? it.url : `${SITE}${it.url.startsWith("/") ? "" : "/"}${it.url}`,
+    })),
+  };
+}
+
+export function productSchema(input: {
+  name: string;
+  slug: string;
+  description?: string | null;
+  images?: string[];
+  sku?: string | null;
+  brandName?: string | null;
+  price?: number | null;
+  currency?: string;
+  availability?: "InStock" | "OutOfStock" | "PreOrder";
+  categoryName?: string | null;
+}) {
+  const url = `${SITE}/products/${input.slug}`;
+  const offers =
+    input.price != null && Number.isFinite(input.price)
+      ? {
+          "@type": "Offer",
+          url,
+          priceCurrency: input.currency ?? "IRR",
+          price: String(Math.round(input.price)),
+          availability: `https://schema.org/${input.availability ?? "InStock"}`,
+          itemCondition: "https://schema.org/NewCondition",
+        }
+      : undefined;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: input.name,
+    description: input.description || undefined,
+    image: input.images?.length ? input.images : undefined,
+    sku: input.sku || undefined,
+    brand: input.brandName
+      ? { "@type": "Brand", name: input.brandName }
+      : undefined,
+    category: input.categoryName || undefined,
+    url,
+    offers,
+  };
+}
+
+export function articleSchema(input: {
+  title: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  datePublished?: string | null;
+  dateModified?: string | null;
+  authorName?: string;
+}) {
+  const url = `${SITE}/blog/${input.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.description || undefined,
+    image: input.image || undefined,
+    datePublished: input.datePublished || undefined,
+    dateModified: input.dateModified || input.datePublished || undefined,
+    author: {
+      "@type": "Person",
+      name: input.authorName || "پیراهن مردانه",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "پیراهن مردانه",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE}/icon.png`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    inLanguage: "fa-IR",
+  };
+}
