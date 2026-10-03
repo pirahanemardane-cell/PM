@@ -212,6 +212,21 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
 
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
+      <JsonLd
+        data={[
+          brandPageSchema({
+            name: brand.name,
+            description: (brand as { description?: string | null }).description,
+            slug,
+            logo: (brand as { logo_url?: string | null }).logo_url ?? null,
+          }),
+          breadcrumbSchema([
+            { name: "خانه", url: "/" },
+            { name: "برندها", url: "/brands" },
+            { name: brand.name, url: "/brands/" + slug },
+          ]),
+        ]}
+      />
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-iranyekan-heavy text-primary">{brand.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
