@@ -48,6 +48,7 @@ const NAV = [
   { href: "/admin/stock-alerts", label: "لیست انتظار موجودی", icon: Bell },
   { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },
   { href: "/admin/logs", label: "لاگ‌ها", icon: FileText },
+  { href: "/admin/seo", label: "سئو PLP", icon: Settings },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },
   { href: "/admin/backup", label: "بک‌آپ", icon: Database },
 ];

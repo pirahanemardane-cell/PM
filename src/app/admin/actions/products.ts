@@ -229,7 +229,21 @@ type CreateProductInput = {
   variants?: AdminVariantInput[];
   size_guide_id?: string | null;
   published_at?: string | null;
+
+  meta_title?: string | null;
+  meta_description?: string | null;
+  focus_keyphrases?: string[];
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  robots_index?: boolean;
+  robots_follow?: boolean;
+  is_cornerstone?: boolean;
+  canonical_url?: string | null;
 };
+
 
 export type AdminVariantInput = {
   id?: string;
@@ -293,6 +307,19 @@ export async function adminCreateProductAction(input: CreateProductInput) {
         is_bestseller: !!input.is_bestseller,
         size_guide_id: input.size_guide_id || null,
         published_at: input.published_at || null,
+
+        meta_title: input.meta_title?.trim() || null,
+        meta_description: input.meta_description?.trim() || null,
+        focus_keyphrases: Array.isArray(input.focus_keyphrases) ? input.focus_keyphrases : [],
+        og_title: input.og_title?.trim() || null,
+        og_description: input.og_description?.trim() || null,
+        og_image_url: input.og_image_url?.trim() || null,
+        twitter_title: input.twitter_title?.trim() || null,
+        twitter_description: input.twitter_description?.trim() || null,
+        robots_index: input.robots_index !== false,
+        robots_follow: input.robots_follow !== false,
+        is_cornerstone: !!input.is_cornerstone,
+        canonical_url: input.canonical_url?.trim() || null,
       })
       .select("id")
       .single();
@@ -491,6 +518,19 @@ export async function adminUpdateProductAction(
     tag_ids?: string[];
     size_guide_id?: string | null;
     published_at?: string | null;
+
+  meta_title?: string | null;
+  meta_description?: string | null;
+  focus_keyphrases?: string[];
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  robots_index?: boolean;
+  robots_follow?: boolean;
+  is_cornerstone?: boolean;
+  canonical_url?: string | null;
   },
 ) {
   const gate = await requireAdmin();
@@ -523,6 +563,19 @@ export async function adminUpdateProductAction(
     // products has no is_active column (only variants/categories/brands)
     if (input.size_guide_id !== undefined) patch.size_guide_id = input.size_guide_id || null;
     if (input.published_at !== undefined) patch.published_at = input.published_at || null;
+
+    if (input.meta_title !== undefined) patch.meta_title = (input.meta_title || "").trim() || null;
+    if (input.meta_description !== undefined) patch.meta_description = (input.meta_description || "").trim() || null;
+    if (input.focus_keyphrases !== undefined) patch.focus_keyphrases = Array.isArray(input.focus_keyphrases) ? input.focus_keyphrases : [];
+    if (input.og_title !== undefined) patch.og_title = (input.og_title || "").trim() || null;
+    if (input.og_description !== undefined) patch.og_description = (input.og_description || "").trim() || null;
+    if (input.og_image_url !== undefined) patch.og_image_url = (input.og_image_url || "").trim() || null;
+    if (input.twitter_title !== undefined) patch.twitter_title = (input.twitter_title || "").trim() || null;
+    if (input.twitter_description !== undefined) patch.twitter_description = (input.twitter_description || "").trim() || null;
+    if (input.robots_index !== undefined) patch.robots_index = !!input.robots_index;
+    if (input.robots_follow !== undefined) patch.robots_follow = !!input.robots_follow;
+    if (input.is_cornerstone !== undefined) patch.is_cornerstone = !!input.is_cornerstone;
+    if (input.canonical_url !== undefined) patch.canonical_url = (input.canonical_url || "").trim() || null;
 
     if (Object.keys(patch).length) {
       const { error: pErr } = await gate.supabase

@@ -28,6 +28,15 @@ type SaveFn = (input: {
   description?: string | null;
   is_active?: boolean;
   parent_id?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  focus_keyphrases?: string[];
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  robots_index?: boolean;
+  robots_follow?: boolean;
+  canonical_url?: string | null;
 }) => Promise<{ ok: true; id?: string } | { ok: false; error: string }>;
 
 const STEPS = [
@@ -163,7 +172,16 @@ export function CatalogWizard({
       description: description || null,
       is_active: isActive,
       parent_id: kind === "category" ? parentId || null : undefined,
-    });
+      meta_title: seo.metaTitle || null,
+      meta_description: seo.metaDescription || null,
+      focus_keyphrases: seo.focusKeyphrases,
+      og_title: seo.ogTitle || null,
+      og_description: seo.ogDescription || null,
+      og_image_url: seo.ogImageUrl || null,
+      robots_index: kind === "tag" ? false : seo.robotsIndex,
+      robots_follow: seo.robotsFollow,
+      canonical_url: seo.canonicalUrl || null,
+    } as any);
     setBusy(false);
     if (!res.ok) {
       setErr(

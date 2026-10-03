@@ -12,6 +12,7 @@ import {
 import { adminListBlogTagsAction } from "@/app/admin/actions/tags";
 import { Toolbar } from "@/components/ui/toolbar";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
 
 type Opt = { id: string; name: string };
 
@@ -32,6 +33,7 @@ export default function EditBlogPostPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [seo, setSeo] = useState<SeoPanelValue>(emptySeoValue());
 
   useEffect(() => {
     if (!id) return;
@@ -86,6 +88,21 @@ export default function EditBlogPostPage() {
         (post.status as "draft" | "published" | "archived") || "draft",
       );
       setSelectedTags((post.blog_tag_map ?? []).map((x) => x.tag_id));
+      const pp = post as any;
+      setSeo(emptySeoValue({
+        metaTitle: String(pp.meta_title ?? ""),
+        metaDescription: String(pp.meta_description ?? ""),
+        focusKeyphrases: Array.isArray(pp.focus_keyphrases) ? pp.focus_keyphrases : [],
+        ogTitle: String(pp.og_title ?? ""),
+        ogDescription: String(pp.og_description ?? ""),
+        ogImageUrl: String(pp.og_image_url ?? ""),
+        twitterTitle: String(pp.twitter_title ?? ""),
+        twitterDescription: String(pp.twitter_description ?? ""),
+        robotsIndex: pp.robots_index !== false,
+        robotsFollow: pp.robots_follow !== false,
+        isCornerstone: !!pp.is_cornerstone,
+        canonicalUrl: String(pp.canonical_url ?? ""),
+      }));
       setLoading(false);
     })();
   }, [id]);
@@ -103,7 +120,19 @@ export default function EditBlogPostPage() {
       cover_url: coverUrl || null,
       status,
       tag_ids: selectedTags,
-    });
+      meta_title: seo.metaTitle || undefined,
+      meta_description: seo.metaDescription || undefined,
+      focus_keyphrases: seo.focusKeyphrases,
+      og_title: seo.ogTitle || undefined,
+      og_description: seo.ogDescription || undefined,
+      og_image_url: seo.ogImageUrl || undefined,
+      twitter_title: seo.twitterTitle || undefined,
+      twitter_description: seo.twitterDescription || undefined,
+      robots_index: seo.robotsIndex,
+      robots_follow: seo.robotsFollow,
+      is_cornerstone: seo.isCornerstone,
+      canonical_url: seo.canonicalUrl || undefined,
+    } as any);
     setBusy(false);
     if (!res.ok) {
       setErr(
@@ -241,6 +270,15 @@ export default function EditBlogPostPage() {
         >
           {busy ? "…" : "ذخیره تغییرات"}
         </button>
+        <SeoAnalysisPanel
+          pageName={title}
+          slug={slug}
+          shortDescription={excerpt}
+          body={body}
+          imageUrl={coverUrl}
+          value={seo}
+          onChange={setSeo}
+        />
       </form>
     </div>
   );

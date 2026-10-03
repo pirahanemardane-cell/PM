@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/actions/blog";
 import { adminListBlogTagsAction } from "@/app/admin/actions/tags";
 import { Toolbar } from "@/components/ui/toolbar";
+import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
 
 type Opt = { id: string; name: string };
 
@@ -27,6 +28,7 @@ export default function NewBlogPostPage() {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [seo, setSeo] = useState<SeoPanelValue>(emptySeoValue());
 
   useEffect(() => {
     void (async () => {
@@ -63,7 +65,19 @@ export default function NewBlogPostPage() {
       cover_url: coverUrl || undefined,
       status,
       tag_ids: selectedTags,
-    });
+      meta_title: seo.metaTitle || undefined,
+      meta_description: seo.metaDescription || undefined,
+      focus_keyphrases: seo.focusKeyphrases,
+      og_title: seo.ogTitle || undefined,
+      og_description: seo.ogDescription || undefined,
+      og_image_url: seo.ogImageUrl || undefined,
+      twitter_title: seo.twitterTitle || undefined,
+      twitter_description: seo.twitterDescription || undefined,
+      robots_index: seo.robotsIndex,
+      robots_follow: seo.robotsFollow,
+      is_cornerstone: seo.isCornerstone,
+      canonical_url: seo.canonicalUrl || undefined,
+    } as any);
     setBusy(false);
     if (!res.ok) {
       setErr(res.error === "title_required" ? "عنوان الزامی است" : res.error || "خطا");
@@ -180,6 +194,15 @@ export default function NewBlogPostPage() {
             ) : null}
           </div>
         </div>
+        <SeoAnalysisPanel
+          pageName={title}
+          slug={slug}
+          shortDescription={excerpt}
+          body={body}
+          imageUrl={coverUrl}
+          value={seo}
+          onChange={setSeo}
+        />
         {err ? <p className="text-destructive text-sm">{err}</p> : null}
         <button
           type="submit"

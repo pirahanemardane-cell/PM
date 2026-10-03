@@ -50,7 +50,13 @@ export async function adminCreateBlogCategoryAction(input: {
         name,
         slug,
         description: input.description?.trim() || null,
-      })
+        meta_title: (input as any).meta_title?.trim?.() || null,
+        meta_description: (input as any).meta_description?.trim?.() || null,
+        focus_keyphrases: Array.isArray((input as any).focus_keyphrases) ? (input as any).focus_keyphrases : [],
+        robots_index: (input as any).robots_index !== false,
+        robots_follow: (input as any).robots_follow !== false,
+        canonical_url: (input as any).canonical_url?.trim?.() || null,
+})
       .select("id")
       .single();
     if (error) throw error;
@@ -129,6 +135,18 @@ export async function adminCreateBlogPostAction(input: {
         cover_url: input.cover_url?.trim() || null,
         status,
         published_at: status === "published" ? new Date().toISOString() : null,
+        meta_title: (input as any).meta_title?.trim?.() || null,
+        meta_description: (input as any).meta_description?.trim?.() || null,
+        focus_keyphrases: Array.isArray((input as any).focus_keyphrases) ? (input as any).focus_keyphrases : [],
+        og_title: (input as any).og_title?.trim?.() || null,
+        og_description: (input as any).og_description?.trim?.() || null,
+        og_image_url: (input as any).og_image_url?.trim?.() || null,
+        twitter_title: (input as any).twitter_title?.trim?.() || null,
+        twitter_description: (input as any).twitter_description?.trim?.() || null,
+        robots_index: (input as any).robots_index !== false,
+        robots_follow: (input as any).robots_follow !== false,
+        is_cornerstone: !!(input as any).is_cornerstone,
+        canonical_url: (input as any).canonical_url?.trim?.() || null,
       })
       .select("id")
       .single();
@@ -231,6 +249,18 @@ export async function adminUpdateBlogPostAction(
       body: input.body?.trim() || null,
       cover_url: input.cover_url?.trim() || null,
       status,
+      meta_title: (input as any).meta_title?.trim?.() || null,
+      meta_description: (input as any).meta_description?.trim?.() || null,
+      focus_keyphrases: Array.isArray((input as any).focus_keyphrases) ? (input as any).focus_keyphrases : [],
+      og_title: (input as any).og_title?.trim?.() || null,
+      og_description: (input as any).og_description?.trim?.() || null,
+      og_image_url: (input as any).og_image_url?.trim?.() || null,
+      twitter_title: (input as any).twitter_title?.trim?.() || null,
+      twitter_description: (input as any).twitter_description?.trim?.() || null,
+      robots_index: (input as any).robots_index !== false,
+      robots_follow: (input as any).robots_follow !== false,
+      is_cornerstone: !!(input as any).is_cornerstone,
+      canonical_url: (input as any).canonical_url?.trim?.() || null,
     };
     if (status === "published") {
       const { data: existing } = await gate.supabase

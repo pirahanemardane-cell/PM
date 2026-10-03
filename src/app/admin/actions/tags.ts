@@ -52,6 +52,11 @@ export async function adminCreateProductTagAction(input: {
         image_url: (input.image_url || "").trim() || null,
         short_description: (input.short_description || "").trim() || null,
         description: (input.description || "").trim() || null,
+        meta_title: (input as any).meta_title?.trim?.() || null,
+        meta_description: (input as any).meta_description?.trim?.() || null,
+        focus_keyphrases: Array.isArray((input as any).focus_keyphrases) ? (input as any).focus_keyphrases : [],
+        robots_index: false,
+        robots_follow: (input as any).robots_follow !== false,
       })
       .select("id")
       .single();
@@ -107,6 +112,11 @@ export async function adminUpdateProductTagAction(
     if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
     if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
     if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
+    if ((patch as any).meta_title !== undefined) body.meta_title = ((patch as any).meta_title || "").trim() || null;
+    if ((patch as any).meta_description !== undefined) body.meta_description = ((patch as any).meta_description || "").trim() || null;
+    if ((patch as any).focus_keyphrases !== undefined) body.focus_keyphrases = Array.isArray((patch as any).focus_keyphrases) ? (patch as any).focus_keyphrases : [];
+    if ((patch as any).robots_index !== undefined) body.robots_index = false; // tags always noindex
+    if ((patch as any).robots_follow !== undefined) body.robots_follow = !!(patch as any).robots_follow;
     if (!Object.keys(body).length) return { ok: true as const };
     const { error } = await gate.supabase.from("product_tags").update(body).eq("id", id);
     if (error) throw error;
@@ -161,7 +171,7 @@ export async function adminCreateBlogTagAction(input: {
   try {
     const { data, error } = await gate.supabase
       .from("blog_tags")
-      .insert({ name, slug })
+      .insert({ name, slug, robots_index: false, meta_title: (input as any).meta_title?.trim?.() || null, meta_description: (input as any).meta_description?.trim?.() || null, focus_keyphrases: Array.isArray((input as any).focus_keyphrases) ? (input as any).focus_keyphrases : [] })
       .select("id")
       .single();
     if (error) throw error;

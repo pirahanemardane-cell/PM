@@ -42,6 +42,19 @@ export async function adminCreateCategoryAction(input: {
   short_description?: string | null;
   description?: string | null;
   is_active?: boolean;
+
+  meta_title?: string | null;
+  meta_description?: string | null;
+  focus_keyphrases?: string[];
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  twitter_title?: string | null;
+  twitter_description?: string | null;
+  robots_index?: boolean;
+  robots_follow?: boolean;
+  is_cornerstone?: boolean;
+  canonical_url?: string | null;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -63,6 +76,19 @@ export async function adminCreateCategoryAction(input: {
         image_url: (input.image_url || "").trim() || null,
         short_description: (input.short_description || "").trim() || null,
         description: (input.description || "").trim() || null,
+
+        meta_title: input.meta_title?.trim() || null,
+        meta_description: input.meta_description?.trim() || null,
+        focus_keyphrases: Array.isArray(input.focus_keyphrases) ? input.focus_keyphrases : [],
+        og_title: input.og_title?.trim() || null,
+        og_description: input.og_description?.trim() || null,
+        og_image_url: input.og_image_url?.trim() || null,
+        twitter_title: input.twitter_title?.trim() || null,
+        twitter_description: input.twitter_description?.trim() || null,
+        robots_index: input.robots_index !== false,
+        robots_follow: input.robots_follow !== false,
+        is_cornerstone: false,
+        canonical_url: input.canonical_url?.trim() || null,
       })
       .select("id")
       .single();
