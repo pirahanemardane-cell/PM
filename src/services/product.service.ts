@@ -1,7 +1,5 @@
 import { BaseService } from "./base.service";
 import { ProductRepository } from "@/repositories/product.repository";
-import { cacheGetOrSet, CacheKeys, CacheTTL } from "@/lib/cache/redis";
-import { createHash } from "crypto";
 import { productFilterSchema, type ProductFilterInput } from "@/lib/validation/product";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 import type { ProductWithRelations } from "@/repositories/product.repository";
