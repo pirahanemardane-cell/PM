@@ -6,3 +6,4 @@ export * from "./indexnow";
 export * from "./suggest";
 export * from "./image-alt";
 export * from "./summarize";
+export * from "./template";

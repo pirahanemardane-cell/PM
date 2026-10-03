@@ -13,6 +13,7 @@ import {
 import { adminSeoSuggestAction } from "@/app/admin/actions/seo-ai";
 import { suggestMetaTitle, suggestMetaDescription, suggestSocial } from "@/lib/seo/suggest";
 import { summarizeText } from "@/lib/seo/summarize";
+import { applySeoTemplate, SEO_TEMPLATE_HINT } from "@/lib/seo/template";
 import { adminSuggestInternalLinksAction } from "@/app/admin/actions/seo-links";
 
 export type SeoPanelValue = {
@@ -83,11 +84,19 @@ export function SeoAnalysisPanel({
   const [linkHints, setLinkHints] = useState<{ title: string; href: string; type: string }[]>([]);
   const [linksBusy, setLinksBusy] = useState(false);
 
+  const tplCtx = {
+    name: pageName,
+    title: pageName,
+    site: siteName,
+    slug: slug || "",
+    keyphrase: value.focusKeyphrases[0] || "",
+    description: shortDescription,
+  };
   const effectiveTitle =
-    value.metaTitle.trim() ||
+    applySeoTemplate(value.metaTitle, tplCtx) ||
     (pageName ? `${pageName} | ${siteName}` : siteName);
   const effectiveDesc =
-    value.metaDescription.trim() ||
+    applySeoTemplate(value.metaDescription, tplCtx) ||
     shortDescription.slice(0, 160) ||
     "";
 

@@ -15,6 +15,7 @@ import { facetSlugsForCategory } from "@/lib/facet-map";
 import { toPersianDigits } from "@/lib/numbers";
 import { JsonLd } from "@/components/seo/json-ld";
 import { brandPageSchema, breadcrumbSchema } from "@/lib/seo/schema";
+import { applySeoTemplate } from "@/lib/seo/template";
 
 export const dynamic = "force-dynamic";
 
@@ -51,9 +52,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     meta_description?: string | null;
     robots_index?: boolean | null;
   };
+  const title = applySeoTemplate(d.meta_title, { name: d.name }) || d.name;
+  const description =
+    applySeoTemplate(d.meta_description, { name: d.name, description: d.description || undefined }) ||
+    d.description ||
+    `محصولات برند ${d.name}`;
   return {
-    title: d.meta_title || d.name,
-    description: d.meta_description || d.description || `محصولات برند ${d.name}`,
+    title,
+    description,
     robots: d.robots_index === false ? { index: false, follow: true } : undefined,
   };
 }

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { applySeoTemplate } from "@/lib/seo/template";
 
 export async function metadataFromSeoPage(
   page_key: "shop_plp" | "blog_plp",
@@ -15,8 +16,10 @@ export async function metadataFromSeoPage(
     if (!data) {
       return { title: fallback.title, description: fallback.description };
     }
-    const title = data.meta_title || data.title || fallback.title;
-    const description = data.meta_description || fallback.description;
+    const ctx = { name: data.title || fallback.title, title: data.title || fallback.title };
+    const title = applySeoTemplate(data.meta_title, ctx) || data.title || fallback.title;
+    const description =
+      applySeoTemplate(data.meta_description, ctx) || fallback.description;
     return {
       title,
       description,

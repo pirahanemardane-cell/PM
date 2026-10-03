@@ -9,6 +9,7 @@ import { getPublishedPostBySlugAction } from "@/app/(shop)/actions/blog-public";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
 import { JsonLd } from "@/components/seo/json-ld";
 import { articleSchema, breadcrumbSchema } from "@/lib/seo/schema";
+import { applySeoTemplate } from "@/lib/seo/template";
 
 export const dynamic = "force-dynamic";
 
@@ -32,8 +33,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     canonical_url?: string | null;
     cover_url?: string | null;
   };
-  const title = p.meta_title || p.title;
-  const description = p.meta_description || p.excerpt || undefined;
+  const tplCtx = { name: p.title, title: p.title, description: p.excerpt || undefined };
+  const title = applySeoTemplate(p.meta_title, tplCtx) || p.title;
+  const description =
+    applySeoTemplate(p.meta_description, tplCtx) || p.excerpt || undefined;
   return {
     title,
     description,

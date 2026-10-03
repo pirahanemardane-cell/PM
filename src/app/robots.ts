@@ -30,6 +30,8 @@ export default function robots(): MetadataRoute.Robots {
           "/tags/",
           "/product-tags/",
           "/blog/tags/",
+          "/labels/",
+          "/blog/tag/",
         ],
       },
     ],

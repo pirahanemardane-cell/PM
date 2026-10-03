@@ -23,6 +23,7 @@ import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
 import { normalizeProductSlug } from "@/lib/product-slug";
 import { JsonLd } from "@/components/seo/json-ld";
 import { productSchema, breadcrumbSchema } from "@/lib/seo/schema";
+import { applySeoTemplate } from "@/lib/seo/template";
 
 export const dynamic = "force-dynamic";
 
@@ -51,8 +52,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots_follow?: boolean | null;
     canonical_url?: string | null;
   };
-  const title = p.meta_title || p.name;
-  const description = p.meta_description || p.short_description || undefined;
+  const tplCtx = {
+    name: p.name,
+    title: p.name,
+    slug: p.slug,
+    category: (p as { category?: { name?: string } | null }).category?.name,
+    brand: (p as { brand?: { name?: string } | null }).brand?.name,
+    description: p.short_description || undefined,
+  };
+  const title = applySeoTemplate(p.meta_title, tplCtx) || p.name;
+  const description =
+    applySeoTemplate(p.meta_description, tplCtx) ||
+    p.short_description ||
+    undefined;
   return {
     title,
     description,
