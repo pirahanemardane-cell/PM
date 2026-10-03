@@ -1492,27 +1492,26 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             disabled={busy}
             onClick={() => void saveDraft()}
           >
-            {status === "published" ? "به‌روزرسانی" : "ذخیره پیش‌نویس"}
+            ذخیره پیش‌نویس
           </button>
           {step < 7 ? (
             <button
               type="button"
-              className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"
+              className="border-border rounded-lg border px-4 py-2 text-sm disabled:opacity-40"
               disabled={busy}
               onClick={() => void goNext()}
             >
               بعدی
             </button>
-          ) : (
-            <button
-              type="button"
-              className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"
-              disabled={busy}
-              onClick={() => void finishPublish()}
-            >
-              {status === "published" ? "به‌روزرسانی" : "انتشار"}
-            </button>
-          )}
+          ) : null}
+          <button
+            type="button"
+            className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm disabled:opacity-40"
+            disabled={busy}
+            onClick={() => void finishPublish()}
+          >
+            {initialId ? "به‌روزرسانی" : "انتشار"}
+          </button>
         </div>
       </div>
     </div>

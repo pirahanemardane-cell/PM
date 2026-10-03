@@ -405,14 +405,6 @@ export function CatalogWizard({
                 <span className="text-muted-foreground">تصویر:</span> {imageUrl ? "دارد" : "ندارد"}
               </p>
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void finish()}
-              className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm font-medium disabled:opacity-50"
-            >
-              {busy ? "در حال ذخیره…" : isEdit ? "ذخیره تغییرات" : "ذخیره و انتشار"}
-            </button>
           </div>
         )}
       </div>
@@ -429,7 +421,7 @@ export function CatalogWizard({
         onChange={setSeo}
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <button
           type="button"
           disabled={step <= 1 || busy}
@@ -438,16 +430,26 @@ export function CatalogWizard({
         >
           قبلی
         </button>
-        {step < 4 ? (
+        <div className="flex flex-wrap gap-2">
+          {step < 4 ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={goNext}
+              className="border-border rounded-xl border px-4 py-2 text-sm disabled:opacity-40"
+            >
+              بعدی
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={busy}
-            onClick={goNext}
+            onClick={() => void finish()}
             className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm disabled:opacity-40"
           >
-            بعدی
+            {busy ? "…" : isEdit ? "به‌روزرسانی" : "انتشار"}
           </button>
-        ) : null}
+        </div>
       </div>
     </div>
   );

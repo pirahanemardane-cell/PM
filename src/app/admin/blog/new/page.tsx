@@ -209,7 +209,7 @@ export default function NewBlogPostPage() {
           disabled={busy}
           className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm disabled:opacity-50"
         >
-          {busy ? "…" : "ذخیره مقاله"}
+          {busy ? "…" : "انتشار"}
         </button>
       </form>
     </div>

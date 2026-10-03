@@ -136,7 +136,7 @@ export default function AdminSeoPlpPage() {
             onClick={() => void save()}
             className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm disabled:opacity-50"
           >
-            {busy ? "…" : "ذخیره SEO این صفحه"}
+            {busy ? "…" : "به‌روزرسانی"}
           </button>
         </>
       )}
