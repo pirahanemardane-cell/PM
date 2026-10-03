@@ -1,5 +1,7 @@
 "use client";
 
+import { ensureAlt } from "@/lib/seo/image-alt";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -155,7 +157,7 @@ export function ProductGallery({
           <Image
             key={main.url + String(activeColor) + String(preferThumb)}
             src={main.url}
-            alt={main.alt ?? productName}
+            alt={ensureAlt(main.alt, { pageName: productName })}
             fill
             className="object-cover object-center"
             sizes="(max-width: 1024px) 100vw, 50vw"
@@ -197,7 +199,7 @@ export function ProductGallery({
             >
               <Image
                 src={img.url}
-                alt=""
+                alt={ensureAlt(null, { pageName: productName })}
                 fill
                 className="object-cover p-0"
                 sizes="56px"
@@ -259,7 +261,7 @@ export function ProductGallery({
             <img
               key={main.url}
               src={main.url}
-              alt={main.alt ?? productName}
+              alt={ensureAlt(main.alt, { pageName: productName })}
               className="max-h-[90vh] max-w-[95vw] object-contain"
             />
           </div>

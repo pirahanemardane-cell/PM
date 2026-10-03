@@ -82,7 +82,10 @@ export default function AdminSeoPlpPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6" dir="rtl">
-      <h1 className="text-primary text-2xl font-bold">سئو صفحات لیست (PLP)</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-primary text-2xl font-bold">سئو صفحات لیست (PLP)</h1>
+        <a href="/admin/seo/report" className="text-primary text-sm underline">گزارش SEO سایت</a>
+      </div>
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
