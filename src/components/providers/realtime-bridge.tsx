@@ -159,6 +159,11 @@ export function RealtimeBridge() {
       { event: "*", schema: "public", table: "reviews" },
       () => dispatch(RT.reviews, 800),
     );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "blog_posts" },
+      () => dispatch(RT.blog, 800),
+    );
 
     if (userId) {
       channel.on(

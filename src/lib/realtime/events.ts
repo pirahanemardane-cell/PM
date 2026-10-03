@@ -8,6 +8,7 @@ export const RT = {
   support: "pm:support-changed",
   returns: "pm:returns-changed",
   notifications: "pm:notifications-changed",
+  blog: "pm:blog-changed",
 } as const;
 
 export type RtEvent = (typeof RT)[keyof typeof RT];

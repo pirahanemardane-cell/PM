@@ -1,3 +1,4 @@
+import { BlogRealtimeRefresh } from "@/components/shop/blog-realtime-refresh";
 import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import { getRelatedPosts } from "@/lib/related-posts";
