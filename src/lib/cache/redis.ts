@@ -23,6 +23,15 @@ function getRedis(): Redis | null {
   return null;
 }
 
+
+function isDynamicServerUsage(e: unknown): boolean {
+  if (!e || typeof e !== "object") return false;
+  const dig = "digest" in e ? String((e as { digest?: string }).digest || "") : "";
+  if (dig === "DYNAMIC_SERVER_USAGE") return true;
+  const msg = e instanceof Error ? e.message : String(e);
+  return msg.includes("Dynamic server usage") || msg.includes("couldn't be rendered statically");
+}
+
 export function isRedisCacheEnabled(): boolean {
   return Boolean(getRedis());
 }
@@ -37,7 +46,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
     const data = await r.get<T>(key);
     return data ?? null;
   } catch (e) {
-    console.error("[cacheGet]", key, e);
+    if (!isDynamicServerUsage(e)) console.error("[cacheGet]", key, e);
     return null;
   }
 }
@@ -55,7 +64,7 @@ export async function cacheSet(
   try {
     await r.set(key, value, { ex: ttlSeconds });
   } catch (e) {
-    console.error("[cacheSet]", key, e);
+    if (!isDynamicServerUsage(e)) console.error("[cacheSet]", key, e);
   }
 }
 
@@ -68,7 +77,7 @@ export async function cacheDel(key: string): Promise<void> {
   try {
     await r.del(key);
   } catch (e) {
-    console.error("[cacheDel]", key, e);
+    if (!isDynamicServerUsage(e)) console.error("[cacheDel]", key, e);
   }
 }
 
@@ -90,7 +99,7 @@ export async function cacheDelByPrefix(prefix: string): Promise<void> {
       }
     } while (cursor !== 0 && cursor !== "0");
   } catch (e) {
-    console.error("[cacheDelByPrefix]", prefix, e);
+    if (!isDynamicServerUsage(e)) console.error("[cacheDelByPrefix]", prefix, e);
   }
 }
 

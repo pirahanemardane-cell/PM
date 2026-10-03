@@ -20,6 +20,8 @@ import {
 import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
+export const dynamic = "force-dynamic";
+
 type VOpt = {
   color?: string;
   colorHex?: string;

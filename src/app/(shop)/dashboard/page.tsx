@@ -3,6 +3,8 @@
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import Link from "next/link";

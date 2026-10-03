@@ -21,6 +21,8 @@ import { useShopStore } from "@/lib/shop-store";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
 
+export const dynamic = "force-dynamic";
+
 type Step = 1 | 2 | 3 | 4 | 5;
 type PayStatus = "success" | "pending" | "failed";
 type ShipMethod = "post" | "tipax" | "peyk" | "pickup";

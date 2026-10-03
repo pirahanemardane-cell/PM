@@ -3,8 +3,6 @@ import { RelatedStrip } from "@/components/shop/related-strip";
 import { getRelatedProducts } from "@/lib/related-products";
 import type { Metadata } from "next";
 // ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — ظاهر و عملکرد دست‌نخورده
-export const revalidate = 60;
-
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -23,6 +21,8 @@ import { resolveColorHex } from "@/lib/colors";
 import { loadSizeGuideForProduct } from "@/lib/size-guide/load";
 import { SizeGuideSnippet } from "@/components/product/size-guide-snippet";
 import { normalizeProductSlug } from "@/lib/product-slug";
+
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;

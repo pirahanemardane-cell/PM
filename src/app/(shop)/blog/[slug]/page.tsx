@@ -7,6 +7,8 @@ import { notFound } from "next/navigation";
 import { getPublishedPostBySlugAction } from "@/app/(shop)/actions/blog-public";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
 
+export const dynamic = "force-dynamic";
+
 
 type Props = { params: Promise<{ slug: string }> };
 

@@ -13,6 +13,8 @@ import { ProductFiltersMobile } from "@/components/product/product-filters-mobil
 import { facetSlugsForCategory } from "@/lib/facet-map";
 import { toPersianDigits } from "@/lib/numbers";
 
+export const dynamic = "force-dynamic";
+
 const FACET_KEYS = [
   "fabric",
   "pattern",

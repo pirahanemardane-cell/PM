@@ -5,6 +5,8 @@ import { ProductService } from "@/services/product.service";
 import { ProductInfiniteList } from "@/components/product/product-infinite-list";
 import { toPersianDigits } from "@/lib/numbers";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
