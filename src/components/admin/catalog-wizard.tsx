@@ -209,9 +209,13 @@ export function CatalogWizard({
       setErr(
         res.error === "bad_name"
           ? "نام نامعتبر"
-          : res.error === "not_found"
-            ? "مورد یافت نشد"
-            : "خطا در ذخیره — شاید slug تکراری باشد",
+          : res.error === "bad_slug"
+            ? "اسلاگ نامعتبر"
+            : res.error === "slug_taken"
+              ? "این اسلاگ قبلاً استفاده شده — اسلاگ دیگری بگذارید"
+              : res.error === "not_found"
+                ? "مورد یافت نشد"
+                : "خطا در ذخیره. اگر اسلاگ تکراری است تغییرش دهید، وگرنه چند ثانیه بعد دوباره تلاش کنید.",
       );
       return;
     }

@@ -12,6 +12,32 @@ function slugify(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/** اسلاگ یکتا بساز؛ اگر تکراری بود -2، -3، ... */
+async function uniqueSlug(
+  supabase: { from: (t: string) => any },
+  table: "categories" | "brands",
+  base: string,
+  excludeId?: string | null,
+): Promise<string> {
+  let candidate = (base || "item").trim() || "item";
+  for (let i = 0; i < 50; i++) {
+    const trySlug = i === 0 ? candidate : `${candidate}-${i + 1}`;
+    let q = supabase.from(table).select("id").eq("slug", trySlug).limit(1);
+    if (excludeId) q = q.neq("id", excludeId);
+    const { data } = await q.maybeSingle();
+    if (!data) return trySlug;
+  }
+  return `${candidate}-${Date.now()}`;
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; message?: string };
+  return (
+    String(e?.code) === "23505" ||
+    /duplicate key|unique constraint/i.test(String(e?.message || ""))
+  );
+}
+
 /* ─── Categories ─── */
 
 export async function adminListCategoriesAction() {
@@ -42,7 +68,6 @@ export async function adminCreateCategoryAction(input: {
   short_description?: string | null;
   description?: string | null;
   is_active?: boolean;
-
   meta_title?: string | null;
   meta_description?: string | null;
   focus_keyphrases?: string[];
@@ -61,10 +86,13 @@ export async function adminCreateCategoryAction(input: {
 
   const name = (input.name || "").trim();
   if (name.length < 2) return { ok: false as const, error: "bad_name" };
-  const slug = (input.slug || slugify(name)).trim();
-  if (!slug) return { ok: false as const, error: "bad_slug" };
+  const baseSlug = (input.slug || slugify(name)).trim();
+  if (!baseSlug) return { ok: false as const, error: "bad_slug" };
+
+  const slug = await uniqueSlug(gate.supabase, "categories", baseSlug);
 
   try {
+    // فقط فیلدهای اصلی — بدون فیلدهای SEO که ممکن است در DB نباشند
     const { data, error } = await gate.supabase
       .from("categories")
       .insert({
@@ -76,19 +104,6 @@ export async function adminCreateCategoryAction(input: {
         image_url: (input.image_url || "").trim() || null,
         short_description: (input.short_description || "").trim() || null,
         description: (input.description || "").trim() || null,
-
-        meta_title: input.meta_title?.trim() || null,
-        meta_description: input.meta_description?.trim() || null,
-        focus_keyphrases: Array.isArray(input.focus_keyphrases) ? input.focus_keyphrases : [],
-        og_title: input.og_title?.trim() || null,
-        og_description: input.og_description?.trim() || null,
-        og_image_url: input.og_image_url?.trim() || null,
-        twitter_title: input.twitter_title?.trim() || null,
-        twitter_description: input.twitter_description?.trim() || null,
-        robots_index: input.robots_index !== false,
-        robots_follow: input.robots_follow !== false,
-        is_cornerstone: false,
-        canonical_url: input.canonical_url?.trim() || null,
       })
       .select("id")
       .single();
@@ -96,6 +111,7 @@ export async function adminCreateCategoryAction(input: {
     return { ok: true as const, id: data.id as string };
   } catch (e) {
     console.error("[adminCreateCategory]", e);
+    if (isUniqueViolation(e)) return { ok: false as const, error: "slug_taken" as const };
     return { ok: false as const, error: "server" };
   }
 }
@@ -118,23 +134,26 @@ export async function adminUpdateCategoryAction(
   try {
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name.trim();
-    if (patch.slug !== undefined) body.slug = patch.slug.trim();
+    if (patch.slug !== undefined) {
+      const s = patch.slug.trim();
+      body.slug = s ? await uniqueSlug(gate.supabase, "categories", s, id) : s;
+    }
     if (patch.is_active !== undefined) body.is_active = patch.is_active;
     if (patch.sort_order !== undefined) body.sort_order = patch.sort_order;
     if (patch.parent_id !== undefined) body.parent_id = patch.parent_id || null;
     if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
-    if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
-    if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
+    if (patch.short_description !== undefined)
+      body.short_description = (patch.short_description || "").trim() || null;
+    if (patch.description !== undefined)
+      body.description = (patch.description || "").trim() || null;
     if (!Object.keys(body).length) return { ok: true as const };
 
-    const { error } = await gate.supabase
-      .from("categories")
-      .update(body)
-      .eq("id", id);
+    const { error } = await gate.supabase.from("categories").update(body).eq("id", id);
     if (error) throw error;
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateCategory]", e);
+    if (isUniqueViolation(e)) return { ok: false as const, error: "slug_taken" as const };
     return { ok: false as const, error: "server" };
   }
 }
@@ -170,8 +189,10 @@ export async function adminCreateBrandAction(input: {
 
   const name = (input.name || "").trim();
   if (name.length < 2) return { ok: false as const, error: "bad_name" };
-  const slug = (input.slug || slugify(name)).trim();
-  if (!slug) return { ok: false as const, error: "bad_slug" };
+  const baseSlug = (input.slug || slugify(name)).trim();
+  if (!baseSlug) return { ok: false as const, error: "bad_slug" };
+
+  const slug = await uniqueSlug(gate.supabase, "brands", baseSlug);
 
   try {
     const { data, error } = await gate.supabase
@@ -190,38 +211,48 @@ export async function adminCreateBrandAction(input: {
     return { ok: true as const, id: data.id as string };
   } catch (e) {
     console.error("[adminCreateBrand]", e);
+    if (isUniqueViolation(e)) return { ok: false as const, error: "slug_taken" as const };
     return { ok: false as const, error: "server" };
   }
 }
 
 export async function adminUpdateBrandAction(
   id: string,
-  patch: { name?: string; slug?: string; is_active?: boolean; image_url?: string | null; short_description?: string | null; description?: string | null },
+  patch: {
+    name?: string;
+    slug?: string;
+    is_active?: boolean;
+    image_url?: string | null;
+    short_description?: string | null;
+    description?: string | null;
+  },
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name.trim();
-    if (patch.slug !== undefined) body.slug = patch.slug.trim();
+    if (patch.slug !== undefined) {
+      const s = patch.slug.trim();
+      body.slug = s ? await uniqueSlug(gate.supabase, "brands", s, id) : s;
+    }
     if (patch.is_active !== undefined) body.is_active = patch.is_active;
     if (patch.image_url !== undefined) body.image_url = (patch.image_url || "").trim() || null;
-    if (patch.short_description !== undefined) body.short_description = (patch.short_description || "").trim() || null;
-    if (patch.description !== undefined) body.description = (patch.description || "").trim() || null;
+    if (patch.short_description !== undefined)
+      body.short_description = (patch.short_description || "").trim() || null;
+    if (patch.description !== undefined)
+      body.description = (patch.description || "").trim() || null;
     if (!Object.keys(body).length) return { ok: true as const };
 
-    const { error } = await gate.supabase
-      .from("brands")
-      .update(body)
-      .eq("id", id);
+    const { error } = await gate.supabase.from("brands").update(body).eq("id", id);
     if (error) throw error;
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateBrand]", e);
+    if (isUniqueViolation(e)) return { ok: false as const, error: "slug_taken" as const };
     return { ok: false as const, error: "server" };
   }
 }
-
 
 export async function adminGetCategoryAction(id: string) {
   const gate = await requireAdmin();
@@ -229,7 +260,9 @@ export async function adminGetCategoryAction(id: string) {
   try {
     const { data, error } = await gate.supabase
       .from("categories")
-      .select("id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description, meta_title, meta_description, focus_keyphrases, og_title, og_description, og_image_url, robots_index, robots_follow, canonical_url")
+      .select(
+        "id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description, meta_title, meta_description",
+      )
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
@@ -247,7 +280,9 @@ export async function adminGetBrandAction(id: string) {
   try {
     const { data, error } = await gate.supabase
       .from("brands")
-      .select("id, name, slug, is_active, image_url, short_description, description, meta_title, meta_description, focus_keyphrases, og_title, og_description, og_image_url, robots_index, robots_follow, canonical_url")
+      .select(
+        "id, name, slug, is_active, image_url, short_description, description, meta_title, meta_description",
+      )
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
