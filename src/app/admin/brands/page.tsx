@@ -1,5 +1,8 @@
 "use client";
 
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";

@@ -1,3 +1,4 @@
+import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
 import type { Metadata } from "next";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -18,11 +19,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductTagPage({ params }: Props) {
   const { slug } = await params;
   return (
+    <>
+      <CatalogRealtimeRefresh />
+
     <div className="w-full max-w-none space-y-4 p-6" dir="rtl">
       <h1 className="text-2xl font-bold text-primary">برچسب: {slug}</h1>
       <p className="text-muted-foreground text-sm">
         لیست محصولات این برچسب به‌زودی — این صفحه برای موتورهای جستجو noindex است.
       </p>
     </div>
+    </>
   );
 }

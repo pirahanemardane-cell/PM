@@ -165,6 +165,44 @@ export function RealtimeBridge() {
       () => dispatch(RT.blog, 800),
     );
 
+    // تاکسونومی فروشگاه + بلاگ
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "brands" },
+      () => dispatch(RT.catalog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "categories" },
+      () => dispatch(RT.catalog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "tags" },
+      () => dispatch(RT.catalog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "product_tags" },
+      () => dispatch(RT.catalog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "blog_categories" },
+      () => dispatch(RT.blog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "blog_tags" },
+      () => dispatch(RT.blog, 600),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "blog_post_tags" },
+      () => dispatch(RT.blog, 600),
+    );
+
+
     if (userId) {
       channel.on(
         "postgres_changes" as any,

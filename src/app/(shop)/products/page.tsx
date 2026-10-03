@@ -1,3 +1,4 @@
+import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
 import type { Metadata } from "next";
 import { ProductService } from "@/services/product.service";
 import { ProductInfiniteList } from "@/components/product/product-infinite-list";
@@ -168,9 +169,13 @@ export default async function ProductsPage({
 
   if (!result.success) {
     return (
+    <>
+      <CatalogRealtimeRefresh />
+
       <main className="w-full max-w-none mx-auto px-4 py-12">
         <p className="text-destructive text-center">{result.error}</p>
       </main>
+    </>
     );
   }
 

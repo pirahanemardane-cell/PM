@@ -1,3 +1,4 @@
+import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryService } from "@/services/category.service";
@@ -54,9 +55,13 @@ export default async function CategoryListingPage({
 
   if (!result.success || !result.data) {
     return (
+    <>
+      <CatalogRealtimeRefresh />
+
       <main className="w-full max-w-none mx-auto px-4 py-12">
         <p className="text-destructive text-center">{result.error ?? "خطا"}</p>
       </main>
+    </>
     );
   }
 
