@@ -4,7 +4,23 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { requestLoginOtp, verifyLoginOtp } from "@/lib/otp/service";
+import { checkRateLimit } from "@/lib/security/rate-limit";
+import { headers } from "next/headers";
 import { onlyDigits, normalizeIranMobile } from "@/lib/numbers";
+
+async function getClientIp(): Promise<string> {
+  try {
+    const h = await headers();
+    return (
+      h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      h.get("x-real-ip") ||
+      "unknown"
+    );
+  } catch {
+    return "unknown";
+  }
+}
+
 
 function otpEmail(phone: string) {
   return `${onlyDigits(phone)}@phone.pirahanmardane.ir`;
@@ -34,6 +50,11 @@ async function resolveAuthEmail(loginId: string): Promise<string | null> {
 }
 
 export async function signInAction(loginId: string, password: string) {
+  const ip = await getClientIp();
+  const rl = await checkRateLimit({ identifier: ip, type: "auth" });
+  if (!rl.success) {
+    return { ok: false as const, error: "تعداد تلاش بیش از حد مجاز. کمی بعد دوباره تلاش کنید." };
+  }
   const email = await resolveAuthEmail(loginId);
   if (!email) {
     return { ok: false as const, error: "شناسه ورود نامعتبر است" };
@@ -57,6 +78,11 @@ export async function signUpAction(
   password: string,
   fullName?: string,
 ) {
+  const ip = await getClientIp();
+  const rl = await checkRateLimit({ identifier: ip, type: "auth" });
+  if (!rl.success) {
+    return { ok: false as const, error: "تعداد تلاش بیش از حد مجاز. کمی بعد دوباره تلاش کنید." };
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
