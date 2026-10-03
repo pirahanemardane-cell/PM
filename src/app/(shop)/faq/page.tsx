@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { StaticPage } from "@/components/content/static-page";
+import { JsonLd } from "@/components/seo/json-ld";
+import { faqPageSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "سوالات متداول | پیراهن مردانه",
@@ -28,6 +30,7 @@ const FAQS: { q: string; a: string }[] = [
 export default function FaqPage() {
   return (
     <StaticPage title="سوالات متداول">
+      <JsonLd data={faqPageSchema(FAQS)} />
       <div className="space-y-6">
         {FAQS.map((item) => (
           <div key={item.q} className="border-border rounded-xl border p-4">

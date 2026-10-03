@@ -1,5 +1,7 @@
 "use server";
 
+import { submitIndexNow, blogUrl } from "@/lib/seo/indexnow";
+
 import { requireAdmin } from "@/lib/admin/require-admin";
 
 function slugify(input: string): string {
@@ -159,6 +161,7 @@ export async function adminCreateBlogPostAction(input: {
       if (tErr) console.error("[blog_tag_map]", tErr);
     }
 
+    if (status === "published" && slug) void submitIndexNow([blogUrl(slug), "/blog"]);
     return { ok: true as const, id: post.id as string };
   } catch (e) {
     console.error("[adminCreateBlogPost]", e);
@@ -285,6 +288,7 @@ export async function adminUpdateBlogPostAction(
         if (tErr) console.error("[blog_tag_map update]", tErr);
       }
     }
+    if (status === "published" && slug) void submitIndexNow([blogUrl(slug), "/blog"]);
     return { ok: true as const };
   } catch (e) {
     console.error("[adminUpdateBlogPost]", e);

@@ -128,3 +128,52 @@ export function articleSchema(input: {
     inLanguage: "fa-IR",
   };
 }
+
+export function collectionPageSchema(input: {
+  name: string;
+  description?: string | null;
+  url: string;
+}) {
+  const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
+  const url = input.url.startsWith("http") ? input.url : `${SITE}${input.url.startsWith("/") ? "" : "/"}${input.url}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: input.name,
+    description: input.description || undefined,
+    url,
+    isPartOf: { "@id": `${SITE}/#website` },
+  };
+}
+
+export function brandPageSchema(input: {
+  name: string;
+  description?: string | null;
+  slug: string;
+  logo?: string | null;
+}) {
+  const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
+  return {
+    "@context": "https://schema.org",
+    "@type": "Brand",
+    name: input.name,
+    description: input.description || undefined,
+    url: `${SITE}/brands/${input.slug}`,
+    logo: input.logo || undefined,
+  };
+}
+
+export function faqPageSchema(items: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  };
+}

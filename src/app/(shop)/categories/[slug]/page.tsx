@@ -5,6 +5,8 @@ import { CategoryService } from "@/services/category.service";
 import { ProductService } from "@/services/product.service";
 import { ProductInfiniteList } from "@/components/product/product-infinite-list";
 import { toPersianDigits } from "@/lib/numbers";
+import { JsonLd } from "@/components/seo/json-ld";
+import { collectionPageSchema, breadcrumbSchema } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -74,8 +76,23 @@ export default async function CategoryListingPage({
 
   const { data: products, total, page, totalPages } = result.data;
 
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
+      <JsonLd
+        data={[
+          collectionPageSchema({
+            name: category.name,
+            description: category.description,
+            url: `/categories/${slug}`,
+          }),
+          breadcrumbSchema([
+            { name: "خانه", url: siteBase + "/" },
+            { name: "دسته‌ها", url: siteBase + "/categories" },
+            { name: category.name, url: siteBase + "/categories/" + slug },
+          ]),
+        ]}
+      />
       <div className="mb-8">
         <h1 className="text-2xl font-bold md:text-3xl text-primary">{category.name}</h1>
         <p className="text-muted-foreground mt-1 text-sm">

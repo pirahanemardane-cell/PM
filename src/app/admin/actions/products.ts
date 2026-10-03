@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { submitIndexNow, productUrl } from "@/lib/seo/indexnow";
 
 import { recordProductPrice } from "@/lib/price-history";
 
@@ -270,9 +271,13 @@ async function revalidateProductPaths(
       .eq("id", productId)
       .maybeSingle();
     const slug = (data?.slug || "").trim();
-    if (slug) revalidatePath(`/products/${slug}`);
-    revalidatePath("/");
-    revalidatePath("/products");
+    if (slug) {
+      revalidatePath(`/products/${slug}`);
+      void submitIndexNow([productUrl(slug), "/products", "/"]);
+    } else {
+      revalidatePath("/");
+      revalidatePath("/products");
+    }
   } catch (e) {
     console.warn("[revalidateProductPaths]", e);
   }

@@ -13,6 +13,8 @@ import { ProductFiltersSidebar } from "@/components/product/product-filters-side
 import { ProductFiltersMobile } from "@/components/product/product-filters-mobile";
 import { facetSlugsForCategory } from "@/lib/facet-map";
 import { toPersianDigits } from "@/lib/numbers";
+import { JsonLd } from "@/components/seo/json-ld";
+import { brandPageSchema, breadcrumbSchema } from "@/lib/seo/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -178,6 +180,22 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
   if (!result.success || !result.data) {
     return (
     <>
+      <JsonLd
+        data={[
+          brandPageSchema({
+            name: brand.name,
+            description: (brand as { description?: string | null }).description,
+            slug,
+            logo: (brand as { logo_url?: string | null }).logo_url ?? null,
+          }),
+          breadcrumbSchema([
+            { name: "خانه", url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/" },
+            { name: "برندها", url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/brands" },
+            { name: brand.name, url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/brands/" + slug },
+          ]),
+        ]}
+      />
+
       <CatalogRealtimeRefresh />
 
       <main className="w-full max-w-none mx-auto px-4 py-12">
