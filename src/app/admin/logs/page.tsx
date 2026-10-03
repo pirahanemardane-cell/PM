@@ -1,5 +1,8 @@
 "use client";
 
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { adminListLogsAction, type AdminLogRow } from "@/app/admin/actions/logs";
@@ -36,6 +39,16 @@ export default function AdminLogsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRtEvent(RT.orders, () => {
+    void load();
+  });
+  useRtEvent(RT.support, () => {
+    void load();
+  });
+  useRtEvent(RT.catalog, () => {
+    void load();
+  });
 
   return (
     <div className="bg-background min-h-screen space-y-6 p-6" dir="rtl">

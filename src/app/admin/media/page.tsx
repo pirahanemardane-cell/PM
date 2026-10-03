@@ -1,5 +1,8 @@
 "use client";
 
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
@@ -64,6 +67,10 @@ export default function AdminMediaPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRtEvent(RT.catalog, () => {
+    void load();
+  });
 
   function toggleSelect(id: string) {
     setSelected((prev) =>

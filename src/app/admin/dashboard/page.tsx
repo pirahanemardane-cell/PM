@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { adminDashboardStatsAction } from "@/app/admin/actions/stats";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 type Stats = {
   ordersTotal: number;
@@ -20,23 +22,33 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const res = await adminDashboardStatsAction();
-      setLoading(false);
-      if (!res.ok) {
-        setError(
-          res.error === "login_required"
-            ? "ورود لازم است"
-            : res.error === "forbidden"
-              ? "دسترسی ادمین ندارید"
-              : "خطا در بارگذاری آمار",
-        );
-        return;
-      }
-      setStats(res.stats);
-    })();
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const res = await adminDashboardStatsAction();
+    setLoading(false);
+    if (!res.ok) {
+      setError(
+        res.error === "login_required"
+          ? "ورود لازم است"
+          : res.error === "forbidden"
+            ? "دسترسی ادمین ندارید"
+            : "خطا در بارگذاری آمار",
+      );
+      return;
+    }
+    setStats(res.stats);
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useRtEvent(RT.orders, () => { void load(); });
+  useRtEvent(RT.catalog, () => { void load(); });
+  useRtEvent(RT.stock, () => { void load(); });
+  useRtEvent(RT.support, () => { void load(); });
+  useRtEvent(RT.returns, () => { void load(); });
 
   const cards = stats
     ? [

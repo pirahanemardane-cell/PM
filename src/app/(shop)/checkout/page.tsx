@@ -20,6 +20,8 @@ import {
 import { useShopStore } from "@/lib/shop-store";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 export const dynamic = "force-dynamic";
 
@@ -210,6 +212,15 @@ export default function CheckoutPage() {
       }
     };
   }, []);
+
+  useRtEvent(RT.cart, () => {
+    if (orderPlacedRef.current) return;
+    void reloadCart();
+  });
+  useRtEvent(RT.stock, () => {
+    if (orderPlacedRef.current) return;
+    void reloadCart();
+  });
 
   function applyAddress(a: {
     id: string;

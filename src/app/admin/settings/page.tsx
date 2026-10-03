@@ -1,5 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -128,6 +133,8 @@ function AdminPasswordForm() {
 }
 
 export default function AdminSettingsPage() {
+  const router = useRouter();
+  useRtEvent(RT.catalog, () => { router.refresh(); });
   const [env, setEnv] = useState<string>("—");
   const [checks, setChecks] = useState<Checks | null>(null);
   const [error, setError] = useState<string | null>(null);
