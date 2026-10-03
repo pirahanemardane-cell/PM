@@ -204,7 +204,7 @@ export async function adminGetProductTagAction(id: string) {
   try {
     const { data, error } = await gate.supabase
       .from("product_tags")
-      .select("id, name, slug, is_active, image_url, short_description, description")
+      .select("id, name, slug, is_active, image_url, short_description, description, meta_title, meta_description, focus_keyphrases, robots_index, robots_follow")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;

@@ -18,6 +18,15 @@ export type CatalogItem = {
   short_description?: string | null;
   description?: string | null;
   parent_id?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  focus_keyphrases?: string[] | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image_url?: string | null;
+  robots_index?: boolean | null;
+  robots_follow?: boolean | null;
+  canonical_url?: string | null;
 };
 
 type SaveFn = (input: {
@@ -122,7 +131,20 @@ export function CatalogWizard({
     setShortDesc(initial.short_description ?? "");
     setDescription(initial.description ?? "");
     setIsActive(initial.is_active !== false);
-  }, [initial]);
+    setSeo(
+      emptySeoValue({
+        metaTitle: String(initial.meta_title ?? ""),
+        metaDescription: String(initial.meta_description ?? ""),
+        focusKeyphrases: Array.isArray(initial.focus_keyphrases) ? initial.focus_keyphrases : [],
+        ogTitle: String(initial.og_title ?? ""),
+        ogDescription: String(initial.og_description ?? ""),
+        ogImageUrl: String(initial.og_image_url ?? ""),
+        robotsIndex: kind === "tag" ? false : initial.robots_index !== false,
+        robotsFollow: initial.robots_follow !== false,
+        canonicalUrl: String(initial.canonical_url ?? ""),
+      }),
+    );
+  }, [initial, kind]);
 
   const autoSlug = useMemo(() => slugify(name), [name]);
   const displaySlug = slugTouched ? slug : autoSlug;

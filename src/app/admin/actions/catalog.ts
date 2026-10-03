@@ -229,7 +229,7 @@ export async function adminGetCategoryAction(id: string) {
   try {
     const { data, error } = await gate.supabase
       .from("categories")
-      .select("id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description")
+      .select("id, name, slug, parent_id, sort_order, is_active, image_url, short_description, description, meta_title, meta_description, focus_keyphrases, og_title, og_description, og_image_url, robots_index, robots_follow, canonical_url")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
@@ -247,7 +247,7 @@ export async function adminGetBrandAction(id: string) {
   try {
     const { data, error } = await gate.supabase
       .from("brands")
-      .select("id, name, slug, is_active, image_url, short_description, description")
+      .select("id, name, slug, is_active, image_url, short_description, description, meta_title, meta_description, focus_keyphrases, og_title, og_description, og_image_url, robots_index, robots_follow, canonical_url")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
