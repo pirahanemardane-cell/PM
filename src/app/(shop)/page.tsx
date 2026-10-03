@@ -143,6 +143,7 @@ export default async function HomePage() {
               title="محصولات جدید"
               viewAllHref="/products?sort=newest"
               products={newest}
+              liveQuery={{ sort: "newest", pageSize: 8 }}
             />
           ) : (
             <section aria-label="محصولات جدید">
@@ -161,6 +162,7 @@ export default async function HomePage() {
                 title="پیشنهاد شگفت‌انگیز"
                 viewAllHref="/products?featured=1"
                 products={deals}
+                liveQuery={{ featured: true, pageSize: 8 }}
                 leading={
                   flashEndsAt ? (
                     <FlashSalePromoCard endsAt={flashEndsAt} />
@@ -184,6 +186,7 @@ export default async function HomePage() {
               title="پرفروش‌ترین‌ها"
               viewAllHref="/products?sort=popular"
               products={bestsellers}
+              liveQuery={{ sort: "popular", pageSize: 12 }}
             />
           ) : (
             <section aria-label="پرفروش‌ترین‌ها">

@@ -97,6 +97,10 @@ export function ProductInfiniteList({
     reloadFirstPage();
   });
 
+  useRtEvent(RT.stock, () => {
+    reloadFirstPage();
+  });
+
   const loadMore = useCallback(() => {
     if (!hasMore || loadingRef.current) return;
     loadingRef.current = true;
