@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUpstashConfigured } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,23 +18,36 @@ export async function GET() {
         headers: { apikey: key, Authorization: `Bearer ${key}` },
         cache: "no-store",
       });
-      supabase = res.ok || res.status === 404 || res.status === 200 ? "ok" : "error";
+      supabase =
+        res.ok || res.status === 404 || res.status === 200 ? "ok" : "error";
     }
   } catch {
     supabase = "error";
   }
+
+  const upstash = isUpstashConfigured();
+  const r2Configured = Boolean(
+    process.env.R2_ACCOUNT_ID &&
+      process.env.R2_ACCESS_KEY_ID &&
+      process.env.R2_SECRET_ACCESS_KEY &&
+      process.env.R2_BUCKET_NAME
+  );
+  const sentryConfigured = Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN);
+  const cronConfigured = Boolean(process.env.CRON_SECRET);
 
   const body = {
     ok: supabase !== "error",
     service: "pirahanmardane",
     ts: new Date().toISOString(),
     latencyMs: Date.now() - started,
+    region: process.env.VERCEL_REGION || "unknown",
     checks: {
       app: "ok",
       supabase,
-      rateLimitConfigured: Boolean(
-        process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
-      ),
+      rateLimit: upstash ? "upstash" : "memory-fallback",
+      r2: r2Configured ? "ok" : "missing-env",
+      sentry: sentryConfigured ? "ok" : "missing-env",
+      cronBackup: cronConfigured ? "ok" : "missing-env",
     },
   };
 
