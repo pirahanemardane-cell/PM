@@ -12,6 +12,8 @@ import {
 } from "@/lib/seo/pixel";
 import { adminSeoSuggestAction } from "@/app/admin/actions/seo-ai";
 import { suggestMetaTitle, suggestMetaDescription, suggestSocial } from "@/lib/seo/suggest";
+import { summarizeText } from "@/lib/seo/summarize";
+import { adminSuggestInternalLinksAction } from "@/app/admin/actions/seo-links";
 
 export type SeoPanelValue = {
   metaTitle: string;
@@ -78,6 +80,8 @@ export function SeoAnalysisPanel({
   const [kpInput, setKpInput] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiMsg, setAiMsg] = useState("");
+  const [linkHints, setLinkHints] = useState<{ title: string; href: string; type: string }[]>([]);
+  const [linksBusy, setLinksBusy] = useState(false);
 
   const effectiveTitle =
     value.metaTitle.trim() ||
@@ -291,6 +295,24 @@ export function SeoAnalysisPanel({
         >
           پر کردن Social
         </button>
+        <button
+          type="button"
+          disabled={aiBusy}
+          onClick={() => {
+            const sum = summarizeText(body || shortDescription || "", {
+              keyphrase: value.focusKeyphrases[0],
+            });
+            if (sum) {
+              onChange({ ...value, metaDescription: sum });
+              setAiMsg("خلاصه از متن اعمال شد");
+            } else {
+              setAiMsg("متنی برای خلاصه نیست");
+            }
+          }}
+          className="border-border rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          خلاصه از متن
+        </button>
         {aiMsg ? <span className="text-muted-foreground self-center text-xs">{aiMsg}</span> : null}
       </div>
 
@@ -360,6 +382,43 @@ export function SeoAnalysisPanel({
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={linksBusy}
+          onClick={() => {
+            setLinksBusy(true);
+            void adminSuggestInternalLinksAction({
+              keyphrase: value.focusKeyphrases[0],
+              pageName,
+              excludeSlug: slug,
+            }).then((res) => {
+              setLinksBusy(false);
+              if (res.ok) setLinkHints(res.links);
+              else setLinkHints([]);
+            });
+          }}
+          className="border-border rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          {linksBusy ? "…" : "پیشنهاد لینک داخلی"}
+        </button>
+        {linkHints.length > 0 ? (
+          <ul className="text-muted-foreground space-y-1 text-xs">
+            {linkHints.map((l) => (
+              <li key={l.href}>
+                <span className="text-primary font-medium">{l.type}:</span>{" "}
+                <a href={l.href} className="underline" target="_blank" rel="noreferrer">
+                  {l.title}
+                </a>{" "}
+                <code className="text-[10px]" dir="ltr">
+                  {l.href}
+                </code>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-4 text-sm">

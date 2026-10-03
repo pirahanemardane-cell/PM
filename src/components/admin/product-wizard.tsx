@@ -34,6 +34,7 @@ import { Toolbar } from "@/components/ui/toolbar";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { parseLocaleNumber } from "@/lib/numbers";
 import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
+import { ensureAlt } from "@/lib/seo/image-alt";
 
 type Opt = { id: string; name: string };
 type VRow = {
