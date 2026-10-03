@@ -111,6 +111,11 @@ export function RealtimeBridge() {
         { event: "*", schema: "public", table: "contact_messages" },
         () => dispatch(RT.support, 500),
       );
+      channel.on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "tickets" },
+        () => dispatch(RT.support, 500),
+      );
     } else if (userId) {
       channel.on(
         "postgres_changes" as any,
@@ -143,6 +148,11 @@ export function RealtimeBridge() {
       "postgres_changes" as any,
       { event: "*", schema: "public", table: "products" },
       () => dispatch(RT.catalog, 1000),
+    );
+    channel.on(
+      "postgres_changes" as any,
+      { event: "*", schema: "public", table: "site_settings" },
+      () => dispatch(RT.catalog, 400),
     );
     channel.on(
       "postgres_changes" as any,

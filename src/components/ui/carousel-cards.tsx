@@ -1,6 +1,9 @@
 "use client";
 
-
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 import { Price } from "@/components/ui/price";
 import * as React from "react";
 import Image from "next/image";
@@ -163,7 +166,7 @@ export type CarouselLinkItem = {
 };
 
 export function CarouselLinks({
-  items,
+  items: initialItems,
   title,
   viewAllHref,
   className,
@@ -175,6 +178,17 @@ export function CarouselLinks({
   className?: string;
   variant?: "brand" | "category";
 }) {
+  const [items, setItems] = useState(initialItems);
+  const router = useRouter();
+
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
+
+  useRtEvent(RT.catalog, () => {
+    router.refresh();
+  });
+
   if (!items?.length) return null;
 
   const chip =

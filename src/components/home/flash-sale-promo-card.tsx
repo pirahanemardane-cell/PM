@@ -5,6 +5,9 @@ import Link from "next/link";
 import { Zap } from "lucide-react";
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
+import { getFlashSaleEndsAtAction } from "@/app/admin/actions/flash-sale";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 type Props = {
   endsAt?: string | null;
@@ -42,10 +45,27 @@ function useCountdown(endsAt: string | null | undefined) {
 }
 
 export function FlashSalePromoCard({
-  endsAt,
+  endsAt: endsAtProp,
   href = "/products?featured=1",
   className,
 }: Props) {
+  const [endsAt, setEndsAt] = useState<string | null | undefined>(endsAtProp);
+
+  useEffect(() => {
+    setEndsAt(endsAtProp);
+  }, [endsAtProp]);
+
+  useRtEvent(RT.catalog, () => {
+    void (async () => {
+      try {
+        const res = await getFlashSaleEndsAtAction();
+        if (res.ok) setEndsAt(res.endsAt);
+      } catch {
+        /* silent */
+      }
+    })();
+  });
+
   const cd = useCountdown(endsAt);
 
   return (

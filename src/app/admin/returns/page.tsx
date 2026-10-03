@@ -134,6 +134,9 @@ export default function AdminReturnsPage() {
   useRtEvent(RT.support, () => {
     void load();
   });
+  useRtEvent(RT.returns, () => {
+    void load();
+  });
 
   async function setStatus(id: string, status: (typeof STATUSES)[number]) {
     setBusyId(id);
