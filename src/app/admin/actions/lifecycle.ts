@@ -48,10 +48,15 @@ export async function adminHardDeleteProductsAction(ids: string[]) {
     }
     await gate.supabase.from("order_items").delete().in("product_id", list);
 
+    // تصاویر را حذف نکن — فقط وابستگی به محصول را قطع کن (کتابخانه رسانه بماند)
+    await gate.supabase
+      .from("product_images")
+      .update({ product_id: null, variant_id: null })
+      .in("product_id", list);
+
     for (const table of [
       "product_tag_map",
       "product_attribute_values",
-      "product_images",
       "stock_alerts",
       "wishlists",
       "cart_items",
@@ -137,7 +142,11 @@ export async function adminHardDeleteCategoriesAction(ids: string[]) {
       await gate.supabase.from("wishlists").delete().in("product_id", softIds);
       await gate.supabase.from("stock_alerts").delete().in("product_id", softIds);
       await gate.supabase.from("reviews").delete().in("product_id", softIds);
-      await gate.supabase.from("product_images").delete().in("product_id", softIds);
+      // تصاویر را حذف نکن — فقط unlink
+      await gate.supabase
+        .from("product_images")
+        .update({ product_id: null, variant_id: null })
+        .in("product_id", softIds);
       await gate.supabase.from("product_attribute_values").delete().in("product_id", softIds);
       await gate.supabase.from("product_variants").delete().in("product_id", softIds);
       await gate.supabase.from("products").delete().in("id", softIds);
