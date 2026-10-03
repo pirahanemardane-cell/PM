@@ -66,8 +66,13 @@ export const metadata: Metadata = {
     images: ["/og-image.webp"],
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
   },
 };
 
