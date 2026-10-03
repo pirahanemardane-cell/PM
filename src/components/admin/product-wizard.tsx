@@ -33,6 +33,7 @@ import { adminListSizeGuidesAction } from "@/app/admin/actions/products";
 import { Toolbar } from "@/components/ui/toolbar";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { parseLocaleNumber } from "@/lib/numbers";
+import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
 
 type Opt = { id: string; name: string };
 type VRow = {
@@ -111,6 +112,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [featured, setFeatured] = useState(false);
   const [isNew, setIsNew] = useState(true);
   const [isActive, setIsActive] = useState(true);
+  const [seo, setSeo] = useState<SeoPanelValue>(emptySeoValue());
   const [productType, setProductType] = useState<"simple" | "variable">("variable");
   const [simpleSku, setSimpleSku] = useState("");
   const [simpleStock, setSimpleStock] = useState("0");
@@ -449,6 +451,18 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
         tag_ids: selectedTags,
         size_guide_id: sizeGuideId || null,
         published_at: resolvedPublishedAt,
+        meta_title: seo.metaTitle || null,
+        meta_description: seo.metaDescription || null,
+        focus_keyphrases: seo.focusKeyphrases,
+        og_title: seo.ogTitle || null,
+        og_description: seo.ogDescription || null,
+        og_image_url: seo.ogImageUrl || null,
+        twitter_title: seo.twitterTitle || null,
+        twitter_description: seo.twitterDescription || null,
+        robots_index: seo.robotsIndex,
+        robots_follow: seo.robotsFollow,
+        is_cornerstone: seo.isCornerstone,
+        canonical_url: seo.canonicalUrl || null,
         price: sellingPrice || 0,
         original_price: originalPrice || null,
         stock_quantity: parseLocaleNumber(simpleStock) || 0,
@@ -1446,6 +1460,16 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
               فعال در فروشگاه
             </label>
+            <SeoAnalysisPanel
+              pageName={name}
+              slug={slug}
+              shortDescription={shortDesc}
+              body={description}
+              imageUrl={imageUrl}
+              forceNoindex={false}
+              value={seo}
+              onChange={setSeo}
+            />
                       </div>
         )}
       </div>

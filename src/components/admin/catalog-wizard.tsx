@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminMediaPicker } from "@/components/admin/media-picker";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
 
 export type CatalogKind = "category" | "brand" | "tag";
 
@@ -100,6 +101,7 @@ export function CatalogWizard({
   const [shortDesc, setShortDesc] = useState(initial?.short_description ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [isActive, setIsActive] = useState(initial?.is_active !== false);
+  const [seo, setSeo] = useState<SeoPanelValue>(() => emptySeoValue({ robotsIndex: kind !== "tag" }));
 
   useEffect(() => {
     if (!initial) return;
