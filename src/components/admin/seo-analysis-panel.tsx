@@ -10,6 +10,8 @@ import {
   PIXEL_LIMITS,
   truncateToPixels,
 } from "@/lib/seo/pixel";
+import { adminSeoSuggestAction } from "@/app/admin/actions/seo-ai";
+import { suggestMetaTitle, suggestMetaDescription, suggestSocial } from "@/lib/seo/suggest";
 
 export type SeoPanelValue = {
   metaTitle: string;
@@ -74,6 +76,8 @@ export function SeoAnalysisPanel({
 }: SeoAnalysisPanelProps) {
   const [showSocial, setShowSocial] = useState(false);
   const [kpInput, setKpInput] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiMsg, setAiMsg] = useState("");
 
   const effectiveTitle =
     value.metaTitle.trim() ||
@@ -142,6 +146,64 @@ export function SeoAnalysisPanel({
   const ogD = value.ogDescription.trim() || effectiveDesc;
   const ogImg = value.ogImageUrl.trim() || imageUrl;
 
+  const suggestPayload = {
+    pageName,
+    shortDescription,
+    body,
+    focusKeyphrases: value.focusKeyphrases,
+    siteName,
+  };
+
+  async function runAiSuggest(mode: "all" | "title" | "desc" | "social") {
+    setAiBusy(true);
+    setAiMsg("");
+    try {
+      const res = await adminSeoSuggestAction(suggestPayload);
+      if (!res.ok) {
+        setAiMsg("خطا در پیشنهاد");
+        return;
+      }
+      if (mode === "title") {
+        patch({ metaTitle: res.metaTitle });
+      } else if (mode === "desc") {
+        patch({ metaDescription: res.metaDescription });
+      } else if (mode === "social") {
+        patch({
+          ogTitle: res.ogTitle,
+          ogDescription: res.ogDescription,
+          twitterTitle: res.twitterTitle,
+          twitterDescription: res.twitterDescription,
+        });
+      } else {
+        patch({
+          metaTitle: res.metaTitle,
+          metaDescription: res.metaDescription,
+          ogTitle: res.ogTitle,
+          ogDescription: res.ogDescription,
+          twitterTitle: res.twitterTitle,
+          twitterDescription: res.twitterDescription,
+        });
+      }
+      setAiMsg(res.source === "openai" ? "پیشنهاد AI اعمال شد" : "پیشنهاد هوشمند اعمال شد");
+    } catch {
+      // fallback local
+      if (mode === "title") patch({ metaTitle: suggestMetaTitle(suggestPayload) });
+      else if (mode === "desc") patch({ metaDescription: suggestMetaDescription(suggestPayload) });
+      else if (mode === "social") patch(suggestSocial(suggestPayload));
+      else {
+        const all = {
+          metaTitle: suggestMetaTitle(suggestPayload),
+          metaDescription: suggestMetaDescription(suggestPayload),
+          ...suggestSocial(suggestPayload),
+        };
+        patch(all);
+      }
+      setAiMsg("پیشنهاد محلی اعمال شد");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
   return (
     <div className="border-border mt-6 space-y-4 rounded-xl border p-4" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -175,6 +237,42 @@ export function SeoAnalysisPanel({
             <div className={`h-full transition-all ${barColor(analysis.readabilityScore)}`} style={{ width: `${analysis.readabilityScore}%` }} />
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={aiBusy}
+          onClick={() => void runAiSuggest("all")}
+          className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+        >
+          {aiBusy ? "…" : "پیشنهاد کامل SEO"}
+        </button>
+        <button
+          type="button"
+          disabled={aiBusy}
+          onClick={() => void runAiSuggest("title")}
+          className="border-border rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          پیشنهاد Title
+        </button>
+        <button
+          type="button"
+          disabled={aiBusy}
+          onClick={() => void runAiSuggest("desc")}
+          className="border-border rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          پیشنهاد Description
+        </button>
+        <button
+          type="button"
+          disabled={aiBusy}
+          onClick={() => void runAiSuggest("social")}
+          className="border-border rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          پر کردن Social
+        </button>
+        {aiMsg ? <span className="text-muted-foreground self-center text-xs">{aiMsg}</span> : null}
       </div>
 
       <div className="space-y-2">
