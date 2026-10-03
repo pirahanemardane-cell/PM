@@ -154,28 +154,59 @@ export function SeoAnalysisPanel({
     siteName,
   };
 
+  function applySuggest(
+    mode: "all" | "title" | "desc" | "social",
+    data: {
+      metaTitle: string;
+      metaDescription: string;
+      ogTitle: string;
+      ogDescription: string;
+      twitterTitle: string;
+      twitterDescription: string;
+    },
+  ) {
+    if (mode === "title") {
+      onChange({ ...value, metaTitle: data.metaTitle });
+    } else if (mode === "desc") {
+      onChange({ ...value, metaDescription: data.metaDescription });
+    } else if (mode === "social") {
+      onChange({
+        ...value,
+        ogTitle: data.ogTitle,
+        ogDescription: data.ogDescription,
+        twitterTitle: data.twitterTitle,
+        twitterDescription: data.twitterDescription,
+      });
+    } else {
+      onChange({
+        ...value,
+        metaTitle: data.metaTitle,
+        metaDescription: data.metaDescription,
+        ogTitle: data.ogTitle,
+        ogDescription: data.ogDescription,
+        twitterTitle: data.twitterTitle,
+        twitterDescription: data.twitterDescription,
+      });
+    }
+  }
+
   async function runAiSuggest(mode: "all" | "title" | "desc" | "social") {
     setAiBusy(true);
     setAiMsg("");
+    // ۱) همیشه پیشنهاد محلی فوری (بدون سرور)
+    const local = {
+      metaTitle: suggestMetaTitle(suggestPayload),
+      metaDescription: suggestMetaDescription(suggestPayload),
+      ...suggestSocial(suggestPayload),
+    };
+    applySuggest(mode, local);
+    setAiMsg("پیشنهاد اعمال شد");
+
+    // ۲) در پس‌زمینه اگر سرور/OpenAI جواب داد، جایگزین کن
     try {
       const res = await adminSeoSuggestAction(suggestPayload);
-      if (!res.ok) {
-        setAiMsg("خطا در پیشنهاد");
-        return;
-      }
-      if (mode === "title") {
-        patch({ metaTitle: res.metaTitle });
-      } else if (mode === "desc") {
-        patch({ metaDescription: res.metaDescription });
-      } else if (mode === "social") {
-        patch({
-          ogTitle: res.ogTitle,
-          ogDescription: res.ogDescription,
-          twitterTitle: res.twitterTitle,
-          twitterDescription: res.twitterDescription,
-        });
-      } else {
-        patch({
+      if (res.ok && res.source === "openai") {
+        applySuggest(mode, {
           metaTitle: res.metaTitle,
           metaDescription: res.metaDescription,
           ogTitle: res.ogTitle,
@@ -183,22 +214,10 @@ export function SeoAnalysisPanel({
           twitterTitle: res.twitterTitle,
           twitterDescription: res.twitterDescription,
         });
+        setAiMsg("پیشنهاد AI اعمال شد");
       }
-      setAiMsg(res.source === "openai" ? "پیشنهاد AI اعمال شد" : "پیشنهاد هوشمند اعمال شد");
     } catch {
-      // fallback local
-      if (mode === "title") patch({ metaTitle: suggestMetaTitle(suggestPayload) });
-      else if (mode === "desc") patch({ metaDescription: suggestMetaDescription(suggestPayload) });
-      else if (mode === "social") patch(suggestSocial(suggestPayload));
-      else {
-        const all = {
-          metaTitle: suggestMetaTitle(suggestPayload),
-          metaDescription: suggestMetaDescription(suggestPayload),
-          ...suggestSocial(suggestPayload),
-        };
-        patch(all);
-      }
-      setAiMsg("پیشنهاد محلی اعمال شد");
+      /* محلی کافی است */
     } finally {
       setAiBusy(false);
     }
