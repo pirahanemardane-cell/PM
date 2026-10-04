@@ -13,7 +13,7 @@ import { toPersianDigits } from "@/lib/numbers";
 import { Suspense } from "react";
 import { metadataFromSeoPage } from "@/lib/seo/page-settings";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 // ISR: HTML کامل سرور-ساید، کش ۶۰ ثانیه — فیلترها و ظاهر دست‌نخورده
 export async function generateMetadata(): Promise<Metadata> {

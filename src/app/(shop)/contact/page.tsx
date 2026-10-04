@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ContactWithGlobe from "@/components/ui/contact-with-globe";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "تماس با ما | پیراهن مردانه",

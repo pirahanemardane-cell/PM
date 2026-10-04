@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 import { StaticPage } from "@/components/content/static-page";
 import { formatCm, loadPrimarySizeGuide } from "@/lib/size-guide/load";
 

@@ -3,7 +3,7 @@ import { listPublishedPostsAction } from "@/app/(shop)/actions/blog-public";
 import { LiveBlogList } from "@/components/shop/live-blog-list";
 import { metadataFromSeoPage } from "@/lib/seo/page-settings";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   return metadataFromSeoPage("blog_plp", {

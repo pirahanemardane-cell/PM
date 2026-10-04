@@ -17,7 +17,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { brandPageSchema, breadcrumbSchema } from "@/lib/seo/schema";
 import { applySeoTemplate } from "@/lib/seo/template";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const FACET_KEYS = [
   "fabric",

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BrandService } from "@/services/brand.service";
 import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "برندها",
