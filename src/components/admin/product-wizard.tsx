@@ -35,6 +35,7 @@ import { LumaSpin } from "@/components/ui/luma-spin";
 import { parseLocaleNumber } from "@/lib/numbers";
 import { SeoAnalysisPanel, emptySeoValue, type SeoPanelValue } from "@/components/admin/seo-analysis-panel";
 import { ensureAlt } from "@/lib/seo/image-alt";
+import { resolveColorHex } from "@/lib/colors";
 
 type Opt = { id: string; name: string };
 type VRow = {
@@ -48,6 +49,23 @@ type VRow = {
   stock: string;
   image_url: string;
 };
+
+function isColorAttribute(slug?: string | null, name?: string | null) {
+  const s = (slug || "").trim().toLowerCase();
+  const n = (name || "").trim().toLowerCase();
+  if (s === "color" || s === "colour" || s === "رنگ") return true;
+  if (n === "رنگ" || n.includes("رنگ") || n === "color" || n === "colour") return true;
+  if (s.includes("color") || s.includes("colour")) return true;
+  return false;
+}
+function isSizeAttribute(slug?: string | null, name?: string | null) {
+  const s = (slug || "").trim().toLowerCase();
+  const n = (name || "").trim().toLowerCase();
+  if (s === "size" || s === "سایز") return true;
+  if (n === "سایز" || n.includes("سایز") || n === "size") return true;
+  return false;
+}
+
 
 const STEPS = [
   { id: 1, title: "هویت" },
@@ -121,11 +139,17 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
   const [imageUrl, setImageUrl] = useState("");
   const [gallery, setGallery] = useState<{ id?: string; url: string }[]>([]);
   const [attrDefs, setAttrDefs] = useState<AttrWithOptions[]>([]);
-  const sizeAttr = attrDefs.find((a) => a.slug === "size");
-  const colorAttr = attrDefs.find((a) => a.slug === "color");
+  const sizeAttr = attrDefs.find((a) => isSizeAttribute(a.slug, a.name));
+  const colorAttr = attrDefs.find((a) => isColorAttribute(a.slug, a.name));
   const sizeOpts = (sizeAttr?.options ?? []) as Array<{ id: string; value: string; hex?: string | null }>;
-  const colorOpts = (colorAttr?.options ?? []) as Array<{ id: string; value: string; hex?: string | null }>;
-  const specDefs = attrDefs.filter((a) => a.slug !== "size" && a.slug !== "color");
+  const colorOpts = (colorAttr?.options ?? []) as Array<{
+    id: string;
+    value: string;
+    hex?: string | null;
+  }>;
+  const specDefs = attrDefs.filter(
+    (a) => !isSizeAttribute(a.slug, a.name) && !isColorAttribute(a.slug, a.name),
+  );
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
   const [loadedAttrRows, setLoadedAttrRows] = useState<
     Array<{ attribute_id: string; option_id?: string | null; value_text?: string | null }>
@@ -373,8 +397,8 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
 
   useEffect(() => {
     if (!loadedAttrRows.length || !attrDefs.length) return;
-    const sizeId = attrDefs.find((a) => a.slug === "size")?.id;
-    const colorId = attrDefs.find((a) => a.slug === "color")?.id;
+    const sizeId = attrDefs.find((a) => isSizeAttribute(a.slug, a.name))?.id;
+    const colorId = attrDefs.find((a) => isColorAttribute(a.slug, a.name))?.id;
     const sizes: string[] = [];
     const colors: string[] = [];
     const map: Record<string, string> = {};
@@ -545,7 +569,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               : main;
           if (!(main > 0) && !(sell > 0)) return null;
           if (!v.size && !v.color_name) return null;
-          const hx = colorOpts.find((o) => o.value === v.color_name)?.hex ?? null;
+          const hx = resolveColorHex(v.color_name, colorOpts.find((o) => o.value === v.color_name)?.hex);
           return {
             id: v.id,
             size: v.size || null,
@@ -1111,7 +1135,90 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
             {!attrDefs.length ? (
               <p className="text-muted-foreground text-sm">مشخصه‌ای تعریف نشده. از ادمین → مشخصات اضافه کنید.</p>
             ) : null}
-{specDefs.map((a) => (
+{/* رنگ: سواچ + نام */}
+            {colorAttr ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{colorAttr.name}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(colorAttr.options ?? []).map((o) => {
+                    const hx = resolveColorHex(
+                      o.value,
+                      (o as { hex?: string | null }).hex,
+                    );
+                    const on = pickedColorIds.includes(o.id);
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        className={
+                          "border-border flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition " +
+                          (on
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted")
+                        }
+                        onClick={() =>
+                          setPickedColorIds((prev) =>
+                            prev.includes(o.id)
+                              ? prev.filter((x) => x !== o.id)
+                              : [...prev, o.id],
+                          )
+                        }
+                      >
+                        <span
+                          className="border-border inline-block h-4 w-4 shrink-0 rounded-full border shadow-sm"
+                          style={{ backgroundColor: hx }}
+                          title={hx}
+                        />
+                        <span>{o.value}</span>
+                        {on ? <span className="text-xs">✓</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+                {!colorAttr.options?.length ? (
+                  <p className="text-muted-foreground text-xs">
+                    گزینه‌ای برای رنگ نیست — از مشخصات محصول رنگ + هگز اضافه کنید.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* سایز */}
+            {sizeAttr ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{sizeAttr.name}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(sizeAttr.options ?? []).map((o) => {
+                    const on = pickedSizeIds.includes(o.id);
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        className={
+                          "border-border rounded-full border px-3 py-1.5 text-sm transition " +
+                          (on
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted")
+                        }
+                        onClick={() =>
+                          setPickedSizeIds((prev) =>
+                            prev.includes(o.id)
+                              ? prev.filter((x) => x !== o.id)
+                              : [...prev, o.id],
+                          )
+                        }
+                      >
+                        {o.value}
+                        {on ? " ✓" : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {/* بقیه مشخصات */}
+            {specDefs.map((a) => (
               <label key={a.id} className="block space-y-1 text-sm">
                 <span>{a.name}</span>
                 <select
@@ -1131,7 +1238,7 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
               </label>
             ))}
             <p className="text-muted-foreground text-xs">
-              سایز و رنگ را در گام واریانت برای هر ردیف انتخاب کنید. بقیه مشخصات روی محصول ذخیره و در فیلتر فروشگاه می‌آیند.
+              رنگ و سایز انتخاب‌شده در فیلتر فروشگاه می‌آیند؛ در گام واریانت برای هر ردیف رنگ/سایز را جداگانه مشخص کنید.
             </p>
           </div>
         )}
@@ -1287,11 +1394,12 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                           {v.color_name ? (
                             <>
                               <span
-                                className="border-border h-3.5 w-3.5 shrink-0 rounded-full border"
+                                className="border-border h-4 w-4 shrink-0 rounded-full border shadow-sm"
                                 style={{
-                                  backgroundColor:
-                                    colorOpts.find((o) => o.value === v.color_name)?.hex ||
-                                    "#e5e5e5",
+                                  backgroundColor: resolveColorHex(
+                                    v.color_name,
+                                    colorOpts.find((o) => o.value === v.color_name)?.hex,
+                                  ),
                                 }}
                               />
                               <span className="truncate">{v.color_name}</span>
@@ -1332,8 +1440,10 @@ export function ProductWizard({ productId: initialId = null }: ProductWizardProp
                               }}
                             >
                               <span
-                                className="border-border inline-block h-3.5 w-3.5 shrink-0 rounded-full border"
-                                style={{ backgroundColor: o.hex || "#e5e5e5" }}
+                                className="border-border inline-block h-4 w-4 shrink-0 rounded-full border shadow-sm"
+                                style={{
+                                  backgroundColor: resolveColorHex(o.value, o.hex),
+                                }}
                               />
                               <span>{o.value}</span>
                             </button>
