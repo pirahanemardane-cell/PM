@@ -69,7 +69,8 @@ function NavRow({
       className={cn(
         "group flex items-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
-          ? "shrink-0 min-w-max px-3 py-2.5"
+          ? // حدود ۳.۵ تب در عرض (۳ کامل + نیم‌تب بعدی)
+            "w-[calc((100%-12px)/3.5)] min-w-[calc((100%-12px)/3.5)] shrink-0 justify-center gap-1 px-1.5 py-2.5"
           : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
@@ -86,7 +87,7 @@ function NavRow({
           )}
           strokeWidth={1.5}
         />
-        <span className="text-[13px] tracking-wide whitespace-nowrap">
+        <span className="max-w-full truncate text-[12px] tracking-wide whitespace-nowrap">
           {item.title}
         </span>
       </div>
