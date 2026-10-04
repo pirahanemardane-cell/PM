@@ -301,10 +301,14 @@ export function AuthForm({
         let dest =
           qNext && qNext.startsWith("/") && !qNext.startsWith("//")
             ? qNext
-            : defaultNext || "/admin/dashboard";
+            : defaultNext || "/dashboard";
         if (!dest.startsWith("/")) dest = "/dashboard";
+        // مشتری هرگز به پنل ادمین نرود (مگر defaultNext صریحاً admin باشد و از صفحه login?next=/admin آمده باشد)
+        if (dest.startsWith("/admin") && !(defaultNext || "").startsWith("/admin") && !(qNext || "").startsWith("/admin")) {
+          dest = "/dashboard";
+        }
         setIsLoading(false);
-        window.location.href = dest;
+        window.location.assign(dest);
         return;
       }
 
@@ -402,7 +406,11 @@ export function AuthForm({
             void onSuccess?.({ phone: formData.phone });
           } catch {}
           setTimeout(() => {
-            window.location.replace(defaultNext || "/dashboard");
+            window.location.replace(
+              (defaultNext && defaultNext.startsWith("/") && !defaultNext.startsWith("/admin"))
+                ? defaultNext
+                : "/dashboard"
+            );
           }, 800);
           setIsLoading(false);
           return;
