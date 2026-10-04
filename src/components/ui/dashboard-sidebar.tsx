@@ -127,12 +127,9 @@ export function CustomerSidebarNav({
 
   if (horizontal) {
     return (
-      <div
-        className={cn("w-full font-sans", className)}
-        dir="rtl"
-        style={{ padding: 3 }}
-      >
-        <div className="mb-2 w-full text-right">
+      <div className={cn("w-full font-sans", className)} dir="rtl">
+        {/* هم‌تراز breadcrumb: px-4 sm:px-6 */}
+        <div className="mb-2 w-full px-4 text-right sm:px-6">
           <span
             className="text-foreground block w-full text-right text-[13px] font-medium tabular-nums"
             dir="ltr"
@@ -145,7 +142,7 @@ export function CustomerSidebarNav({
           </span>
         </div>
         <div
-          className="flex flex-row gap-1 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-row gap-1 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           dir="rtl"
         >
           {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
@@ -165,6 +162,7 @@ export function CustomerSidebarNav({
       </div>
     );
   }
+
 
   return (
     <div
@@ -232,17 +230,17 @@ export function CustomerDashboardShell({
 
   return (
     <div
-      className="bg-background flex min-h-[100dvh] w-full flex-col p-2 sm:p-3 md:p-6"
+      className="bg-background flex min-h-[100dvh] w-full flex-col px-0 py-2 sm:p-3 md:p-6"
       dir="rtl"
     >
       <div
         className={cn(
-          "border-border/50 bg-card relative mx-auto flex w-full max-w-6xl overflow-hidden rounded-xl border shadow-sm ring-1 ring-black/5 dark:ring-white/5",
+          "border-border/50 bg-card relative mx-auto flex w-full max-w-6xl overflow-hidden rounded-none border-x-0 border-y shadow-sm ring-1 ring-black/5 sm:rounded-xl sm:border dark:ring-white/5",
           "flex-col lg:flex-row",
           "min-h-[min(900px,calc(100dvh-1rem))] lg:h-[min(900px,calc(100dvh-1.5rem))]",
         )}
       >
-        <div className="border-border/50 shrink-0 border-b lg:hidden">
+        <div className="border-border/50 shrink-0 border-b py-2.5 lg:hidden">
           <CustomerSidebarNav
             horizontal
             displayName={displayName}
