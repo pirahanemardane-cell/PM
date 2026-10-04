@@ -1,5 +1,7 @@
 "use client";
 
+import nextDynamic from "next/dynamic";
+
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
 
@@ -10,7 +12,7 @@ import { toast } from "@/lib/toaster";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-const ProductCard = dynamic(
+const ProductCard = nextDynamic(
   () => import("@/components/product/product-card").then((m) => m.ProductCard),
   { ssr: false, loading: () => null },
 );
@@ -48,7 +50,7 @@ import {
   listMyReturnsAction,
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
-const ComposerInput = dynamic(
+const ComposerInput = nextDynamic(
   () => import("@/components/ui/composer-input").then((m) => m.ComposerInput),
   { ssr: false, loading: () => null },
 );
