@@ -1,26 +1,19 @@
 import type { Metadata } from "next";
-import { StaticPage } from "@/components/content/static-page";
+import { getTextPageContentAction } from "@/app/admin/actions/content-pages";
+import { LegalView } from "@/components/content/legal-view";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "شرایط استفاده | پیراهن مردانه",
   description: "شرایط و قوانین استفاده از فروشگاه پیراهن مردانه",
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const content = await getTextPageContentAction("terms");
   return (
-    <StaticPage title="شرایط استفاده">
-      <p>
-        با استفاده از این وب‌سایت، شما شرایط زیر را می‌پذیرید. محتوای سایت، قیمت‌ها
-        و موجودی ممکن است بدون اطلاع قبلی به‌روز شوند.
-      </p>
-      <p>
-        ثبت سفارش به معنای پذیرش قیمت نهایی، هزینه ارسال اعلام‌شده و سیاست
-        مرجوعی است. سوءاستفاده از درگاه، کد تخفیف یا ثبت نظرات جعلی ممنوع است.
-      </p>
-      <p>
-        مسئولیت حفظ اطلاعات حساب کاربری با شماست. در صورت مشاهده فعالیت مشکوک،
-        دسترسی ممکن است محدود شود.
-      </p>
-    </StaticPage>
+    <main className="px-4 py-8 md:py-12">
+      <LegalView content={content} variant="terms" />
+    </main>
   );
 }

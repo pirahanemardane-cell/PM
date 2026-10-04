@@ -1,44 +1,25 @@
 import type { Metadata } from "next";
-import { StaticPage } from "@/components/content/static-page";
 import { JsonLd } from "@/components/seo/json-ld";
 import { faqPageSchema } from "@/lib/seo/schema";
+import { getFaqContentAction } from "@/app/admin/actions/content-pages";
+import { FaqView } from "@/components/content/faq-view";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "سوالات متداول | پیراهن مردانه",
   description: "پاسخ به سوالات رایج درباره سفارش، سایز، ارسال و مرجوعی",
 };
 
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: "چطور سایز مناسب را انتخاب کنم؟",
-    a: "از صفحه راهنمای سایز استفاده کنید و در صورت تردید با پشتیبانی تماس بگیرید.",
-  },
-  {
-    q: "زمان ارسال چقدر است؟",
-    a: "پس از تأیید پرداخت، معمولاً ۱ تا ۳ روز کاری پردازش و سپس ارسال انجام می‌شود. جزئیات در صفحه ارسال آمده است.",
-  },
-  {
-    q: "شرایط مرجوعی چیست؟",
-    a: "کالای استفاده‌نشده با برچسب، طبق سیاست مرجوعی قابل بازگشت است. از داشبورد می‌توانید درخواست ثبت کنید.",
-  },
-  {
-    q: "آیا می‌توانم سفارش را پیگیری کنم؟",
-    a: "پس از ورود به داشبورد، وضعیت سفارش‌ها و در صورت فعال شدن، کد رهگیری نمایش داده می‌شود.",
-  },
-];
-
-export default function FaqPage() {
+export default async function FaqPage() {
+  const items = await getFaqContentAction();
   return (
-    <StaticPage title="سوالات متداول">
-      <JsonLd data={faqPageSchema(FAQS)} />
-      <div className="space-y-6">
-        {FAQS.map((item) => (
-          <div key={item.q} className="border-border rounded-xl border p-4">
-            <h2 className="mb-2 font-semibold text-primary">{item.q}</h2>
-            <p>{item.a}</p>
-          </div>
-        ))}
-      </div>
-    </StaticPage>
+    <main className="mx-auto w-full max-w-none px-4 py-8 md:py-12" dir="rtl">
+      <h1 className="mb-2 text-center text-2xl font-bold text-primary md:text-3xl">
+        سوالات متداول
+      </h1>
+      <JsonLd data={faqPageSchema(items)} />
+      <FaqView items={items} />
+    </main>
   );
 }
