@@ -13,20 +13,20 @@ export default function ShopLayout({
 }) {
   return (
     <SiteLoaderProvider>
-      <div className="flex min-h-screen flex-col">
-        <SiteHeader />
-        <div className="flex-1">
-          <div className="w-full max-w-none">
-            <AppBreadcrumb />
-            <NotificationsProvider>
+      <NotificationsProvider>
+        <div className="flex min-h-screen flex-col">
+          <SiteHeader />
+          <div className="flex-1">
+            <div className="w-full max-w-none">
+              <AppBreadcrumb />
               <ScrollToTop />
               {children}
-            </NotificationsProvider>
+            </div>
           </div>
+          <SiteFooter />
+          <BackToTop />
         </div>
-        <SiteFooter />
-        <BackToTop />
-      </div>
+      </NotificationsProvider>
     </SiteLoaderProvider>
   );
 }
