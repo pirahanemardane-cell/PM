@@ -71,7 +71,7 @@ function NavRow({
         "group flex items-center justify-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
           ? // عرض تقریبی ۲.۵ تب در عرض صفحه: هر تب ~40% عرض اسکرولر
-            "w-[40%] min-w-[40%] shrink-0 px-2 py-2.5"
+            "w-[42%] min-w-[42%] shrink-0 justify-center px-2 py-2.5"
           : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
@@ -131,16 +131,26 @@ export function CustomerSidebarNav({
     return (
       <div className={cn("w-full font-sans", className)} dir="rtl">
         {/* فقط شماره/نام — بدون آواتار آبی */}
-        <div className="mb-2 px-1">
-          <span className="text-foreground block truncate text-[13px] font-medium tabular-nums" dir="ltr">
+        <div className="mb-2 w-full px-0 text-right">
+          <span
+            className="text-foreground block w-full truncate text-right text-[13px] font-medium tabular-nums"
+            dir="ltr"
+            style={{ unicodeBidi: "isolate" }}
+          >
             {displayName}
           </span>
-          <span className="text-muted-foreground text-[11px]">پنل مشتری</span>
+          <span className="text-muted-foreground block w-full text-right text-[11px]">
+            پنل مشتری
+          </span>
         </div>
-        {/* اسلایدر تب‌ها: هر تب ~۴۰٪ تا حدود ۲.۵ تب دیده شود */}
-        <div className="flex gap-1 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* اسلایدر تب‌ها: شروع از لبه راست (RTL) */}
+        <div
+          className="flex flex-row gap-1 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          dir="rtl"
+          style={{ justifyContent: "flex-start" }}
+        >
           {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
-            <div key={item.id} className="snap-start contents">
+            <div key={item.id} className="snap-start shrink-0">
               <NavRow
                 item={item}
                 active={activeTab === item.id}
@@ -167,10 +177,16 @@ export function CustomerSidebarNav({
     >
       {/* دسکتاپ: فقط متن، بدون بج آبی */}
       <div className="mb-4 rounded-lg px-2 py-2 select-none">
-        <span className="text-foreground mb-1 block truncate text-[13px] font-medium tabular-nums" dir="ltr">
+        <span
+          className="text-foreground mb-1 block w-full truncate text-right text-[13px] font-medium tabular-nums"
+          dir="ltr"
+          style={{ unicodeBidi: "isolate" }}
+        >
           {displayName}
         </span>
-        <span className="text-muted-foreground text-[11px]">پنل مشتری</span>
+        <span className="text-muted-foreground block w-full text-right text-[11px]">
+          پنل مشتری
+        </span>
       </div>
 
       <div className="mt-2 flex flex-1 flex-col gap-0.5 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
