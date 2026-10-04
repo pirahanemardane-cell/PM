@@ -4,7 +4,7 @@ import { faqPageSchema } from "@/lib/seo/schema";
 import { getFaqContentAction } from "@/app/admin/actions/content-pages";
 import { FaqView } from "@/components/content/faq-view";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "سوالات متداول | پیراهن مردانه",

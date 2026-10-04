@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   CONTENT_KEYS,
   DEFAULT_FAQ,
@@ -11,9 +13,29 @@ import {
   type TextPageContent,
 } from "@/lib/content/static-pages";
 
+/** value ممکن است object یا رشته JSON باشد */
+function parseJsonValue(raw: unknown): unknown {
+  if (raw == null) return null;
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (!s) return null;
+    try {
+      return JSON.parse(s);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof raw === "object") return raw;
+  return null;
+}
+
 function asFaq(raw: unknown): FaqItem[] {
-  if (!raw || typeof raw !== "object") return DEFAULT_FAQ;
-  const items = (raw as { items?: unknown }).items;
+  const parsed = parseJsonValue(raw);
+  if (!parsed || typeof parsed !== "object") return DEFAULT_FAQ;
+  // شکل‌های ممکن: { items: [...] } یا خود آرایه
+  const items = Array.isArray(parsed)
+    ? parsed
+    : (parsed as { items?: unknown }).items;
   if (!Array.isArray(items)) return DEFAULT_FAQ;
   const out: FaqItem[] = [];
   for (const it of items) {
@@ -27,8 +49,11 @@ function asFaq(raw: unknown): FaqItem[] {
 
 function asTextPage(slug: ContentPageSlug, raw: unknown): TextPageContent {
   const def = DEFAULT_PAGES[slug] || { title: slug, paragraphs: [] };
-  if (!raw || typeof raw !== "object") return def;
-  const o = raw as { title?: string; paragraphs?: unknown };
+  const parsed = parseJsonValue(raw);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return def;
+  }
+  const o = parsed as { title?: string; paragraphs?: unknown };
   const title = String(o.title || def.title).trim() || def.title;
   const paragraphs = Array.isArray(o.paragraphs)
     ? o.paragraphs.map((p) => String(p || "").trim()).filter(Boolean)
@@ -36,16 +61,31 @@ function asTextPage(slug: ContentPageSlug, raw: unknown): TextPageContent {
   return { title, paragraphs: paragraphs.length ? paragraphs : def.paragraphs };
 }
 
-export async function getFaqContentAction(): Promise<FaqItem[]> {
+async function readSetting(key: string): Promise<unknown> {
+  // service client: مطمئن از خواندن حتی اگر RLS محدود باشد
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("site_settings")
       .select("value")
-      .eq("key", CONTENT_KEYS.faq)
+      .eq("key", key)
       .maybeSingle();
-    if (error || !data?.value) return DEFAULT_FAQ;
-    return asFaq(data.value);
+    if (error) {
+      console.error("[readSetting]", key, error);
+      return null;
+    }
+    return data?.value ?? null;
+  } catch (e) {
+    console.error("[readSetting]", key, e);
+    return null;
+  }
+}
+
+export async function getFaqContentAction(): Promise<FaqItem[]> {
+  try {
+    const value = await readSetting(CONTENT_KEYS.faq);
+    if (value == null) return DEFAULT_FAQ;
+    return asFaq(value);
   } catch {
     return DEFAULT_FAQ;
   }
@@ -57,15 +97,9 @@ export async function getTextPageContentAction(
   const def = DEFAULT_PAGES[slug] || { title: slug, paragraphs: [] };
   if (slug === "faq") return def;
   try {
-    const supabase = await createClient();
-    const key = CONTENT_KEYS[slug];
-    const { data, error } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", key)
-      .maybeSingle();
-    if (error || !data?.value) return def;
-    return asTextPage(slug, data.value);
+    const value = await readSetting(CONTENT_KEYS[slug]);
+    if (value == null) return def;
+    return asTextPage(slug, value);
   } catch {
     return def;
   }
@@ -83,6 +117,7 @@ export async function adminGetAllContentPagesAction() {
       .in("key", keys);
 
     if (error) {
+      console.error("[adminGetAllContentPages]", error);
       return {
         ok: true as const,
         faq: DEFAULT_FAQ,
@@ -104,7 +139,8 @@ export async function adminGetAllContentPagesAction() {
       } as Record<string, TextPageContent>,
       tableMissing: false as const,
     };
-  } catch {
+  } catch (e) {
+    console.error("[adminGetAllContentPages]", e);
     return { ok: false as const, error: "server" as const };
   }
 }
@@ -122,18 +158,35 @@ export async function adminSaveFaqAction(items: FaqItem[]) {
 
   if (!cleaned.length) return { ok: false as const, error: "empty" as const };
 
+  const payload = { items: cleaned };
+
   const { error } = await gate.supabase.from("site_settings").upsert(
     {
       key: CONTENT_KEYS.faq,
-      value: { items: cleaned },
+      value: payload,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "key" },
   );
   if (error) {
     console.error("[adminSaveFaq]", error);
-    return { ok: false as const, error: "db" as const };
+    // fallback: بعضی schemaها value را text می‌خواهند
+    const { error: err2 } = await gate.supabase.from("site_settings").upsert(
+      {
+        key: CONTENT_KEYS.faq,
+        value: JSON.stringify(payload) as unknown as object,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" },
+    );
+    if (err2) {
+      console.error("[adminSaveFaq string]", err2);
+      return { ok: false as const, error: "db" as const };
+    }
   }
+
+  revalidatePath("/faq");
+  revalidatePath("/admin/pages");
   return { ok: true as const };
 }
 
@@ -156,17 +209,33 @@ export async function adminSaveTextPageAction(
     return { ok: false as const, error: "empty" as const };
   }
 
+  const payload = { title, paragraphs };
+
   const { error } = await gate.supabase.from("site_settings").upsert(
     {
       key,
-      value: { title, paragraphs },
+      value: payload,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "key" },
   );
   if (error) {
     console.error("[adminSaveTextPage]", error);
-    return { ok: false as const, error: "db" as const };
+    const { error: err2 } = await gate.supabase.from("site_settings").upsert(
+      {
+        key,
+        value: JSON.stringify(payload) as unknown as object,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" },
+    );
+    if (err2) {
+      console.error("[adminSaveTextPage string]", err2);
+      return { ok: false as const, error: "db" as const };
+    }
   }
+
+  revalidatePath(`/${slug}`);
+  revalidatePath("/admin/pages");
   return { ok: true as const };
 }
