@@ -41,6 +41,7 @@ const NAV = [
   { href: "/admin/discounts", label: "تخفیف‌ها", icon: Tag },
   { href: "/admin/flash-sale", label: "شگفت‌انگیز", icon: Percent },
   { href: "/admin/users", label: "کاربران", icon: Users },
+  { href: "/admin/club", label: "باشگاه مشتریان", icon: Users },
   { href: "/admin/media", label: "رسانه", icon: ImageIcon },
   { href: "/admin/blog", label: "بلاگ", icon: FileText },
   { href: "/admin/reviews", label: "نظرات", icon: MessageSquare },
