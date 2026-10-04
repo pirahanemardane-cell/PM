@@ -10,7 +10,10 @@ import { toast } from "@/lib/toaster";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ProductCard } from "@/components/product/product-card";
+const ProductCard = dynamic(
+  () => import("@/components/product/product-card").then((m) => m.ProductCard),
+  { ssr: false, loading: () => null },
+);
 import { useShopStore } from "@/lib/shop-store"
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
@@ -45,7 +48,10 @@ import {
   listMyReturnsAction,
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
-import { ComposerInput } from "@/components/ui/composer-input";
+const ComposerInput = dynamic(
+  () => import("@/components/ui/composer-input").then((m) => m.ComposerInput),
+  { ssr: false, loading: () => null },
+);
 import { normalizeIranMobile } from "@/lib/numbers";
 import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
 import { useNotifications } from "@/lib/notifications/use-notifications";
@@ -217,20 +223,35 @@ export default function BuyerDashboardPage() {
 useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await getMyProfileAction();
-      if (cancelled) return;
-      if (!res.ok) {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (!data.session?.user) {
+          setAuthChecked(true);
+          setAuthOk(false);
+          router.replace("/ورود?next=/dashboard");
+          return;
+        }
+        setAuthOk(true);
         setAuthChecked(true);
-        setAuthOk(false);
-        router.replace("/ورود?next=/dashboard");
-        return;
+        // پروفایل پس‌زمینه برای نمایش شماره
+        void getMyProfileAction().then((res) => {
+          if (cancelled || !res.ok) return;
+          setProfileForm({
+            full_name: res.profile.full_name ?? "",
+            phone: res.profile.phone ?? "",
+          });
+          setProfileEmail(res.email);
+          setEmailDraft(res.email ?? "");
+        });
+      } catch {
+        if (!cancelled) {
+          setAuthChecked(true);
+          setAuthOk(false);
+          router.replace("/ورود?next=/dashboard");
+        }
       }
-      setProfileForm({
-        full_name: res.profile?.full_name ?? "",
-        phone: res.profile?.phone ?? "",
-      });
-      setAuthOk(true);
-      setAuthChecked(true);
     })();
     return () => {
       cancelled = true;
