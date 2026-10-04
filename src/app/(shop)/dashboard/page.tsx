@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { ProductCard } from "@/components/product/product-card";
 import { useShopStore } from "@/lib/shop-store"
 import { useServerCartStore } from "@/lib/server-cart-store";
@@ -104,7 +105,7 @@ export default function BuyerDashboardPage() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
   const displayName = profileForm.phone?.trim() || profileForm.full_name?.trim() || "حساب من";
-  const notif = useNotifications(authOk);
+  const notif = useNotifications(authOk && tab === "notifications");
   const [serverWishlist, setServerWishlist] = useState<
     { productId: string; title: string; slug: string; price: number; image?: string }[]
   >([]);
@@ -166,22 +167,25 @@ export default function BuyerDashboardPage() {
   const compare = useShopStore((s) => s.compare);
   const recent = useShopStore((s) => s.recentlyViewed);
 
-  // حذف محصولات پاک‌شده از بازدید اخیر
+  // بازدید اخیر: بعد از ۳ثانیه (اولویت با UI پنل)
   useEffect(() => {
-    const list = useShopStore.getState().recentlyViewed || [];
-    if (!list.length) return;
-    const ids = list.map((x) => x.id).filter(Boolean);
-    void filterLiveProductIdsAction(ids).then((res) => {
-      if (!res.ok) return;
-      const live = new Set(res.ids);
-      const next = list.filter((x) => live.has(x.id));
-      if (next.length !== list.length) {
-        useShopStore.setState({ recentlyViewed: next });
-        try {
-          localStorage.setItem("pm-recently-viewed", JSON.stringify(next));
-        } catch {}
-      }
-    });
+    const timer = window.setTimeout(() => {
+      const list = useShopStore.getState().recentlyViewed || [];
+      if (!list.length) return;
+      const ids = list.map((x) => x.id).filter(Boolean);
+      void filterLiveProductIdsAction(ids).then((res) => {
+        if (!res.ok) return;
+        const live = new Set(res.ids);
+        const next = list.filter((x) => live.has(x.id));
+        if (next.length !== list.length) {
+          useShopStore.setState({ recentlyViewed: next });
+          try {
+            localStorage.setItem("pm-recently-viewed", JSON.stringify(next));
+          } catch {}
+        }
+      });
+    }, 3000);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const removeFromCart = useShopStore((s) => s.removeFromCart);
@@ -234,6 +238,7 @@ useEffect(() => {
   }, [router]);
 
   useEffect(() => {
+    if (tab !== "cart") return;
     let cancelled = false;
     (async () => {
       setCartLoading(true);
@@ -243,7 +248,7 @@ useEffect(() => {
     return () => {
       cancelled = true;
     };
-  }, [refreshServerCart]);
+  }, [tab, refreshServerCart]);
 
   useEffect(() => {
     if (tab !== "orders") return;
