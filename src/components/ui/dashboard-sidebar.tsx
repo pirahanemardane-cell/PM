@@ -69,8 +69,7 @@ function NavRow({
       className={cn(
         "group flex items-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
-          ? // حدود ۳.۵ تب در عرض (۳ کامل + نیم‌تب بعدی)
-            "w-[calc((100%-12px)/3.5)] min-w-[calc((100%-12px)/3.5)] shrink-0 justify-center gap-1 px-1.5 py-2.5"
+          ? "h-full w-full justify-center gap-1 px-2 py-2.5"
           : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
@@ -87,7 +86,7 @@ function NavRow({
           )}
           strokeWidth={1.5}
         />
-        <span className="max-w-full truncate text-[12px] tracking-wide whitespace-nowrap">
+        <span className="truncate text-[12px] tracking-wide whitespace-nowrap">
           {item.title}
         </span>
       </div>
@@ -143,11 +142,14 @@ export function CustomerSidebarNav({
           </span>
         </div>
         <div
-          className="flex flex-row gap-1 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-row gap-1.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           dir="rtl"
         >
           {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
-            <div key={item.id} className="snap-start shrink-0">
+            <div
+              key={item.id}
+              className="snap-start w-[40%] min-w-[40%] max-w-[40%] shrink-0"
+            >
               <NavRow
                 item={item}
                 active={activeTab === item.id}
