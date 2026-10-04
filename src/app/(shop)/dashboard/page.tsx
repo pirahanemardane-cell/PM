@@ -103,7 +103,7 @@ export default function BuyerDashboardPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
-  const displayName = profileForm.full_name?.trim() || "حساب من";
+  const displayName = profileForm.phone?.trim() || profileForm.full_name?.trim() || "حساب من";
   const notif = useNotifications(authOk);
   const [serverWishlist, setServerWishlist] = useState<
     { productId: string; title: string; slug: string; price: number; image?: string }[]

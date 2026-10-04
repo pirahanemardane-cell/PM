@@ -68,16 +68,17 @@ function NavRow({
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex items-center justify-between rounded-[6px] transition-all duration-200 select-none",
+        "group flex items-center justify-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
-          ? "shrink-0 gap-1.5 px-3 py-2"
-          : "w-full px-2.5 py-[7px]",
+          ? // عرض تقریبی ۲.۵ تب در عرض صفحه: هر تب ~40% عرض اسکرولر
+            "w-[40%] min-w-[40%] shrink-0 px-2 py-2.5"
+          : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
           : "text-muted-foreground hover:bg-black/5 hover:text-foreground/90 dark:hover:bg-white/5",
       )}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 items-center gap-1.5">
         <item.icon
           className={cn(
             "h-4 w-4 shrink-0 transition-colors",
@@ -91,7 +92,7 @@ function NavRow({
           {item.title}
         </span>
       </div>
-      {item.badge != null ? (
+      {!compact && item.badge != null ? (
         <span className="bg-primary/10 text-primary flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-medium">
           {item.badge}
         </span>
@@ -129,29 +130,27 @@ export function CustomerSidebarNav({
   if (horizontal) {
     return (
       <div className={cn("w-full font-sans", className)} dir="rtl">
-        <div className="mb-2 flex items-center gap-3 px-1">
-          <div className="bg-primary text-primary-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] text-[13px] font-semibold shadow-sm">
-            {(displayName || "ک").charAt(0)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-foreground block truncate text-[13px] font-medium">
-              {displayName}
-            </span>
-            <span className="text-muted-foreground text-[11px]">پنل مشتری</span>
-          </div>
+        {/* فقط شماره/نام — بدون آواتار آبی */}
+        <div className="mb-2 px-1">
+          <span className="text-foreground block truncate text-[13px] font-medium tabular-nums" dir="ltr">
+            {displayName}
+          </span>
+          <span className="text-muted-foreground text-[11px]">پنل مشتری</span>
         </div>
-        <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* اسلایدر تب‌ها: هر تب ~۴۰٪ تا حدود ۲.۵ تب دیده شود */}
+        <div className="flex gap-1 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
-            <NavRow
-              key={item.id}
-              item={item}
-              active={activeTab === item.id}
-              compact
-              onClick={() => {
-                if (item.id === "logout") void logout();
-                else onNavigate(item.id);
-              }}
-            />
+            <div key={item.id} className="snap-start contents">
+              <NavRow
+                item={item}
+                active={activeTab === item.id}
+                compact
+                onClick={() => {
+                  if (item.id === "logout") void logout();
+                  else onNavigate(item.id);
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -166,20 +165,12 @@ export function CustomerSidebarNav({
       )}
       dir="rtl"
     >
-      <div className="mb-4 flex items-center justify-between rounded-lg px-2 py-2 select-none">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-[6px] text-[13px] font-semibold shadow-sm">
-            {(displayName || "ک").charAt(0)}
-          </div>
-          <div className="flex max-w-[140px] flex-col overflow-hidden">
-            <span className="text-foreground mb-1 truncate text-[13px] leading-none font-medium">
-              {displayName}
-            </span>
-            <span className="text-muted-foreground text-[11px] leading-none">
-              پنل مشتری
-            </span>
-          </div>
-        </div>
+      {/* دسکتاپ: فقط متن، بدون بج آبی */}
+      <div className="mb-4 rounded-lg px-2 py-2 select-none">
+        <span className="text-foreground mb-1 block truncate text-[13px] font-medium tabular-nums" dir="ltr">
+          {displayName}
+        </span>
+        <span className="text-muted-foreground text-[11px]">پنل مشتری</span>
       </div>
 
       <div className="mt-2 flex flex-1 flex-col gap-0.5 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -210,7 +201,6 @@ export function CustomerSidebarNav({
   );
 }
 
-/** شل پنل مشتری — دسکتاپ: سایدبار کنار | موبایل/تبلت: سایدبار بالا، محتوا زیر */
 export function CustomerDashboardShell({
   displayName,
   activeTab,
@@ -234,12 +224,11 @@ export function CustomerDashboardShell({
       <div
         className={cn(
           "border-border/50 bg-card relative mx-auto flex w-full max-w-6xl overflow-hidden rounded-xl border shadow-sm ring-1 ring-black/5 dark:ring-white/5",
-          // موبایل/تبلت: ستون عمودی | دسکتاپ: ردیف افقی
           "flex-col lg:flex-row",
           "min-h-[min(900px,calc(100dvh-1rem))] lg:h-[min(900px,calc(100dvh-1.5rem))]",
         )}
       >
-        {/* —— موبایل/تبلت: ناوبری افقی بالا —— */}
+        {/* موبایل/تبلت: ناوبری بالا */}
         <div className="border-border/50 shrink-0 border-b p-3 lg:hidden">
           <CustomerSidebarNav
             horizontal
@@ -249,7 +238,7 @@ export function CustomerDashboardShell({
           />
         </div>
 
-        {/* —— دسکتاپ: سایدبار کنار —— */}
+        {/* دسکتاپ: سایدبار */}
         <div
           className={cn(
             "border-border/50 bg-card/50 hidden h-full shrink-0 overflow-hidden border-l transition-all duration-300 ease-in-out lg:block",
@@ -264,8 +253,7 @@ export function CustomerDashboardShell({
           />
         </div>
 
-        {/* محتوا */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-black/[0.02] transition-all duration-300 dark:bg-white/[0.02]">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-black/[0.02] dark:bg-white/[0.02]">
           <div className="border-border/50 bg-card flex h-12 shrink-0 items-center justify-between border-b px-3 sm:h-14 sm:px-4">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button

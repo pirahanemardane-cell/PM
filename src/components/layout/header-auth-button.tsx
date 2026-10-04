@@ -13,6 +13,7 @@ type Props = {
 };
 
 export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
+  /** null = loading | "" = مهمان | string = شماره/برچسب */
   const [label, setLabel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,9 +23,9 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
         const res = await getMyProfileAction();
         if (cancelled) return;
         if (res.ok) {
-          const name = (res.profile?.full_name || "").trim();
-          setLabel(name || (res.email ? res.email.split("@")[0] : "حساب من"));
-          // یک‌بار merge سبد مهمان → کاربر
+          const phone = (res.profile?.phone || "").trim();
+          // فقط شماره تماس — بدون نام و بدون آواتار
+          setLabel(phone || "حساب من");
           try {
             await mergeGuestCartAction();
             await useServerCartStore.getState().refresh();
@@ -32,7 +33,7 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
               window.dispatchEvent(new Event("pm:cart-changed"));
             }
           } catch {
-            /* ignore merge errors on header load */
+            /* ignore */
           }
         } else {
           setLabel("");
@@ -55,8 +56,8 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
   const userClass =
     className ||
     (fullWidth
-      ? "bg-primary text-primary-foreground flex h-10 w-full items-center justify-center gap-2 truncate rounded-xl px-3 text-sm font-medium"
-      : "border-border hover:bg-primary hover:text-primary-foreground inline-flex h-10 max-w-[9rem] shrink-0 items-center gap-1.5 truncate rounded-xl border px-3 text-sm");
+      ? "border-border hover:bg-muted flex h-10 w-full items-center justify-center truncate rounded-xl border px-3 text-sm font-medium"
+      : "border-border hover:bg-muted inline-flex h-10 max-w-[11rem] shrink-0 items-center truncate rounded-xl border px-2.5 text-sm tabular-nums");
 
   if (label === null) {
     return (
@@ -74,10 +75,8 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
         onClick={onNavigate}
         title={label}
         className={userClass}
+        dir="ltr"
       >
-        <span className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold">
-          {(label || "ک").trim().charAt(0)}
-        </span>
         <span className="truncate">{label}</span>
       </Link>
     );
