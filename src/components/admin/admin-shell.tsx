@@ -73,15 +73,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               href={item.href}
               onClick={() => setMobileNavOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-lg text-sm transition-colors",
-                compact ? "shrink-0 gap-1.5 px-3 py-2 whitespace-nowrap" : "px-3 py-2.5",
+                "flex items-center rounded-lg text-sm transition-colors",
+                compact
+                  ? // حدود ۳.۵ تب در عرض موبایل + فاصله یکنواخت
+                    "w-[calc((100%-18px)/3.5)] min-w-[calc((100%-18px)/3.5)] shrink-0 justify-center gap-1 px-1.5 py-2"
+                  : "gap-3 px-3 py-2.5",
                 active
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted text-foreground",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {(open || compact) ? <span>{item.label}</span> : null}
+              {(open || compact) ? (
+                <span className={cn(compact && "truncate text-[12px] leading-tight")}>
+                  {item.label}
+                </span>
+              ) : null}
             </Link>
           );
         })}
@@ -113,7 +120,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {/* اسکرول افقی سریع */}
-        <nav className="flex gap-1 overflow-x-auto px-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav
+          className="flex gap-1.5 overflow-x-auto px-3 pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          dir="rtl"
+        >
           <NavLinks compact />
         </nav>
         {/* منوی کامل بازشونده */}
