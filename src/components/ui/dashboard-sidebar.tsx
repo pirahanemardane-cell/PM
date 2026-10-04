@@ -69,7 +69,7 @@ function NavRow({
       className={cn(
         "group flex items-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
-          ? "w-auto max-w-full justify-start gap-1.5 px-3 py-2"
+          ? "h-full w-full justify-center gap-1 px-2 py-2.5"
           : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
@@ -142,13 +142,13 @@ export function CustomerSidebarNav({
           </span>
         </div>
         <div
-          className="flex flex-row gap-2 overflow-x-auto px-4 pb-1 pe-5 snap-x snap-mandatory sm:px-6 sm:pe-7 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-row gap-1.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           dir="rtl"
         >
           {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
             <div
               key={item.id}
-              className="snap-start flex w-[40%] min-w-[40%] max-w-[40%] shrink-0 justify-start"
+              className="snap-start w-[40%] min-w-[40%] max-w-[40%] shrink-0"
             >
               <NavRow
                 item={item}
