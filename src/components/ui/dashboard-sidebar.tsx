@@ -71,7 +71,7 @@ function NavRow({
         "group flex items-center justify-center gap-1.5 rounded-lg transition-all duration-200 select-none",
         compact
           ? // عرض تقریبی ۲.۵ تب در عرض صفحه: هر تب ~40% عرض اسکرولر
-            "w-[42%] min-w-[42%] shrink-0 justify-center px-2 py-2.5"
+            "shrink-0 px-3 py-2.5 min-w-max"
           : "w-full justify-between px-2.5 py-[7px]",
         active
           ? "bg-black/5 font-medium text-foreground dark:bg-white/10"
@@ -88,7 +88,7 @@ function NavRow({
           )}
           strokeWidth={1.5}
         />
-        <span className="truncate text-[13px] tracking-wide whitespace-nowrap">
+        <span className="text-[13px] tracking-wide whitespace-nowrap">
           {item.title}
         </span>
       </div>
@@ -129,6 +129,44 @@ export function CustomerSidebarNav({
 
   if (horizontal) {
     return (
+      <div className={cn("w-full font-sans", className)} dir="rtl" style={{ padding: 3 }}>
+        {/* شماره دقیقاً بالای «پنل مشتری»، راست‌چین */}
+        <div className="mb-2 w-full text-right">
+          <span
+            className="text-foreground block w-full text-right text-[13px] font-medium tabular-nums"
+            dir="ltr"
+            style={{ unicodeBidi: "isolate" }}
+          >
+            {displayName}
+          </span>
+          <span className="text-muted-foreground block w-full text-right text-[11px]">
+            پنل مشتری
+          </span>
+        </div>
+        {/* تب‌ها از لبه راست؛ متن + آیکون خوانا */}
+        <div
+          className="flex flex-row gap-1 overflow-x-auto pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          dir="rtl"
+        >
+          {[...NAV_MAIN, ...NAV_BOTTOM].map((item) => (
+            <div key={item.id} className="snap-start shrink-0">
+              <NavRow
+                item={item}
+                active={activeTab === item.id}
+                compact
+                onClick={() => {
+                  if (item.id === "logout") void logout();
+                  else onNavigate(item.id);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
       <div className={cn("w-full font-sans", className)} dir="rtl">
         {/* فقط شماره/نام — بدون آواتار آبی */}
         <div className="mb-2 w-full px-0 text-right">
@@ -290,12 +328,7 @@ export function CustomerDashboardShell({
                 <span className="text-foreground truncate font-medium">{title}</span>
               </div>
             </div>
-            <Link
-              href="/"
-              className="text-muted-foreground hover:text-foreground shrink-0 text-xs transition-colors"
-            >
-              فروشگاه
-            </Link>
+            {/* لینک فروشگاه حذف شد */}
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
