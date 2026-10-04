@@ -17,8 +17,15 @@ import {
   adminHardDeleteAttributesAction,
 } from "@/app/admin/actions/lifecycle";
 
-function isColorAttr(slug: string) {
-  return slug === "color";
+/** مشخصه رنگ: slug یا نام */
+function isColorAttr(slug: string, name?: string) {
+  const s = (slug || "").trim().toLowerCase();
+  const n = (name || "").trim().toLowerCase();
+  if (s === "color" || s === "colour" || s === "رنگ") return true;
+  if (n === "رنگ" || n.includes("رنگ") || n === "color" || n === "colour")
+    return true;
+  if (s.includes("color") || s.includes("colour")) return true;
+  return false;
 }
 
 function normalizeHex(raw: string): string | null {
@@ -143,25 +150,30 @@ export default function AdminAttributesPage() {
     await load();
   }
 
-  async function onAddOption(attributeId: string, slug: string) {
+  async function onAddOption(attributeId: string, slug: string, attrName: string) {
     const value = (optValue[attributeId] || "").trim();
     if (!value) return;
-    const hex = isColorAttr(slug)
-      ? normalizeHex(optHex[attributeId] || "")
-      : null;
-    if (isColorAttr(slug) && (optHex[attributeId] || "").trim() && !hex) {
-      setError("کد رنگ معتبر نیست (مثلاً #1A2B3C)");
+    const color = isColorAttr(slug, attrName);
+    const hexRaw = (optHex[attributeId] || "").trim();
+    const hex = color ? normalizeHex(hexRaw) : null;
+    if (color && hexRaw && !hex) {
+      setError("کد رنگ معتبر نیست (مثلاً #1A2B3C یا 1A2B3C)");
+      return;
+    }
+    if (color && !hex) {
+      setError("برای رنگ، کد هگز یا انتخاب از پیکر رنگ لازم است");
       return;
     }
     setBusy(attributeId);
+    setError(null);
     const res = await adminCreateAttributeOptionAction({
       attribute_id: attributeId,
       value,
-      hex,
+      hex: color ? hex : null,
     });
     setBusy(null);
     if (!res.ok) {
-      setError("افزودن گزینه ناموفق");
+      setError("افزودن گزینه ناموفق — ستون hex در دیتابیس را چک کنید");
       return;
     }
     setOptValue((p) => ({ ...p, [attributeId]: "" }));
@@ -188,11 +200,12 @@ export default function AdminAttributesPage() {
   ) {
     const hex = normalizeHex(raw);
     if (raw.trim() && !hex) {
-      setError("کد رنگ معتبر نیست");
+      setError("کد رنگ معتبر نیست (مثلاً #5B8FA8)");
       return;
     }
     if ((hex || null) === (current || null)) return;
     setBusy(optionId);
+    setError(null);
     const res = await adminUpdateAttributeOptionAction({
       id: optionId,
       hex,
@@ -210,7 +223,10 @@ export default function AdminAttributesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-primary">مشخصات محصول</h1>
-          </div>
+          <p className="text-muted-foreground mt-1 text-xs">
+            برای مشخصه رنگ: نام + کد هگز (سواچ)
+          </p>
+        </div>
         <Link
           href="/admin/products"
           className="text-muted-foreground text-sm hover:underline"
@@ -261,7 +277,7 @@ export default function AdminAttributesPage() {
       ) : (
         <div className="space-y-4">
           {items.map((a) => {
-            const color = isColorAttr(a.slug);
+            const color = isColorAttr(a.slug, a.name);
             return (
               <div
                 key={a.id}
@@ -294,7 +310,7 @@ export default function AdminAttributesPage() {
                   </h2>
                   <span className="text-muted-foreground font-mono text-xs">
                     {a.slug}
-                    {color ? " · رنگ" : ""}
+                    {color ? " · رنگ + هگز" : ""}
                   </span>
                 </div>
 
@@ -308,21 +324,33 @@ export default function AdminAttributesPage() {
                       >
                         {color ? (
                           <span
-                            className="border-border inline-block h-5 w-5 shrink-0 rounded-full border"
+                            className="border-border inline-block h-6 w-6 shrink-0 rounded-full border shadow-sm"
                             style={{ backgroundColor: hx || "#ccc" }}
                             title={hx || "بدون hex"}
                           />
                         ) : null}
                         <span>{o.value}</span>
                         {color ? (
-                          <input
-                            className="border-border bg-background w-[7.5rem] rounded border px-1.5 py-0.5 font-mono text-xs"
-                            defaultValue={hx || ""}
-                            placeholder="#RRGGBB"
-                            onBlur={(e) =>
-                              void onHexBlur(o.id, e.target.value, hx)
-                            }
-                          />
+                          <>
+                            <input
+                              type="color"
+                              className="h-7 w-8 cursor-pointer rounded border-0 bg-transparent p-0"
+                              value={normalizeHex(hx || "") || "#CCCCCC"}
+                              onChange={(e) => {
+                                const v = e.target.value.toUpperCase();
+                                void onHexBlur(o.id, v, hx);
+                              }}
+                              title="انتخاب رنگ"
+                            />
+                            <input
+                              className="border-border bg-background w-[7.5rem] rounded border px-1.5 py-0.5 font-mono text-xs"
+                              defaultValue={hx || ""}
+                              placeholder="#RRGGBB"
+                              onBlur={(e) =>
+                                void onHexBlur(o.id, e.target.value, hx)
+                              }
+                            />
+                          </>
                         ) : null}
                         <button
                           type="button"
@@ -345,7 +373,7 @@ export default function AdminAttributesPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     className="border-border bg-background max-w-xs flex-1 rounded-lg border px-2 py-1.5 text-sm"
-                    placeholder={color ? "نام رنگ" : "گزینه جدید"}
+                    placeholder={color ? "نام رنگ (مثلاً آبی)" : "گزینه جدید"}
                     value={optValue[a.id] ?? ""}
                     onChange={(e) =>
                       setOptValue((p) => ({
@@ -358,20 +386,19 @@ export default function AdminAttributesPage() {
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        className="h-9 w-10 cursor-pointer rounded border-0 bg-transparent p-0"
-                        value={
-                          normalizeHex(optHex[a.id] || "") || "#CCCCCC"
-                        }
+                        className="border-border h-9 w-10 cursor-pointer rounded-lg border bg-transparent p-0.5"
+                        value={normalizeHex(optHex[a.id] || "") || "#5B8FA8"}
                         onChange={(e) =>
                           setOptHex((p) => ({
                             ...p,
                             [a.id]: e.target.value.toUpperCase(),
                           }))
                         }
+                        title="انتخاب رنگ"
                       />
                       <input
-                        className="border-border bg-background w-[7.5rem] rounded-lg border px-2 py-1.5 font-mono text-sm"
-                        placeholder="#RRGGBB"
+                        className="border-border bg-background w-[8rem] rounded-lg border px-2 py-1.5 font-mono text-sm"
+                        placeholder="#5B8FA8"
                         value={optHex[a.id] ?? ""}
                         onChange={(e) =>
                           setOptHex((p) => ({
@@ -381,11 +408,12 @@ export default function AdminAttributesPage() {
                         }
                       />
                       <span
-                        className="border-border inline-block h-7 w-7 rounded-full border"
+                        className="border-border inline-block h-8 w-8 shrink-0 rounded-full border shadow-sm"
                         style={{
                           backgroundColor:
                             normalizeHex(optHex[a.id] || "") || "#e5e7eb",
                         }}
+                        title="پیش‌نمایش سواچ"
                       />
                     </div>
                   ) : null}
@@ -393,11 +421,16 @@ export default function AdminAttributesPage() {
                     type="button"
                     className="border-border rounded-lg border px-3 py-1.5 text-xs"
                     disabled={busy === a.id}
-                    onClick={() => void onAddOption(a.id, a.slug)}
+                    onClick={() => void onAddOption(a.id, a.slug, a.name)}
                   >
                     + گزینه
                   </button>
                 </div>
+                {color ? (
+                  <p className="text-muted-foreground text-[11px]">
+                    نام رنگ + کد هگز (یا از دایره رنگ انتخاب کنید) → سواچ در فیلتر و محصول
+                  </p>
+                ) : null}
               </div>
             );
           })}
