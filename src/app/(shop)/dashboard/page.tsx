@@ -221,6 +221,10 @@ useEffect(() => {
         router.replace("/ورود?next=/dashboard");
         return;
       }
+      setProfileForm({
+        full_name: res.profile?.full_name ?? "",
+        phone: res.profile?.phone ?? "",
+      });
       setAuthOk(true);
       setAuthChecked(true);
     })();
@@ -990,7 +994,7 @@ useEffect(() => {
               ) : shopProducts.length === 0 ? (
                 <p className="text-muted-foreground text-sm">محصولی یافت نشد.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {shopProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}

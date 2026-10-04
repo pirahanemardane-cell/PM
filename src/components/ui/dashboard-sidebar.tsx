@@ -229,7 +229,7 @@ export function CustomerDashboardShell({
         )}
       >
         {/* موبایل/تبلت: ناوبری بالا */}
-        <div className="border-border/50 shrink-0 border-b p-3 lg:hidden">
+        <div className="border-border/50 shrink-0 border-b px-0 py-3 pt-3 lg:hidden">
           <CustomerSidebarNav
             horizontal
             displayName={displayName}
