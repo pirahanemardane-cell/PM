@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CarouselCards } from "@/components/ui/carousel-cards";
 import type { CarouselCardItem } from "@/lib/product-to-carousel-item";
 import { getLiveRecentlyViewedAction } from "@/app/(shop)/actions/shop";
 import { useShopStore } from "@/lib/shop-store";
+import { useRtEvent } from "@/hooks/use-rt-event";
+import { RT } from "@/lib/realtime/events";
 
 type StoredItem = {
   id?: string;
@@ -20,105 +22,86 @@ type StoredItem = {
 
 const LS_KEY = "pm-recently-viewed";
 
+function collectIds(): string[] {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as StoredItem[]) : [];
+    const fromLs = Array.isArray(parsed) ? parsed : [];
+    const storeItems = useShopStore.getState().recentlyViewed || [];
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    for (const x of [...storeItems, ...fromLs]) {
+      const id = (x as StoredItem).id;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+    }
+    return ids;
+  } catch {
+    return (useShopStore.getState().recentlyViewed || [])
+      .map((x) => x.id)
+      .filter(Boolean);
+  }
+}
+
 export function RecentlyViewed() {
   const [items, setItems] = useState<CarouselCardItem[]>([]);
   const [ready, setReady] = useState(false);
-  const pruneStore = useShopStore((s) => s.recentlyViewed);
+  const storeLen = useShopStore((s) => s.recentlyViewed.length);
+
+  const refresh = useCallback(async () => {
+    try {
+      const ids = collectIds();
+      if (!ids.length) {
+        setItems([]);
+        setReady(true);
+        return;
+      }
+      const res = await getLiveRecentlyViewedAction(ids);
+      if (!res.ok) {
+        setItems([]);
+        setReady(true);
+        return;
+      }
+      const live = res.items;
+      const kept = live.map((x) => ({
+        id: x.id,
+        title: x.title,
+        price: x.price,
+        image: x.image,
+        brand: x.brand,
+        href: x.href,
+      }));
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(kept));
+      } catch {}
+      useShopStore.setState({ recentlyViewed: kept });
+      setItems(
+        live.map((x) => ({
+          id: x.id,
+          title: x.title,
+          brand: x.brand,
+          href: x.href,
+          imageUrl: x.image || "/og-image.webp",
+          price: x.price,
+        })),
+      );
+      setReady(true);
+    } catch {
+      setItems([]);
+      setReady(true);
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        const parsed = raw ? (JSON.parse(raw) as StoredItem[]) : [];
-        const fromLs = Array.isArray(parsed) ? parsed : [];
-        const storeItems = useShopStore.getState().recentlyViewed || [];
-        const byId = new Map<string, StoredItem>();
-        // store اول (تازه‌تر)، بعد LS
-        for (const x of [...storeItems, ...fromLs]) {
-          const id = (x as StoredItem).id;
-          if (!id) continue;
-          if (!byId.has(id)) byId.set(id, x as StoredItem);
-        }
-        const ordered = [...byId.values()];
-        if (!ordered.length) {
-          if (!cancelled) {
-            setItems([]);
-            setReady(true);
-          }
-          return;
-        }
+    void refresh();
+  }, [refresh, storeLen]);
 
-        const ids = ordered.map((x) => x.id!).filter(Boolean);
-        // سرور واقعی: فقط محصولات published و حذف‌نشده + قیمت/عکس/نام فعلی
-        const res = await getLiveRecentlyViewedAction(ids);
-        if (cancelled) return;
+  useRtEvent(RT.catalog, () => {
+    void refresh();
+  });
 
-        if (!res.ok) {
-          // اگر سرور خطا داد، چیزی نشان نده (نه دموی قدیمی)
-          setItems([]);
-          setReady(true);
-          return;
-        }
-
-        const liveItems = res.items;
-        const liveIds = new Set(liveItems.map((x) => x.id));
-
-        // پاک کردن حذف‌شده‌ها از localStorage و zustand
-        const keptForStore = ordered
-          .filter((x) => x.id && liveIds.has(x.id))
-          .map((x) => {
-            const live = liveItems.find((l) => l.id === x.id);
-            return {
-              id: x.id!,
-              title: live?.title ?? x.title ?? x.name ?? "محصول",
-              price: live?.price ?? (typeof x.price === "number" ? x.price : 0),
-              image: live?.image ?? x.imageUrl ?? x.image,
-              brand: live?.brand ?? x.brand,
-              href: live?.href ?? x.href,
-            };
-          });
-
-        try {
-          localStorage.setItem(LS_KEY, JSON.stringify(keptForStore));
-        } catch {}
-        useShopStore.setState({
-          recentlyViewed: keptForStore.map((k) => ({
-            id: k.id,
-            title: k.title,
-            price: k.price,
-            image: k.image,
-            brand: k.brand,
-            href: k.href,
-          })),
-        });
-
-        setItems(
-          liveItems.map((x) => ({
-            id: x.id,
-            title: x.title,
-            brand: x.brand,
-            href: x.href,
-            imageUrl: x.image || "/og-image.webp",
-            price: x.price,
-          })),
-        );
-        setReady(true);
-      } catch {
-        if (!cancelled) {
-          setItems([]);
-          setReady(true);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [pruneStore]);
-
-  if (!ready) {
-    return null;
-  }
+  if (!ready) return null;
 
   if (items.length === 0) {
     return (

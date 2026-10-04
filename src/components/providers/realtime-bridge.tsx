@@ -226,6 +226,7 @@ export function RealtimeBridge() {
         if (userId) {
           dispatch(RT.cart, 0);
           dispatch(RT.orders, 0);
+          dispatch(RT.wishlist, 0);
         }
       }
     };

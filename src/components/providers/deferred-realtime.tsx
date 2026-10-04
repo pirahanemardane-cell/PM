@@ -15,7 +15,18 @@ const WishlistSync = dynamic(
   { ssr: false },
 );
 
-/** بعد از ۲.۵ثانیه یا اولین تعامل */
+const CompareSync = dynamic(
+  () =>
+    import("@/components/providers/compare-sync").then((m) => m.CompareSync),
+  { ssr: false },
+);
+
+const RecentSync = dynamic(
+  () =>
+    import("@/components/providers/recent-sync").then((m) => m.RecentSync),
+  { ssr: false },
+);
+
 export function DeferredRealtime() {
   const [ready, setReady] = useState(false);
 
@@ -41,6 +52,8 @@ export function DeferredRealtime() {
     <>
       <RealtimeBridge />
       <WishlistSync />
+      <CompareSync />
+      <RecentSync />
     </>
   );
 }

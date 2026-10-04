@@ -102,7 +102,9 @@ export async function listWishlistAction(): Promise<{
         product_images(url, is_primary, sort_order, variant_id)
       `
       )
-      .in("id", ids);
+      .in("id", ids)
+      .eq("status", "published")
+      .is("deleted_at", null);
     if (error) throw error;
 
     const items: WishlistItemDTO[] = (data ?? []).map((p: any) => {
