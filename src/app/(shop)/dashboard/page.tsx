@@ -1,24 +1,21 @@
 "use client";
 
 import nextDynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
-
-export const dynamic = "force-dynamic";
-
-import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-const ProductCard = nextDynamic(
-  () => import("@/components/product/product-card").then((m) => m.ProductCard),
-  { ssr: false, loading: () => null },
-);
-import { useShopStore } from "@/lib/shop-store"
+import { useShopStore } from "@/lib/shop-store";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
+import { normalizeIranMobile } from "@/lib/numbers";
+import { useNotifications } from "@/lib/notifications/use-notifications";
+import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
 import {
   getCartAction,
   removeCartItemAction,
@@ -26,7 +23,9 @@ import {
   listMyOrdersAction,
   reorderOrderAction,
   getMyProfileAction,
-  updateMyProfileAction, updateMyEmailAction, deleteMyAccountAction,
+  updateMyProfileAction,
+  updateMyEmailAction,
+  deleteMyAccountAction,
   listMyAddressesAction,
   listActiveDiscountsAction,
   listShopProductsAction,
@@ -50,14 +49,16 @@ import {
   listMyReturnsAction,
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
+
+const ProductCard = nextDynamic(
+  () => import("@/components/product/product-card").then((m) => m.ProductCard),
+  { ssr: false, loading: () => null },
+);
+
 const ComposerInput = nextDynamic(
   () => import("@/components/ui/composer-input").then((m) => m.ComposerInput),
   { ssr: false, loading: () => null },
 );
-import { normalizeIranMobile } from "@/lib/numbers";
-import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
-import { useNotifications } from "@/lib/notifications/use-notifications";
-import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
 
 
 const TABS = [
