@@ -3,8 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 import { AppToaster } from "@/components/ui/app-toaster";
-import { RealtimeBridge } from "@/components/providers/realtime-bridge";
-import { WishlistSync } from "@/components/providers/wishlist-sync";
+import { DeferredRealtime } from "@/components/providers/deferred-realtime";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 
@@ -84,8 +83,6 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning className="max-w-full">
       <head>
-        <link rel="preload" as="image" href="/hero/hero-poster.webp" type="image/webp" />
-        <link rel="preload" as="image" href="/hero/frames/frame-001.webp" type="image/webp" />
         <link
           rel="preload"
           as="font"
@@ -121,8 +118,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster theme="light" position="top-left" richColors closeButton />
-          <RealtimeBridge />
-          <WishlistSync />
+          <DeferredRealtime />
           <AppToaster />
         </ThemeProvider>
       </body>

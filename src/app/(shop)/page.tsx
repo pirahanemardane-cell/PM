@@ -27,6 +27,16 @@ export const metadata: Metadata = {
     "خرید پیراهن مردانه، کروات، پاپیون و اکسسوری از فروشگاه تخصصی پیراهن مردانه",
 };
 
+
+function HomeHeroPreloads() {
+  return (
+    <>
+      <link rel="preload" as="image" href="/hero/hero-poster.webp" type="image/webp" />
+      <link rel="preload" as="image" href="/hero/frames/frame-001.webp" type="image/webp" />
+    </>
+  );
+}
+
 export default async function HomePage() {
   const productService = new ProductService();
   const categoryService = new CategoryService();
@@ -94,6 +104,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <HomeHeroPreloads />
       <HeroScroll />
       <HomeAfterHero>
         <main className="mx-auto w-full max-w-none space-y-14 px-4 py-10 md:py-14">
