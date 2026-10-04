@@ -37,6 +37,7 @@ import {
   listWishlistAction,
   toggleWishlistAction,
   filterLiveProductIdsAction,
+  getLiveRecentlyViewedAction,
   type CartLineDTO,
 } from "@/app/(shop)/actions/shop";
 import {
@@ -176,24 +177,32 @@ export default function BuyerDashboardPage() {
   const compare = useShopStore((s) => s.compare);
   const recent = useShopStore((s) => s.recentlyViewed);
 
-  // بازدید اخیر: بعد از ۳ثانیه (اولویت با UI پنل)
+  // بازدید اخیر: داده واقعی از سرور — محصول حذف‌شده نمایش داده نمی‌شود
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const list = useShopStore.getState().recentlyViewed || [];
       if (!list.length) return;
       const ids = list.map((x) => x.id).filter(Boolean);
-      void filterLiveProductIdsAction(ids).then((res) => {
+      void getLiveRecentlyViewedAction(ids).then((res) => {
         if (!res.ok) return;
-        const live = new Set(res.ids);
-        const next = list.filter((x) => live.has(x.id));
-        if (next.length !== list.length) {
-          useShopStore.setState({ recentlyViewed: next });
-          try {
-            localStorage.setItem("pm-recently-viewed", JSON.stringify(next));
-          } catch {}
-        }
+        const liveById = new Map(res.items.map((x) => [x.id, x]));
+        const next = ids
+          .map((id) => liveById.get(id))
+          .filter((x): x is NonNullable<typeof x> => x != null)
+          .map((x) => ({
+            id: x.id,
+            title: x.title,
+            price: x.price,
+            image: x.image,
+            brand: x.brand,
+            href: x.href,
+          }));
+        useShopStore.setState({ recentlyViewed: next });
+        try {
+          localStorage.setItem("pm-recently-viewed", JSON.stringify(next));
+        } catch {}
       });
-    }, 3000);
+    }, 800);
     return () => window.clearTimeout(timer);
   }, []);
 

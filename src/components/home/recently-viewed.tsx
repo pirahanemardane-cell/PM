@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { CarouselCards } from "@/components/ui/carousel-cards";
 import type { CarouselCardItem } from "@/lib/product-to-carousel-item";
-import { filterLiveProductIdsAction } from "@/app/(shop)/actions/shop";
+import { getLiveRecentlyViewedAction } from "@/app/(shop)/actions/shop";
 import { useShopStore } from "@/lib/shop-store";
 
 type StoredItem = {
@@ -22,6 +22,7 @@ const LS_KEY = "pm-recently-viewed";
 
 export function RecentlyViewed() {
   const [items, setItems] = useState<CarouselCardItem[]>([]);
+  const [ready, setReady] = useState(false);
   const pruneStore = useShopStore((s) => s.recentlyViewed);
 
   useEffect(() => {
@@ -31,65 +32,93 @@ export function RecentlyViewed() {
         const raw = localStorage.getItem(LS_KEY);
         const parsed = raw ? (JSON.parse(raw) as StoredItem[]) : [];
         const fromLs = Array.isArray(parsed) ? parsed : [];
-        // merge with zustand store (same ids)
         const storeItems = useShopStore.getState().recentlyViewed || [];
         const byId = new Map<string, StoredItem>();
-        for (const x of [...fromLs, ...storeItems]) {
+        // store اول (تازه‌تر)، بعد LS
+        for (const x of [...storeItems, ...fromLs]) {
           const id = (x as StoredItem).id;
           if (!id) continue;
           if (!byId.has(id)) byId.set(id, x as StoredItem);
         }
         const ordered = [...byId.values()];
-        if (!ordered.length) return;
-
-        const ids = ordered.map((x) => x.id!).filter(Boolean);
-        const res = await filterLiveProductIdsAction(ids);
-        const live = new Set(res.ok ? res.ids : []);
-
-        const kept = ordered.filter((x) => x.id && live.has(x.id));
-        // پاک کردن حذف‌شده‌ها از localStorage و store
-        try {
-          localStorage.setItem(LS_KEY, JSON.stringify(kept));
-        } catch {}
-        const store = useShopStore.getState();
-        if (store.recentlyViewed?.length) {
-          const dead = store.recentlyViewed.filter((x) => !live.has(x.id));
-          for (const d of dead) {
-            // re-add only live via set: replace list
+        if (!ordered.length) {
+          if (!cancelled) {
+            setItems([]);
+            setReady(true);
           }
-          useShopStore.setState({
-            recentlyViewed: store.recentlyViewed.filter((x) => live.has(x.id)),
-          });
+          return;
         }
 
+        const ids = ordered.map((x) => x.id!).filter(Boolean);
+        // سرور واقعی: فقط محصولات published و حذف‌نشده + قیمت/عکس/نام فعلی
+        const res = await getLiveRecentlyViewedAction(ids);
         if (cancelled) return;
+
+        if (!res.ok) {
+          // اگر سرور خطا داد، چیزی نشان نده (نه دموی قدیمی)
+          setItems([]);
+          setReady(true);
+          return;
+        }
+
+        const liveItems = res.items;
+        const liveIds = new Set(liveItems.map((x) => x.id));
+
+        // پاک کردن حذف‌شده‌ها از localStorage و zustand
+        const keptForStore = ordered
+          .filter((x) => x.id && liveIds.has(x.id))
+          .map((x) => {
+            const live = liveItems.find((l) => l.id === x.id);
+            return {
+              id: x.id!,
+              title: live?.title ?? x.title ?? x.name ?? "محصول",
+              price: live?.price ?? (typeof x.price === "number" ? x.price : 0),
+              image: live?.image ?? x.imageUrl ?? x.image,
+              brand: live?.brand ?? x.brand,
+              href: live?.href ?? x.href,
+            };
+          });
+
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(keptForStore));
+        } catch {}
+        useShopStore.setState({
+          recentlyViewed: keptForStore.map((k) => ({
+            id: k.id,
+            title: k.title,
+            price: k.price,
+            image: k.image,
+            brand: k.brand,
+            href: k.href,
+          })),
+        });
+
         setItems(
-          kept
-            .map((x, i) => {
-              const title = (x.title || x.name || "").trim();
-              const href =
-                x.href ||
-                (x.slug ? `/products/${x.slug}` : x.id ? `/products/${x.id}` : "");
-              if (!title || !href) return null;
-              return {
-                id: x.id || x.slug || String(i),
-                title,
-                brand: x.brand,
-                href,
-                imageUrl: x.imageUrl || x.image || "/og-image.webp",
-                price: typeof x.price === "number" ? x.price : 0,
-              } satisfies CarouselCardItem;
-            })
-            .filter((x): x is CarouselCardItem => x != null),
+          liveItems.map((x) => ({
+            id: x.id,
+            title: x.title,
+            brand: x.brand,
+            href: x.href,
+            imageUrl: x.image || "/og-image.webp",
+            price: x.price,
+          })),
         );
+        setReady(true);
       } catch {
-        // ignore
+        if (!cancelled) {
+          setItems([]);
+          setReady(true);
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [pruneStore]);
+
+  if (!ready) {
+    return null;
+  }
 
   if (items.length === 0) {
     return (

@@ -1031,3 +1031,112 @@ export async function filterLiveProductIdsAction(ids: string[]) {
     return { ok: false as const, ids: [] as string[], error: "server" };
   }
 }
+
+/** محصولات زنده برای آخرین بازدیدها — فقط published و حذف‌نشده + داده فعلی */
+export type LiveRecentProductDTO = {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  image?: string;
+  brand?: string;
+  href: string;
+};
+
+export async function getLiveRecentlyViewedAction(ids: string[]): Promise<{
+  ok: boolean;
+  items: LiveRecentProductDTO[];
+  error?: string;
+}> {
+  try {
+    const clean = [...new Set((ids || []).filter(Boolean))].slice(0, 40);
+    if (!clean.length) return { ok: true, items: [] };
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        `
+        id,
+        name,
+        slug,
+        status,
+        deleted_at,
+        brands(name),
+        product_variants(price, is_active),
+        product_images(url, is_primary, sort_order, variant_id)
+      `
+      )
+      .in("id", clean)
+      .eq("status", "published")
+      .is("deleted_at", null);
+
+    if (error) {
+      console.error("[getLiveRecentlyViewed]", error);
+      return { ok: false, items: [], error: "db" };
+    }
+
+    const byId = new Map<string, LiveRecentProductDTO>();
+    for (const p of data ?? []) {
+      const row = p as {
+        id: string;
+        name?: string | null;
+        slug?: string | null;
+        brands?: { name?: string } | { name?: string }[] | null;
+        product_variants?: { price?: number; is_active?: boolean }[];
+        product_images?: {
+          url?: string;
+          is_primary?: boolean;
+          sort_order?: number;
+          variant_id?: string | null;
+        }[];
+      };
+      if (!row.id) continue;
+
+      const variants = (row.product_variants ?? []).filter(
+        (v) => v.is_active !== false
+      );
+      const prices = variants
+        .map((v) => Number(v.price ?? 0))
+        .filter((n) => !Number.isNaN(n) && n >= 0);
+      const price = prices.length ? Math.min(...prices) : 0;
+
+      const images = (row.product_images ?? [])
+        .slice()
+        .sort(
+          (a, b) =>
+            Number(b.is_primary) - Number(a.is_primary) ||
+            (a.sort_order ?? 0) - (b.sort_order ?? 0)
+        );
+      // عکس شاخص (بدون variant_id) یا اولین عکس
+      const image =
+        images.find((im) => !im.variant_id)?.url ?? images[0]?.url ?? undefined;
+
+      let brand: string | undefined;
+      const b = row.brands;
+      if (Array.isArray(b)) brand = b[0]?.name;
+      else if (b && typeof b === "object") brand = b.name;
+
+      const slug = (row.slug || "").trim();
+      byId.set(row.id, {
+        id: row.id,
+        title: (row.name || "محصول").trim(),
+        slug,
+        price,
+        image,
+        brand,
+        href: slug ? `/products/${slug}` : `/products/${row.id}`,
+      });
+    }
+
+    // ترتیب همان ids ورودی (آخرین بازدید اول)
+    const items = clean
+      .map((id) => byId.get(id))
+      .filter((x): x is LiveRecentProductDTO => x != null);
+
+    return { ok: true, items };
+  } catch (e) {
+    console.error("[getLiveRecentlyViewed]", e);
+    return { ok: false, items: [], error: "server" };
+  }
+}
