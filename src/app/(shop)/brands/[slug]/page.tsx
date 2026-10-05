@@ -38,8 +38,23 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+
+function decodeSlug(raw: string): string {
+  let s = raw;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const d = decodeURIComponent(s);
+      if (d === s) break;
+      s = d;
+    } catch {
+      break;
+    }
+  }
+  return s;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = decodeSlug((await params).slug);
   const brandService = new BrandService();
   const result = await brandService.getBySlug(slug);
   if (!result.success || !result.data) {
@@ -65,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BrandListingPage({ params, searchParams }: Props) {
-  const { slug } = await params;
+  const slug = decodeSlug((await params).slug);
   const sp = await searchParams;
 
   const brandService = new BrandService();
