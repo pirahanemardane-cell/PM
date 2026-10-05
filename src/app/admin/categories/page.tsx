@@ -1,8 +1,5 @@
 "use client";
 
-import { useRtEvent } from "@/hooks/use-rt-event";
-import { RT } from "@/lib/realtime/events";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
@@ -56,7 +53,10 @@ export default function AdminPage() {
     setBulkBusy(true);
     const res = await adminArchiveCategoriesAction(selected);
     setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    if (!res.ok) {
+      setError("آرشیو ناموفق");
+      return;
+    }
     setSelected([]);
     void load();
   }
@@ -86,7 +86,10 @@ export default function AdminPage() {
     setBulkBusy(true);
     const res = await adminArchiveCategoriesAction([id]);
     setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
+    if (!res.ok) {
+      setError("آرشیو ناموفق");
+      return;
+    }
     void load();
   }
   async function hardDeleteOne(id: string, n: string) {
@@ -110,7 +113,10 @@ export default function AdminPage() {
     setBulkBusy(true);
     const res = await adminRestoreCategoriesAction([id]);
     setBulkBusy(false);
-    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    if (!res.ok) {
+      setError("بازگردانی ناموفق");
+      return;
+    }
     void load();
   }
   async function runBulkRestore() {
@@ -119,7 +125,10 @@ export default function AdminPage() {
     setBulkBusy(true);
     const res = await adminRestoreCategoriesAction(selected);
     setBulkBusy(false);
-    if (!res.ok) { setError("بازگردانی ناموفق"); return; }
+    if (!res.ok) {
+      setError("بازگردانی ناموفق");
+      return;
+    }
     setSelected([]);
     void load();
   }
@@ -131,9 +140,11 @@ export default function AdminPage() {
     setLoading(false);
     if (!res.ok) {
       setError(
-        res.error === "login_required" ? "ورود لازم است"
-          : res.error === "forbidden" ? "دسترسی ادمین ندارید"
-          : "خطا در بارگذاری",
+        res.error === "login_required"
+          ? "ورود لازم است"
+          : res.error === "forbidden"
+            ? "دسترسی ادمین ندارید"
+            : "خطا در بارگذاری",
       );
       setItems([]);
       return;
@@ -141,16 +152,60 @@ export default function AdminPage() {
     setItems((res.items as Row[]) ?? []);
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
+  const byId = useMemo(() => {
+    const m = new Map<string, Row>();
+    for (const x of items) m.set(x.id, x);
+    return m;
+  }, [items]);
+
+  /** مرتب‌سازی سلسله‌مراتبی: ریشه، بعد فرزندانش */
   const visible = useMemo(() => {
     let list = items;
     if (showArchived || statusFilter === "archived") list = list.filter((x) => !x.is_active);
     else if (statusFilter === "active") list = list.filter((x) => x.is_active);
     const s = q.trim().toLowerCase();
-    if (s) list = list.filter((x) => x.name.toLowerCase().includes(s) || (x.slug || "").toLowerCase().includes(s));
-    return list;
-  }, [items, q, showArchived, statusFilter]);
+    if (s) {
+      list = list.filter(
+        (x) =>
+          x.name.toLowerCase().includes(s) ||
+          (x.slug || "").toLowerCase().includes(s) ||
+          (x.parent_id && (byId.get(x.parent_id)?.name || "").toLowerCase().includes(s)),
+      );
+    }
+
+    const roots = list
+      .filter((x) => !x.parent_id)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, "fa"));
+    const childrenOf = (pid: string) =>
+      list
+        .filter((x) => x.parent_id === pid)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, "fa"));
+
+    const ordered: Row[] = [];
+    const used = new Set<string>();
+    for (const r of roots) {
+      ordered.push(r);
+      used.add(r.id);
+      for (const ch of childrenOf(r.id)) {
+        ordered.push(ch);
+        used.add(ch.id);
+      }
+    }
+    // یتیم‌ها (والد فیلتر شده یا حذف شده)
+    for (const x of list) {
+      if (!used.has(x.id)) ordered.push(x);
+    }
+    return ordered;
+  }, [items, q, showArchived, statusFilter, byId]);
+
+  const rootOptions = useMemo(
+    () => items.filter((c) => !c.parent_id && c.is_active).sort((a, b) => a.name.localeCompare(b.name, "fa")),
+    [items],
+  );
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -164,15 +219,21 @@ export default function AdminPage() {
       return;
     }
     setName("");
-      setParentId("");
+    setParentId("");
     void load();
   }
 
-  async function save(id: string, patch: { name?: string; is_active?: boolean; sort_order?: number }) {
+  async function save(
+    id: string,
+    patch: { name?: string; is_active?: boolean; sort_order?: number; parent_id?: string | null },
+  ) {
     setBusyId(id);
     const res = await adminUpdateCategoryAction(id, patch);
     setBusyId(null);
-    if (!res.ok) { setError("ذخیره ناموفق"); return; }
+    if (!res.ok) {
+      setError("ذخیره ناموفق");
+      return;
+    }
     setItems((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
@@ -186,15 +247,19 @@ export default function AdminPage() {
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
-                        <Link
+            <Link
               href="/admin/categories/new"
               className="bg-primary text-primary-foreground rounded-xl px-4 py-2 text-sm font-medium"
             >
               دسته جدید
             </Link>
-<button
+            <button
               type="button"
-              onClick={() => { setShowArchived((v) => !v); setStatusFilter(""); setSelected([]); }}
+              onClick={() => {
+                setShowArchived((v) => !v);
+                setStatusFilter("");
+                setSelected([]);
+              }}
               className={
                 showArchived
                   ? "bg-amber-600 text-white rounded-xl px-4 py-2 text-sm font-medium"
@@ -210,10 +275,7 @@ export default function AdminPage() {
             >
               تازه‌سازی
             </button>
-            <Link
-              href="/admin/dashboard"
-              className="border-border rounded-xl border px-4 py-2 text-sm"
-            >
+            <Link href="/admin/dashboard" className="border-border rounded-xl border px-4 py-2 text-sm">
               داشبورد
             </Link>
           </div>
@@ -230,15 +292,16 @@ export default function AdminPage() {
             className="border-input bg-background h-10 min-w-[12rem] flex-1 rounded-xl border px-3 text-sm"
             required
           />
-
           <select
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
             className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
           >
-            <option value="">بدون والد (ریشه)</option>
-            {items.filter((c) => !c.parent_id && c.is_active).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+            <option value="">دسته اصلی (بدون والد)</option>
+            {rootOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                زیردستهٔ «{c.name}»
+              </option>
             ))}
           </select>
           <button
@@ -255,7 +318,7 @@ export default function AdminPage() {
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="جستجو نام یا اسلاگ…"
+            placeholder="جستجو نام، اسلاگ یا والد…"
             className="border-input bg-background h-10 min-w-[200px] flex-1 rounded-xl border px-3 text-sm"
           />
           <select
@@ -288,18 +351,21 @@ export default function AdminPage() {
         />
 
         {loading ? (
-          <div className="flex justify-center py-16"><LumaSpin /></div>
+          <div className="flex justify-center py-16">
+            <LumaSpin />
+          </div>
         ) : visible.length === 0 ? (
           <div className="border-border rounded-2xl border py-16 text-center">
             <p className="text-muted-foreground text-sm">دسته‌ای یافت نشد.</p>
           </div>
         ) : (
           <div className="table-scroll border-border overflow-x-auto rounded-2xl border">
-            <table className="w-full min-w-[700px] text-right text-sm">
+            <table className="w-full min-w-[820px] text-right text-sm">
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr className="whitespace-nowrap">
                   <th className="p-2 font-medium"> </th>
                   <th className="p-2 font-medium">نام</th>
+                  <th className="p-2 font-medium">سطح / والد</th>
                   <th className="p-2 font-medium">اسلاگ</th>
                   <th className="p-2 font-medium">ترتیب</th>
                   <th className="p-2 font-medium">وضعیت</th>
@@ -307,96 +373,137 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((r) => (
-                  <tr
-                    key={r.id}
-                    className={
-                      "border-border border-t whitespace-nowrap " +
-                      (!r.is_active ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80" : "")
-                    }
-                  >
-                    <td className="p-2 align-middle">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(r.id)}
-                        onChange={() => toggleSelect(r.id)}
-                        className="h-4 w-4"
-                      />
-                    </td>
-                    <td className="p-2 align-middle">
-                    <input
-                      defaultValue={r.name}
-                      disabled={busyId === r.id}
-                      className="border-input bg-background h-8 min-w-[120px] max-w-[200px] rounded-lg border px-2 text-xs font-medium"
-                      onBlur={(e) => {
-                        const v = e.target.value.trim();
-                        if (v && v !== r.name) void save(r.id, { name: v });
-                      }}
-                    />
-                    </td>
-                    <td className="text-muted-foreground p-2 align-middle font-mono text-xs" dir="ltr">
-                      {r.slug}
-                    </td>
-                  <td className="p-2 align-middle">
-                    <input
-                      type="number"
-                      defaultValue={r.sort_order ?? 0}
-                      disabled={busyId === r.id}
-                      className="border-input bg-background h-8 w-16 rounded-lg border px-2 text-xs tabular-nums"
-                      onBlur={(e) => {
-                        const n = Number(e.target.value);
-                        if (Number.isFinite(n) && n !== r.sort_order) void save(r.id, { sort_order: n });
-                      }}
-                    />
-                  </td>
-                    <td className="p-2 align-middle">
-                      <span
-                        className={
-                          "inline-flex rounded-lg border px-2 py-1 text-xs " +
-                          (r.is_active
-                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100"
-                            : "border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100")
-                        }
-                      >
-                        {r.is_active ? "فعال" : "بایگانی"}
-                      </span>
-                    </td>
-                    <td className="p-2 align-middle">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/admin/categories/${r.id}/edit`}
-                          className="text-sky-700 text-xs hover:underline dark:text-sky-400"
+                {visible.map((r) => {
+                  const isChild = Boolean(r.parent_id);
+                  const parentName = r.parent_id ? byId.get(r.parent_id)?.name : null;
+                  return (
+                    <tr
+                      key={r.id}
+                      className={
+                        "border-border border-t whitespace-nowrap " +
+                        (!r.is_active ? "bg-amber-50/80 dark:bg-amber-950/30 opacity-80 " : "") +
+                        (isChild ? "bg-muted/20" : "")
+                      }
+                    >
+                      <td className="p-2 align-middle">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(r.id)}
+                          onChange={() => toggleSelect(r.id)}
+                          className="h-4 w-4"
+                        />
+                      </td>
+                      <td className="p-2 align-middle">
+                        <div className={"flex items-center gap-1 " + (isChild ? "pr-5" : "")}>
+                          {isChild ? (
+                            <span className="text-muted-foreground text-xs" aria-hidden>
+                              └
+                            </span>
+                          ) : null}
+                          <input
+                            defaultValue={r.name}
+                            disabled={busyId === r.id}
+                            className={
+                              "border-input bg-background h-8 min-w-[120px] max-w-[220px] rounded-lg border px-2 text-xs " +
+                              (isChild ? "font-normal" : "font-semibold")
+                            }
+                            onBlur={(e) => {
+                              const v = e.target.value.trim();
+                              if (v && v !== r.name) void save(r.id, { name: v });
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td className="p-2 align-middle">
+                        <select
+                          value={r.parent_id || ""}
+                          disabled={busyId === r.id}
+                          className="border-input bg-background h-8 max-w-[180px] rounded-lg border px-2 text-xs"
+                          onChange={(e) => {
+                            const next = e.target.value || null;
+                            if (next === r.id) return;
+                            void save(r.id, { parent_id: next });
+                          }}
                         >
-                          ویرایش
-                        </Link>
-                        {!r.is_active ? (
-                          <button
-                            type="button"
-                            className="text-primary text-xs hover:underline"
-                            onClick={() => void restoreOne(r.id, r.name)}
-                          >
-                            بازگردانی
-                          </button>
+                          <option value="">دسته اصلی</option>
+                          {rootOptions
+                            .filter((c) => c.id !== r.id)
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                زیردستهٔ {c.name}
+                              </option>
+                            ))}
+                        </select>
+                        {isChild && parentName ? (
+                          <p className="text-muted-foreground mt-0.5 text-[10px]">زیر «{parentName}»</p>
                         ) : (
+                          <p className="text-muted-foreground mt-0.5 text-[10px]">ریشه</p>
+                        )}
+                      </td>
+                      <td className="text-muted-foreground p-2 align-middle font-mono text-xs" dir="ltr">
+                        {r.slug}
+                      </td>
+                      <td className="p-2 align-middle">
+                        <input
+                          type="number"
+                          defaultValue={r.sort_order ?? 0}
+                          disabled={busyId === r.id}
+                          className="border-input bg-background h-8 w-16 rounded-lg border px-2 text-xs tabular-nums"
+                          onBlur={(e) => {
+                            const n = Number(e.target.value);
+                            if (Number.isFinite(n) && n !== r.sort_order) void save(r.id, { sort_order: n });
+                          }}
+                        />
+                      </td>
+                      <td className="p-2 align-middle">
+                        <span
+                          className={
+                            "inline-flex rounded-lg border px-2 py-1 text-xs " +
+                            (r.is_active
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100"
+                              : "border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100")
+                          }
+                        >
+                          {r.is_active ? "فعال" : "بایگانی"}
+                        </span>
+                      </td>
+                      <td className="p-2 align-middle">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/admin/categories/${r.id}/edit`}
+                            className="text-sky-700 text-xs hover:underline dark:text-sky-400"
+                          >
+                            ویرایش
+                          </Link>
+                          {!r.is_active ? (
+                            <button
+                              type="button"
+                              className="text-primary text-xs hover:underline"
+                              onClick={() => void restoreOne(r.id, r.name)}
+                            >
+                              بازگردانی
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-muted-foreground text-xs hover:underline"
+                              onClick={() => void archiveOne(r.id, r.name)}
+                            >
+                              آرشیو
+                            </button>
+                          )}
                           <button
                             type="button"
-                            className="text-muted-foreground text-xs hover:underline"
-                            onClick={() => void archiveOne(r.id, r.name)}
+                            className="text-destructive text-xs hover:underline"
+                            onClick={() => void hardDeleteOne(r.id, r.name)}
                           >
-                            آرشیو
+                            حذف دائمی
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="text-destructive text-xs hover:underline"
-                          onClick={() => void hardDeleteOne(r.id, r.name)}
-                        >
-                          حذف دائمی
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
