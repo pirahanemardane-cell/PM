@@ -22,14 +22,14 @@ import type { ProductWithRelations } from "@/repositories/product.repository";
 export const revalidate = 60;
 
 const HOME_BRAND_SLIDES = [
-  { id: "lacoste", label: "Lacoste", href: "/brands/lacoste", imageUrl: "/brands/lacoste.webp" },
-  { id: "tommy", label: "Tommy Hilfiger", href: "/brands/tommy-hilfiger", imageUrl: "/brands/tommy-hilfiger.webp" },
-  { id: "armani", label: "Armani", href: "/brands/armani", imageUrl: "/brands/armani.webp" },
-  { id: "zara", label: "Zara", href: "/brands/zara", imageUrl: "/brands/zara.webp" },
-  { id: "polo", label: "Polo Ralph Lauren", href: "/brands/polo", imageUrl: "/brands/polo.webp" },
-  { id: "brooks", label: "Brooks Brothers", href: "/brands/brooks-brothers", imageUrl: "/brands/brooks-brothers.webp" },
-  { id: "ck", label: "Calvin Klein", href: "/brands/calvin-klein", imageUrl: "/brands/calvin-klein.webp" },
-  { id: "boss", label: "Hugo Boss", href: "/brands/hugo-boss", imageUrl: "/brands/hugo-boss.webp" },
+  { id: "لاکوست", label: "Lacoste", href: "/لاکوست", imageUrl: "/brands/lacoste.webp" },
+  { id: "تامی-هیلفیگر", label: "Tommy Hilfiger", href: "/تامی-هیلفیگر", imageUrl: "/brands/tommy-hilfiger.webp" },
+  { id: "آرمانی", label: "Armani", href: "/آرمانی", imageUrl: "/brands/armani.webp" },
+  { id: "زارا", label: "Zara", href: "/زارا", imageUrl: "/brands/zara.webp" },
+  { id: "پولو", label: "Polo Ralph Lauren", href: "/پولو", imageUrl: "/brands/polo.webp" },
+  { id: "بروکس-برادرز", label: "Brooks Brothers", href: "/بروکس-برادرز", imageUrl: "/brands/brooks-brothers.webp" },
+  { id: "کلوین-کلاین", label: "Calvin Klein", href: "/کلوین-کلاین", imageUrl: "/brands/calvin-klein.webp" },
+  { id: "هوگو-باس", label: "Hugo Boss", href: "/هوگو-باس", imageUrl: "/brands/hugo-boss.webp" },
 ] as const;
 
 
@@ -154,7 +154,7 @@ export default async function HomePage() {
                     return {
                       id: b.id,
                       label: b.name,
-                      href: `/brands/${b.slug}`,
+                      href: `/${encodeURIComponent(b.slug)}`,
                       imageUrl:
                         (b as { logo_url?: string | null }).logo_url ||
                         fromStatic?.imageUrl ||

@@ -1,6 +1,6 @@
 import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 import { BrandService } from "@/services/brand.service";
 import { ProductService } from "@/services/product.service";
@@ -197,7 +197,7 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
           breadcrumbSchema([
             { name: "خانه", url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/" },
             { name: "برندها", url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/brands" },
-            { name: brand.name, url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/brands/" + slug },
+            { name: brand.name, url: ((process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "")) + "/" + encodeURIComponent(slug) },
           ]),
         ]}
       />
@@ -229,7 +229,7 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
           breadcrumbSchema([
             { name: "خانه", url: "/" },
             { name: "برندها", url: "/brands" },
-            { name: brand.name, url: "/brands/" + slug },
+            { name: brand.name, url: "/" + encodeURIComponent(slug) },
           ]),
         ]}
       />
