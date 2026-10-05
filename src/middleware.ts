@@ -25,41 +25,44 @@ const PERSIAN_ROUTES: Record<string, string> = {
 
 const RESERVED = new Set([
   "",
-  "about",
-  "blog",
-  "brands",
-  "cart",
-  "categories",
-  "checkout",
-  "contact",
-  "dashboard",
-  "faq",
+  "admin",
+  "api",
   "login",
-  "products",
   "register",
-  "privacy",
-  "returns",
-  "shipping",
-  "size-guide",
+  "dashboard",
+  "cart",
+  "checkout",
+  "products",
+  "brands",
+  "blog",
+  "contact",
+  "about",
+  "faq",
   "terms",
+  "privacy",
+  "shipping",
+  "returns",
+  "size-guide",
   "track",
+  "categories",
   "tag",
   "wishlist",
   "compare",
-  "api",
-  "admin",
+  "recently-viewed",
+  "_next",
+  "favicon.ico",
+  "robots.txt",
+  "sitemap.xml",
+  "llms.txt",
   "ورود",
   "ثبت-نام",
   "علاقه-مندی-ها",
   "مقایسه",
   "سبد-خرید",
   "محصولات",
-  "تماس",
-  "درباره-ما",
-  "_next",
 ]);
 
-function decodePath(raw: string): string {
+function decodeSeg(raw: string): string {
   let s = raw;
   for (let i = 0; i < 3; i++) {
     try {
@@ -73,9 +76,21 @@ function decodePath(raw: string): string {
   return s;
 }
 
+async function withSessionRewrite(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const sessionRes = await updateSession(request);
+  const rewrite = NextResponse.rewrite(url);
+  sessionRes.cookies.getAll().forEach((c) => {
+    rewrite.cookies.set(c.name, c.value);
+  });
+  return applySecurityHeaders(rewrite);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // مسیرهای فارسی ثابت
   let dest = PERSIAN_ROUTES[pathname];
   if (!dest) {
     try {
@@ -84,59 +99,53 @@ export async function middleware(request: NextRequest) {
       /* ignore */
     }
   }
-
   if (dest) {
-    const url = request.nextUrl.clone();
-    url.pathname = dest;
-    const sessionRes = await updateSession(request);
-    const rewrite = NextResponse.rewrite(url);
-    sessionRes.cookies.getAll().forEach((c) => {
-      rewrite.cookies.set(c.name, c.value);
-    });
-    return applySecurityHeaders(rewrite);
+    return withSessionRewrite(request, dest);
   }
 
-  // تک‌بخشی: /لاکوست یا /پیراهن-رسمی → rewrite داخلی
+  // تک‌بخشی: /لاکوست یا /پیراهن-رسمی
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 1) {
-    const seg = decodePath(parts[0]);
-    if (!RESERVED.has(seg) && !RESERVED.has(parts[0])) {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if (url && key) {
+    const seg = decodeSeg(parts[0]);
+    if (!RESERVED.has(seg) && !RESERVED.has(seg.toLowerCase()) && !seg.includes(".")) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (supabaseUrl && supabaseKey) {
         try {
-          const sb = createClient(url, key);
-          // اول برند
+          const sb = createClient(supabaseUrl, supabaseKey);
+
+          // 1) برند اول
           const { data: brand } = await sb
             .from("brands")
             .select("slug")
             .eq("is_active", true)
             .eq("slug", seg)
             .maybeSingle();
+
           if (brand?.slug) {
-            const u = request.nextUrl.clone();
-            u.pathname = "/brands/" + encodeURIComponent(brand.slug);
-            const sessionRes = await updateSession(request);
-            const rw = NextResponse.rewrite(u);
-            sessionRes.cookies.getAll().forEach((c) => rw.cookies.set(c.name, c.value));
-            return applySecurityHeaders(rw);
+            // URL مرورگر همان /لاکوست می‌ماند
+            return withSessionRewrite(
+              request,
+              "/brands/" + encodeURIComponent(brand.slug),
+            );
           }
-          // بعد دسته
+
+          // 2) دسته
           const { data: cat } = await sb
             .from("categories")
             .select("slug")
             .eq("slug", seg)
             .maybeSingle();
+
           if (cat?.slug) {
-            const u = request.nextUrl.clone();
-            u.pathname = "/categories/" + encodeURIComponent(cat.slug);
-            const sessionRes = await updateSession(request);
-            const rw = NextResponse.rewrite(u);
-            sessionRes.cookies.getAll().forEach((c) => rw.cookies.set(c.name, c.value));
-            return applySecurityHeaders(rw);
+            return withSessionRewrite(
+              request,
+              "/categories/" + encodeURIComponent(cat.slug),
+            );
           }
         } catch (e) {
-          console.error("[middleware slug resolve]", e);
+          console.error("[middleware resolve slug]", e);
         }
       }
     }
