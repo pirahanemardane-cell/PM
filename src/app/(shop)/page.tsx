@@ -128,13 +128,22 @@ export default async function HomePage() {
             <CarouselLinks
               title="برندها"
               viewAllHref="/brands"
+              variant="brand"
               items={brands.map((b) => ({
                 id: b.id,
                 label: b.name,
                 href: `/brands/${b.slug}`,
+                imageUrl: (b as { logo_url?: string | null }).logo_url ?? null,
               }))}
             />
-          ) : null}
+          ) : (
+            <section aria-label="برندها" className="w-full">
+              <h2 className="mb-5 text-xl font-bold text-primary md:text-2xl">برندها</h2>
+              <p className="text-muted-foreground text-sm">
+                برندی برای نمایش نیست. در ادمین حداقل یک برند فعال با لوگو ثبت کنید.
+              </p>
+            </section>
+          )}
 
           {(() => {
             const HIDDEN = new Set(["متفرقه"]);
