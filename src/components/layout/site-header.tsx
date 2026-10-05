@@ -11,7 +11,8 @@ import { CountBadge, useShopCounts } from "@/components/layout/header-badges";
 import { useShopStore } from "@/lib/shop-store";
 import { ShopActivityDrawer, type ActivityTab } from "@/components/layout/shop-activity-drawer";
 import { Heart, GitCompareArrows, ShoppingCart, History, Menu, X, Sun, Moon, UserRound, ChevronDown, Shirt, Sparkles, Tag, Layers, Bell} from "lucide-react";
-import { cn } from "@/lib/utils"; const MAIN_NAV = [
+import { cn } from "@/lib/utils";
+import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_NAV = [
   { href: "/", label: "خانه", mega: null as null | "categories" | "brands" | "sale" },
   { href: "/products", label: "فروشگاه", mega: null },
   { href: "/contact", label: "تماس با ما", mega: null },
@@ -191,14 +192,20 @@ import { cn } from "@/lib/utils"; const MAIN_NAV = [
 
 export function SiteHeader({ className }: { className?: string }) {
   const [megaCategories, setMegaCategories] = useState<{ name: string; href: string; children?: { name: string; href: string }[] }[]>([]);
-  const [megaBrands, setMegaBrands] = useState<{ name: string; href: string }[]>([]);
+  const [megaBrands, setMegaBrands] = useState<{ name: string; href: string; slug?: string }[]>([]);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/nav/mega")
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        setMegaCategories(data.categories ?? []);
+        setMegaCategories(
+          (data.categories ?? []).map((c: { name: string; href: string; slug?: string }) => ({
+            name: c.name,
+            href: c.href,
+            slug: c.slug,
+          })),
+        );
         setMegaBrands(data.brands ?? []);
       })
       .catch(() => {});
