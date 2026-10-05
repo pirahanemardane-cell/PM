@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { applySecurityHeaders } from "@/lib/security/headers";
-import { createClient } from "@supabase/supabase-js";
 
 const PERSIAN_ROUTES: Record<string, string> = {
   "/ورود": "/login",
@@ -24,42 +23,12 @@ const PERSIAN_ROUTES: Record<string, string> = {
 };
 
 const RESERVED = new Set([
-  "",
-  "admin",
-  "api",
-  "login",
-  "register",
-  "dashboard",
-  "cart",
-  "checkout",
-  "products",
-  "brands",
-  "blog",
-  "contact",
-  "about",
-  "faq",
-  "terms",
-  "privacy",
-  "shipping",
-  "returns",
-  "size-guide",
-  "track",
-  "categories",
-  "tag",
-  "wishlist",
-  "compare",
-  "recently-viewed",
-  "_next",
-  "favicon.ico",
-  "robots.txt",
-  "sitemap.xml",
-  "llms.txt",
-  "ورود",
-  "ثبت-نام",
-  "علاقه-مندی-ها",
-  "مقایسه",
-  "سبد-خرید",
-  "محصولات",
+  "", "admin", "api", "login", "register", "dashboard", "cart", "checkout",
+  "products", "brands", "blog", "contact", "about", "faq", "terms", "privacy",
+  "shipping", "returns", "size-guide", "track", "categories", "tag", "wishlist",
+  "compare", "recently-viewed", "_next", "favicon.ico", "robots.txt",
+  "sitemap.xml", "llms.txt", "ورود", "ثبت-نام", "علاقه-مندی-ها", "مقایسه",
+  "سبد-خرید", "محصولات",
 ]);
 
 function decodeSeg(raw: string): string {
@@ -76,21 +45,47 @@ function decodeSeg(raw: string): string {
   return s;
 }
 
-async function withSessionRewrite(request: NextRequest, pathname: string) {
+async function sessionRewrite(request: NextRequest, pathname: string) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   const sessionRes = await updateSession(request);
   const rewrite = NextResponse.rewrite(url);
-  sessionRes.cookies.getAll().forEach((c) => {
-    rewrite.cookies.set(c.name, c.value);
-  });
+  sessionRes.cookies.getAll().forEach((c) => rewrite.cookies.set(c.name, c.value));
   return applySecurityHeaders(rewrite);
+}
+
+async function supabaseExists(
+  table: "brands" | "categories",
+  slug: string,
+): Promise<boolean> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!base || !key) return false;
+  try {
+    const q =
+      table === "brands"
+        ? `slug=eq.${encodeURIComponent(slug)}&is_active=eq.true&select=slug&limit=1`
+        : `slug=eq.${encodeURIComponent(slug)}&select=slug&limit=1`;
+    const res = await fetch(`${base}/rest/v1/${table}?${q}`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
+      // edge-friendly
+      next: { revalidate: 60 },
+    } as RequestInit);
+    if (!res.ok) return false;
+    const rows = (await res.json()) as unknown[];
+    return Array.isArray(rows) && rows.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // مسیرهای فارسی ثابت
   let dest = PERSIAN_ROUTES[pathname];
   if (!dest) {
     try {
@@ -99,54 +94,18 @@ export async function middleware(request: NextRequest) {
       /* ignore */
     }
   }
-  if (dest) {
-    return withSessionRewrite(request, dest);
-  }
+  if (dest) return sessionRewrite(request, dest);
 
-  // تک‌بخشی: /لاکوست یا /پیراهن-رسمی
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 1) {
     const seg = decodeSeg(parts[0]);
     if (!RESERVED.has(seg) && !RESERVED.has(seg.toLowerCase()) && !seg.includes(".")) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-      if (supabaseUrl && supabaseKey) {
-        try {
-          const sb = createClient(supabaseUrl, supabaseKey);
-
-          // 1) برند اول
-          const { data: brand } = await sb
-            .from("brands")
-            .select("slug")
-            .eq("is_active", true)
-            .eq("slug", seg)
-            .maybeSingle();
-
-          if (brand?.slug) {
-            // URL مرورگر همان /لاکوست می‌ماند
-            return withSessionRewrite(
-              request,
-              "/brands/" + encodeURIComponent(brand.slug),
-            );
-          }
-
-          // 2) دسته
-          const { data: cat } = await sb
-            .from("categories")
-            .select("slug")
-            .eq("slug", seg)
-            .maybeSingle();
-
-          if (cat?.slug) {
-            return withSessionRewrite(
-              request,
-              "/categories/" + encodeURIComponent(cat.slug),
-            );
-          }
-        } catch (e) {
-          console.error("[middleware resolve slug]", e);
-        }
+      // برند اول — URL نوار همان /لاکوست می‌ماند
+      if (await supabaseExists("brands", seg)) {
+        return sessionRewrite(request, "/brands/" + seg);
+      }
+      if (await supabaseExists("categories", seg)) {
+        return sessionRewrite(request, "/categories/" + seg);
       }
     }
   }
