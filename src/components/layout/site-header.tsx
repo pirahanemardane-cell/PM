@@ -88,8 +88,7 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {categories.map((root, i) => {
-            const Icon = catIcons[i % catIcons.length];
+          {categories.map((root) => {
             const hasKids = (root.children?.length ?? 0) > 0;
             return (
               <div
@@ -102,7 +101,7 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
                   className="mb-2 flex items-center gap-2.5"
                 >
                   <span className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition">
-                    <Icon className="h-4 w-4" />
+                    <CategorySvgIcon name={root.name} slug={root.href} className="h-5 w-5" />
                   </span>
                   <span className="text-sm font-bold leading-tight group-hover:text-primary">
                     {root.name}
@@ -251,8 +250,11 @@ return ( <> <header className={cn( "sticky top-0 z-50 border-b border-border/60"
                       <Link
                         href={root.href}
                         onClick={() => setMenuOpen(false)}
-                        className="hover:bg-primary hover:text-primary-foreground block rounded-xl px-3 py-2 text-sm font-medium"
+                        className="hover:bg-primary hover:text-primary-foreground flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium"
                       >
+                        <span className="bg-primary/10 text-primary inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                          <CategorySvgIcon name={root.name} slug={root.href} className="h-4 w-4" />
+                        </span>
                         {root.name}
                       </Link>
                       {(root.children?.length ?? 0) > 0 ? (
