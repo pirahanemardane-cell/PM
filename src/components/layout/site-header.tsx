@@ -2,6 +2,7 @@
 import { NotificationCountBadge } from "@/components/notifications/notification-count-badge";
 import { NotificationBell } from "@/components/notifications/notification-bell";
  import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { HeaderAuthButton } from "@/components/layout/header-auth-button";
@@ -39,8 +40,8 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
 }: {
   type: "categories" | "brands" | "sale";
   onNavigate?: () => void;
-  categories?: { name: string; href: string; children?: { name: string; href: string }[] }[];
-  brands?: { name: string; href: string }[];
+  categories?: { name: string; href: string; slug?: string; children?: { name: string; href: string; slug?: string }[] }[];
+  brands?: { name: string; href: string; slug?: string; logoUrl?: string | null }[];
 }) {
   const catIcons = [Shirt, Layers, Tag, Sparkles, Heart, ShoppingCart];
 
@@ -100,7 +101,7 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
                   onClick={onNavigate}
                   className="mb-2 flex items-center gap-2.5"
                 >
-                  <span className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition">
+                  <span className="bg-primary/10 text-primary group-hover:bg-primary/15 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition">
                     <CategorySvgIcon name={root.name} slug={root.href} className="h-5 w-5" />
                   </span>
                   <span className="text-sm font-bold leading-tight group-hover:text-primary">
@@ -179,9 +180,20 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
             key={item.href + item.name}
             href={item.href}
             onClick={onNavigate}
-            className="border-border/60 bg-background/70 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-xl border px-3 py-3.5 text-center text-sm font-medium shadow-sm transition"
+            className="border-border/60 bg-white hover:border-primary/40 flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-sm font-medium shadow-sm transition hover:bg-muted/30 dark:bg-background/70"
           >
-            {item.name}
+            {item.logoUrl ? (
+              <span className="relative flex h-10 w-full max-w-[6.5rem] items-center justify-center">
+                <Image
+                  src={item.logoUrl}
+                  alt={item.name}
+                  width={104}
+                  height={40}
+                  className="max-h-10 w-auto object-contain"
+                />
+              </span>
+            ) : null}
+            <span className="line-clamp-1 text-xs text-primary">{item.name}</span>
           </Link>
         ))}
       </div>
@@ -191,7 +203,7 @@ import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_N
 
 export function SiteHeader({ className }: { className?: string }) {
   const [megaCategories, setMegaCategories] = useState<{ name: string; href: string; children?: { name: string; href: string }[] }[]>([]);
-  const [megaBrands, setMegaBrands] = useState<{ name: string; href: string; slug?: string }[]>([]);
+  const [megaBrands, setMegaBrands] = useState<{ name: string; href: string; slug?: string; logoUrl?: string | null }[]>([]);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/nav/mega")
@@ -199,13 +211,30 @@ export function SiteHeader({ className }: { className?: string }) {
       .then((data) => {
         if (cancelled) return;
         setMegaCategories(
-          (data.categories ?? []).map((c: { name: string; href: string; slug?: string }) => ({
-            name: c.name,
-            href: c.href,
-            slug: c.slug,
-          })),
+          (data.categories ?? []).map(
+            (c: {
+              name: string;
+              href: string;
+              slug?: string;
+              children?: { name: string; href: string; slug?: string }[];
+            }) => ({
+              name: c.name,
+              href: c.href,
+              slug: c.slug,
+              children: c.children ?? [],
+            }),
+          ),
         );
-        setMegaBrands(data.brands ?? []);
+        setMegaBrands(
+          (data.brands ?? []).map(
+            (b: { name: string; href: string; slug?: string; logoUrl?: string | null }) => ({
+              name: b.name,
+              href: b.href,
+              slug: b.slug,
+              logoUrl: b.logoUrl ?? null,
+            }),
+          ),
+        );
       })
       .catch(() => {});
     return () => {

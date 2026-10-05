@@ -47,7 +47,8 @@ export async function GET() {
         ? brandRes.data.map((b) => ({
             name: b.name,
             slug: b.slug,
-            href: "/brands/" + encodeURIComponent(b.slug),
+            href: "/" + encodeURIComponent(b.slug),
+            logoUrl: (b as { logo_url?: string | null }).logo_url ?? null,
           }))
         : [];
 
