@@ -32,13 +32,13 @@ export async function GET() {
     const categories: NavCat[] = roots.map((r) => ({
       name: r.name,
       slug: r.slug,
-      href: "/products?category=" + encodeURIComponent(r.slug),
+      href: "/" + encodeURIComponent(r.slug),
       children: sorted
         .filter((c) => c.parent_id === r.id)
         .map((c) => ({
           name: c.name,
           slug: c.slug,
-          href: "/products?category=" + encodeURIComponent(c.slug),
+          href: "/" + encodeURIComponent(c.slug),
         })),
     }));
 
@@ -47,7 +47,7 @@ export async function GET() {
         ? brandRes.data.map((b) => ({
             name: b.name,
             slug: b.slug,
-            href: "/brands/" + b.slug,
+            href: "/brands/" + encodeURIComponent(b.slug),
           }))
         : [];
 

@@ -16,8 +16,22 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function decodeSlug(raw: string): string {
+  let s = raw;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const d = decodeURIComponent(s);
+      if (d === s) break;
+      s = d;
+    } catch {
+      break;
+    }
+  }
+  return s;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = decodeSlug((await params).slug);
   const categoryService = new CategoryService();
   const result = await categoryService.getBySlug(slug);
   if (!result.success || !result.data) {
@@ -32,7 +46,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
   const title = applySeoTemplate(d.meta_title, { name: d.name }) || d.name;
   const description =
-    applySeoTemplate(d.meta_description, { name: d.name, description: d.description || undefined }) ||
+    applySeoTemplate(d.meta_description, {
+      name: d.name,
+      description: d.description || undefined,
+    }) ||
     d.description ||
     `محصولات دسته ${d.name}`;
   return {
@@ -46,7 +63,7 @@ export default async function CategoryListingPage({
   params,
   searchParams,
 }: Props) {
-  const { slug } = await params;
+  const slug = decodeSlug((await params).slug);
   const sp = await searchParams;
 
   const categoryService = new CategoryService();
@@ -70,19 +87,21 @@ export default async function CategoryListingPage({
 
   if (!result.success || !result.data) {
     return (
-    <>
-      <CatalogRealtimeRefresh />
-
-      <main className="w-full max-w-none mx-auto px-4 py-12">
-        <p className="text-destructive text-center">{result.error ?? "خطا"}</p>
-      </main>
-    </>
+      <>
+        <CatalogRealtimeRefresh />
+        <main className="w-full max-w-none mx-auto px-4 py-12">
+          <p className="text-destructive text-center">{result.error ?? "خطا"}</p>
+        </main>
+      </>
     );
   }
 
   const { data: products, total, page, totalPages } = result.data;
+  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(
+    /\/$/,
+    "",
+  );
 
-  const siteBase = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir").replace(/\/$/, "");
   return (
     <main className="w-full max-w-none mx-auto px-4 py-8 md:py-12">
       <JsonLd
@@ -90,12 +109,15 @@ export default async function CategoryListingPage({
           collectionPageSchema({
             name: category.name,
             description: category.description,
-            url: `/categories/${slug}`,
+            url: `/${encodeURIComponent(slug)}`,
           }),
           breadcrumbSchema([
             { name: "خانه", url: siteBase + "/" },
-            { name: "دسته‌ها", url: siteBase + "/categories" },
-            { name: category.name, url: siteBase + "/categories/" + slug },
+            { name: "فروشگاه", url: siteBase + "/products" },
+            {
+              name: category.name,
+              url: siteBase + "/" + encodeURIComponent(slug),
+            },
           ]),
         ]}
       />
