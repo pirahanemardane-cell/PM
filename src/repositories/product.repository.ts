@@ -40,15 +40,37 @@ export class ProductRepository extends BaseRepository {
       .eq("status", "published")
       .is("deleted_at", null);
 
-    // دسته‌بندی
+    // دسته‌بندی: خود دسته + همه زیردسته‌های مستقیم
     if (filters.categorySlug) {
+      let catSlug = String(filters.categorySlug);
+      for (let i = 0; i < 3; i++) {
+        try {
+          const d = decodeURIComponent(catSlug);
+          if (d === catSlug) break;
+          catSlug = d;
+        } catch {
+          break;
+        }
+      }
       const { data: category } = await client
         .from("categories")
         .select("id")
-        .eq("slug", filters.categorySlug)
+        .eq("slug", catSlug)
         .eq("is_active", true)
         .maybeSingle();
-      if (category) query = query.eq("category_id", category.id);
+      if (category) {
+        const parentId = (category as { id: string }).id;
+        const { data: children } = await client
+          .from("categories")
+          .select("id")
+          .eq("parent_id", parentId)
+          .eq("is_active", true);
+        const ids = [
+          parentId,
+          ...((children ?? []) as { id: string }[]).map((c) => c.id),
+        ];
+        query = query.in("category_id", ids);
+      }
     }
 
     // برند
