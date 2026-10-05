@@ -7,6 +7,7 @@ import { RT } from "@/lib/realtime/events";
 import { Price } from "@/components/ui/price";
 import * as React from "react";
 import Image from "next/image";
+import { CategorySvgIcon } from "@/components/home/category-icons";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -197,7 +198,7 @@ export function CarouselLinks({
     "basis-[calc((100%-0.5rem)/2.2)] pr-4 sm:basis-[calc((100%-1.5rem)/3.5)] lg:basis-[calc((100%-2.5rem)/5)]";
 
   const categoryBasis =
-    "basis-[calc((100%-0.5rem)/1.4)] pr-4 sm:basis-[calc((100%-1.5rem)/2.3)] lg:basis-[calc((100%-2.5rem)/3.2)]";
+    "basis-[calc((100%-0.5rem)/2.05)] pr-4 sm:basis-[calc((100%-1.5rem)/3.1)] lg:basis-[calc((100%-2.5rem)/4.2)]";
 
   return (
     <section className={cn("w-full", className)}>
@@ -233,23 +234,14 @@ export function CarouselLinks({
                 {variant === "category" ? (
                   <Link
                     href={item.href}
-                    className="group relative block overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-md"
+                    className="group flex h-36 w-full flex-col items-center justify-center gap-3 rounded-2xl border bg-card px-3 py-4 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
-                      <Image
-                        src={item.imageUrl || "/og-image.webp"}
-                        alt={item.label}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="(max-width: 640px) 70vw, (max-width: 1024px) 40vw, 28vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 p-3">
-                        <span className="block text-sm font-bold text-white drop-shadow md:text-base">
-                          {item.label}
-                        </span>
-                      </div>
-                    </div>
+                    <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-10" />
+                    </span>
+                    <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
+                      {item.label}
+                    </span>
                   </Link>
                 ) : (
                   <Link
