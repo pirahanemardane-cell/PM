@@ -114,16 +114,6 @@ export async function middleware(request: NextRequest) {
   }
 
 
-  // برند: /brands/slug → /slug (URL فارسی ریشه)
-  if (pathname.startsWith("/brands/") && pathname !== "/brands/") {
-    const brandSlug = pathname.slice("/brands/".length);
-    if (brandSlug && !brandSlug.includes("/")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/" + brandSlug;
-      return applySecurityHeaders(NextResponse.redirect(url, 308));
-    }
-  }
-
   return applySecurityHeaders(await updateSession(request));
 }
 
