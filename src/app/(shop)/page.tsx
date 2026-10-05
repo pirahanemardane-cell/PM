@@ -136,18 +136,25 @@ export default async function HomePage() {
             />
           ) : null}
 
-          {categories.length > 0 ? (
-            <CarouselLinks
-              title="دسته‌بندی‌ها"
-              viewAllHref="/products"
-              variant="category"
-              items={categories.map((cat) => ({
-                id: cat.id,
-                label: cat.name,
-                href: `/categories/${cat.slug}`,
-              }))}
-            />
-          ) : null}
+          {(() => {
+            const HIDDEN = new Set(["متفرقه"]);
+            const homeCats = categories.filter(
+              (c) => !c.parent_id && !HIDDEN.has(String(c.name).trim()),
+            );
+            return homeCats.length > 0 ? (
+              <CarouselLinks
+                title="دسته‌بندی‌ها"
+                viewAllHref="/products"
+                variant="category"
+                items={homeCats.map((cat) => ({
+                  id: cat.id,
+                  label: cat.name,
+                  href: "/" + encodeURIComponent(cat.slug),
+                  imageUrl: (cat as { image_url?: string | null }).image_url ?? null,
+                }))}
+              />
+            ) : null;
+          })()}
 
           {newest.length > 0 ? (
             <ProductCarousel

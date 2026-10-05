@@ -32,7 +32,9 @@ type CarouselCardsProps = {
   leading?: React.ReactNode;
 };
 
-function formatPrice(_p: number) { return null; }
+function formatPrice(_p: number) {
+  return null;
+}
 
 export function CarouselCards({
   items,
@@ -113,10 +115,7 @@ export function CarouselCards({
                       <Badge className="absolute top-3 right-3">{item.badge}</Badge>
                     )}
                     {item.discountPercent != null && item.discountPercent > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute top-3 left-3"
-                      >
+                      <Badge variant="destructive" className="absolute top-3 left-3">
                         ٪{toPersianDigits(item.discountPercent)}
                       </Badge>
                     )}
@@ -136,12 +135,11 @@ export function CarouselCards({
                     )}
                     <div className="flex flex-wrap items-baseline gap-2 pt-1">
                       <Price amount={item.price} size="sm" />
-                      {item.originalPrice != null &&
-                        item.originalPrice > item.price && (
-                          <span className="text-xs text-muted-foreground line-through">
-                            <Price amount={item.originalPrice} size="sm" strike />
-                          </span>
-                        )}
+                      {item.originalPrice != null && item.originalPrice > item.price && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          <Price amount={item.originalPrice} size="sm" strike />
+                        </span>
+                      )}
                     </div>
                     {item.inStock === false && (
                       <p className="text-xs text-destructive">ناموجود</p>
@@ -163,6 +161,7 @@ export type CarouselLinkItem = {
   id: string;
   label: string;
   href: string;
+  imageUrl?: string | null;
 };
 
 export function CarouselLinks({
@@ -191,15 +190,14 @@ export function CarouselLinks({
 
   if (!items?.length) return null;
 
-  const chip =
-    variant === "category"
-      ? "hover:border-foreground/20 flex h-24 w-full items-center justify-center rounded-2xl border p-4 text-center text-sm font-medium transition-colors hover:bg-muted/40"
-      : "bg-muted/40 hover:border-foreground/20 flex h-20 w-full items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60";
+  const brandChip =
+    "bg-muted/40 hover:border-foreground/20 flex h-20 w-full items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60";
 
-  const basis =
-    variant === "category"
-      ? "basis-[calc((100%-0.5rem)/1.5)] pr-4 sm:basis-[calc((100%-1.5rem)/2.5)] lg:basis-[calc((100%-2.5rem)/3.5)]"
-      : "basis-[calc((100%-0.5rem)/2.2)] pr-4 sm:basis-[calc((100%-1.5rem)/3.5)] lg:basis-[calc((100%-2.5rem)/5)]";
+  const brandBasis =
+    "basis-[calc((100%-0.5rem)/2.2)] pr-4 sm:basis-[calc((100%-1.5rem)/3.5)] lg:basis-[calc((100%-2.5rem)/5)]";
+
+  const categoryBasis =
+    "basis-[calc((100%-0.5rem)/1.4)] pr-4 sm:basis-[calc((100%-1.5rem)/2.3)] lg:basis-[calc((100%-2.5rem)/3.2)]";
 
   return (
     <section className={cn("w-full", className)}>
@@ -228,10 +226,36 @@ export function CarouselLinks({
         >
           <CarouselContent className="-mr-4 ml-0 px-4">
             {items.map((item) => (
-              <CarouselItem key={item.id} className={basis}>
-                <Link href={item.href} className={chip}>
-                  {item.label}
-                </Link>
+              <CarouselItem
+                key={item.id}
+                className={variant === "category" ? categoryBasis : brandBasis}
+              >
+                {variant === "category" ? (
+                  <Link
+                    href={item.href}
+                    className="group relative block overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+                      <Image
+                        src={item.imageUrl || "/og-image.webp"}
+                        alt={item.label}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-width: 640px) 70vw, (max-width: 1024px) 40vw, 28vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-3">
+                        <span className="block text-sm font-bold text-white drop-shadow md:text-base">
+                          {item.label}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ) : (
+                  <Link href={item.href} className={brandChip}>
+                    {item.label}
+                  </Link>
+                )}
               </CarouselItem>
             ))}
           </CarouselContent>
