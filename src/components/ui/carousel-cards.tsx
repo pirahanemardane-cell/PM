@@ -252,8 +252,24 @@ export function CarouselLinks({
                     </div>
                   </Link>
                 ) : (
-                  <Link href={item.href} className={brandChip}>
-                    {item.label}
+                  <Link
+                    href={item.href}
+                    className="hover:border-foreground/20 flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border bg-white px-3 py-2 text-center text-sm font-medium shadow-sm transition-colors hover:bg-muted/30"
+                  >
+                    {item.imageUrl ? (
+                      <span className="relative flex h-14 w-full max-w-[8rem] items-center justify-center">
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.label}
+                          width={128}
+                          height={56}
+                          className="max-h-14 w-auto object-contain"
+                        />
+                      </span>
+                    ) : null}
+                    <span className={item.imageUrl ? "line-clamp-1 text-xs text-primary" : undefined}>
+                      {item.label}
+                    </span>
                   </Link>
                 )}
               </CarouselItem>
