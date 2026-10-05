@@ -21,6 +21,18 @@ import type { ProductWithRelations } from "@/repositories/product.repository";
 // ISR: HTML کش‌شده ۶۰ ثانیه — هیرو دست‌نخورده
 export const revalidate = 60;
 
+const HOME_BRAND_SLIDES = [
+  { id: "lacoste", label: "Lacoste", href: "/brands/lacoste", imageUrl: "/brands/lacoste.webp" },
+  { id: "tommy", label: "Tommy Hilfiger", href: "/brands/tommy-hilfiger", imageUrl: "/brands/tommy-hilfiger.webp" },
+  { id: "armani", label: "Armani", href: "/brands/armani", imageUrl: "/brands/armani.webp" },
+  { id: "zara", label: "Zara", href: "/brands/zara", imageUrl: "/brands/zara.webp" },
+  { id: "polo", label: "Polo Ralph Lauren", href: "/brands/polo", imageUrl: "/brands/polo.webp" },
+  { id: "brooks", label: "Brooks Brothers", href: "/brands/brooks-brothers", imageUrl: "/brands/brooks-brothers.webp" },
+  { id: "ck", label: "Calvin Klein", href: "/brands/calvin-klein", imageUrl: "/brands/calvin-klein.webp" },
+  { id: "boss", label: "Hugo Boss", href: "/brands/hugo-boss", imageUrl: "/brands/hugo-boss.webp" },
+] as const;
+
+
 export const metadata: Metadata = {
   title: "فروشگاه تخصصی پیراهن مردانه",
   description:
@@ -124,26 +136,31 @@ export default async function HomePage() {
             ))}
           </section>
 
-          {brands.length > 0 ? (
-            <CarouselLinks
-              title="برندها"
-              viewAllHref="/brands"
-              variant="brand"
-              items={brands.map((b) => ({
-                id: b.id,
-                label: b.name,
-                href: `/brands/${b.slug}`,
-                imageUrl: (b as { logo_url?: string | null }).logo_url ?? null,
-              }))}
-            />
-          ) : (
-            <section aria-label="برندها" className="w-full">
-              <h2 className="mb-5 text-xl font-bold text-primary md:text-2xl">برندها</h2>
-              <p className="text-muted-foreground text-sm">
-                برندی برای نمایش نیست. در ادمین حداقل یک برند فعال با لوگو ثبت کنید.
-              </p>
-            </section>
-          )}
+          <CarouselLinks
+            title="برندها"
+            viewAllHref="/brands"
+            variant="brand"
+            items={
+              brands.length > 0
+                ? brands.map((b) => ({
+                    id: b.id,
+                    label: b.name,
+                    href: `/brands/${b.slug}`,
+                    imageUrl:
+                      (b as { logo_url?: string | null }).logo_url ||
+                      HOME_BRAND_SLIDES.find(
+                        (s) => s.id === b.slug || s.label === b.name,
+                      )?.imageUrl ||
+                      null,
+                  }))
+                : HOME_BRAND_SLIDES.map((s) => ({
+                    id: s.id,
+                    label: s.label,
+                    href: s.href,
+                    imageUrl: s.imageUrl,
+                  }))
+            }
+          />
 
           {(() => {
             const HIDDEN = new Set(["متفرقه"]);
