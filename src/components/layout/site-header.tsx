@@ -41,62 +41,110 @@ import { cn } from "@/lib/utils"; const MAIN_NAV = [
   categories?: { name: string; href: string; children?: { name: string; href: string }[] }[];
   brands?: { name: string; href: string }[];
 }) {
+  const catIcons = [Shirt, Layers, Tag, Sparkles, Heart, ShoppingCart];
+
   if (type === "sale") {
     return (
-      <div className="py-4">
+      <div className="py-5">
         <Link
           href="/products?featured=1"
           onClick={onNavigate}
-          className="from-primary/15 to-transparent flex flex-col gap-1 rounded-2xl bg-gradient-to-l p-5"
+          className="from-primary/20 via-primary/10 to-transparent group flex flex-col gap-2 rounded-2xl bg-gradient-to-l p-6 transition hover:from-primary/30"
         >
-          <span className="text-primary text-xs font-bold">فروش ویژه</span>
-          <span className="text-lg font-black">تخفیف‌های امروز</span>
+          <span className="text-primary inline-flex items-center gap-1.5 text-xs font-bold">
+            <Sparkles className="h-3.5 w-3.5" />
+            فروش ویژه
+          </span>
+          <span className="text-xl font-black tracking-tight">تخفیف‌های امروز</span>
           <span className="text-muted-foreground text-sm">بهترین قیمت روی پیراهن‌های منتخب</span>
+          <span className="text-primary mt-1 text-sm font-medium group-hover:underline">مشاهده محصولات ←</span>
         </Link>
       </div>
     );
   }
+
   if (type === "categories") {
     if (categories.length === 0) {
       return (
-        <div className="text-muted-foreground py-8 text-center text-sm">
+        <div className="text-muted-foreground py-10 text-center text-sm">
           هنوز دسته‌بندی‌ای ثبت نشده
         </div>
       );
     }
     return (
-      <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {categories.map((root) => (
-          <div key={root.href + root.name} className="space-y-2">
-            <Link
-              href={root.href}
-              onClick={onNavigate}
-              className="hover:text-primary block text-sm font-bold"
-            >
-              {root.name}
-            </Link>
-            {(root.children?.length ?? 0) > 0 ? (
-              <ul className="space-y-1">
-                {root.children!.map((ch) => (
-                  <li key={ch.href + ch.name}>
-                    <Link
-                      href={ch.href}
-                      onClick={onNavigate}
-                      className="text-muted-foreground hover:text-primary block text-xs"
-                    >
-                      {ch.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+      <div className="py-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold">دسته‌بندی‌ها</p>
+            <p className="text-muted-foreground text-xs">انتخاب بر اساس سبک، فیت و پارچه</p>
           </div>
-        ))}
-        <div className="flex items-end">
           <Link
             href="/products"
             onClick={onNavigate}
-            className="hover:bg-primary hover:text-primary-foreground rounded-xl border border-dashed border-[#023047]/30 px-3 py-3 text-center text-sm font-medium dark:border-[#13ABC4]/40"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 hidden rounded-full px-4 py-1.5 text-xs font-medium sm:inline-flex"
+          >
+            همه محصولات
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {categories.map((root, i) => {
+            const Icon = catIcons[i % catIcons.length];
+            const hasKids = (root.children?.length ?? 0) > 0;
+            return (
+              <div
+                key={root.href + root.name}
+                className="border-border/60 bg-background/70 hover:border-primary/40 group rounded-2xl border p-4 shadow-sm transition hover:shadow-md"
+              >
+                <Link
+                  href={root.href}
+                  onClick={onNavigate}
+                  className="mb-2 flex items-center gap-2.5"
+                >
+                  <span className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-bold leading-tight group-hover:text-primary">
+                    {root.name}
+                  </span>
+                </Link>
+                {hasKids ? (
+                  <ul className="mt-2 space-y-0.5 border-t border-border/50 pt-2">
+                    {root.children!.slice(0, 8).map((ch) => (
+                      <li key={ch.href + ch.name}>
+                        <Link
+                          href={ch.href}
+                          onClick={onNavigate}
+                          className="text-muted-foreground hover:bg-primary/10 hover:text-primary flex items-center justify-between rounded-lg px-2 py-1.5 text-xs transition"
+                        >
+                          <span>{ch.name}</span>
+                          <span className="opacity-0 transition group-hover:opacity-40">‹</span>
+                        </Link>
+                      </li>
+                    ))}
+                    {(root.children!.length > 8) ? (
+                      <li>
+                        <Link
+                          href={root.href}
+                          onClick={onNavigate}
+                          className="text-primary block px-2 py-1 text-[11px] font-medium"
+                        >
+                          +{root.children!.length - 8} مورد دیگر
+                        </Link>
+                      </li>
+                    ) : null}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground mt-1 text-[11px]">مشاهده همه در این دسته</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 flex justify-center sm:hidden">
+          <Link
+            href="/products"
+            onClick={onNavigate}
+            className="bg-primary text-primary-foreground rounded-full px-5 py-2 text-xs font-medium"
           >
             همه محصولات
           </Link>
@@ -104,30 +152,39 @@ import { cn } from "@/lib/utils"; const MAIN_NAV = [
       </div>
     );
   }
+
   if (brands.length === 0) {
     return (
-      <div className="text-muted-foreground py-8 text-center text-sm">هنوز برندی ثبت نشده</div>
+      <div className="text-muted-foreground py-10 text-center text-sm">هنوز برندی ثبت نشده</div>
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-2 py-4 sm:grid-cols-3 lg:grid-cols-4">
-      {brands.map((item) => (
+    <div className="py-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold">برندها</p>
+          <p className="text-muted-foreground text-xs">انتخاب برند مورد علاقه</p>
+        </div>
         <Link
-          key={item.href + item.name}
-          href={item.href}
+          href="/brands"
           onClick={onNavigate}
-          className="hover:bg-primary hover:text-primary-foreground rounded-xl border border-[#023047]/40 px-3 py-4 text-center text-sm font-medium dark:border-[#13ABC4]/55"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-1.5 text-xs font-medium"
         >
-          {item.name}
+          همه برندها
         </Link>
-      ))}
-      <Link
-        href="/brands"
-        onClick={onNavigate}
-        className="hover:bg-primary hover:text-primary-foreground rounded-xl border border-dashed border-[#023047]/30 px-3 py-4 text-center text-sm font-medium dark:border-[#13ABC4]/40"
-      >
-        همه برندها
-      </Link>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {brands.map((item) => (
+          <Link
+            key={item.href + item.name}
+            href={item.href}
+            onClick={onNavigate}
+            className="border-border/60 bg-background/70 hover:border-primary hover:bg-primary hover:text-primary-foreground rounded-xl border px-3 py-3.5 text-center text-sm font-medium shadow-sm transition"
+          >
+            {item.name}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -177,7 +234,7 @@ export function SiteHeader({ className }: { className?: string }) {
     return () => window.removeEventListener("pm:hero-intro-done", onDone);
   }, [pathname]);
 
-return ( <> <header className={cn( "sticky top-0 z-50 border-b border-border/60", "bg-[#F8F9FA]/80 dark:bg-[#212529]/75", "supports-[backdrop-filter]:bg-[#F8F9FA]/65 dark:supports-[backdrop-filter]:bg-[#212529]/55", "backdrop-blur-xl backdrop-saturate-150", hideForHeroIntro && "hidden", className )} dir="rtl" onMouseLeave={closeMegaDelayed} > {/* دسکتاپ */} <div className="mx-auto hidden h-16 max-w-none items-center gap-3 px-4 xl:flex"> <div className="shrink-0"> <Logo size="lg" /> </div> <nav className="relative flex shrink-0 items-center gap-0.5"> {MAIN_NAV.map((item) => ( <div key={item.label} className="relative" onMouseEnter={() => (item.mega ? openMega(item.mega) : setMega(null))} > <Link href={item.href} className={cn( "text-muted-foreground inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-sm", mega && item.mega === mega && "bg-muted text-foreground" )} onClick={(e) => { if (item.mega) { e.preventDefault(); setMega((m) => (m === item.mega ? null : item.mega)); } }} > {item.label} {item.mega ? <ChevronDown className="h-3.5 w-3.5 opacity-60" /> : null} </Link> </div> ))} </nav> <div className="flex h-10 min-w-0 flex-1 items-center"> <SmartSearch /> </div> <HeaderIcons onOpenPanel={openPanel} /> <HeaderAuthButton /> </div> {/* مگامنو تمام‌عرض */} {mega ? ( <div className="absolute inset-x-0 top-full z-50 hidden w-full border-b-0 bg-[#e9ecef] dark:bg-[#343a40] shadow-md xl:block" onMouseEnter={() => mega && openMega(mega)} onMouseLeave={closeMegaDelayed} > <div className="w-full px-6 py-2 lg:px-10"> <MegaPanel type={mega} onNavigate={() => setMega(null)} categories={megaCategories} brands={megaBrands} /> </div> </div> ) : null} {/* موبایل + تبلت: برگر | سرچ | ورود */} <div className="mx-auto flex h-14 max-w-none items-center gap-2 px-3 xl:hidden"> <button type="button" className="border-border bg-background/80 hover:bg-primary hover:text-primary-foreground inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)} > <Menu className="h-5 w-5" /> </button> <div className="flex h-10 min-w-0 flex-1 items-center"> <SmartSearch /> </div> <button type="button" className="border-border bg-background/80 hover:bg-primary hover:text-primary-foreground relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border" title="سبد خرید" aria-label="سبد خرید" onClick={() => openPanel("cart")}><ShoppingCart className="h-4 w-4" /><CountBadge count={counts.cart} /></button> <HeaderAuthButton /> </div> </header> {/* کشوی منوی موبایل — پس‌زمینه شیشه‌ای */} {menuOpen ? ( <div className="fixed inset-0 z-[110] xl:hidden" dir="rtl" role="dialog" aria-modal="true"> <button type="button" className="absolute inset-0 bg-[#F8F9FA]/45 backdrop-blur-md dark:bg-[#212529]/50" aria-label="بستن منو" onClick={() => setMenuOpen(false)} /> <div className="border-border/40 absolute top-0 right-0 flex h-full w-[min(100vw,22rem)] flex-col border-l bg-[#F8F9FA]/90 shadow-2xl backdrop-blur-xl dark:bg-[#212529]/90"> <div className="border-border/40 flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3"> <Logo size="sm" /> <button type="button" className=" hover:bg-primary hover:text-primary-foreground inline-flex h-10 w-10 items-center justify-center rounded-full" onClick={() => setMenuOpen(false)} > <X className="h-5 w-5" /> </button> </div> <div className="flex-1 space-y-5 overflow-y-auto p-4"> <div>  <HeaderIcons onOpenPanel={openPanel} hideCart /> </div> <HeaderAuthButton fullWidth onNavigate={() => setMenuOpen(false)} /> <nav className="space-y-1"> {MAIN_NAV.map((item) => ( <div key={item.label}> <Link href={item.href} onClick={() => setMenuOpen(false)} className=" hover:bg-primary hover:text-primary-foreground block rounded-xl px-3 py-2.5 text-sm font-medium" > {item.label} </Link> </div> ))} </nav>
+return ( <> <header className={cn( "sticky top-0 z-50 border-b border-border/60", "bg-[#F8F9FA]/80 dark:bg-[#212529]/75", "supports-[backdrop-filter]:bg-[#F8F9FA]/65 dark:supports-[backdrop-filter]:bg-[#212529]/55", "backdrop-blur-xl backdrop-saturate-150", hideForHeroIntro && "hidden", className )} dir="rtl" onMouseLeave={closeMegaDelayed} > {/* دسکتاپ */} <div className="mx-auto hidden h-16 max-w-none items-center gap-3 px-4 xl:flex"> <div className="shrink-0"> <Logo size="lg" /> </div> <nav className="relative flex shrink-0 items-center gap-0.5"> {MAIN_NAV.map((item) => ( <div key={item.label} className="relative" onMouseEnter={() => (item.mega ? openMega(item.mega) : setMega(null))} > <Link href={item.href} className={cn( "text-muted-foreground inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-sm", mega && item.mega === mega && "bg-muted text-foreground" )} onClick={(e) => { if (item.mega) { e.preventDefault(); setMega((m) => (m === item.mega ? null : item.mega)); } }} > {item.label} {item.mega ? <ChevronDown className="h-3.5 w-3.5 opacity-60" /> : null} </Link> </div> ))} </nav> <div className="flex h-10 min-w-0 flex-1 items-center"> <SmartSearch /> </div> <HeaderIcons onOpenPanel={openPanel} /> <HeaderAuthButton /> </div> {/* مگامنو تمام‌عرض */} {mega ? ( <div className="absolute inset-x-0 top-full z-50 hidden w-full border-b border-border/40 bg-[#F8F9FA]/95 shadow-lg backdrop-blur-xl dark:bg-[#212529]/95 xl:block" onMouseEnter={() => mega && openMega(mega)} onMouseLeave={closeMegaDelayed} > <div className="w-full px-6 py-2 lg:px-10"> <MegaPanel type={mega} onNavigate={() => setMega(null)} categories={megaCategories} brands={megaBrands} /> </div> </div> ) : null} {/* موبایل + تبلت: برگر | سرچ | ورود */} <div className="mx-auto flex h-14 max-w-none items-center gap-2 px-3 xl:hidden"> <button type="button" className="border-border bg-background/80 hover:bg-primary hover:text-primary-foreground inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)} > <Menu className="h-5 w-5" /> </button> <div className="flex h-10 min-w-0 flex-1 items-center"> <SmartSearch /> </div> <button type="button" className="border-border bg-background/80 hover:bg-primary hover:text-primary-foreground relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border" title="سبد خرید" aria-label="سبد خرید" onClick={() => openPanel("cart")}><ShoppingCart className="h-4 w-4" /><CountBadge count={counts.cart} /></button> <HeaderAuthButton /> </div> </header> {/* کشوی منوی موبایل — پس‌زمینه شیشه‌ای */} {menuOpen ? ( <div className="fixed inset-0 z-[110] xl:hidden" dir="rtl" role="dialog" aria-modal="true"> <button type="button" className="absolute inset-0 bg-[#F8F9FA]/45 backdrop-blur-md dark:bg-[#212529]/50" aria-label="بستن منو" onClick={() => setMenuOpen(false)} /> <div className="border-border/40 absolute top-0 right-0 flex h-full w-[min(100vw,22rem)] flex-col border-l bg-[#F8F9FA]/90 shadow-2xl backdrop-blur-xl dark:bg-[#212529]/90"> <div className="border-border/40 flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3"> <Logo size="sm" /> <button type="button" className=" hover:bg-primary hover:text-primary-foreground inline-flex h-10 w-10 items-center justify-center rounded-full" onClick={() => setMenuOpen(false)} > <X className="h-5 w-5" /> </button> </div> <div className="flex-1 space-y-5 overflow-y-auto p-4"> <div>  <HeaderIcons onOpenPanel={openPanel} hideCart /> </div> <HeaderAuthButton fullWidth onNavigate={() => setMenuOpen(false)} /> <nav className="space-y-1"> {MAIN_NAV.map((item) => ( <div key={item.label}> <Link href={item.href} onClick={() => setMenuOpen(false)} className=" hover:bg-primary hover:text-primary-foreground block rounded-xl px-3 py-2.5 text-sm font-medium" > {item.label} </Link> </div> ))} </nav>
             {megaCategories.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-muted-foreground px-1 text-xs font-semibold">دسته‌بندی‌ها</p>
