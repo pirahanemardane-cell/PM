@@ -136,23 +136,31 @@ export default async function HomePage() {
             ))}
           </section>
 
-          <CarouselLinks
+                    <CarouselLinks
             title="برندها"
             viewAllHref="/brands"
             variant="brand"
             items={
               brands.length > 0
-                ? brands.map((b) => ({
-                    id: b.id,
-                    label: b.name,
-                    href: `/brands/${b.slug}`,
-                    imageUrl:
-                      (b as { logo_url?: string | null }).logo_url ||
-                      HOME_BRAND_SLIDES.find(
-                        (s) => s.id === b.slug || s.label === b.name,
-                      )?.imageUrl ||
-                      null,
-                  }))
+                ? brands.map((b) => {
+                    const slug = String(b.slug || "").toLowerCase();
+                    const name = String(b.name || "");
+                    const fromStatic = HOME_BRAND_SLIDES.find(
+                      (s) =>
+                        s.id === slug ||
+                        s.href.endsWith("/" + slug) ||
+                        s.label.toLowerCase() === name.toLowerCase(),
+                    );
+                    return {
+                      id: b.id,
+                      label: b.name,
+                      href: `/brands/${b.slug}`,
+                      imageUrl:
+                        (b as { logo_url?: string | null }).logo_url ||
+                        fromStatic?.imageUrl ||
+                        null,
+                    };
+                  })
                 : HOME_BRAND_SLIDES.map((s) => ({
                     id: s.id,
                     label: s.label,
