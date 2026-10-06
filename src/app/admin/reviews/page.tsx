@@ -1,277 +1,159 @@
-"use client";
+import { createServiceClient } from "@/lib/supabase/service";
+import { formatJalaliDateTime } from "@/lib/dates/jalali";
+import { toPersianDigits } from "@/lib/numbers";
+import { ReviewActions } from "./actions-client";
+import { ReviewsRealtimeRefresh } from "./realtime-refresh";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { useRtEvent } from "@/hooks/use-rt-event";
-import { RT } from "@/lib/realtime/events";
-import { AdminBulkBar } from "@/components/admin/bulk-bar";
-import {
-  adminArchiveReviewsAction,
-  adminHardDeleteReviewsAction,
-} from "@/app/admin/actions/lifecycle";
-import {
-  adminListReviewsAction,
-  adminSetReviewApprovedAction,
-  adminSetReviewReplyAction,
-} from "@/app/admin/actions/reviews";
-import { LumaSpin } from "@/components/ui/luma-spin";
-import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+export const dynamic = "force-dynamic";
 
+export default async function ReviewsAdminPage() {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(
+      "id, created_at, rating, title, body, is_approved, is_verified, admin_reply, product_id, user_id, user:profiles(full_name), product:products(name, slug)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
 
-type Row = {
-  id: string;
-  rating: number;
-  title: string | null;
-  body: string;
-  is_approved: boolean;
-  admin_reply?: string | null;
-  created_at: string;
-  product?: { name: string } | null;
-  user?: { full_name: string | null } | null;
-};
-
-export default function AdminReviewsPage() {
-  const [items, setItems] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [bulkBusy, setBulkBusy] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"all" | "yes" | "no">("all");
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-
-  
-  function toggleSelectAll(ids: string[]) {
-    setSelected((prev) => (prev.length === ids.length ? [] : ids));
-  }
-  function toggleSelect(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  if (error) {
+    return (
+      <>
+        <ReviewsRealtimeRefresh />
+        <div className="p-6 text-sm text-destructive" dir="rtl">
+          خطا در بارگذاری نظرات: {error.message}
+        </div>
+      </>
     );
   }
-  async function runBulkArchive() {
-    if (!selected.length) return;
-    if (!confirm("آرشیو موارد انتخاب‌شده؟")) return;
-    setBulkBusy(true);
-    const res = await adminArchiveReviewsAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    setSelected([]);
-    void load();
-  }
-  async function runBulkHardDelete() {
-    if (!selected.length) return;
-    if (!confirm("حذف دائمی موارد انتخاب‌شده؟ برگشت‌ناپذیر است.")) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteReviewsAction(selected);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-        has_products: "به محصول متصل است",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    setSelected([]);
-    void load();
-  }
-  async function archiveOne(id: string, name: string) {
-    if (!confirm(`آرشیو «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminArchiveReviewsAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) { setError("آرشیو ناموفق"); return; }
-    void load();
-  }
-  async function hardDeleteOne(id: string, name: string) {
-    if (!confirm(`حذف دائمی «${name}»؟`)) return;
-    setBulkBusy(true);
-    const res = await adminHardDeleteReviewsAction([id]);
-    setBulkBusy(false);
-    if (!res.ok) {
-      const map: Record<string, string> = {
-        has_orders: "در سفارش‌ها استفاده شده",
-      };
-      setError(map[String(res.error)] ?? "حذف دائمی ناموفق");
-      return;
-    }
-    void load();
-  }
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const res = await adminListReviewsAction({ approved: filter });
-    setLoading(false);
-    if (!res.ok) {
-      setError(
-        res.error === "login_required"
-          ? "ورود لازم است"
-          : res.error === "forbidden"
-            ? "دسترسی ادمین ندارید"
-            : "خطا در بارگذاری",
-      );
-      setItems([]);
-      return;
-    }
-    const rows = (res.items as Row[]) ?? [];
-    setItems(rows);
-    const next: Record<string, string> = {};
-    for (const r of rows) next[r.id] = r.admin_reply ?? "";
-    setDrafts(next);
-  }, [filter]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useRtEvent(RT.reviews, () => {
-    void load();
-  });
-
-  async function toggle(id: string, is_approved: boolean) {
-    setBusyId(id);
-    const res = await adminSetReviewApprovedAction(id, is_approved);
-    setBusyId(null);
-    if (!res.ok) {
-      setError("ذخیره ناموفق بود");
-      return;
-    }
-    if (filter === "yes" && !is_approved) {
-      setItems((prev) => prev.filter((r) => r.id !== id));
-    } else if (filter === "no" && is_approved) {
-      setItems((prev) => prev.filter((r) => r.id !== id));
-    } else {
-      setItems((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, is_approved } : r)),
-      );
-    }
-  }
-
-  async function saveReply(id: string) {
-    setBusyId(id);
-    const text = drafts[id] ?? "";
-    const res = await adminSetReviewReplyAction(id, text);
-    setBusyId(null);
-    if (!res.ok) {
-      setError("ذخیره پاسخ ناموفق بود");
-      return;
-    }
-    setItems((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, admin_reply: text.trim() || null } : r)),
-    );
-  }
+  const rows = data ?? [];
+  const counts = {
+    all: rows.length,
+    pending: rows.filter((r) => !r.is_approved).length,
+    approved: rows.filter((r) => r.is_approved).length,
+  };
 
   return (
-    <div className="space-y-4 p-6" dir="rtl">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <>
+      <ReviewsRealtimeRefresh />
+      <div className="space-y-6 p-4 md:p-6" dir="rtl">
         <div>
-          <h1 className="text-2xl font-bold text-primary">نظرات محصولات</h1>
-          </div>
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as "all" | "yes" | "no")}
-            className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
-          >
-            <option value="all">همه</option>
-            <option value="no">در انتظار</option>
-            <option value="yes">تأییدشده</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="border-border rounded-xl border px-4 py-2 text-sm"
-          >
-            تازه‌سازی
-          </button>
-          <Link
-            href="/admin/dashboard"
-            className="border-border rounded-xl border px-4 py-2 text-sm"
-          >
-            داشبورد
-          </Link>
+          <h1 className="text-xl font-bold">نظرات محصولات</h1>
+          <p className="text-muted-foreground text-sm">
+            تأیید، رد و پاسخ به نظرات خریداران
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {(
+            [
+              ["همه", counts.all],
+              ["در انتظار تأیید", counts.pending],
+              ["تأیید شده", counts.approved],
+            ] as const
+          ).map(([label, n]) => (
+            <div key={label} className="border-border bg-card rounded-xl border p-3">
+              <p className="text-muted-foreground text-xs">{label}</p>
+              <p className="text-lg font-semibold">{toPersianDigits(String(n))}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-border overflow-x-auto rounded-xl border">
+          <table className="w-full min-w-[900px] text-sm">
+            <thead className="bg-muted/50 text-muted-foreground">
+              <tr>
+                <th className="p-3 text-right font-medium">زمان</th>
+                <th className="p-3 text-right font-medium">محصول</th>
+                <th className="p-3 text-right font-medium">کاربر</th>
+                <th className="p-3 text-right font-medium">امتیاز</th>
+                <th className="p-3 text-right font-medium">نظر</th>
+                <th className="p-3 text-right font-medium">وضعیت</th>
+                <th className="p-3 text-right font-medium">عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-muted-foreground p-6 text-center">
+                    هنوز نظری ثبت نشده است.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((r: any) => (
+                  <tr key={r.id} className="border-border border-t align-top">
+                    <td className="p-3 whitespace-nowrap text-xs">
+                      {formatJalaliDateTime(r.created_at)}
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium">
+                        {r.product?.name ?? "—"}
+                      </div>
+                      {r.product?.slug ? (
+                        <a
+                          href={`/products/${r.product.slug}`}
+                          target="_blank"
+                          className="text-muted-foreground text-xs hover:underline"
+                        >
+                          مشاهده محصول
+                        </a>
+                      ) : null}
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium">
+                        {r.user?.full_name?.trim() || "کاربر"}
+                      </div>
+                      {r.is_verified ? (
+                        <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 mt-1 inline-block rounded px-1.5 py-0.5 text-[10px]">
+                          خریدار تأییدشده
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="p-3 text-amber-600">
+                      {"★".repeat(r.rating || 0)}
+                    </td>
+                    <td className="max-w-xs p-3">
+                      {r.title ? (
+                        <p className="mb-1 font-medium">{r.title}</p>
+                      ) : null}
+                      <p className="text-muted-foreground line-clamp-4 whitespace-pre-wrap">
+                        {r.body}
+                      </p>
+                      {r.admin_reply ? (
+                        <div className="bg-muted/50 mt-2 rounded-lg border-r-2 border-primary p-2 text-xs">
+                          <p className="mb-0.5 font-medium text-primary">پاسخ فروشگاه</p>
+                          <p className="text-muted-foreground whitespace-pre-wrap">
+                            {r.admin_reply}
+                          </p>
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          r.is_approved
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                        }`}
+                      >
+                        {r.is_approved ? "تأیید شده" : "در انتظار"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <ReviewActions
+                        id={r.id}
+                        isApproved={!!r.is_approved}
+                        adminReply={r.admin_reply ?? ""}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      {error ? <p className="text-destructive text-sm">{error}</p> : null}
-        <AdminBulkBar
-          total={items.length}
-          onSelectAll={() => toggleSelectAll(items.map((x) => x.id))}
-          onClear={() => setSelected([])}
-          count={selected.length}
-          busy={bulkBusy}
-          onArchive={() => void runBulkArchive()}
-          onHardDelete={() => void runBulkHardDelete()}
-          onClear={() => setSelected([])}
-        />
-
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <LumaSpin />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {items.map((r) => (
-            <article
-              key={r.id}
-              className="border-border space-y-3 rounded-xl border p-4 text-sm"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="font-medium">{r.product?.name ?? "—"}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {r.user?.full_name ?? "—"} ·{" "}
-                    {formatJalaliDate(r.created_at)} ·{" "}
-                    {"★".repeat(r.rating)}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={busyId === r.id}
-                  className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ${
-                    r.is_approved
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
-                      : "border-amber-300 bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100"
-                  }`}
-                  onClick={() => void toggle(r.id, !r.is_approved)}
-                >
-                  {r.is_approved ? "تأیید شده" : "در انتظار"}
-                </button>
-              </div>
-              {r.title ? <p className="font-medium">{r.title}</p> : null}
-              <p className="text-muted-foreground whitespace-pre-wrap"><label className="inline-flex items-center gap-2"><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleSelect(r.id)} /><span>{r.body}</span></label> <button type="button" className="text-muted-foreground text-xs" onClick={() => void archiveOne(r.id, String(r.body || r.id))}>آرشیو</button> <button type="button" className="text-destructive text-xs" onClick={() => void hardDeleteOne(r.id, String(r.body || r.id))}>حذف دائمی</button></p>
-              <div className="space-y-2 border-t pt-3">
-                <label className="text-xs font-medium">پاسخ فروشگاه</label>
-                <textarea
-                  value={drafts[r.id] ?? ""}
-                  onChange={(e) =>
-                    setDrafts((d) => ({ ...d, [r.id]: e.target.value }))
-                  }
-                  rows={2}
-                  className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
-                  placeholder="پاسخ رسمی (اختیاری)"
-                  dir="rtl"
-                />
-                <button
-                  type="button"
-                  disabled={busyId === r.id}
-                  onClick={() => void saveReply(r.id)}
-                  className="bg-primary text-primary-foreground rounded-lg px-3 py-1.5 text-xs disabled:opacity-50"
-                >
-                  ذخیره پاسخ
-                </button>
-              </div>
-            </article>
-          ))}
-          {!items.length ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              نظری نیست
-            </p>
-          ) : null}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
