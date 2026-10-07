@@ -54,15 +54,31 @@ export function ShippingActions(props: Props) {
   const [baseUrl, setBaseUrl] = useState(
     isCreate ? "" : String((props.apiConfig as any)?.base_url || ""),
   );
+  const [originLat, setOriginLat] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.origin_lat || ""),
+  );
+  const [originLng, setOriginLng] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.origin_lng || ""),
+  );
   const [editing, setEditing] = useState(false);
   const [showApi, setShowApi] = useState(false);
+
+  const code = (isCreate ? providerCode : props.providerCode || "").toLowerCase();
 
   const buildApiConfig = () => {
     const cfg: Record<string, unknown> = {};
     if (baseUrl.trim()) cfg.base_url = baseUrl.trim();
     if (apiKey.trim()) cfg.api_key = apiKey.trim();
-    if (clientId.trim()) cfg.client_id = clientId.trim();
-    if (contractCode.trim()) cfg.contract_code = contractCode.trim();
+
+    // فقط فیلدهای مربوط به همان سرویس
+    if (code === "tipax") {
+      if (contractCode.trim()) cfg.contract_code = contractCode.trim();
+    }
+    if (code === "snappbox") {
+      if (clientId.trim()) cfg.client_id = clientId.trim();
+      if (originLat.trim()) cfg.origin_lat = Number(originLat);
+      if (originLng.trim()) cfg.origin_lng = Number(originLng);
+    }
     return cfg;
   };
 
@@ -263,7 +279,12 @@ export function ShippingActions(props: Props) {
 
       {showApi ? (
         <div className="border-border mt-1 space-y-1.5 rounded-lg border p-2">
-          <p className="text-xs font-medium">تنظیمات API — {props.title}</p>
+          <p className="text-xs font-medium">
+            تنظیمات API — {props.title}
+            {code ? ` (${code})` : ""}
+          </p>
+
+          {/* Base URL برای همه APIها */}
           <input
             className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
             value={baseUrl}
@@ -271,27 +292,82 @@ export function ShippingActions(props: Props) {
             placeholder="Base URL"
             dir="ltr"
           />
-          <input
-            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="API Key"
-            dir="ltr"
-          />
-          <input
-            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            placeholder="Client ID (اسنپ باکس)"
-            dir="ltr"
-          />
-          <input
-            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
-            value={contractCode}
-            onChange={(e) => setContractCode(e.target.value)}
-            placeholder="Contract Code (تیپاکس)"
-            dir="ltr"
-          />
+
+          {/* تیپاکس: API Key + Contract Code */}
+          {code === "tipax" && (
+            <>
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="API Key (تیپاکس)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={contractCode}
+                onChange={(e) => setContractCode(e.target.value)}
+                placeholder="Contract Code (تیپاکس)"
+                dir="ltr"
+              />
+            </>
+          )}
+
+          {/* اسنپ باکس: API Key + Client ID + مختصات مبدا */}
+          {code === "snappbox" && (
+            <>
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="API Key (اسنپ باکس)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                placeholder="Client ID (اسنپ باکس)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={originLat}
+                onChange={(e) => setOriginLat(e.target.value)}
+                placeholder="عرض جغرافیایی انبار (origin_lat)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={originLng}
+                onChange={(e) => setOriginLng(e.target.value)}
+                placeholder="طول جغرافیایی انبار (origin_lng)"
+                dir="ltr"
+              />
+            </>
+          )}
+
+          {/* پست پیشتاز: بدون کلید */}
+          {code === "post" && (
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              پست پیشتاز فعلاً با جدول تعرفه داخلی محاسبه می‌شود.
+              برای نرخ دقیق، قرارداد تاپین یا سامانه رسمی لازم است.
+            </p>
+          )}
+
+          {/* ناشناخته */}
+          {!["tipax", "snappbox", "post"].includes(code) && (
+            <>
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="API Key"
+                dir="ltr"
+              />
+            </>
+          )}
+
           <div className="flex gap-2">
             <button
               type="button"
