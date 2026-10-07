@@ -1,5 +1,6 @@
 "use server";
 
+import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -13,6 +14,7 @@ export type OrderStatusDTO = {
 export async function getMyOrderStatusAction(
   orderId: string,
 ): Promise<{ ok: true; order: OrderStatusDTO } | { ok: false; error: string }> {
+  noStore();
   try {
     if (!orderId) return { ok: false, error: "missing_id" };
     const supabase = await createClient();
@@ -43,7 +45,7 @@ export async function getMyOrderStatusAction(
         id: data.id as string,
         status: String(data.status ?? "pending"),
         paymentStatus: String(
-          (data as { payment_status?: string }).payment_status ?? "pending",
+          (data as { payment_status?: string | null }).payment_status ?? "pending",
         ),
         total: Number(data.total_amount ?? 0),
       },

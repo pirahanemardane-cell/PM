@@ -956,7 +956,7 @@ export default function CheckoutPage() {
                       پرداخت معلق
                     </p>
                     <p className="text-muted-foreground mt-2 text-sm">
-                      سفارش ثبت شد؛ منتظر تأیید پرداخت آنلاین بمانید.
+                      سفارش ثبت شد. وضعیت پرداخت معلق است و پس از تأیید ادمین موفق میشود.
                     </p>
                   </div>
                 ) : null}

@@ -96,13 +96,13 @@ export class OrderRepository extends BaseRepository {
       0
     );
 
-    const { data: order, error: oErr } = await supabase
+    const payStatus = input.paymentMethod === "cod" ? "paid" : "pending";
+    const { data: order, error: oErr } = await service
       .from("orders")
       .insert({
         user_id: input.userId,
         status: "pending",
-        payment_status:
-          input.paymentMethod === "cod" ? "paid" : "pending",
+        payment_status: payStatus,
         total_amount: Math.max(0, Number(total) - Number(input.discountAmount ?? 0)),
         discount_code: input.discountCode ?? null,
         discount_amount: input.discountAmount ?? 0,
@@ -335,9 +335,18 @@ export class OrderRepository extends BaseRepository {
       }
     }
 
+    const patch: Record<string, unknown> = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (status === "paid") {
+      patch.payment_status = "paid";
+    } else if (status === "cancelled") {
+      patch.payment_status = "failed";
+    }
     const { error } = await supabase
       .from("orders")
-      .update({ status })
+      .update(patch)
       .eq("id", orderId);
     if (error) throw error;
     return true;
