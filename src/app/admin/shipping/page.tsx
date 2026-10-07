@@ -1,0 +1,99 @@
+import { createServiceClient } from "@/lib/supabase/service";
+import { toPersianDigits } from "@/lib/numbers";
+import { ShippingActions } from "./actions-client";
+
+export const dynamic = "force-dynamic";
+
+export default async function ShippingAdminPage() {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("shipping_methods")
+    .select("id, title, description, fee, is_active, sort_order")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    return (
+      <div className="p-6 text-sm text-destructive" dir="rtl">
+        خطا در بارگذاری روش‌های ارسال: {error.message}
+      </div>
+    );
+  }
+
+  const rows = data ?? [];
+
+  return (
+    <div className="space-y-6 p-4 md:p-6" dir="rtl">
+      <div>
+        <h1 className="text-xl font-bold">روش‌های ارسال</h1>
+        <p className="text-muted-foreground text-sm">
+          افزودن، ویرایش و فعال/غیرفعال کردن روش‌های ارسال
+        </p>
+      </div>
+
+      <div className="border-border overflow-x-auto rounded-xl border">
+        <table className="w-full min-w-[700px] text-sm">
+          <thead className="bg-muted/50 text-muted-foreground">
+            <tr>
+              <th className="p-3 text-right font-medium">ترتیب</th>
+              <th className="p-3 text-right font-medium">عنوان</th>
+              <th className="p-3 text-right font-medium">توضیح</th>
+              <th className="p-3 text-right font-medium">هزینه (تومان)</th>
+              <th className="p-3 text-right font-medium">وضعیت</th>
+              <th className="p-3 text-right font-medium">عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-muted-foreground p-6 text-center">
+                  هنوز روش ارسالی تعریف نشده است.
+                </td>
+              </tr>
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id} className="border-border border-t align-top">
+                  <td className="p-3 text-xs">{toPersianDigits(String(r.sort_order))}</td>
+                  <td className="p-3 font-medium">{r.title}</td>
+                  <td className="p-3 text-muted-foreground text-xs">
+                    {r.description || "—"}
+                  </td>
+                  <td className="p-3">
+                    {r.fee === 0
+                      ? "رایگان"
+                      : toPersianDigits(r.fee.toLocaleString("fa-IR"))}
+                  </td>
+                  <td className="p-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
+                        r.is_active
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {r.is_active ? "فعال" : "غیرفعال"}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <ShippingActions
+                      id={r.id}
+                      title={r.title}
+                      description={r.description ?? ""}
+                      fee={r.fee}
+                      isActive={r.is_active}
+                      sortOrder={r.sort_order}
+                    />
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="border-border rounded-xl border p-4">
+        <h2 className="mb-3 font-semibold">افزودن روش جدید</h2>
+        <ShippingActions mode="create" />
+      </div>
+    </div>
+  );
+}
