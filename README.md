@@ -58,3 +58,6 @@ npm run dev
 ## مستندات فاز ۴
 - [وضعیت احراز هویت](docs/04-AUTH-STATUS.md)
 
+## بستن فاز ۰ تا ۴
+- [سند بستن رسمی](docs/PHASES-0-4-CLOSURE.md)
+
