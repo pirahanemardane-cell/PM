@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+"use client";
+
+import { useState } from "react";
 
 export type UiState =
   | "idle"
@@ -22,30 +24,17 @@ export type UiVariant =
   | "warning";
 
 export type UiSize = "sm" | "md" | "lg" | "xl";
-export type UiColor = "primary" | "secondary" | "accent" | "destructive" | "muted" | "foreground";
+export type UiColor =
+  | "primary"
+  | "secondary"
+  | "accent"
+  | "destructive"
+  | "muted"
+  | "foreground";
 
-interface UiStateContextType {
-  state: UiState;
-  setState: (s: UiState) => void;
-  error: string | null;
-  setError: (e: string | null) => void;
-}
-
-const UiStateContext = createContext<UiStateContextType | null>(null);
-
-export function UiStateProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<UiState>("idle");
+/** هوک ساده بدون Context — نیاز به Provider ندارد */
+export function useUiState(initial: UiState = "idle") {
+  const [state, setState] = useState<UiState>(initial);
   const [error, setError] = useState<string | null>(null);
-
-  return (
-    <UiStateContext.Provider value={{ state, setState, error, setError }}>
-      {children}
-    </UiStateContext.Provider>
-  );
+  return { state, setState, error, setError };
 }
-
-export const useUiState = () => {
-  const context = useContext(UiStateContext);
-  if (!context) throw new Error("useUiState must be used within UiStateProvider");
-  return context;
-};
