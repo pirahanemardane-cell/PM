@@ -29,11 +29,13 @@ type ServerCartState = {
   lines: ServerCartLine[];
   loading: boolean;
   hydrated: boolean;
-  refresh: () => Promise<void>;
+  refresh: (opts?: { force?: boolean }) => Promise<void>;
   setLines: (lines: ServerCartLine[]) => void;
+  addOptimistic: (line: ServerCartLine) => void;
   setQuantityOptimistic: (variantId: string, quantity: number) => void;
   removeOptimistic: (variantId: string) => void;
   clear: () => void;
+  touchMutation: () => void;
 };
 
 function mapItems(
@@ -52,13 +54,15 @@ function mapItems(
     colorHex: (l as { colorHex?: string }).colorHex,
     colors: (l as { colors?: string[] }).colors,
     sizes: (l as { sizes?: string[] }).sizes,
-    variantOptions: (l as { variantOptions?: unknown }).variantOptions as any,
+    variantOptions: (l as { variantOptions?: unknown })
+      .variantOptions as ServerCartLine["variantOptions"],
     slug: l.slug,
   }));
 }
 
 let inflight: Promise<void> | null = null;
-let lastOkAt = 0;
+let lastMutationAt = 0;
+const MUTATION_GUARD_MS = 1200;
 
 export const useServerCartStore = create<ServerCartState>((set, get) => ({
   lines: [],
@@ -67,28 +71,55 @@ export const useServerCartStore = create<ServerCartState>((set, get) => ({
   setLines: (lines) => set({ lines, hydrated: true }),
   clear: () => set({ lines: [], hydrated: true }),
 
-  /** همیشه از get() استفاده کن — نه state بسته در closure */
+  touchMutation: () => {
+    lastMutationAt = Date.now();
+  },
+
+  addOptimistic: (line) => {
+    lastMutationAt = Date.now();
+    const vid = line.variantId;
+    const prev = get().lines;
+    if (vid && prev.some((l) => l.variantId === vid)) {
+      set({
+        lines: prev.map((l) =>
+          l.variantId === vid
+            ? { ...l, quantity: (l.quantity || 1) + (line.quantity || 1) }
+            : l,
+        ),
+        hydrated: true,
+      });
+      return;
+    }
+    set({ lines: [line, ...prev], hydrated: true });
+  },
+
   setQuantityOptimistic: (variantId, quantity) => {
+    lastMutationAt = Date.now();
     const q = Math.max(0, Math.floor(Number(quantity) || 0));
     set({
       lines: get()
         .lines.map((l) =>
-          l.variantId === variantId
-            ? { ...l, quantity: Math.max(1, q) }
-            : l,
+          l.variantId === variantId ? { ...l, quantity: Math.max(1, q) } : l,
         )
         .filter((l) => !(l.variantId === variantId && q < 1)),
     });
   },
 
   removeOptimistic: (variantId) => {
+    lastMutationAt = Date.now();
     set({ lines: get().lines.filter((l) => l.variantId !== variantId) });
   },
 
-  refresh: async () => {
+  refresh: async (opts) => {
+    const force = Boolean(opts?.force);
     if (inflight) return inflight;
-    // بعد از optimistic موفق، ۱۲۰ms رفرش بی‌مورد نزن
-    if (Date.now() - lastOkAt < 120 && get().hydrated) return;
+    if (
+      !force &&
+      get().hydrated &&
+      Date.now() - lastMutationAt < MUTATION_GUARD_MS
+    ) {
+      return;
+    }
 
     const first = !get().hydrated;
     if (first) set({ loading: true });
@@ -96,7 +127,9 @@ export const useServerCartStore = create<ServerCartState>((set, get) => ({
     inflight = (async () => {
       try {
         const res = await getCartAction();
-        lastOkAt = Date.now();
+        if (!force && Date.now() - lastMutationAt < MUTATION_GUARD_MS) {
+          return;
+        }
         if (res.ok) set({ lines: mapItems(res.items), hydrated: true });
         else set({ lines: [], hydrated: true });
       } catch (e) {

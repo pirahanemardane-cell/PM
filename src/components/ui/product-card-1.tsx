@@ -208,19 +208,16 @@ export function ProductCard1({
     }
     setIsAddingToCart(true);
     try {
-      // optimistic UI
-      addToCartStore({
-        id: productId,
+      useServerCartStore.getState().addOptimistic({
+        key: variantId,
+        productId,
+        variantId,
         title: name ?? "محصول",
         price: price ?? 0,
-        image: (images && images[0]) || undefined,
-        href: href,
-        color: selectedColor || undefined,
-        size: selectedSize || undefined,
-        colors: colors?.length ? colors : undefined,
-        sizes: sizes?.length ? sizes : undefined,
         quantity: 1,
-        variantId,
+        image: (images && images[0]) || undefined,
+        size: selectedSize || undefined,
+        color: selectedColor || undefined,
       });
       if (typeof window !== "undefined") {
         window.dispatchEvent(
@@ -230,7 +227,7 @@ export function ProductCard1({
       console.log("addCart", { variantId, selectedSize, selectedColor, optsLen: opts.length });
       const res = await addToCartAction(variantId, 1);
             if (res.ok) {
-        void refreshServerCart();
+        
         window.dispatchEvent(new CustomEvent("pm:cart-changed"));
       }
 // مهمان: فقط local — لاگین اجباری نیست

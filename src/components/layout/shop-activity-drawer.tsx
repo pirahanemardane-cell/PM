@@ -54,15 +54,13 @@ export function ShopActivityDrawer({
   const toggleWishlist = useShopStore((s) => s.toggleWishlist);
   const toggleCompare = useShopStore((s) => s.toggleCompare);
 
-  const cartTotal = isLoggedIn
-    ? unifiedTotal
-    : cart.reduce((sum, x) => sum + (x.price ?? 0) * (x.quantity ?? 1), 0);
+  const cartTotal = unifiedTotal;
 
   const items =
     tab === "notifications"
       ? []
       : tab === "cart"
-        ? (isLoggedIn ? unifiedLines : cart)
+        ? unifiedLines
         : tab === "wishlist"
           ? wishlist
           : tab === "compare"
@@ -353,13 +351,13 @@ export function ShopActivityDrawer({
                                     setQuantityOptimistic(line.variantId, q);
                                     const res = await updateCartQuantityAction(line.variantId, q);
                                     if (!res.ok) {
-                                      void refreshServer();
+                                      /* no forced refresh */
                                       toast.error("تغییر تعداد ممکن نشد");
                                       return;
                                     }
                                   }
                                   window.dispatchEvent(new Event("pm:cart-changed"));
-                                  void refreshServer();
+                                  /* no forced refresh */
                                 } else {
                                   const pid = line.productId || line.id || (p as { id?: string }).id;
                                   const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
@@ -383,12 +381,12 @@ export function ShopActivityDrawer({
                                   setQuantityOptimistic(line.variantId, q);
                                   const res = await updateCartQuantityAction(line.variantId, q);
                                   if (!res.ok) {
-                                    void refreshServer();
+                                    /* no forced refresh */
                                     toast.error("تغییر تعداد ممکن نشد (موجودی؟)");
                                     return;
                                   }
                                   window.dispatchEvent(new Event("pm:cart-changed"));
-                                  void refreshServer();
+                                  /* no forced refresh */
                                 } else {
                                   const pid = line.productId || line.id || (p as { id?: string }).id;
                                   const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
@@ -427,7 +425,7 @@ export function ShopActivityDrawer({
           )}
         </div>
 
-        {tab === "cart" && (isLoggedIn ? unifiedLines.length > 0 : cart.length > 0) ? (
+        {tab === "cart" && (unifiedLines.length > 0) ? (
           <div className="border-border flex items-center justify-between border-t px-4 py-3">
             <span className="text-sm font-medium">جمع کل</span>
             <span className="text-sm font-bold">
@@ -437,7 +435,7 @@ export function ShopActivityDrawer({
         ) : null}
 
         <DrawerFooter className="shrink-0 space-y-2 border-t border-border/40">
-          {tab === "cart" && (isLoggedIn ? unifiedLines.length > 0 : cart.length > 0) ? (
+          {tab === "cart" && (unifiedLines.length > 0) ? (
             <>
               <Link
                 href="/checkout"

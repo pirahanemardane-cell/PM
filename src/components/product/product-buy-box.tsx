@@ -195,21 +195,7 @@ export function ProductBuyBox({
     }
     setLoading(true);
     try {
-      addToCartStore({
-        id: productId,
-        title,
-        image,
-        href,
-        price: price ?? undefined,
-        color: selectedColor || undefined,
-        size: selectedSize || undefined,
-        colors: colors.length ? colors.map((c) => c.name) : undefined,
-        sizes: sizes.length ? sizes : undefined,
-        quantity: qty,
-        variantId: match.id,
-      });
-
-  // eslint-disable-line react-hooks/exhaustive-deps
+      // eslint-disable-line react-hooks/exhaustive-deps
 
 
       if (typeof window !== "undefined") {
@@ -225,9 +211,20 @@ export function ProductBuyBox({
         window.dispatchEvent(new CustomEvent("pm:cart-changed"));
       }
       try {
-        const res = await addToCartAction(match.id, qty);
+        useServerCartStore.getState().addOptimistic({
+        key: match.id,
+        productId,
+        variantId: match.id,
+        title,
+        price: Number(price ?? 0),
+        quantity: Math.max(1, Number(qty) || 1),
+        image,
+        size: selectedSize || undefined,
+        color: selectedColor || undefined,
+      });
+      const res = await addToCartAction(match.id, qty);
         if (res.ok) {
-          void refreshServerCart();
+          
           window.dispatchEvent(new CustomEvent("pm:cart-changed"));
         } else if (res.error && res.error !== "login_required") {
           // سرور fail ولی لوکال OK — فقط هشدار خفیف، نه خطای کلی

@@ -72,40 +72,22 @@ export default function CartPage() {
   const pendingQty = useRef<Record<string, number>>({});
 
   const lines = useMemo(() => {
-    if (isLoggedIn && unifiedLines.length > 0) {
-      return unifiedLines.map((l) => ({
-        key: l.key,
-        productId: l.productId,
-        variantId: l.variantId,
-        title: l.title || "محصول",
-        price: l.price ?? 0,
-        quantity: l.quantity ?? 1,
-        image: l.image,
-        size: l.size,
-        color: l.color,
-        colorHex: l.colorHex,
-        variantOptions: (l.variantOptions ?? []) as VOpt[],
-      }));
-    }
-    return localCart.map((p) => ({
-      key: `${p.id}|${p.color ?? ""}|${p.size ?? ""}`,
-      productId: p.id,
-      variantId: p.variantId as string | undefined,
-      title: p.title || "محصول",
-      price: p.price ?? 0,
-      quantity: p.quantity ?? 1,
-      image: p.image,
-      size: p.size,
-      color: p.color?.startsWith("#") ? undefined : p.color,
-      colorHex: p.color?.startsWith("#") ? p.color : undefined,
-      variantOptions: [] as VOpt[],
+    return unifiedLines.map((l) => ({
+      key: l.key,
+      productId: l.productId,
+      variantId: l.variantId,
+      title: l.title || "محصول",
+      price: l.price ?? 0,
+      quantity: l.quantity ?? 1,
+      image: l.image,
+      size: l.size,
+      color: l.color,
+      colorHex: l.colorHex,
+      variantOptions: (l.variantOptions ?? []) as VOpt[],
     }));
-  }, [isLoggedIn, unifiedLines, localCart]);
+  }, [unifiedLines]);
 
-  const total =
-    isLoggedIn && unifiedLines.length > 0
-      ? unifiedTotal
-      : lines.reduce((s, x) => s + Number(x.price) * Number(x.quantity ?? 1), 0);
+  const total = unifiedTotal;
 
   function setBusy(key: string, v: boolean) {
     setBusyMap((m) => ({ ...m, [key]: v }));
@@ -146,14 +128,14 @@ export default function CartPage() {
               ? "موجودی کافی نیست"
               : "تغییر تعداد ممکن نشد",
           );
-          void refreshServer();
+          void refreshServer({ force: true });
         }
         // بدون refresh اجباری — optimistic کافی است؛ realtime/event بعداً sync می‌کند
         window.dispatchEvent(new Event("pm:cart-changed"));
       }
     } catch {
       setMsg("خطا در تغییر تعداد");
-      void refreshServer();
+      void refreshServer({ force: true });
     } finally {
       setBusy(line.key, false);
       // اگر کاربر در حین await دوباره کلیک کرده، یک بار دیگر sync
@@ -167,7 +149,7 @@ export default function CartPage() {
       ) {
         setQuantityOptimistic(line.variantId, latest);
         void updateCartQuantityAction(line.variantId, latest).then((r) => {
-          if (!r.ok) void refreshServer();
+          if (!r.ok) void refreshServer({ force: true });
         });
       }
     }
@@ -177,21 +159,18 @@ export default function CartPage() {
     setBusy(line.key, true);
     setMsg(null);
     try {
-      if (isLoggedIn && line.variantId) {
-        removeOptimistic(line.variantId);
-        const res = await removeCartItemAction(line.variantId);
-        if (!res.ok) {
-          void refreshServer();
-          setMsg("حذف ممکن نشد");
-          return;
-        }
-        window.dispatchEvent(new Event("pm:cart-changed"));
-      } else {
-        removeFromCart(line.productId, {
-          size: line.size,
-          color: line.colorHex || line.color,
-        });
+      if (!line.variantId) {
+        setMsg("حذف ممکن نشد");
+        return;
       }
+      removeOptimistic(line.variantId);
+      const res = await removeCartItemAction(line.variantId);
+      if (!res.ok) {
+        void refreshServer({ force: true });
+        setMsg("حذف ممکن نشد");
+        return;
+      }
+      window.dispatchEvent(new Event("pm:cart-changed"));
     } finally {
       setBusy(line.key, false);
     }
