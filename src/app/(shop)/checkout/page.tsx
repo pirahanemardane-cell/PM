@@ -233,6 +233,8 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shipMethod, form.city, shipMethods]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  /** default = آدرس ذخیره‌شده/پیش‌فرض | new = فرم آدرس جدید */
+  const [addressMode, setAddressMode] = useState<"default" | "new">("new");
 
   const [discountCode, setDiscountCode] = useState("");
   const [discountPreview, setDiscountPreview] = useState<{
@@ -386,7 +388,12 @@ export default function CheckoutPage() {
       const def =
         res.items.find((x: { is_default?: boolean }) => x.is_default) ??
         res.items[0];
-      if (def) applyAddress(def as Parameters<typeof applyAddress>[0]);
+      if (def) {
+        applyAddress(def as Parameters<typeof applyAddress>[0]);
+        setAddressMode("default");
+      } else {
+        setAddressMode("new");
+      }
     })();
   }, []);
 
@@ -652,9 +659,55 @@ export default function CheckoutPage() {
             {step === 2 ? (
               <>
                 <h2 className="font-semibold text-primary">۲. اطلاعات گیرنده</h2>
+
                 {savedAddresses.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const def =
+                          savedAddresses.find((x) => x.is_default) ??
+                          savedAddresses[0];
+                        if (def) applyAddress(def);
+                        setAddressMode("default");
+                      }}
+                      className={`rounded-xl border p-3 text-sm font-medium transition-colors ${
+                        addressMode === "default"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      استفاده از آدرس پیش‌فرض
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddressMode("new");
+                        setSelectedAddressId(null);
+                        setForm((f) => ({
+                          ...f,
+                          address: "",
+                          city: "",
+                          postal: "",
+                          note: "",
+                        }));
+                      }}
+                      className={`rounded-xl border p-3 text-sm font-medium transition-colors ${
+                        addressMode === "new"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      افزودن آدرس جدید
+                    </button>
+                  </div>
+                ) : null}
+
+                {savedAddresses.length > 0 && addressMode === "default" ? (
                   <div className="space-y-2">
-                    <p className="text-muted-foreground text-xs">آدرس‌های ذخیره‌شده</p>
+                    <p className="text-muted-foreground text-xs">
+                      یکی از آدرس‌های ذخیره‌شده را انتخاب کنید
+                    </p>
                     <ul className="space-y-2">
                       {savedAddresses.map((a) => (
                         <li key={a.id}>
@@ -667,7 +720,14 @@ export default function CheckoutPage() {
                                 : "border-border hover:bg-muted/50"
                             }`}
                           >
-                            <span className="font-medium">{a.full_name}</span>
+                            <span className="font-medium">
+                              {a.full_name}
+                              {a.is_default ? (
+                                <span className="text-primary mr-2 text-xs">
+                                  (پیش‌فرض)
+                                </span>
+                              ) : null}
+                            </span>
                             <span className="text-muted-foreground mt-1 block text-xs">
                               {a.city} — {a.address_line}
                             </span>
@@ -675,7 +735,16 @@ export default function CheckoutPage() {
                         </li>
                       ))}
                     </ul>
+                    <p className="text-muted-foreground text-xs">
+                      در صورت نیاز می‌توانید فیلدهای زیر را قبل از ادامه ویرایش کنید.
+                    </p>
                   </div>
+                ) : null}
+
+                {(addressMode === "new" || savedAddresses.length === 0) ? (
+                  <p className="text-muted-foreground text-xs">
+                    مشخصات گیرنده و آدرس تحویل را وارد کنید.
+                  </p>
                 ) : null}
 
                 <div className="grid gap-3 sm:grid-cols-2">
