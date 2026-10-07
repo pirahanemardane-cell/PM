@@ -79,6 +79,12 @@ export function ShippingActions(props: Props) {
       if (originLat.trim()) cfg.origin_lat = Number(originLat);
       if (originLng.trim()) cfg.origin_lng = Number(originLng);
     }
+    if (code === "alopeyk") {
+      if (apiKey.trim()) cfg.api_token = apiKey.trim();
+      if (originLat.trim()) cfg.origin_lat = Number(originLat);
+      if (originLng.trim()) cfg.origin_lng = Number(originLng);
+      cfg.transport_type = "motor_taxi";
+    }
     return cfg;
   };
 
@@ -347,6 +353,36 @@ export function ShippingActions(props: Props) {
             </>
           )}
 
+          {/* الوپیک */}
+          {code === "alopeyk" && (
+            <>
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Access Token (Bearer JWT)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={originLat}
+                onChange={(e) => setOriginLat(e.target.value)}
+                placeholder="عرض جغرافیایی انبار (origin_lat)"
+                dir="ltr"
+              />
+              <input
+                className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+                value={originLng}
+                onChange={(e) => setOriginLng(e.target.value)}
+                placeholder="طول جغرافیایی انبار (origin_lng)"
+                dir="ltr"
+              />
+              <p className="text-muted-foreground text-[10px]">
+                نوع پیش‌فرض: motor_taxi — توکن از پنل الوپیک / فروش
+              </p>
+            </>
+          )}
+
           {/* پست پیشتاز: بدون کلید */}
           {code === "post" && (
             <p className="text-muted-foreground text-xs leading-relaxed">
@@ -356,7 +392,7 @@ export function ShippingActions(props: Props) {
           )}
 
           {/* ناشناخته */}
-          {!["tipax", "snappbox", "post"].includes(code) && (
+          {!["tipax", "snappbox", "post", "alopeyk"].includes(code) && (
             <>
               <input
                 className="border-input bg-background h-8 w-full rounded border px-2 text-xs"

@@ -2,6 +2,7 @@ import type { QuoteInput, QuoteResult, ShippingMethodRow } from "./types";
 import { tipaxQuote } from "./providers/tipax";
 import { snappboxQuote } from "./providers/snappbox";
 import { postPishtazQuote } from "./providers/post";
+import { alopeykQuote } from "./providers/alopeyk";
 
 export async function getShippingQuote(
   method: ShippingMethodRow,
@@ -30,7 +31,6 @@ export async function getShippingQuote(
     };
   }
 
-  // pricing === "api"
   const payload: QuoteInput = {
     providerCode: code,
     apiConfig,
@@ -41,13 +41,14 @@ export async function getShippingQuote(
     lengthCm: input.lengthCm,
     widthCm: input.widthCm,
     heightCm: input.heightCm,
+    ...(input as any),
   };
 
   if (code === "tipax") return tipaxQuote(payload);
   if (code === "snappbox") return snappboxQuote(payload);
   if (code === "post") return postPishtazQuote(payload);
+  if (code === "alopeyk") return alopeykQuote(payload);
 
-  // ناشناخته → fee ثابت جدول به‌عنوان fallback
   return {
     ok: true,
     fee: Math.max(0, Number(method.fee) || 0),
