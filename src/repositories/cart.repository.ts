@@ -1,25 +1,30 @@
-import { BaseRepository } from "./base.repository";
+import { createServiceClient } from "@/lib/supabase/service";
 
-export class CartRepository extends BaseRepository {
+/** سبد فقط با Service Role (سرور). هویت در server action تعیین می‌شود. */
+export class CartRepository {
+  private getClient() {
+    return createServiceClient();
+  }
+
   async getOrCreateCart(opts: {
     userId?: string | null;
     sessionId?: string | null;
   }): Promise<string> {
-    const supabase = await this.getClient();
+    const supabase = this.getClient();
     if (opts.userId) {
       const { data } = await supabase
         .from("carts")
         .select("id")
         .eq("user_id", opts.userId)
         .maybeSingle();
-      if (data?.id) return data.id;
+      if (data?.id) return data.id as string;
       const { data: created, error } = await supabase
         .from("carts")
         .insert({ user_id: opts.userId })
         .select("id")
         .single();
       if (error) throw error;
-      return created.id;
+      return created.id as string;
     }
     if (opts.sessionId) {
       const { data } = await supabase
@@ -28,24 +33,20 @@ export class CartRepository extends BaseRepository {
         .eq("session_id", opts.sessionId)
         .is("user_id", null)
         .maybeSingle();
-      if (data?.id) return data.id;
+      if (data?.id) return data.id as string;
       const { data: created, error } = await supabase
         .from("carts")
         .insert({ session_id: opts.sessionId })
         .select("id")
         .single();
       if (error) throw error;
-      return created.id;
+      return created.id as string;
     }
     throw new Error("userId or sessionId required");
   }
 
-  async addItem(
-    cartId: string,
-    variantId: string,
-    quantity = 1
-  ): Promise<void> {
-    const supabase = await this.getClient();
+  async addItem(cartId: string, variantId: string, quantity = 1): Promise<void> {
+    const supabase = this.getClient();
     const qtyAdd = Math.max(1, Number(quantity) || 1);
 
     const { data: variant, error: vErr } = await supabase
@@ -54,9 +55,7 @@ export class CartRepository extends BaseRepository {
       .eq("id", variantId)
       .maybeSingle();
     if (vErr) throw vErr;
-    if (!variant || variant.is_active === false) {
-      throw new Error("unavailable");
-    }
+    if (!variant || variant.is_active === false) throw new Error("unavailable");
     const stock = Math.max(0, Number(variant.stock_quantity ?? 0));
 
     const { data: existing } = await supabase
@@ -68,9 +67,7 @@ export class CartRepository extends BaseRepository {
 
     if (existing) {
       const next = Number(existing.quantity) + qtyAdd;
-      if (next > stock) {
-        throw new Error(`insufficient_stock:${stock}`);
-      }
+      if (stock > 0 && next > stock) throw new Error(`insufficient_stock:${stock}`);
       const { error } = await supabase
         .from("cart_items")
         .update({ quantity: next })
@@ -79,9 +76,7 @@ export class CartRepository extends BaseRepository {
       return;
     }
 
-    if (qtyAdd > stock) {
-      throw new Error(`insufficient_stock:${stock}`);
-    }
+    if (stock > 0 && qtyAdd > stock) throw new Error(`insufficient_stock:${stock}`);
     const { error } = await supabase.from("cart_items").insert({
       cart_id: cartId,
       variant_id: variantId,
@@ -90,29 +85,34 @@ export class CartRepository extends BaseRepository {
     if (error) throw error;
   }
 
-  async setQuantity(
-    cartId: string,
-    variantId: string,
-    quantity: number
-  ): Promise<void> {
-    const supabase = await this.getClient();
+  async setQuantity(cartId: string, variantId: string, quantity: number): Promise<void> {
+    const supabase = this.getClient();
     if (quantity < 1) {
       await this.removeItem(cartId, variantId);
       return;
     }
     const { data: variant, error: vErr } = await supabase
       .from("product_variants")
-      .select("stock_quantity, is_active")
+      .select("id, stock_quantity, is_active")
       .eq("id", variantId)
       .maybeSingle();
     if (vErr) throw vErr;
-    if (!variant || variant.is_active === false) {
-      throw new Error("unavailable");
-    }
+    if (!variant || variant.is_active === false) throw new Error("unavailable");
     const stock = Math.max(0, Number(variant.stock_quantity ?? 0));
-    const qty = Math.min(Number(quantity) || 1, stock);
-    if (qty < 1) {
-      throw new Error(`insufficient_stock:${stock}`);
+    const qty =
+      stock > 0
+        ? Math.min(Number(quantity) || 1, stock)
+        : Math.max(1, Number(quantity) || 1);
+
+    const { data: existing } = await supabase
+      .from("cart_items")
+      .select("id")
+      .eq("cart_id", cartId)
+      .eq("variant_id", variantId)
+      .maybeSingle();
+    if (!existing) {
+      await this.addItem(cartId, variantId, qty);
+      return;
     }
     const { error } = await supabase
       .from("cart_items")
@@ -123,7 +123,7 @@ export class CartRepository extends BaseRepository {
   }
 
   async removeItem(cartId: string, variantId: string): Promise<void> {
-    const supabase = await this.getClient();
+    const supabase = this.getClient();
     const { error } = await supabase
       .from("cart_items")
       .delete()
@@ -133,7 +133,7 @@ export class CartRepository extends BaseRepository {
   }
 
   async listItems(cartId: string) {
-    const supabase = await this.getClient();
+    const supabase = this.getClient();
     const { data, error } = await supabase
       .from("cart_items")
       .select(
@@ -150,54 +150,47 @@ export class CartRepository extends BaseRepository {
           color_hex,
           products(id, name, slug, product_images(url, is_primary, sort_order, variant_id))
         )
-      `
+      `,
       )
-      .eq("cart_id", cartId);
+      .eq("cart_id", cartId)
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return data ?? [];
   }
 
   async clearCart(cartId: string): Promise<void> {
-    const supabase = await this.getClient();
-    const { error } = await supabase
-      .from("cart_items")
-      .delete()
-      .eq("cart_id", cartId);
+    const supabase = this.getClient();
+    const { error } = await supabase.from("cart_items").delete().eq("cart_id", cartId);
     if (error) throw error;
   }
 
-
-  /** اقلام سبد session مهمان را به سبد کاربر منتقل می‌کند و سبد مهمان را خالی/حذف می‌کند */
   async mergeSessionIntoUser(sessionId: string, userId: string): Promise<void> {
     if (!sessionId || !userId) return;
-    const supabase = await this.getClient();
-
+    const supabase = this.getClient();
     const { data: guestCart } = await supabase
       .from("carts")
       .select("id")
       .eq("session_id", sessionId)
       .is("user_id", null)
       .maybeSingle();
-
     if (!guestCart?.id) return;
-
     const userCartId = await this.getOrCreateCart({ userId });
     if (guestCart.id === userCartId) return;
-
     const { data: guestItems } = await supabase
       .from("cart_items")
       .select("variant_id, quantity")
       .eq("cart_id", guestCart.id);
-
     for (const row of guestItems ?? []) {
       const vid = (row as { variant_id: string }).variant_id;
       const qty = Number((row as { quantity: number }).quantity) || 1;
       if (!vid) continue;
-      await this.addItem(userCartId, vid, qty);
+      try {
+        await this.addItem(userCartId, vid, qty);
+      } catch (e) {
+        console.error("[mergeSessionIntoUser]", e);
+      }
     }
-
-    await this.clearCart(guestCart.id);
+    await this.clearCart(guestCart.id as string);
     await supabase.from("carts").delete().eq("id", guestCart.id);
   }
-
 }

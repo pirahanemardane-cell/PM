@@ -6,7 +6,7 @@ import { sizeAvailable as sizeAvailableShared, sameColor, stockOf, findVariant, 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";
-import { addToCartAction } from "@/app/(shop)/actions/shop";
+import { cartAdd } from "@/lib/cart-api";
 import { subscribeStockAlertAction } from "@/app/(shop)/actions/stock-alerts";
 import { useServerCartStore } from "@/lib/server-cart-store";
 import { cn } from "@/lib/utils";
@@ -195,43 +195,27 @@ export function ProductBuyBox({
     }
     setLoading(true);
     try {
-      // eslint-disable-line react-hooks/exhaustive-deps
-
-
+      const addQty = Math.max(1, Number(qty) || 1);
       if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
-        );
+        window.dispatchEvent(new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }));
       }
-      // لوکال همین الان در استور است → UI درست است
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }),
-        );
-        window.dispatchEvent(new CustomEvent("pm:cart-changed"));
-      }
-      try {
-        useServerCartStore.getState().addOptimistic({
-        key: match.id,
-        productId,
+      const res = await cartAdd({
         variantId: match.id,
+        productId,
         title,
         price: Number(price ?? 0),
-        quantity: Math.max(1, Number(qty) || 1),
+        quantity: addQty,
         image,
         size: selectedSize || undefined,
         color: selectedColor || undefined,
       });
-      const res = await addToCartAction(match.id, qty);
-        if (res.ok) {
-          
-          window.dispatchEvent(new CustomEvent("pm:cart-changed"));
-        } else if (res.error && res.error !== "login_required") {
-          // سرور fail ولی لوکال OK — فقط هشدار خفیف، نه خطای کلی
-          console.warn("[addToCart server]", res.error);
-        }
-      } catch (e) {
-        console.warn("[addToCart server exception]", e);
+      if (!res.ok) {
+        toast.error(
+          res.error?.startsWith("insufficient_stock")
+            ? "موجودی کافی نیست"
+            : "افزودن به سبد ممکن نشد",
+        );
+        return;
       }
       toast.success("به سبد خرید اضافه شد");
     } catch (e) {

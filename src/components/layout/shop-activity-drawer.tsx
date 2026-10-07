@@ -16,7 +16,8 @@ import {
 import { useShopStore } from "@/lib/shop-store";
 import { useUnifiedCart } from "@/lib/use-unified-cart";
 import { useServerCartStore } from "@/lib/server-cart-store";
-import { removeCartItemAction, updateCartQuantityAction, swapCartVariantAction } from "@/app/(shop)/actions/shop";
+import { swapCartVariantAction } from "@/app/(shop)/actions/shop";
+import { cartRemove, cartSetQty } from "@/lib/cart-api";
 import { X } from "lucide-react";
 import { NotificationsPanel } from "@/components/notifications/notifications-panel";
 
@@ -308,30 +309,13 @@ export function ShopActivityDrawer({
                           <button
                             type="button"
                             className="text-destructive text-xs"
-                            onClick={async () => {
-                              const line = p as {
-                                id?: string;
-                                productId?: string;
-                                variantId?: string;
-                                source?: string;
-                                color?: string;
-                                size?: string;
-                              };
-                              const isServer =
-                                isLoggedIn &&
-                                (line.source === "server" || Boolean(line.variantId));
-                              if (isServer && line.variantId) {
-                                const res = await removeCartItemAction(line.variantId);
-                                if (!res.ok) {
-                                  console.error("[drawer remove]", res.error);
-                                  return;
-                                }
-                                window.dispatchEvent(new Event("pm:cart-changed"));
-                                  toast.success("از سبد حذف شد");
-                              } else {
-                                const pid = line.productId || line.id || (p as { id?: string }).id;
-                                if (pid) removeFromCart(pid, { color: p.color, size: p.size });
-                              }
+                            onClick={() => {
+                              const vid = (p as { variantId?: string }).variantId;
+                              if (!vid) { toast.error("حذف ممکن نشد"); return; }
+                              void cartRemove(vid).then((r) => {
+                                if (!r.ok) toast.error("حذف از سبد ممکن نشد");
+                                else toast.success("از سبد حذف شد");
+                              });
                             }}
                           >
                             حذف
@@ -340,31 +324,14 @@ export function ShopActivityDrawer({
                             <button
                               type="button"
                               className="border-border h-7 w-7 rounded-md border text-sm"
-                              onClick={async () => {
-                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string; color?: string; size?: string };
-                                const q = Math.max(0, (p.quantity ?? 1) - 1);
-                                if (isLoggedIn && line.variantId) {
-                                  if (q < 1) {
-                                    removeOptimistic(line.variantId);
-                                    await removeCartItemAction(line.variantId);
-                                  } else {
-                                    setQuantityOptimistic(line.variantId, q);
-                                    const res = await updateCartQuantityAction(line.variantId, q);
-                                    if (!res.ok) {
-                                      /* no forced refresh */
-                                      toast.error("تغییر تعداد ممکن نشد");
-                                      return;
-                                    }
-                                  }
-                                  window.dispatchEvent(new Event("pm:cart-changed"));
-                                  /* no forced refresh */
-                                } else {
-                                  const pid = line.productId || line.id || (p as { id?: string }).id;
-                                  const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                  if (q < 1) removeFromCart(pid!, { color: p.color, size: p.size });
-                                  else setCartQuantity(key, q);
-                                }
-                              }}
+                              onClick={() => {
+                              const vid = (p as { variantId?: string }).variantId;
+                              if (!vid) { toast.error("حذف ممکن نشد"); return; }
+                              void cartRemove(vid).then((r) => {
+                                if (!r.ok) toast.error("حذف از سبد ممکن نشد");
+                                else toast.success("از سبد حذف شد");
+                              });
+                            }}
                             >
                               −
                             </button>
@@ -374,24 +341,11 @@ export function ShopActivityDrawer({
                             <button
                               type="button"
                               className="border-border h-7 w-7 rounded-md border text-sm"
-                              onClick={async () => {
-                                const line = p as { variantId?: string; source?: string; productId?: string; id?: string };
-                                const q = Math.min(99, (p.quantity ?? 1) + 1);
-                                if (isLoggedIn && line.variantId) {
-                                  setQuantityOptimistic(line.variantId, q);
-                                  const res = await updateCartQuantityAction(line.variantId, q);
-                                  if (!res.ok) {
-                                    /* no forced refresh */
-                                    toast.error("تغییر تعداد ممکن نشد (موجودی؟)");
-                                    return;
-                                  }
-                                  window.dispatchEvent(new Event("pm:cart-changed"));
-                                  /* no forced refresh */
-                                } else {
-                                  const pid = line.productId || line.id || (p as { id?: string }).id;
-                                  const key = `${pid}|${p.color ?? ""}|${p.size ?? ""}`;
-                                  setCartQuantity(key, q);
-                                }
+                              onClick={() => {
+                                const vid = (p as { variantId?: string }).variantId;
+                                if (!vid) return;
+                                const q = Math.max(0, (p.quantity ?? 1) - 1);
+                                void cartSetQty(vid, q);
                               }}
                             >
                               +

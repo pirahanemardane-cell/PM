@@ -20,7 +20,8 @@ import {
 
 import { toast } from "@/lib/toaster";
 import { useShopStore } from "@/lib/shop-store";
-import { toggleWishlistAction, addToCartAction } from "@/app/(shop)/actions/shop";
+import { toggleWishlistAction } from "@/app/(shop)/actions/shop";
+import { cartAdd } from "@/lib/cart-api";
 import { useServerCartStore } from "@/lib/server-cart-store";
 
 import { motion } from "framer-motion";
@@ -208,10 +209,12 @@ export function ProductCard1({
     }
     setIsAddingToCart(true);
     try {
-      useServerCartStore.getState().addOptimistic({
-        key: variantId,
-        productId,
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("pm:open-panel", { detail: { tab: "cart" } }));
+      }
+      const res = await cartAdd({
         variantId,
+        productId,
         title: name ?? "محصول",
         price: price ?? 0,
         quantity: 1,
@@ -219,20 +222,8 @@ export function ProductCard1({
         size: selectedSize || undefined,
         color: selectedColor || undefined,
       });
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("pm:open-panel", { detail: { tab: "cart" } })
-        );
-      }
-      console.log("addCart", { variantId, selectedSize, selectedColor, optsLen: opts.length });
-      const res = await addToCartAction(variantId, 1);
-            if (res.ok) {
-        
-        window.dispatchEvent(new CustomEvent("pm:cart-changed"));
-      }
-// مهمان: فقط local — لاگین اجباری نیست
-      if (!res.ok && res.error !== "login_required") {
-        toast.error(res.error ? `سبد: ${res.error}` : "خطا در افزودن به سبد");
+      if (!res.ok) {
+        toast.error(res.error?.startsWith("insufficient_stock") ? "موجودی کافی نیست" : "خطا در افزودن به سبد");
       } else {
         setIsAddedToCart(true);
         toast.success("به سبد خرید اضافه شد");

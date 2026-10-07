@@ -1,3 +1,4 @@
+import { cartRemove, cartSetQty } from "@/lib/cart-api";
 "use client";
 
 import Link from "next/link";
@@ -159,22 +160,14 @@ export default function CartPage() {
     setBusy(line.key, true);
     setMsg(null);
     try {
-      if (!line.variantId) {
-        setMsg("حذف ممکن نشد");
-        return;
-      }
-      removeOptimistic(line.variantId);
-      const res = await removeCartItemAction(line.variantId);
-      if (!res.ok) {
-        void refreshServer({ force: true });
-        setMsg("حذف ممکن نشد");
-        return;
-      }
-      window.dispatchEvent(new Event("pm:cart-changed"));
+      if (!line.variantId) { setMsg("حذف ممکن نشد"); return; }
+      const res = await cartRemove(line.variantId);
+      if (!res.ok) setMsg("حذف ممکن نشد");
     } finally {
       setBusy(line.key, false);
     }
   }
+
 
   async function changeVariant(
     line: (typeof lines)[number],
