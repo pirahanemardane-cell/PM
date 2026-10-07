@@ -317,8 +317,9 @@ export default function CheckoutPage() {
     void getMyOrderStatusAction(doneOrder.id).then((r) => {
       if (!r.ok) return;
       const ps = r.order.paymentStatus;
-      if (ps === "paid" || ps === "success") setPayStatus("success");
-      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+      const st = r.order.status;
+      if (ps === "paid" || ps === "success" || st === "paid") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled" || st === "cancelled") setPayStatus("failed");
       else setPayStatus("pending");
     });
   });
@@ -327,8 +328,9 @@ export default function CheckoutPage() {
     void getMyOrderStatusAction(doneOrder.id).then((r) => {
       if (!r.ok) return;
       const ps = r.order.paymentStatus;
-      if (ps === "paid" || ps === "success") setPayStatus("success");
-      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+      const st = r.order.status;
+      if (ps === "paid" || ps === "success" || st === "paid") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled" || st === "cancelled") setPayStatus("failed");
       else setPayStatus("pending");
     });
   });
@@ -340,11 +342,12 @@ export default function CheckoutPage() {
       const r = await getMyOrderStatusAction(doneOrder.id);
       if (cancelled || !r.ok) return;
       const ps = r.order.paymentStatus;
-      if (ps === "paid" || ps === "success") setPayStatus("success");
-      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+      const st = r.order.status;
+      if (ps === "paid" || ps === "success" || st === "paid") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled" || st === "cancelled") setPayStatus("failed");
     };
     void tick();
-    const iv = window.setInterval(() => void tick(), 5000);
+    const iv = window.setInterval(() => void tick(), 2000);
     return () => {
       cancelled = true;
       window.clearInterval(iv);
@@ -459,6 +462,7 @@ export default function CheckoutPage() {
           .filter(Boolean)
           .join(" | ") || undefined,
       discountCode: (discountPreview?.code || discountCode).trim() || undefined,
+      paymentMethod: payMethod,
     });
     setSubmitting(false);
 

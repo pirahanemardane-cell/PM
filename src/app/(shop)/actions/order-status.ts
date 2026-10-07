@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type OrderStatusDTO = {
   id: string;
@@ -20,7 +21,8 @@ export async function getMyOrderStatusAction(
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "login_required" };
 
-    const { data, error } = await supabase
+    const service = createServiceClient();
+    const { data, error } = await service
       .from("orders")
       .select("id, status, payment_status, total_amount, user_id")
       .eq("id", orderId)
@@ -38,7 +40,7 @@ export async function getMyOrderStatusAction(
     return {
       ok: true,
       order: {
-        id: data.id,
+        id: data.id as string,
         status: String(data.status ?? "pending"),
         paymentStatus: String(
           (data as { payment_status?: string }).payment_status ?? "pending",

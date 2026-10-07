@@ -419,6 +419,7 @@ export type CreateOrderPayload = {
   postal?: string;
   note?: string;
   discountCode?: string;
+  paymentMethod?: "cod" | "online";
 };
 
 export async function createOrderAction(payload: CreateOrderPayload) {
@@ -529,6 +530,7 @@ const orderRepo = new OrderRepository();
       note: noteOk.text || undefined,
       discountCode,
       discountAmount,
+      paymentMethod: payload.paymentMethod === "online" ? "online" : "cod",
       // اگر repo هنوز total را خودش از items می‌سازد، داخل repo:
       // total = subtotal - discountAmount
     });

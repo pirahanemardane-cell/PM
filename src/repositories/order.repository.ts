@@ -21,6 +21,7 @@ export type CreateOrderInput = {
   note?: string;
   discountCode?: string | null;
   discountAmount?: number;
+    paymentMethod?: "cod" | "online";
 };
 
 export class OrderRepository extends BaseRepository {
@@ -100,6 +101,8 @@ export class OrderRepository extends BaseRepository {
       .insert({
         user_id: input.userId,
         status: "pending",
+        payment_status:
+          input.paymentMethod === "cod" ? "paid" : "pending",
         total_amount: Math.max(0, Number(total) - Number(input.discountAmount ?? 0)),
         discount_code: input.discountCode ?? null,
         discount_amount: input.discountAmount ?? 0,
