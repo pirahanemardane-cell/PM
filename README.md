@@ -61,3 +61,6 @@ npm run dev
 ## بستن فاز ۰ تا ۴
 - [سند بستن رسمی](docs/PHASES-0-4-CLOSURE.md)
 
+## مستندات فاز ۵
+- [وضعیت کاتالوگ](docs/05-CATALOG-STATUS.md)
+
