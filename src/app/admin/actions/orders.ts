@@ -176,3 +176,44 @@ export async function adminHardDeleteOrdersAction(ids: string[]) {
   };
 }
 
+
+/** تأیید یا رد پرداخت آنلاین توسط ادمین — مشتری با polling/RT می‌بیند */
+export async function adminUpdatePaymentStatusAction(
+  orderId: string,
+  paymentStatus: "pending" | "paid" | "failed",
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const service = createServiceClient();
+    const patch: Record<string, unknown> = {
+      payment_status: paymentStatus,
+      updated_at: new Date().toISOString(),
+    };
+    // اگر پرداخت تأیید شد، وضعیت سفارش را هم paid کن (اگر هنوز pending باشد)
+    if (paymentStatus === "paid") {
+      patch.status = "paid";
+    }
+    if (paymentStatus === "failed") {
+      // فقط payment؛ status را لغو اجباری نمی‌کنیم تا ادمین جدا تصمیم بگیرد
+    }
+    const { error } = await service
+      .from("orders")
+      .update(patch)
+      .eq("id", orderId);
+    if (error) throw error;
+
+    void adminWriteLogAction({
+      action: "payment_status_change",
+      entity: "order",
+      entity_id: orderId,
+      meta: paymentStatus,
+    });
+
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminUpdatePaymentStatus]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   adminListOrdersAction,
   adminUpdateOrderStatusAction,
+  adminUpdatePaymentStatusAction,
   adminHardDeleteOrdersAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
@@ -40,6 +41,7 @@ type OrderRow = {
   shipping_phone?: string | null;
   shipping_city?: string | null;
   created_at: string;
+  payment_status?: string | null;
   order_items?: { title: string; quantity: number; line_total: number }[];
 };
 
@@ -99,6 +101,33 @@ export default function AdminOrdersPage() {
     setItems((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status } : o)),
     );
+  }
+
+  async function changePayment(id: string, paymentStatus: string) {
+    setBusyId(id);
+    const res = await adminUpdatePaymentStatusAction(
+      id,
+      paymentStatus as "pending" | "paid" | "failed",
+    );
+    setBusyId(null);
+    if (!res.ok) {
+      setError("به‌روزرسانی وضعیت پرداخت ناموفق بود");
+      return;
+    }
+    setItems((prev) =>
+      prev.map((o) =>
+        o.id === id
+          ? {
+              ...o,
+              payment_status: paymentStatus,
+              status: paymentStatus === "paid" ? "paid" : o.status,
+            }
+          : o,
+      ),
+    );
+    // اطلاع به تب‌های باز مشتری
+    window.dispatchEvent(new Event("pm:payment-changed"));
+    window.dispatchEvent(new Event("pm:orders-changed"));
   }
 
 
@@ -286,6 +315,18 @@ export default function AdminOrdersPage() {
                       ) : (
                         "—"
                       )}
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={o.payment_status || "pending"}
+                        disabled={busyId === o.id}
+                        onChange={(e) => void changePayment(o.id, e.target.value)}
+                        className="border-input bg-background max-w-[8rem] rounded-lg border px-2 py-1 text-xs"
+                      >
+                        <option value="pending">معلق</option>
+                        <option value="paid">تأیید شد</option>
+                        <option value="failed">ناموفق</option>
+                      </select>
                     </td>
                     <td className="p-3">
                       <select
