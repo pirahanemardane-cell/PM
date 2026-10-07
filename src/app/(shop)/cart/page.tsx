@@ -1,5 +1,6 @@
-import { cartRemove, cartSetQty } from "@/lib/cart-api";
 "use client";
+
+import { cartRemove, cartSetQty } from "@/lib/cart-api";
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
