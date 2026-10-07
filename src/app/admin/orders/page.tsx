@@ -93,7 +93,6 @@ export default function AdminOrdersPage() {
   async function changeStatus(id: string, status: string) {
     setBusyId(id);
     const res = await adminUpdateOrderStatusAction(id, status);
-    // همزمان وضعیت پرداخت: فقط وقتی «پرداخت شده» انتخاب شود → paid
     if (res.ok && (status === "paid" || status === "payment_received")) {
       await adminUpdatePaymentStatusAction(id, "paid");
     }
@@ -119,21 +118,7 @@ export default function AdminOrdersPage() {
     window.dispatchEvent(new Event("pm:orders-changed"));
     window.dispatchEvent(new Event("pm:payment-changed"));
   }
-    setItems((prev) =>
-      prev.map((o) =>
-        o.id === id
-          ? {
-              ...o,
-              payment_status: paymentStatus,
-              status: paymentStatus === "paid" ? "paid" : o.status,
-            }
-          : o,
-      ),
-    );
-    // اطلاع به تب‌های باز مشتری
-    window.dispatchEvent(new Event("pm:payment-changed"));
-    window.dispatchEvent(new Event("pm:orders-changed"));
-  }
+
 
 
   function toggleSelect(id: string) {
