@@ -44,3 +44,10 @@ npm run dev
 
 ## تماس
 برای سوالات فنی به صاحب پروژه مراجعه کنید.
+
+## مستندات فاز ۰
+- [نیازمندی‌ها و User Flows](docs/00-REQUIREMENTS-AND-USER-FLOWS.md)
+- [استاندارد کدنویسی](docs/00-CODING-STANDARDS.md)
+- [قرارداد Git](docs/00-GIT-CONVENTION.md)
+- [Definition of Done](docs/00-DEFINITION-OF-DONE.md)
+
