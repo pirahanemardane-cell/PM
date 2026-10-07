@@ -13,6 +13,11 @@ import {
   type CartLineDTO,
 } from "@/app/(shop)/actions/shop";
 import {
+  listActiveShippingMethodsAction,
+  quoteShippingAction,
+} from "@/app/(shop)/actions/shipping";
+import type { ShippingMethodRow } from "@/lib/shipping/types";
+import {
   reserveCheckoutStockAction,
   extendCheckoutReservationAction,
   releaseCheckoutReservationAction,
@@ -27,7 +32,7 @@ export const dynamic = "force-dynamic";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type PayStatus = "success" | "pending" | "failed";
-type ShipMethod = "post" | "tipax" | "peyk" | "pickup";
+type ShipMethod = string; // id از جدول shipping_methods
 
 const STEPS: { n: Step; label: string }[] = [
   { n: 1, label: "تأیید سبد" },
@@ -37,36 +42,17 @@ const STEPS: { n: Step; label: string }[] = [
   { n: 5, label: "نتیجه" },
 ];
 
-const SHIP_OPTIONS: {
-  id: ShipMethod;
+/** fallback اگر دیتابیس خالی بود */
+const FALLBACK_shipOptions: {
+  id: string;
   title: string;
   desc: string;
   fee: number;
 }[] = [
-  {
-    id: "post",
-    title: "پست پیشتاز",
-    desc: "۲ تا ۴ روز کاری",
-    fee: 45000,
-  },
-  {
-    id: "tipax",
-    title: "تیپاکس",
-    desc: "۱ تا ۳ روز کاری",
-    fee: 65000,
-  },
-  {
-    id: "peyk",
-    title: "پیک موتوری (تهران)",
-    desc: "همان روز / روز بعد",
-    fee: 85000,
-  },
-  {
-    id: "pickup",
-    title: "تحویل حضوری",
-    desc: "از فروشگاه — رایگان",
-    fee: 0,
-  },
+  { id: "post", title: "پست پیشتاز", desc: "۲ تا ۴ روز کاری", fee: 45000 },
+  { id: "tipax", title: "تیپاکس", desc: "۱ تا ۳ روز کاری", fee: 65000 },
+  { id: "peyk", title: "پیک موتوری", desc: "توافقی", fee: 0 },
+  { id: "pickup", title: "تحویل حضوری", desc: "از فروشگاه — رایگان", fee: 0 },
 ];
 
 function mapCheckoutError(code: string | undefined): string {
@@ -111,7 +97,12 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState<Step>(1);
   const [payMethod, setPayMethod] = useState<"cod" | "online">("cod");
-  const [shipMethod, setShipMethod] = useState<ShipMethod>("post");
+  const [shipMethod, setShipMethod] = useState<ShipMethod>("");
+  const [shipMethods, setShipMethods] = useState<ShippingMethodRow[]>([]);
+  const [shipOptions, setShipOptions] = useState(FALLBACK_shipOptions);
+  const [shipFee, setShipFee] = useState(0);
+  const [shipQuoteNote, setShipQuoteNote] = useState<string | null>(null);
+  const [shipLoading, setShipLoading] = useState(false);
   const [payStatus, setPayStatus] = useState<PayStatus | null>(null);
   const [doneOrder, setDoneOrder] = useState<{
     id: string;
@@ -142,6 +133,104 @@ export default function CheckoutPage() {
       is_default: boolean;
     }[]
   >([]);
+
+  // بارگذاری روش‌های فعال از دیتابیس
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await listActiveShippingMethodsAction();
+      if (cancelled) return;
+      if (res.ok && res.items.length) {
+        setShipMethods(res.items);
+        const opts = res.items.map((m) => ({
+          id: m.id,
+          title: m.title,
+          desc: m.description || "",
+          fee: m.fee,
+        }));
+        setShipOptions(opts);
+        if (!shipMethod || !opts.some((o) => o.id === shipMethod)) {
+          setShipMethod(opts[0].id);
+        }
+      } else {
+        setShipOptions(FALLBACK_shipOptions);
+        if (!shipMethod) setShipMethod(FALLBACK_shipOptions[0].id);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // استعلام هزینه ارسال
+  useEffect(() => {
+    if (!shipMethod) return;
+    let cancelled = false;
+    (async () => {
+      setShipLoading(true);
+      setShipQuoteNote(null);
+
+      // اگر از fallback است (idهای کوتاه)
+      const isDbId = shipMethod.length > 20;
+      if (!isDbId) {
+        const fb = FALLBACK_shipOptions.find((s) => s.id === shipMethod);
+        if (!cancelled) {
+          setShipFee(fb?.fee ?? 0);
+          setShipLoading(false);
+        }
+        return;
+      }
+
+      const method = shipMethods.find((m) => m.id === shipMethod);
+      if (!method) {
+        if (!cancelled) setShipLoading(false);
+        return;
+      }
+
+      // وزن تقریبی: هر آیتم سبد ~۴۰۰ گرم
+      const weightGrams = Math.max(
+        400,
+        (typeof items !== "undefined" ? items.length : 1) * 400,
+      );
+
+      const res = await quoteShippingAction({
+        methodId: shipMethod,
+        weightGrams,
+        destCity: form.city || undefined,
+        destProvince: undefined,
+        parcelValueToman: afterDiscount,
+      });
+
+      if (cancelled) return;
+
+      if (res.ok && res.quote.ok) {
+        setShipFee(res.quote.fee);
+        setShipQuoteNote(res.quote.note || null);
+      } else if (res.ok && !res.quote.ok) {
+        // API پیکربندی نشده یا خطا → fee ثابت / صفر + یادداشت
+        const fallbackFee =
+          method.pricing_type === "fixed" ? method.fee : 0;
+        setShipFee(fallbackFee);
+        const err = "error" in res.quote ? res.quote.error : "quote_failed";
+        if (err.includes("not_configured") || err.includes("missing_")) {
+          setShipQuoteNote("هزینه پس از تأیید سفارش اعلام می‌شود");
+        } else if (method.pricing_type === "negotiable") {
+          setShipQuoteNote("هزینه توافقی");
+        } else {
+          setShipQuoteNote("استعلام موقت در دسترس نیست");
+        }
+      } else {
+        setShipFee(method.fee || 0);
+        setShipQuoteNote(null);
+      }
+      setShipLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipMethod, form.city, shipMethods]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   const [discountCode, setDiscountCode] = useState("");
@@ -262,7 +351,6 @@ export default function CheckoutPage() {
     () => items.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
     [items],
   );
-  const shipFee = SHIP_OPTIONS.find((s) => s.id === shipMethod)?.fee ?? 0;
   const afterDiscount = discountPreview?.finalTotal ?? subtotal;
   const payable = Math.max(0, afterDiscount + shipFee);
 
@@ -325,7 +413,7 @@ export default function CheckoutPage() {
       note:
         [
           form.note.trim(),
-          `ارسال: ${SHIP_OPTIONS.find((s) => s.id === shipMethod)?.title ?? shipMethod}`,
+          `ارسال: ${shipOptions.find((s) => s.id === shipMethod)?.title ?? shipMethod}`,
           `پرداخت: ${payMethod === "cod" ? "در محل" : "آنلاین"}`,
         ]
           .filter(Boolean)
@@ -618,8 +706,13 @@ export default function CheckoutPage() {
             {step === 3 ? (
               <>
                 <h2 className="font-semibold text-primary">۳. نحوه ارسال</h2>
+              {shipLoading ? (
+                <p className="text-muted-foreground text-xs">در حال محاسبه هزینه ارسال...</p>
+              ) : shipQuoteNote ? (
+                <p className="text-muted-foreground text-xs">{shipQuoteNote}</p>
+              ) : null}
                 <div className="space-y-2">
-                  {SHIP_OPTIONS.map((opt) => (
+                  {shipOptions.map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
@@ -769,7 +862,7 @@ export default function CheckoutPage() {
                   </p>
                   <p>
                     <span className="text-muted-foreground">ارسال: </span>
-                    {SHIP_OPTIONS.find((s) => s.id === shipMethod)?.title}
+                    {shipOptions.find((s) => s.id === shipMethod)?.title}
                   </p>
                   <p className="font-bold">
                     قابل پرداخت: <Price amount={payable} size="md" />
