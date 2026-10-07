@@ -1,4 +1,5 @@
 import { BaseRepository } from "./base.repository";
+import { createServiceClient } from "@/lib/supabase/service";
 import { normalizeIranMobile } from "@/lib/numbers";
 
 export type AddressRow = {
@@ -28,7 +29,7 @@ export type AddressInput = {
 
 export class AddressRepository extends BaseRepository {
   async list(userId: string): Promise<AddressRow[]> {
-    const supabase = await this.getClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("addresses")
       .select("*")
@@ -40,7 +41,7 @@ export class AddressRepository extends BaseRepository {
   }
 
   async create(userId: string, input: AddressInput): Promise<AddressRow> {
-    const supabase = await this.getClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("addresses")
       .insert({
@@ -65,7 +66,7 @@ export class AddressRepository extends BaseRepository {
     id: string,
     input: Partial<AddressInput>
   ): Promise<void> {
-    const supabase = await this.getClient();
+    const supabase = createServiceClient();
     const patch: Record<string, unknown> = {};
     if (input.title !== undefined) patch.title = input.title?.trim() || null;
     if (input.full_name !== undefined) patch.full_name = input.full_name.trim();
@@ -92,7 +93,7 @@ export class AddressRepository extends BaseRepository {
   }
 
   async remove(userId: string, id: string): Promise<void> {
-    const supabase = await this.getClient();
+    const supabase = createServiceClient();
     const { error } = await supabase
       .from("addresses")
       .delete()

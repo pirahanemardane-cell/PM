@@ -536,6 +536,37 @@ const orderRepo = new OrderRepository();
     });
 
     await cartRepo.clearCart(cartId);
+
+    // ذخیره آدرس در دفترچه برای خریدهای بعدی
+    try {
+      const addrRepo = new AddressRepository();
+      const existing = await addrRepo.list(user.id);
+      const line = addrOk.text.trim();
+      const city = (cityOk.text || "").trim() || "—";
+      const phone = phoneOk.text;
+      const fullName = nameOk.text;
+      const postal = (payload.postal || "").trim() || null;
+      const already = existing.some(
+        (a) =>
+          a.address_line.trim() === line &&
+          a.city.trim() === city &&
+          (a.postal_code || "") === (postal || ""),
+      );
+      if (!already && line) {
+        await addrRepo.create(user.id, {
+          full_name: fullName,
+          phone,
+          city,
+          address_line: line,
+          postal_code: postal || undefined,
+          is_default: existing.length === 0,
+          title: existing.length === 0 ? "پیش‌فرض" : "آدرس سفارش",
+        });
+      }
+    } catch (ae) {
+      console.error("[createOrder save address]", ae);
+    }
+
     return { ok: true as const, orderId };
   } catch (e) {
     console.error("[createOrder]", e);
@@ -683,7 +714,41 @@ export async function listMyAddressesAction() {
     const user = await requireUser();
     if (!user) return { ok: false as const, items: [], error: "login_required" };
     const repo = new AddressRepository();
-    const items = await repo.list(user.id);
+    let items = await repo.list(user.id);
+
+    // اگر خالی است ولی سفارش قبلی دارد → از آخرین سفارش بساز
+    if (!items.length) {
+      try {
+        const { createServiceClient } = await import("@/lib/supabase/service");
+        const service = createServiceClient();
+        const { data: last } = await service
+          .from("orders")
+          .select(
+            "shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal",
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (last?.shipping_address) {
+          const created = await repo.create(user.id, {
+            full_name: String(last.shipping_name || "گیرنده"),
+            phone: String(last.shipping_phone || ""),
+            city: String(last.shipping_city || "—"),
+            address_line: String(last.shipping_address),
+            postal_code: last.shipping_postal
+              ? String(last.shipping_postal)
+              : undefined,
+            is_default: true,
+            title: "پیش‌فرض",
+          });
+          items = [created];
+        }
+      } catch (be) {
+        console.error("[listMyAddresses bootstrap]", be);
+      }
+    }
+
     return { ok: true as const, items };
   } catch (e) {
     console.error("[listMyAddresses]", e);
