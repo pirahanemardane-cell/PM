@@ -18,6 +18,9 @@ type Props =
       fee: number;
       isActive: boolean;
       sortOrder: number;
+      providerCode: string;
+      pricingType: string;
+      apiConfig: Record<string, unknown>;
     };
 
 export function ShippingActions(props: Props) {
@@ -26,12 +29,42 @@ export function ShippingActions(props: Props) {
   const isCreate = props.mode === "create";
 
   const [title, setTitle] = useState(isCreate ? "" : props.title);
-  const [description, setDescription] = useState(isCreate ? "" : props.description);
+  const [description, setDescription] = useState(
+    isCreate ? "" : props.description,
+  );
   const [fee, setFee] = useState(isCreate ? "0" : String(props.fee));
   const [sortOrder, setSortOrder] = useState(
     isCreate ? "99" : String(props.sortOrder),
   );
+  const [providerCode, setProviderCode] = useState(
+    isCreate ? "" : props.providerCode,
+  );
+  const [pricingType, setPricingType] = useState(
+    isCreate ? "fixed" : props.pricingType,
+  );
+  const [apiKey, setApiKey] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.api_key || ""),
+  );
+  const [clientId, setClientId] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.client_id || ""),
+  );
+  const [contractCode, setContractCode] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.contract_code || ""),
+  );
+  const [baseUrl, setBaseUrl] = useState(
+    isCreate ? "" : String((props.apiConfig as any)?.base_url || ""),
+  );
   const [editing, setEditing] = useState(false);
+  const [showApi, setShowApi] = useState(false);
+
+  const buildApiConfig = () => {
+    const cfg: Record<string, unknown> = {};
+    if (baseUrl.trim()) cfg.base_url = baseUrl.trim();
+    if (apiKey.trim()) cfg.api_key = apiKey.trim();
+    if (clientId.trim()) cfg.client_id = clientId.trim();
+    if (contractCode.trim()) cfg.contract_code = contractCode.trim();
+    return cfg;
+  };
 
   const save = () => {
     start(async () => {
@@ -41,19 +74,27 @@ export function ShippingActions(props: Props) {
           description,
           fee: Number(fee) || 0,
           sort_order: Number(sortOrder) || 99,
+          provider_code: providerCode || undefined,
+          pricing_type: pricingType,
         });
         setTitle("");
         setDescription("");
         setFee("0");
         setSortOrder("99");
+        setProviderCode("");
+        setPricingType("fixed");
       } else {
         await updateShippingMethod(props.id, {
           title,
           description,
           fee: Number(fee) || 0,
           sort_order: Number(sortOrder) || 0,
+          provider_code: providerCode || undefined,
+          pricing_type: pricingType,
+          api_config: buildApiConfig(),
         });
         setEditing(false);
+        setShowApi(false);
       }
       router.refresh();
     });
@@ -77,7 +118,7 @@ export function ShippingActions(props: Props) {
         <input
           type="number"
           className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
-          placeholder="هزینه (تومان)"
+          placeholder="هزینه ثابت (تومان)"
           value={fee}
           onChange={(e) => setFee(e.target.value)}
         />
@@ -87,6 +128,21 @@ export function ShippingActions(props: Props) {
           placeholder="ترتیب نمایش"
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value)}
+        />
+        <select
+          className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          value={pricingType}
+          onChange={(e) => setPricingType(e.target.value)}
+        >
+          <option value="fixed">قیمت ثابت</option>
+          <option value="api">استعلام API</option>
+          <option value="negotiable">توافقی</option>
+        </select>
+        <input
+          className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          placeholder="کد سرویس (post / tipax / snappbox / ...)"
+          value={providerCode}
+          onChange={(e) => setProviderCode(e.target.value)}
         />
         <button
           type="button"
@@ -102,7 +158,7 @@ export function ShippingActions(props: Props) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      {!editing ? (
+      {!editing && !showApi ? (
         <>
           <button
             type="button"
@@ -112,6 +168,16 @@ export function ShippingActions(props: Props) {
           >
             ویرایش
           </button>
+          {props.pricingType === "api" ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setShowApi(true)}
+              className="text-primary text-xs hover:underline"
+            >
+              تنظیم API
+            </button>
+          ) : null}
           <button
             type="button"
             disabled={pending}
@@ -143,7 +209,9 @@ export function ShippingActions(props: Props) {
             حذف
           </button>
         </>
-      ) : (
+      ) : null}
+
+      {editing ? (
         <div className="space-y-1.5">
           <input
             className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
@@ -162,15 +230,17 @@ export function ShippingActions(props: Props) {
             className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
             value={fee}
             onChange={(e) => setFee(e.target.value)}
-            placeholder="هزینه"
+            placeholder="هزینه ثابت"
           />
-          <input
-            type="number"
+          <select
             className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            placeholder="ترتیب"
-          />
+            value={pricingType}
+            onChange={(e) => setPricingType(e.target.value)}
+          >
+            <option value="fixed">قیمت ثابت</option>
+            <option value="api">استعلام API</option>
+            <option value="negotiable">توافقی</option>
+          </select>
           <div className="flex gap-2">
             <button
               type="button"
@@ -189,7 +259,58 @@ export function ShippingActions(props: Props) {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
+
+      {showApi ? (
+        <div className="border-border mt-1 space-y-1.5 rounded-lg border p-2">
+          <p className="text-xs font-medium">تنظیمات API — {props.title}</p>
+          <input
+            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+            value={baseUrl}
+            onChange={(e) => setBaseUrl(e.target.value)}
+            placeholder="Base URL"
+            dir="ltr"
+          />
+          <input
+            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="API Key"
+            dir="ltr"
+          />
+          <input
+            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            placeholder="Client ID (اسنپ باکس)"
+            dir="ltr"
+          />
+          <input
+            className="border-input bg-background h-8 w-full rounded border px-2 text-xs"
+            value={contractCode}
+            onChange={(e) => setContractCode(e.target.value)}
+            placeholder="Contract Code (تیپاکس)"
+            dir="ltr"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={save}
+              className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs"
+            >
+              ذخیره API
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowApi(false)}
+              className="text-muted-foreground text-xs"
+            >
+              بستن
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
