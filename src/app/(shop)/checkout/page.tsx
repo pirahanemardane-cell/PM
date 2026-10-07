@@ -1072,7 +1072,7 @@ export default function CheckoutPage() {
                     </button>
                   ) : (
                     <Link
-                      href="/dashboard/orders"
+                      href="/dashboard?tab=orders"
                       className="bg-primary text-primary-foreground flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-medium"
                     >
                       پیگیری سفارش

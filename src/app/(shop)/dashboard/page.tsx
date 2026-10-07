@@ -3,7 +3,7 @@
 import nextDynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
@@ -82,6 +82,13 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function BuyerDashboardPage() {
   const [tab, setTab] = useState<TabId>("cart");
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const q = searchParams.get("tab");
+    if (!q) return;
+    const allowed = TABS.map((x) => x.id) as string[];
+    if (allowed.includes(q)) setTab(q as TabId);
+  }, [searchParams]);
   const [authChecked, setAuthChecked] = useState(false);
   const [authOk, setAuthOk] = useState(false);
   const router = useRouter();
