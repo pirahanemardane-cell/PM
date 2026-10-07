@@ -1,8 +1,3 @@
-/**
- * فاز ۲ — سیستم طراحی
- * تعریف رسمی States برای همه کامپوننت‌های UI
- */
-
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type UiState =
