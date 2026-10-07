@@ -51,3 +51,7 @@ npm run dev
 - [قرارداد Git](docs/00-GIT-CONVENTION.md)
 - [Definition of Done](docs/00-DEFINITION-OF-DONE.md)
 
+## مستندات فاز ۱
+- [گردش کار برنچ](docs/01-BRANCH-AND-WORKFLOW.md)
+- [لاگ‌گیری](docs/01-LOGGING.md)
+
