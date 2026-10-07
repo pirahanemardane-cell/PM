@@ -55,3 +55,6 @@ npm run dev
 - [گردش کار برنچ](docs/01-BRANCH-AND-WORKFLOW.md)
 - [لاگ‌گیری](docs/01-LOGGING.md)
 
+## مستندات فاز ۴
+- [وضعیت احراز هویت](docs/04-AUTH-STATUS.md)
+
