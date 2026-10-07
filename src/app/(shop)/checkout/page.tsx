@@ -51,7 +51,7 @@ const FALLBACK_shipOptions: {
 }[] = [
   { id: "post", title: "پست پیشتاز", desc: "۲ تا ۴ روز کاری", fee: 45000 },
   { id: "tipax", title: "تیپاکس", desc: "۱ تا ۳ روز کاری", fee: 65000 },
-  { id: "peyk", title: "پیک موتوری", desc: "توافقی", fee: 0 },
+  { id: "peyk", title: "پیک موتوری", desc: "فقط تهران — توافقی", fee: 0 },
   { id: "pickup", title: "تحویل حضوری", desc: "از فروشگاه — رایگان", fee: 0 },
 ];
 
