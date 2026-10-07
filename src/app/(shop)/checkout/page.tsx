@@ -27,6 +27,7 @@ import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
+import { getMyOrderStatusAction } from "@/app/(shop)/actions/order-status";
 
 export const dynamic = "force-dynamic";
 
@@ -310,6 +311,45 @@ export default function CheckoutPage() {
     if (orderPlacedRef.current) return;
     void reloadCart();
   });
+
+  useRtEvent(RT.orders, () => {
+    if (!doneOrder?.id) return;
+    void getMyOrderStatusAction(doneOrder.id).then((r) => {
+      if (!r.ok) return;
+      const ps = r.order.paymentStatus;
+      if (ps === "paid" || ps === "success") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+      else setPayStatus("pending");
+    });
+  });
+  useRtEvent(RT.payment, () => {
+    if (!doneOrder?.id) return;
+    void getMyOrderStatusAction(doneOrder.id).then((r) => {
+      if (!r.ok) return;
+      const ps = r.order.paymentStatus;
+      if (ps === "paid" || ps === "success") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+      else setPayStatus("pending");
+    });
+  });
+
+  useEffect(() => {
+    if (step !== 5 || !doneOrder?.id || payStatus !== "pending") return;
+    let cancelled = false;
+    const tick = async () => {
+      const r = await getMyOrderStatusAction(doneOrder.id);
+      if (cancelled || !r.ok) return;
+      const ps = r.order.paymentStatus;
+      if (ps === "paid" || ps === "success") setPayStatus("success");
+      else if (ps === "failed" || ps === "cancelled") setPayStatus("failed");
+    };
+    void tick();
+    const iv = window.setInterval(() => void tick(), 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+    };
+  }, [step, doneOrder?.id, payStatus]);
 
   function applyAddress(a: {
     id: string;

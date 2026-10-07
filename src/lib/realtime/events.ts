@@ -1,6 +1,7 @@
 export const RT = {
   cart: "pm:cart-changed",
   orders: "pm:orders-changed",
+  payment: "pm:payment-changed",
   wishlist: "pm:wishlist-changed",
   stock: "pm:stock-changed",
   catalog: "pm:catalog-changed",
