@@ -243,7 +243,7 @@ export class OrderRepository extends BaseRepository {
     const { data, error } = await service
       .from("orders")
       .select(
-        "id, status, total_amount, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, line_total)"
+        "id, status, payment_status, total_amount, shipping_city, created_at, order_items(id, title, size_name, color_name, quantity, line_total)"
       )
       .eq("id", id)
       .maybeSingle();
