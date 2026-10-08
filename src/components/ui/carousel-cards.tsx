@@ -246,28 +246,30 @@ export function CarouselLinks({
                 ) : (
                   <Link
                     href={item.href}
-                    className="bg-secondary hover:bg-secondary/90 border-secondary flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-2 text-center text-sm font-medium shadow-sm transition-colors"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex h-28 w-full items-center justify-center rounded-2xl border px-3 py-2 shadow-sm transition-colors"
+                    aria-label={item.label}
                   >
                     {item.imageUrl ? (
-                      <span className="relative flex h-14 w-full max-w-[8rem] items-center justify-center">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.label}
-                          width={128}
-                          height={56}
-                          className="max-h-14 w-auto object-contain brightness-0 invert"
-                        />
+                      <span
+                        className="block h-14 w-full max-w-[8rem] bg-white dark:bg-primary"
+                        style={{
+                          WebkitMaskImage: `url(${item.imageUrl})`,
+                          maskImage: `url(${item.imageUrl})`,
+                          WebkitMaskSize: "contain",
+                          maskSize: "contain",
+                          WebkitMaskRepeat: "no-repeat",
+                          maskRepeat: "no-repeat",
+                          WebkitMaskPosition: "center",
+                          maskPosition: "center",
+                        }}
+                        role="img"
+                        aria-label={item.label}
+                      />
+                    ) : (
+                      <span className="text-sm font-medium text-white dark:text-primary">
+                        {item.label}
                       </span>
-                    ) : null}
-                    <span
-                      className={
-                        item.imageUrl
-                          ? "line-clamp-1 text-xs text-white/90"
-                          : "text-white"
-                      }
-                    >
-                      {item.label}
-                    </span>
+                    )}
                   </Link>
                 )}
               </CarouselItem>
