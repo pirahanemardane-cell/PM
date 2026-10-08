@@ -34,10 +34,24 @@ export function ProductCard({ product }: Props) {
       return n;
     })
     .filter((n) => !Number.isNaN(n) && n > 0);
-  const originalPrice = compares.length ? Math.max(...compares) : price;
+  const minIdx = prices.length
+    ? variants
+        .map((v, i) => ({ i, p: Number(v.price) }))
+        .filter((x) => Number.isFinite(x.p) && x.p > 0)
+        .sort((a, b) => a.p - b.p)[0]?.i
+    : undefined;
+  const minVariant =
+    minIdx != null ? (variants[minIdx] as { original_price?: number | null; compare_at_price?: number | null }) : null;
+  const minCompare = minVariant
+    ? Number(minVariant.original_price ?? minVariant.compare_at_price)
+    : NaN;
+  let originalPrice =
+    Number.isFinite(minCompare) && minCompare > price ? minCompare : null;
+  const maxPrice = prices.length ? Math.max(...prices) : price;
+  const showFrom = maxPrice > price;
 
   let discount = 0;
-  if (originalPrice > price && originalPrice > 0) {
+  if (originalPrice != null && originalPrice > price && originalPrice > 0) {
     discount = Math.round(((originalPrice - price) / originalPrice) * 100);
   }
 
@@ -169,7 +183,8 @@ export function ProductCard({ product }: Props) {
         isSpecialSale={isSpecialSale}
                 name={product.name}
         price={price}
-        originalPrice={originalPrice}
+        originalPrice={originalPrice ?? undefined}
+        showFrom={showFrom}
         rating={typeof product.rating === 'number' ? product.rating : 0}
         reviewCount={typeof product.review_count === 'number' ? product.review_count : 0}
         images={images}

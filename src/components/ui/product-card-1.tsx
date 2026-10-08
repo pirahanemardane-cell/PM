@@ -56,6 +56,8 @@ export interface ProductCard1Props {
   brand?: string;
   price?: number;
   originalPrice?: number;
+  /** وقتی واریانت‌ها بازه قیمت دارند */
+  showFrom?: boolean;
   rating?: number;
   reviewCount?: number;
   images?: string[];
@@ -81,6 +83,7 @@ export function ProductCard1({
   name = "محصول",
   price = 0,
   originalPrice,
+  showFrom = false,
   rating = 0,
   reviewCount = 0,
   images = [],
@@ -454,7 +457,10 @@ if (res.ok === false && res.error === "login_required") {
         {/* Price */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-base font-bold tracking-tight sm:text-[17px]">
-            <span className="price font-bold"><Price amount={price} size="sm" /></span>
+            <span className="price font-bold">
+              {showFrom ? <span className="ml-1 text-xs font-normal opacity-80">از </span> : null}
+              <Price amount={price} size="sm" />
+            </span>
           </span>
           {originalPrice != null && originalPrice > price && (
             <span className="text-muted-foreground text-xs line-through">
