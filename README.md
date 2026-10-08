@@ -64,3 +64,6 @@ npm run dev
 ## مستندات فاز ۵
 - [وضعیت کاتالوگ](docs/05-CATALOG-STATUS.md)
 
+## مستندات فاز ۶
+- [وضعیت محتوا](docs/06-CONTENT-STATUS.md)
+
