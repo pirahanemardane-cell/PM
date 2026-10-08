@@ -75,3 +75,6 @@ npm run dev
 
 ## مستندات فاز ۹
 - [وضعیت سبد](docs/09-CART-STATUS.md)
+
+## مستندات فاز ۱۰
+- [وضعیت چک‌اوت](docs/10-CHECKOUT-STATUS.md)
