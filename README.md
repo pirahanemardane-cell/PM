@@ -72,3 +72,6 @@ npm run dev
 
 ## مستندات فاز ۸
 - [وضعیت جستجو](docs/08-SEARCH-STATUS.md)
+
+## مستندات فاز ۹
+- [وضعیت سبد](docs/09-CART-STATUS.md)
