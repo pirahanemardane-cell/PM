@@ -125,7 +125,7 @@ export function CarouselCards({
                     {item.brand && (
                       <p className="text-xs text-muted-foreground">{item.brand}</p>
                     )}
-                    <h3 className="mt-1 line-clamp-2 px-1 text-center text-[14px] font-light leading-snug tracking-wide text-primary">
+                    <h3 className="mt-1.5 line-clamp-2 px-1 text-center text-[18px] font-light leading-snug tracking-wide text-primary">
                       {item.title}
                     </h3>
                     {typeof item.rating === "number" && (
@@ -235,7 +235,7 @@ export function CarouselLinks({
                 {variant === "category" ? (
                   <Link
                     href={item.href}
-                    className="group flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
+                    className="group flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
                     <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
                       <CategorySvgIcon name={item.label} slug={item.href} className="size-[3.25rem]" />
@@ -247,7 +247,7 @@ export function CarouselLinks({
                 ) : (
                   <Link
                     href={item.href}
-                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border px-2 py-2.5 shadow-sm transition-colors"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border px-2 py-2.5 shadow-sm transition-colors"
                     aria-label={item.label}
                   >
                     {item.imageUrl ? (
@@ -267,7 +267,7 @@ export function CarouselLinks({
                         aria-label={item.label}
                       />
                     ) : null}
-                    <span className="mt-1 line-clamp-2 px-1 text-center text-[14px] font-light leading-snug tracking-wide text-white dark:text-[#212529]">
+                    <span className="mt-1.5 line-clamp-2 px-1 text-center text-[18px] font-light leading-snug tracking-wide text-white dark:text-[#212529]">
                       {item.labelFa || item.label}
                     </span>
                   </Link>
