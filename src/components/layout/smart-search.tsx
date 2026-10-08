@@ -126,7 +126,14 @@ export function SmartSearch({ className }: { className?: string }) {
           body: JSON.stringify({ query: text, resultCount: -1, source: "submit" }),
         }).catch(() => {});
       }
-      router.push(qs ? `/products?${qs}` : "/products");
+      const hasFilter =
+        Boolean(category || brand || color || size || sort || minPrice || maxPrice) ||
+        Object.keys(attrSel).length > 0;
+      if (text && !hasFilter) {
+        router.push(`/search?q=${encodeURIComponent(text)}`);
+      } else {
+        router.push(qs ? `/products?${qs}` : "/products");
+      }
       setSuggestOpen(false);
       setFilterOpen(false);
     },
