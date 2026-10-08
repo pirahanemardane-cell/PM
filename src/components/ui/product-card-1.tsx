@@ -518,9 +518,9 @@ if (res.ok === false && res.error === "login_required") {
         <div className="mt-auto flex min-h-[2.75rem] flex-col justify-end gap-0.5 leading-tight">
           {originalPrice != null && originalPrice > price ? (
             <>
-              {/* خط ۱: قیمت اصلی خط‌خورده */}
-              <span className="text-muted-foreground text-xs line-through">
-                <Price amount={originalPrice} size="sm" />
+              {/* خط ۱: قیمت اصلی با خط نرم */}
+              <span className="text-muted-foreground text-xs">
+                <Price amount={originalPrice} size="sm" strike />
               </span>
               {/* خط ۲: قیمت نهایی + کلمه تخفیف */}
               <span className="text-base font-bold tracking-tight sm:text-[17px]">
