@@ -112,13 +112,13 @@ export function ProductCarousel({
           }}
           className="w-full"
         >
-          <CarouselContent className="-mr-4 ml-0 px-4">
+          <CarouselContent className="-mr-4 ml-0 px-4 items-stretch">
             {leading ? (
-              <CarouselItem className={`${SLIDE_BASIS} h-full`}>{leading}</CarouselItem>
+              <CarouselItem className={`${SLIDE_BASIS} flex h-full`}>{leading}</CarouselItem>
             ) : null}
 
             {products.map((product) => (
-              <CarouselItem key={product.id} className={`${SLIDE_BASIS} h-full`}>
+              <CarouselItem key={product.id} className={`${SLIDE_BASIS} flex h-full`}>
                 <ProductCard product={product} />
               </CarouselItem>
             ))}

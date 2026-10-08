@@ -454,21 +454,6 @@ if (res.ok === false && res.error === "login_required") {
           )}
         </div>
 
-        {/* Price */}
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-auto">
-          <span className="text-base font-bold tracking-tight sm:text-[17px]">
-            <span className="price font-bold">
-              {showFrom ? <span className="ml-1 text-xs font-normal opacity-80">از </span> : null}
-              <Price amount={price} size="sm" />
-            </span>
-          </span>
-          {originalPrice != null && originalPrice > price && (
-            <span className="text-muted-foreground text-xs line-through">
-              <Price amount={originalPrice} size="sm" />
-            </span>
-          )}
-        </div>
-
         {/* Colors / sizes — compact, only if data exists */}
         {colors.length > 0 && (
           <div className="flex items-center gap-1.5">
@@ -523,6 +508,22 @@ if (res.ok === false && res.error === "login_required") {
             );})}
           </div>
         )}
+
+        {/* Price */}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-auto">
+          <span className="text-base font-bold tracking-tight sm:text-[17px]">
+            <span className="price font-bold">
+              {showFrom ? <span className="ml-1 text-xs font-normal opacity-80">از </span> : null}
+              <Price amount={price} size="sm" />
+            </span>
+          </span>
+          {originalPrice != null && originalPrice > price && (
+            <span className="text-muted-foreground text-xs line-through">
+              <Price amount={originalPrice} size="sm" />
+            </span>
+          )}
+        </div>
+
       </CardContent>
 
       <CardFooter className="border-0 bg-white p-3 pt-0 dark:bg-[#2A2E32]">
