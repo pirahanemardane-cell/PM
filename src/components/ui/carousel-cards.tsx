@@ -246,7 +246,7 @@ export function CarouselLinks({
                 ) : (
                   <Link
                     href={item.href}
-                    className="hover:border-foreground/20 flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border bg-white px-3 py-2 text-center text-sm font-medium shadow-sm transition-colors hover:bg-muted/30"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-2 text-center text-sm font-medium shadow-sm transition-colors"
                   >
                     {item.imageUrl ? (
                       <span className="relative flex h-14 w-full max-w-[8rem] items-center justify-center">
@@ -255,11 +255,17 @@ export function CarouselLinks({
                           alt={item.label}
                           width={128}
                           height={56}
-                          className="max-h-14 w-auto object-contain"
+                          className="max-h-14 w-auto object-contain brightness-0 invert"
                         />
                       </span>
                     ) : null}
-                    <span className={item.imageUrl ? "line-clamp-1 text-xs text-primary" : undefined}>
+                    <span
+                      className={
+                        item.imageUrl
+                          ? "line-clamp-1 text-xs text-white/90"
+                          : "text-white"
+                      }
+                    >
                       {item.label}
                     </span>
                   </Link>
