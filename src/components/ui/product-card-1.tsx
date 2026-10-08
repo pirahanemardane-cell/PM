@@ -519,7 +519,7 @@ if (res.ok === false && res.error === "login_required") {
           {originalPrice != null && originalPrice > price ? (
             <>
               {/* خط ۱: قیمت اصلی با خط نرم */}
-              <span className="text-muted-foreground text-xs">
+              <span className="text-xs opacity-70">
                 <Price amount={originalPrice} size="sm" strike />
               </span>
               {/* خط ۲: قیمت نهایی + کلمه تخفیف */}
