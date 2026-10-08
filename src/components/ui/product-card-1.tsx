@@ -523,9 +523,9 @@ if (res.ok === false && res.error === "login_required") {
                 <Price amount={originalPrice} size="sm" strike />
               </span>
               {/* خط ۲: قیمت نهایی + کلمه تخفیف */}
-              <span className="text-base font-bold tracking-tight sm:text-[17px]">
+              <span className="flex flex-wrap items-baseline gap-x-1.5 text-base font-bold tracking-tight sm:text-[17px]">
                 <Price amount={price} size="sm" />
-                <span className="mr-1 text-xs font-medium text-rose-400 dark:text-rose-300">تخفیف</span>
+                <span className="text-xs font-medium text-rose-400 dark:text-rose-300">تخفیف</span>
               </span>
             </>
           ) : showFrom && priceTo != null && priceTo > price ? (
