@@ -240,7 +240,7 @@ export function CarouselLinks({
                     <span className="flex h-[5.75rem] w-[5.75rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
                       <CategorySvgIcon name={item.label} slug={item.href} className="size-[4.14rem]" />
                     </span>
-                    <span className="line-clamp-2 text-sm font-thin leading-snug tracking-wide text-primary">
+                    <span className="line-clamp-2 text-[20px] font-thin leading-snug tracking-wide text-primary">
                       {item.label}
                     </span>
                   </Link>
