@@ -251,7 +251,7 @@ export function CarouselLinks({
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-14 w-full max-w-[8rem] bg-white dark:bg-primary"
+                        className="block h-14 w-full max-w-[8rem] bg-white dark:bg-[#212529]"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
@@ -266,7 +266,7 @@ export function CarouselLinks({
                         aria-label={item.label}
                       />
                     ) : (
-                      <span className="text-sm font-medium text-white dark:text-primary">
+                      <span className="text-sm font-medium text-white dark:text-[#212529]">
                         {item.label}
                       </span>
                     )}
