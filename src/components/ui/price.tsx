@@ -58,7 +58,7 @@ export function Price({
       {!bare ? (
         <span
           className={cn(
-            "font-thin text-secondary dark:!text-[#13ABC4]",
+            "font-thin text-secondary dark:!text-white",
             tomanSize[size],
           )}
         >
