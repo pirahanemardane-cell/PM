@@ -245,7 +245,7 @@ export function HeroScroll() {
 
         {/* overlay تیره فقط در دارک مود */}
         <div
-          className="pointer-events-none absolute inset-0 z-[5] bg-transparent dark:bg-black/45"
+          className="pointer-events-none absolute inset-0 z-[5] bg-transparent dark:bg-black/30"
           aria-hidden
         />
 
