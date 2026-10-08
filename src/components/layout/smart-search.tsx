@@ -29,6 +29,28 @@ const SORTS = [
   { value: "price_desc", label: "گران‌ترین" },
 ];
 
+const RECENT_KEY = "pm_recent_searches";
+const RECENT_MAX = 8;
+
+function loadRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === "string").slice(0, RECENT_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushRecent(term: string) {
+  try {
+    const t = term.trim();
+    if (t.length < 2) return;
+    const prev = loadRecent().filter((x) => x !== t);
+    localStorage.setItem(RECENT_KEY, JSON.stringify([t, ...prev].slice(0, RECENT_MAX)));
+  } catch {}
+}
+
 export function SmartSearch({ className }: { className?: string }) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -57,6 +79,7 @@ export function SmartSearch({ className }: { className?: string }) {
   const [attrSel, setAttrSel] = useState<Record<string, string>>({});
   const [moreOpen, setMoreOpen] = useState(false);
   const [facetsLoaded, setFacetsLoaded] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
 
   const activeFilters = useMemo(() => {
     let n = 0;
@@ -92,6 +115,15 @@ export function SmartSearch({ className }: { className?: string }) {
         if (v) params.set(k, v);
       }
       const qs = params.toString();
+      if (text) {
+        pushRecent(text);
+        setRecent(loadRecent());
+        void fetch("/api/search/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: text, resultCount: -1, source: "submit" }),
+        }).catch(() => {});
+      }
       router.push(qs ? `/products?${qs}` : "/products");
       setSuggestOpen(false);
       setFilterOpen(false);
@@ -123,6 +155,10 @@ export function SmartSearch({ className }: { className?: string }) {
       return next;
     });
   }
+
+  useEffect(() => {
+    setRecent(loadRecent());
+  }, []);
 
   useEffect(() => {
     if (!filterOpen || facetsLoaded) return;
@@ -217,7 +253,8 @@ export function SmartSearch({ className }: { className?: string }) {
               setFilterOpen(false);
             }}
             onFocus={() => {
-              if (q.trim().length >= 2) setSuggestOpen(true);
+              setRecent(loadRecent());
+              setSuggestOpen(true);
             }}
             placeholder="جستجوی محصول، برند، دسته…"
             className="placeholder:text-muted-foreground h-full min-w-0 flex-1 bg-transparent text-sm outline-none"
@@ -268,17 +305,54 @@ export function SmartSearch({ className }: { className?: string }) {
         </button>
       </form>
 
-      {suggestOpen && q.trim().length >= 2 ? (
+      {suggestOpen && (q.trim().length >= 2 || recent.length > 0) ? (
         <div className="border-border bg-card fixed inset-x-0 top-14 z-[120] max-h-[min(80vh,36rem)] overflow-y-auto rounded-none border-x-0 border-b border-t px-4 py-3 shadow-xl xl:top-16">
           {loading && !hasSuggest ? (
             <p className="text-muted-foreground px-4 py-6 text-center text-sm">
               در حال جستجو…
             </p>
           ) : null}
-          {!loading && !hasSuggest ? (
-            <p className="text-muted-foreground px-4 py-6 text-center text-sm">
-              نتیجه‌ای یافت نشد
-            </p>
+          {q.trim().length < 2 && recent.length > 0 ? (
+            <div className="px-3 py-2">
+              <p className="text-muted-foreground mb-1 text-[11px]">جستجوهای اخیر</p>
+              <ul className="flex flex-wrap gap-1.5">
+                {recent.map((r) => (
+                  <li key={r}>
+                    <button
+                      type="button"
+                      className="border-border hover:bg-muted rounded-lg border px-2.5 py-1 text-xs"
+                      onClick={() => {
+                        setQ(r);
+                        goResults(r);
+                      }}
+                    >
+                      {r}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {!loading && q.trim().length >= 2 && !hasSuggest ? (
+            <div className="text-muted-foreground space-y-3 px-4 py-6 text-center text-sm">
+              <p>برای «{q.trim()}» نتیجه‌ای یافت نشد</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link
+                  href="/products"
+                  onClick={() => setSuggestOpen(false)}
+                  className="border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-xs"
+                >
+                  همه محصولات
+                </Link>
+                <Link
+                  href="/products?sort=popular"
+                  onClick={() => setSuggestOpen(false)}
+                  className="border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-xs"
+                >
+                  محبوب‌ترین‌ها
+                </Link>
+              </div>
+            </div>
           ) : null}
           {products.length > 0 ? (
             <ul className="divide-border divide-y">

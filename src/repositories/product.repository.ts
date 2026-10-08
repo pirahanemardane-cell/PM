@@ -2,6 +2,7 @@ import { BaseRepository } from "./base.repository";
 import type { Product, ProductVariant, ProductImage } from "@/types/database";
 import type { ProductFilterInput } from "@/lib/validation/product";
 import { normalizeProductSlug } from "@/lib/product-slug";
+import { expandTypoVariants, normalizeSearchQuery } from "@/lib/search/normalize";
 
 export type ProductWithRelations = Product & {
   brand?: { id: string; name: string; slug: string } | null;
@@ -150,9 +151,21 @@ export class ProductRepository extends BaseRepository {
     if (filters.isNew === true) query = query.eq("is_new", true);
     if (filters.bestseller === true) query = query.eq("is_bestseller", true);
 
-    // جستجو
+    // جستجو: چند فیلد + واریانت غلط‌املای سبک
     if (filters.q) {
-      query = query.ilike("name", `%${filters.q}%`);
+      const variants = expandTypoVariants(String(filters.q));
+      const terms = variants.length ? variants : [normalizeSearchQuery(String(filters.q))];
+      const orParts: string[] = [];
+      for (const term of terms) {
+        const safe = term.replace(/%/g, "").replace(/,/g, " ").slice(0, 80);
+        if (!safe) continue;
+        orParts.push(`name.ilike.%${safe}%`);
+        orParts.push(`short_description.ilike.%${safe}%`);
+        orParts.push(`slug.ilike.%${safe}%`);
+      }
+      if (orParts.length) {
+        query = query.or(orParts.join(","));
+      }
     }
 
     // مرتب‌سازی
