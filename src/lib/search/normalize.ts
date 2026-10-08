@@ -1,4 +1,3 @@
-/** نرمال‌سازی فارسی برای جستجو */
 export function normalizeSearchQuery(raw: string): string {
   return (raw || "")
     .trim()
@@ -8,7 +7,6 @@ export function normalizeSearchQuery(raw: string): string {
     .replace(/\s+/g, " ");
 }
 
-/** چند واریانت غلط‌املای رایج فارسی لباس */
 const TYPO_MAP: [RegExp, string][] = [
   [/پیرهن/g, "پیراهن"],
   [/پیرهنن/g, "پیراهن"],
@@ -16,7 +14,6 @@ const TYPO_MAP: [RegExp, string][] = [
   [/شلوارر/g, "شلوار"],
   [/تیشرت/g, "تی‌شرت"],
   [/تيشرت/g, "تی‌شرت"],
-  [/كتان/g, "کتان"],
 ];
 
 export function expandTypoVariants(q: string): string[] {
@@ -24,13 +21,8 @@ export function expandTypoVariants(q: string): string[] {
   if (!base) return [];
   const set = new Set<string>([base]);
   let fixed = base;
-  for (const [re, to] of TYPO_MAP) {
-    if (re.test(fixed)) fixed = fixed.replace(re, to);
-  }
+  for (const [re, to] of TYPO_MAP) fixed = fixed.replace(re, to);
   set.add(fixed);
-  // حذف یک حرف تکراری ساده (پیرهنن → پیرهن)
-  if (base.length >= 4) {
-    set.add(base.replace(/(.)\1+/g, "$1"));
-  }
+  if (base.length >= 4) set.add(base.replace(/(.)\1+/g, "$1"));
   return [...set].filter(Boolean);
 }

@@ -12,6 +12,8 @@ type SuggestProduct = {
   slug: string;
   brand?: string | null;
   category?: string | null;
+  image?: string | null;
+  price?: number | null;
 };
 type SuggestItem = { name: string; slug: string };
 type SuggestPost = { title: string; slug: string };
@@ -363,15 +365,29 @@ export function SmartSearch({ className }: { className?: string }) {
                     onClick={() => setSuggestOpen(false)}
                     className="hover:bg-muted/60 flex items-center gap-3 px-3 py-2.5 text-sm"
                   >
-                    <LayoutGrid className="text-muted-foreground h-4 w-4 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate font-medium">
-                      {p.name}
+                    <span className="bg-muted relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <LayoutGrid className="text-muted-foreground h-4 w-4" />
+                      )}
                     </span>
-                    {(p.brand || p.category) && (
-                      <span className="text-muted-foreground shrink-0 text-xs">
-                        {p.brand || p.category}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{p.name}</span>
+                      <span className="text-muted-foreground block truncate text-xs">
+                        {[p.brand, p.category].filter(Boolean).join(" · ")}
                       </span>
-                    )}
+                    </span>
+                    {p.price != null && p.price > 0 ? (
+                      <span className="text-primary shrink-0 text-xs font-medium">
+                        {Number(p.price).toLocaleString("fa-IR")} ت
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
               ))}
