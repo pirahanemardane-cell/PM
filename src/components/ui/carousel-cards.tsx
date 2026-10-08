@@ -125,7 +125,7 @@ export function CarouselCards({
                     {item.brand && (
                       <p className="text-xs text-muted-foreground">{item.brand}</p>
                     )}
-                    <h3 className="mt-1.5 line-clamp-2 px-1 text-center text-[18px] font-light leading-snug tracking-wide text-primary">
+                    <h3 className="mt-1.5 line-clamp-2 px-1 text-center text-[20px] font-thin leading-snug tracking-wide text-primary">
                       {item.title}
                     </h3>
                     {typeof item.rating === "number" && (
@@ -240,7 +240,7 @@ export function CarouselLinks({
                     <span className="flex h-[5.75rem] w-[5.75rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
                       <CategorySvgIcon name={item.label} slug={item.href} className="size-[4.14rem]" />
                     </span>
-                    <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
+                    <span className="line-clamp-2 text-sm font-thin leading-snug tracking-wide text-primary">
                       {item.label}
                     </span>
                   </Link>
@@ -267,7 +267,7 @@ export function CarouselLinks({
                         aria-label={item.label}
                       />
                     ) : null}
-                    <span className="mt-1.5 line-clamp-2 px-1 text-center text-[18px] font-light leading-snug tracking-wide text-white dark:text-[#212529]">
+                    <span className="mt-1.5 line-clamp-2 px-1 text-center text-[20px] font-thin leading-snug tracking-wide text-white dark:text-[#212529]">
                       {item.labelFa || item.label}
                     </span>
                   </Link>
