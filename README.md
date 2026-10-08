@@ -84,3 +84,6 @@ npm run dev
 
 ## مستندات فاز ۱۲
 - [سفارش مشتری](docs/12-CUSTOMER-ORDERS-STATUS.md)
+
+## مستندات فاز ۱۳
+- [ارسال](docs/13-SHIPPING-STATUS.md)
