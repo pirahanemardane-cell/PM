@@ -386,13 +386,15 @@ export function SmartSearch({ className }: { className?: string }) {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{p.name}</span>
-                      <span className="text-muted-foreground block truncate text-xs">
-                        {[p.brand, p.category].filter(Boolean).join(" · ")}
-                      </span>
+                      {p.price != null && p.price > 0 ? (
+                        <span className="text-primary block text-sm font-bold">
+                          {Number(p.price).toLocaleString("fa-IR")} تومان
+                        </span>
+                      ) : null}
                     </span>
-                    {p.price != null && p.price > 0 ? (
-                      <span className="text-primary shrink-0 text-xs font-medium">
-                        {Number(p.price).toLocaleString("fa-IR")} ت
+                    {(p.brand || p.category) ? (
+                      <span className="text-muted-foreground max-w-[9rem] shrink-0 truncate text-xs">
+                        {[p.brand, p.category].filter(Boolean).join(" · ")}
                       </span>
                     ) : null}
                   </Link>
