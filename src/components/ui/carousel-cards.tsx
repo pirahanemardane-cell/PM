@@ -195,10 +195,10 @@ export function CarouselLinks({
     "bg-muted/40 hover:border-foreground/20 flex h-20 w-full items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60";
 
   const brandBasis =
-    "basis-[4.75rem] pr-3 sm:basis-[5.5rem] md:basis-[6rem] lg:basis-[6.5rem]";
+    "basis-[calc((100%-0.5rem)/1.5)] pr-3 sm:basis-[calc((100%-1rem)/2.5)] lg:basis-[calc((100%-1.5rem)/4.5)]";
 
   const categoryBasis =
-    "basis-[4.75rem] pr-3 sm:basis-[5.5rem] md:basis-[6rem] lg:basis-[6.5rem]";
+    "basis-[calc((100%-0.5rem)/1.5)] pr-3 sm:basis-[calc((100%-1rem)/2.5)] lg:basis-[calc((100%-1.5rem)/4.5)]";
 
   return (
     <section className={cn("w-full", className)}>
@@ -236,10 +236,10 @@ export function CarouselLinks({
                     href={item.href}
                     className="group flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
-                      <CategorySvgIcon name={item.label} slug={item.href} className="size-6" />
+                    <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-8" />
                     </span>
-                    <span className="line-clamp-2 text-[11px] font-semibold leading-snug text-primary">
+                    <span className="line-clamp-2 text-xs font-semibold leading-snug text-primary">
                       {item.label}
                     </span>
                   </Link>
@@ -251,7 +251,7 @@ export function CarouselLinks({
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-10 w-full max-w-[4.5rem] bg-white dark:bg-[#212529]"
+                        className="block h-12 w-full max-w-[6rem] bg-white dark:bg-[#212529]"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
