@@ -67,3 +67,6 @@ npm run dev
 ## مستندات فاز ۶
 - [وضعیت محتوا](docs/06-CONTENT-STATUS.md)
 
+## مستندات فاز ۷
+- [صفحه محصول](docs/07-PRODUCT-PAGE.md)
+
