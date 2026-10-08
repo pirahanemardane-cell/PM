@@ -237,8 +237,8 @@ export function CarouselLinks({
                     href={item.href}
                     className="group flex aspect-square w-full flex-col items-center justify-center gap-2.5 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <span className="flex size-[4.5rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
-                      <CategorySvgIcon name={item.label} slug={item.href} className="size-12" />
+                    <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-[3.25rem]" />
                     </span>
                     <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
                       {item.label}
@@ -252,7 +252,7 @@ export function CarouselLinks({
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-[4.25rem] w-full max-w-[85%] shrink-0 bg-white dark:bg-[#212529] sm:h-20"
+                        className="block h-[4.5rem] w-[4.5rem] shrink-0 bg-white dark:bg-[#212529]"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
