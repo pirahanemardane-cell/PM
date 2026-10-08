@@ -252,7 +252,7 @@ export function CarouselLinks({
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-[4.5rem] w-[4.5rem] shrink-0 bg-white dark:bg-[#212529]"
+                        className="block h-[5.75rem] w-[5.75rem] shrink-0 bg-white dark:bg-[#212529]"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
