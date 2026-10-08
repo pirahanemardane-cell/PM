@@ -46,6 +46,7 @@ import {
 import { toPersianDigits } from "@/lib/numbers";
 import { cn } from "@/lib/utils";
 import { resolveColorHex } from "@/lib/colors";
+import { getCardPrice, formatToman } from "@/lib/product/card-price";
 
 export interface ProductCard1Props {
   variantOptions?: { id: string; size?: string | null; color?: string | null; price?: number; stock?: number }[];

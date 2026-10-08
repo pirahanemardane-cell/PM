@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ProductCard1 as ProductCardUI } from "@/components/ui/product-card-1";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 import { resolveColorHex } from "@/lib/colors";
+import { getCardPrice, formatToman } from "@/lib/product/card-price";
 
 type Props = {
   product: ProductWithRelations;
