@@ -114,11 +114,11 @@ export function ProductCarousel({
         >
           <CarouselContent className="-mr-4 ml-0 px-4">
             {leading ? (
-              <CarouselItem className={SLIDE_BASIS}>{leading}</CarouselItem>
+              <CarouselItem className={`${SLIDE_BASIS} h-full`}>{leading}</CarouselItem>
             ) : null}
 
             {products.map((product) => (
-              <CarouselItem key={product.id} className={SLIDE_BASIS}>
+              <CarouselItem key={product.id} className={`${SLIDE_BASIS} h-full`}>
                 <ProductCard product={product} />
               </CarouselItem>
             ))}

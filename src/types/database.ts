@@ -580,6 +580,7 @@ export type Database = {
           shipping_name: string | null; shipping_phone: string | null;
           shipping_address: string | null; shipping_city: string | null;
           shipping_postal: string | null; note: string | null; discount_code: string | null; discount_amount: number | null; paid_at: string | null;
+          tracking_number: string | null; shipped_at: string | null;
           created_at: string; updated_at: string;
         };
         Insert: {
@@ -587,6 +588,7 @@ export type Database = {
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
+          tracking_number?: string | null; shipped_at?: string | null;
           created_at?: string; updated_at?: string;
         };
         Update: {
@@ -594,6 +596,7 @@ export type Database = {
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
+          tracking_number?: string | null; shipped_at?: string | null;
           created_at?: string; updated_at?: string;
         };
         Relationships: [];

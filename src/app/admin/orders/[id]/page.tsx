@@ -6,10 +6,10 @@ import { useParams } from "next/navigation";
 import {
   adminGetOrderAction,
   adminUpdateOrderStatusAction,
+  adminSetOrderTrackingAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
-import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
-
+import { formatJalaliDateTime } from "@/lib/dates/jalali";
 
 const STATUSES = [
   "pending",
@@ -36,6 +36,7 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tracking, setTracking] = useState("");
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -54,6 +55,7 @@ export default function AdminOrderDetailPage() {
       return;
     }
     setOrder(res.order);
+    setTracking(String((res.order as any)?.tracking_number ?? ""));
   }, [id]);
 
   useEffect(() => {
@@ -69,6 +71,17 @@ export default function AdminOrderDetailPage() {
       return;
     }
     setOrder((o: any) => (o ? { ...o, status } : o));
+  }
+
+  async function saveTracking() {
+    setBusy(true);
+    const res = await adminSetOrderTrackingAction(id, tracking);
+    setBusy(false);
+    if (!res.ok) {
+      setError("ذخیره کد رهگیری ناموفق");
+      return;
+    }
+    await load();
   }
 
   if (loading) {
@@ -146,6 +159,42 @@ export default function AdminOrderDetailPage() {
             {order.shipping_city} {order.shipping_address}{" "}
             {order.shipping_postal ?? ""}
           </p>
+
+          <div className="border-border space-y-2 rounded-xl border p-3 print:border-0 print:p-0">
+            <label className="text-muted-foreground text-xs">کد رهگیری پست / پیک</label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                value={tracking}
+                onChange={(e) => setTracking(e.target.value)}
+                placeholder="مثلاً 1234567890"
+                dir="ltr"
+                className="border-input bg-background h-9 min-w-[200px] flex-1 rounded-lg border px-3 font-mono text-xs"
+              />
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void saveTracking()}
+                className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-xs font-medium disabled:opacity-50"
+              >
+                ذخیره رهگیری
+              </button>
+            </div>
+            {order.tracking_number ? (
+              <p className="text-xs">
+                فعلی:{" "}
+                <span className="font-mono font-bold" dir="ltr">
+                  {order.tracking_number}
+                </span>
+                {order.shipped_at ? (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    — {formatJalaliDateTime(order.shipped_at)}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
+
           {order.note ? (
             <p>
               <span className="text-muted-foreground">یادداشت: </span>

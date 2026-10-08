@@ -217,3 +217,70 @@ export async function adminUpdatePaymentStatusAction(
   }
 }
 
+/** ذخیره کد رهگیری؛ در صورت خالی نبودن، status را shipped می‌کند */
+export async function adminSetOrderTrackingAction(
+  orderId: string,
+  trackingNumber: string,
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const code = (trackingNumber || "").trim();
+    const service = createServiceClient();
+    const patch: Record<string, unknown> = {
+      tracking_number: code || null,
+      updated_at: new Date().toISOString(),
+    };
+    if (code) {
+      patch.shipped_at = new Date().toISOString();
+      // اگر هنوز shipped/delivered نیست، به shipped ببر
+      const { data: cur } = await service
+        .from("orders")
+        .select("status")
+        .eq("id", orderId)
+        .maybeSingle();
+      const st = String((cur as { status?: string } | null)?.status ?? "");
+      if (st !== "delivered" && st !== "cancelled") {
+        patch.status = "shipped";
+      }
+    }
+    const { error } = await service.from("orders").update(patch).eq("id", orderId);
+    if (error) throw error;
+
+    void adminWriteLogAction({
+      action: "order_tracking_set",
+      entity: "order",
+      entity_id: orderId,
+      meta: code || "cleared",
+    });
+
+    // اعلان best-effort
+    if (code) {
+      try {
+        const repo = new OrderRepository();
+        const order = await repo.getByIdAdmin(orderId);
+        const userId = (order as { user_id?: string | null } | null)?.user_id;
+        if (userId) {
+          const tpl = PREDEFINED_NOTIFICATIONS.find((x) => x.id === "order_shipped");
+          if (tpl) {
+            await service.from("notifications").insert({
+              user_id: userId,
+              title: tpl.title,
+              body: `${tpl.body} کد رهگیری: ${code}`,
+              type: tpl.type,
+              link: "/dashboard?tab=orders",
+            });
+          }
+        }
+      } catch (ne) {
+        console.error("[adminSetOrderTracking notify]", ne);
+      }
+    }
+
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSetOrderTracking]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+

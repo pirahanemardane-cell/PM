@@ -243,7 +243,7 @@ export function ProductCard1({
   const card = (
     <Card
       className={cn(
-        "w-full overflow-hidden rounded-2xl border bg-card text-foreground shadow-sm p-0 gap-0",
+        "h-full w-full flex flex-col overflow-hidden rounded-2xl border bg-card text-foreground shadow-sm p-0 gap-0",
         className
       )}
     >
@@ -410,7 +410,7 @@ if (res.ok === false && res.error === "login_required") {
         </div>
 
       {/* Content — balanced spacing */}
-      <CardContent className="mt-[3px] space-y-3 bg-white p-3 dark:bg-[#2A2E32] sm:space-y-2.5">
+      <CardContent className="mt-[3px] flex flex-1 flex-col space-y-3 bg-white p-3 dark:bg-[#2A2E32] sm:space-y-2.5">
         <div className="space-y-1">
           {brand ? (
             <p className="text-muted-foreground text-[11px] leading-4 tracking-wide">
@@ -561,7 +561,7 @@ if (res.ok === false && res.error === "login_required") {
           className="absolute inset-0 z-[1] rounded-2xl"
           aria-label={name}
         />
-        <div className="pointer-events-none relative z-[2] [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
+        <div className="pointer-events-none relative z-[2] h-full flex flex-col [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
           {card}
         </div>
       </div>
