@@ -237,8 +237,8 @@ export function CarouselLinks({
                     href={item.href}
                     className="group flex aspect-square w-full flex-col items-center justify-center gap-4 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
-                      <CategorySvgIcon name={item.label} slug={item.href} className="size-[3.25rem]" />
+                    <span className="flex h-[5.75rem] w-[5.75rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-[4.14rem]" />
                     </span>
                     <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
                       {item.label}
