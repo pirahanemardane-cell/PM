@@ -78,3 +78,6 @@ npm run dev
 
 ## مستندات فاز ۱۰
 - [وضعیت چک‌اوت](docs/10-CHECKOUT-STATUS.md)
+
+## مستندات فاز ۱۱
+- [وضعیت پرداخت](docs/11-PAYMENT-STATUS.md)
