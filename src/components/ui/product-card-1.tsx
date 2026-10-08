@@ -455,7 +455,7 @@ if (res.ok === false && res.error === "login_required") {
         </div>
 
         {/* Price */}
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-auto">
           <span className="text-base font-bold tracking-tight sm:text-[17px]">
             <span className="price font-bold">
               {showFrom ? <span className="ml-1 text-xs font-normal opacity-80">از </span> : null}
@@ -555,7 +555,7 @@ if (res.ok === false && res.error === "login_required") {
 
   if (href) {
     return (
-      <div className="relative block w-full">
+      <div className="relative block w-full h-full flex flex-col">
         <Link
           href={href}
           className="absolute inset-0 z-[1] rounded-2xl"
