@@ -183,6 +183,7 @@ export function ProductCard({ product }: Props) {
         isSpecialSale={isSpecialSale}
                 name={product.name}
         price={price}
+        priceTo={maxPrice}
         originalPrice={originalPrice ?? undefined}
         showFrom={showFrom}
         rating={typeof product.rating === 'number' ? product.rating : 0}

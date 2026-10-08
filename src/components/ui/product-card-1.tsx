@@ -55,6 +55,8 @@ export interface ProductCard1Props {
   name?: string;
   brand?: string;
   price?: number;
+  /** حداکثر قیمت (برای بازه) */
+  priceTo?: number;
   originalPrice?: number;
   /** وقتی واریانت‌ها بازه قیمت دارند */
   showFrom?: boolean;
@@ -82,6 +84,7 @@ export function ProductCard1({
   href,
   name = "محصول",
   price = 0,
+  priceTo,
   originalPrice,
   showFrom = false,
   rating = 0,
@@ -511,18 +514,43 @@ if (res.ok === false && res.error === "login_required") {
           )}
         </div>
 
-        {/* Price */}
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-auto">
-          <span className="text-base font-bold tracking-tight sm:text-[17px]">
-            <span className="price font-bold">
-              {showFrom ? <span className="ml-1 text-xs font-normal opacity-80">از </span> : null}
-              <Price amount={price} size="sm" />
-            </span>
-          </span>
-          {originalPrice != null && originalPrice > price && (
-            <span className="text-muted-foreground text-xs line-through">
-              <Price amount={originalPrice} size="sm" />
-            </span>
+        {/* Price — همیشه دقیقاً دو خط برای ارتفاع یکسان کارت‌ها */}
+        <div className="mt-auto flex min-h-[2.75rem] flex-col justify-end gap-0.5 leading-tight">
+          {originalPrice != null && originalPrice > price ? (
+            <>
+              {/* خط ۱: قیمت اصلی خط‌خورده */}
+              <span className="text-muted-foreground text-xs line-through">
+                <Price amount={originalPrice} size="sm" />
+              </span>
+              {/* خط ۲: قیمت نهایی + کلمه تخفیف */}
+              <span className="text-base font-bold tracking-tight sm:text-[17px]">
+                <Price amount={price} size="sm" />
+                <span className="mr-1 text-xs font-medium text-rose-600">تخفیف</span>
+              </span>
+            </>
+          ) : showFrom && priceTo != null && priceTo > price ? (
+            <>
+              {/* خط ۱: از حداقل */}
+              <span className="text-base font-bold tracking-tight sm:text-[17px]">
+                <span className="ml-1 text-xs font-normal opacity-80">از </span>
+                <Price amount={price} size="sm" />
+              </span>
+              {/* خط ۲: تا حداکثر */}
+              <span className="text-sm font-medium tracking-tight text-muted-foreground">
+                <span className="ml-1 text-xs font-normal opacity-80">تا </span>
+                <Price amount={priceTo} size="sm" />
+              </span>
+            </>
+          ) : (
+            <>
+              {/* تک‌قیمت: هر دو خط همان قیمت */}
+              <span className="text-base font-bold tracking-tight sm:text-[17px]">
+                <Price amount={price} size="sm" />
+              </span>
+              <span className="text-base font-bold tracking-tight opacity-0 sm:text-[17px] select-none pointer-events-none">
+                <Price amount={price} size="sm" />
+              </span>
+            </>
           )}
         </div>
 
