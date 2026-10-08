@@ -454,60 +454,62 @@ if (res.ok === false && res.error === "login_required") {
           )}
         </div>
 
-        {/* Colors / sizes — compact, only if data exists */}
-        {colors.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            {colors.slice(0, 5).map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={cn(
-                  "h-5 w-5 rounded-full border border-black/20 shadow-sm transition-all",
-                  selectedColor === color
-                    ? "ring-primary ring-2 ring-offset-1"
-                    : ""
-                )}
-                style={{ backgroundColor: color }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setSelectedColor(color);
-                  setCurrentImageIndex(imageIndexForColor(color, safeImages));
-                }}
-                aria-label={`رنگ ${color}`}
-              />
-            ))}
-          </div>
-        )}
+        {/* Colors / sizes — always reserve same height so cards match */}
+        <div className="flex min-h-[3.25rem] flex-col justify-end gap-1.5">
+          {colors.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {colors.slice(0, 5).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  className={cn(
+                    "h-5 w-5 rounded-full border border-black/20 shadow-sm transition-all",
+                    selectedColor === color
+                      ? "ring-primary ring-2 ring-offset-1"
+                      : ""
+                  )}
+                  style={{ backgroundColor: color }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedColor(color);
+                    setCurrentImageIndex(imageIndexForColor(color, safeImages));
+                  }}
+                  aria-label={`رنگ ${color}`}
+                />
+              ))}
+            </div>
+          )}
 
-        {sizes.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {sizes.slice(0, 6).map((size) => {
-              const ok = sizeAvailable(size);
-              return (
-              <button
-                key={size}
-                type="button"
-                disabled={!ok}
-                title={ok ? size : `سایز ${size} برای این رنگ تعریف نشده`}
-                className={cn(
-                  "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
-                  selectedSize === size && ok
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 text-foreground",
-                  !ok && "cursor-not-allowed opacity-35 line-through"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (ok) setSelectedSize(size);
-                }}
-              >
-                {size}
-              </button>
-            );})}
-          </div>
-        )}
+          {sizes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {sizes.slice(0, 6).map((size) => {
+                const ok = sizeAvailable(size);
+                return (
+                <button
+                  key={size}
+                  type="button"
+                  disabled={!ok}
+                  title={ok ? size : `سایز ${size} برای این رنگ تعریف نشده`}
+                  className={cn(
+                    "h-7 min-w-[2rem] rounded-md px-1.5 text-[11px] font-medium transition-all",
+                    selectedSize === size && ok
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/70 text-foreground",
+                    !ok && "cursor-not-allowed opacity-35 line-through"
+                  )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (ok) setSelectedSize(size);
+                  }}
+                >
+                  {size}
+                </button>
+              );})}
+            </div>
+          )}
+        </div>
 
         {/* Price */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-auto">
