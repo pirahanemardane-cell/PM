@@ -23,7 +23,6 @@ export const revalidate = 60;
 
 const HOME_BRAND_SLIDES = [
   { id: "لاکوست", label: "Lacoste", href: "/لاکوست", imageUrl: "/brands/lacoste.webp" },
-  { id: "تامی-هیلفیگر", label: "Tommy Hilfiger", href: "/تامی-هیلفیگر", imageUrl: "/brands/tommy-hilfiger.webp" },
   { id: "آرمانی", label: "Armani", href: "/آرمانی", imageUrl: "/brands/armani.webp" },
   { id: "زارا", label: "Zara", href: "/زارا", imageUrl: "/brands/zara.webp" },
   { id: "پولو", label: "Polo Ralph Lauren", href: "/پولو", imageUrl: "/brands/polo.webp" },
@@ -142,7 +141,21 @@ export default async function HomePage() {
             variant="brand"
             items={
               brands.length > 0
-                ? brands.map((b) => {
+                ? brands
+                    .filter((b) => {
+                      const s = String(b.slug || "").toLowerCase();
+                      const n = String(b.name || "").toLowerCase();
+                      return !(
+                        s.includes("tommy") ||
+                        s.includes("hilfiger") ||
+                        s.includes("تامی") ||
+                        n.includes("tommy") ||
+                        n.includes("hilfiger") ||
+                        n.includes("تامی") ||
+                        n.includes("هیلفیگر")
+                      );
+                    })
+                    .map((b) => {
                     const slug = String(b.slug || "").toLowerCase();
                     const name = String(b.name || "");
                     const fromStatic = HOME_BRAND_SLIDES.find(
