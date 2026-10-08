@@ -243,8 +243,14 @@ export function HeroScroll() {
           style={{ width: "100%", height: "100%" }}
         />
 
+        {/* overlay تیره فقط در دارک مود */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+          className="pointer-events-none absolute inset-0 z-[5] bg-transparent dark:bg-black/45"
+          aria-hidden
+        />
+
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] h-40"
           style={{
             background: "linear-gradient(to top, rgba(0,0,0,0.55), transparent)",
           }}
