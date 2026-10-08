@@ -236,22 +236,22 @@ export function CarouselLinks({
                     href={item.href}
                     className="group flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
-                      <CategorySvgIcon name={item.label} slug={item.href} className="size-8" />
+                    <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-10" />
                     </span>
-                    <span className="line-clamp-2 text-xs font-semibold leading-snug text-primary">
+                    <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
                       {item.label}
                     </span>
                   </Link>
                 ) : (
                   <Link
                     href={item.href}
-                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full items-center justify-center rounded-2xl border px-3 py-2 shadow-sm transition-colors"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-2 shadow-sm transition-colors"
                     aria-label={item.label}
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-12 w-full max-w-[6rem] bg-white dark:bg-[#212529]"
+                        className="block h-14 w-full max-w-[7rem] shrink-0 bg-white dark:bg-[#212529] sm:h-16 sm:max-w-[8rem]"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
@@ -265,11 +265,10 @@ export function CarouselLinks({
                         role="img"
                         aria-label={item.label}
                       />
-                    ) : (
-                      <span className="text-sm font-medium text-white dark:text-[#212529]">
-                        {item.label}
-                      </span>
-                    )}
+                    ) : null}
+                    <span className="line-clamp-2 px-0.5 text-center text-xs font-semibold leading-snug text-white dark:text-[#212529]">
+                      {item.label}
+                    </span>
                   </Link>
                 )}
               </CarouselItem>
