@@ -81,3 +81,6 @@ npm run dev
 
 ## مستندات فاز ۱۱
 - [وضعیت پرداخت](docs/11-PAYMENT-STATUS.md)
+
+## مستندات فاز ۱۲
+- [سفارش مشتری](docs/12-CUSTOMER-ORDERS-STATUS.md)
