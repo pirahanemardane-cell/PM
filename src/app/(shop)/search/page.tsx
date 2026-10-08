@@ -29,6 +29,24 @@ function minPrice(
   return prices.length ? Math.min(...prices) : null;
 }
 
+const SELECT = `
+  id, name, slug, category_id,
+  brand:brands ( name, slug ),
+  category:categories ( name, slug ),
+  images:product_images ( url, is_primary ),
+  variants:product_variants ( price, is_active )
+`;
+
+type P = {
+  id: string;
+  name: string;
+  slug: string;
+  brand?: { name?: string; slug?: string } | null;
+  category?: { name?: string; slug?: string } | null;
+  images?: { url?: string; is_primary?: boolean }[] | null;
+  variants?: { price?: number; is_active?: boolean | null }[] | null;
+};
+
 export default async function SearchResultsPage({ searchParams }: Props) {
   const sp = await searchParams;
   const q = normalizeSearchQuery(sp.q || "");
@@ -41,10 +59,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
         <p className="text-muted-foreground mt-2 text-sm">
           عبارت جستجو را وارد کنید (حداقل ۲ کاراکتر).
         </p>
-        <Link
-          href="/products"
-          className="text-primary mt-4 inline-block text-sm underline"
-        >
+        <Link href="/products" className="text-primary mt-4 inline-block text-sm underline">
           مشاهده همه محصولات
         </Link>
       </main>
@@ -52,66 +67,55 @@ export default async function SearchResultsPage({ searchParams }: Props) {
   }
 
   const supabase = await createClient();
-  let products: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    brand?: { name?: string; slug?: string } | null;
-    category?: { name?: string; slug?: string } | null;
-    images?: { url?: string; is_primary?: boolean }[] | null;
-    variants?: { price?: number; is_active?: boolean | null }[] | null;
-  }> = [];
+  const byId = new Map<string, P>();
 
   for (const term of terms) {
     const safe = term.replace(/%/g, "").slice(0, 80);
     if (!safe) continue;
     const { data } = await supabase
       .from("products")
-      .select(
-        `
-        id, name, slug,
-        brand:brands ( name, slug ),
-        category:categories ( name, slug ),
-        images:product_images ( url, is_primary ),
-        variants:product_variants ( price, is_active )
-      `,
-      )
+      .select(SELECT)
       .eq("status", "published")
       .is("deleted_at", null)
-      .or(
-        `name.ilike.%${safe}%,short_description.ilike.%${safe}%,slug.ilike.%${safe}%`,
-      )
+      .or(`name.ilike.%${safe}%,short_description.ilike.%${safe}%,slug.ilike.%${safe}%`)
       .limit(48);
-    if (data?.length) {
-      products = data as typeof products;
-      break;
-    }
+    for (const row of (data as unknown as P[]) ?? []) byId.set(row.id, row);
   }
 
+  const { data: allCats } = await supabase
+    .from("categories")
+    .select("id, name, slug")
+    .limit(100);
+  const matchedCatIds: string[] = [];
   const catMap = new Map<string, { name: string; slug: string }>();
+  for (const c of allCats ?? []) {
+    const name = String(c.name || "");
+    const slug = String(c.slug || "");
+    if (terms.some((t) => name.includes(t))) {
+      matchedCatIds.push(String(c.id));
+      catMap.set(slug, { name, slug });
+    }
+  }
+  if (matchedCatIds.length) {
+    const { data } = await supabase
+      .from("products")
+      .select(SELECT)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .in("category_id", matchedCatIds)
+      .limit(48);
+    for (const row of (data as unknown as P[]) ?? []) byId.set(row.id, row);
+  }
+
+  const products = [...byId.values()];
   const brandMap = new Map<string, { name: string; slug: string }>();
   for (const p of products) {
     if (p.category?.slug && p.category.name)
-      catMap.set(p.category.slug, {
-        name: p.category.name,
-        slug: p.category.slug,
-      });
+      catMap.set(p.category.slug, { name: p.category.name, slug: p.category.slug });
     if (p.brand?.slug && p.brand.name)
       brandMap.set(p.brand.slug, { name: p.brand.name, slug: p.brand.slug });
   }
-  const { data: allCats } = await supabase
-    .from("categories")
-    .select("name, slug")
-    .limit(80);
-  for (const c of allCats ?? []) {
-    const name = String(c.name || "");
-    if (terms.some((t) => name.includes(t)))
-      catMap.set(String(c.slug), { name, slug: String(c.slug) });
-  }
-  const { data: allBrands } = await supabase
-    .from("brands")
-    .select("name, slug")
-    .limit(80);
+  const { data: allBrands } = await supabase.from("brands").select("name, slug").limit(80);
   for (const b of allBrands ?? []) {
     const name = String(b.name || "");
     if (terms.some((t) => name.toLowerCase().includes(t.toLowerCase())))
@@ -134,42 +138,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
         </p>
       </header>
 
-      {categories.length > 0 ? (
-        <section>
-          <h2 className="mb-3 text-lg font-semibold text-primary">
-            دسته‌بندی‌ها
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/products?category=${encodeURIComponent(c.slug)}`}
-                className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {brands.length > 0 ? (
-        <section>
-          <h2 className="mb-3 text-lg font-semibold text-primary">برندها</h2>
-          <div className="flex flex-wrap gap-2">
-            {brands.map((b) => (
-              <Link
-                key={b.slug}
-                href={`/brands/${b.slug}`}
-                className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
-              >
-                {b.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
+      {/* ۱) محصولات اول */}
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-primary">محصولات</h2>
@@ -212,16 +181,16 @@ export default async function SearchResultsPage({ searchParams }: Props) {
                     )}
                   </div>
                   <div className="space-y-1 p-3">
-                    {p.brand?.name ? (
-                      <p className="text-muted-foreground text-[11px]">
-                        {p.brand.name}
+                    {price != null ? (
+                      <p className="text-primary text-sm font-bold">
+                        {price.toLocaleString("fa-IR")} تومان
                       </p>
                     ) : null}
                     <p className="line-clamp-2 text-sm font-medium">{p.name}</p>
-                    {price != null ? (
-                      <p className="text-primary text-xs font-medium">
-                        {price.toLocaleString("fa-IR")} تومان
-                      </p>
+                    {p.category?.name ? (
+                      <p className="text-muted-foreground text-[11px]">{p.category.name}</p>
+                    ) : p.brand?.name ? (
+                      <p className="text-muted-foreground text-[11px]">{p.brand.name}</p>
                     ) : null}
                   </div>
                 </Link>
@@ -230,6 +199,40 @@ export default async function SearchResultsPage({ searchParams }: Props) {
           </div>
         )}
       </section>
+
+      {categories.length > 0 ? (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold text-primary">دسته‌بندی‌ها</h2>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/products?category=${encodeURIComponent(c.slug)}`}
+                className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {brands.length > 0 ? (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold text-primary">برندها</h2>
+          <div className="flex flex-wrap gap-2">
+            {brands.map((b) => (
+              <Link
+                key={b.slug}
+                href={`/brands/${b.slug}`}
+                className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
+              >
+                {b.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -22,8 +22,7 @@ function minPrice(variants: ProductRow["variants"]): number | null {
     .filter((v) => v.is_active !== false)
     .map((v) => Number(v.price))
     .filter((n) => Number.isFinite(n) && n > 0);
-  if (!prices.length) return null;
-  return Math.min(...prices);
+  return prices.length ? Math.min(...prices) : null;
 }
 
 function primaryImage(images: ProductRow["images"]): string | null {
@@ -32,120 +31,82 @@ function primaryImage(images: ProductRow["images"]): string | null {
   return p?.url ?? null;
 }
 
+const SELECT = `
+  id, name, slug, category_id,
+  brand:brands ( name, slug ),
+  category:categories ( name, slug ),
+  images:product_images ( url, is_primary ),
+  variants:product_variants ( price, is_active )
+`;
+
 export async function GET(req: NextRequest) {
-  const qRaw = (req.nextUrl.searchParams.get("q") || "").trim();
-  const q = normalizeSearchQuery(qRaw);
+  const q = normalizeSearchQuery((req.nextUrl.searchParams.get("q") || "").trim());
   if (q.length < 2) {
-    return NextResponse.json({
-      products: [],
-      brands: [],
-      categories: [],
-      posts: [],
-    });
+    return NextResponse.json({ products: [], brands: [], categories: [], posts: [] });
   }
-  const variants = expandTypoVariants(q);
-  const terms = variants.length ? variants : [q];
+  const terms = expandTypoVariants(q);
 
   try {
     const supabase = await createClient();
+    const byId = new Map<string, ProductRow>();
 
-    let products: ProductRow[] = [];
+    // 1) match روی نام/توضیح/اسلاگ
     for (const term of terms) {
       const safe = term.replace(/%/g, "").slice(0, 80);
       if (!safe) continue;
       const { data } = await supabase
         .from("products")
-        .select(
-          `
-          id, name, slug,
-          brand:brands ( name, slug ),
-          category:categories ( name, slug ),
-          images:product_images ( url, is_primary ),
-          variants:product_variants ( price, is_active )
-        `,
-        )
+        .select(SELECT)
         .eq("status", "published")
         .is("deleted_at", null)
-        .or(
-          `name.ilike.%${safe}%,short_description.ilike.%${safe}%,slug.ilike.%${safe}%`,
-        )
-        .limit(40);
-      if (data?.length) {
-        products = data as unknown as ProductRow[];
-        break;
+        .or(`name.ilike.%${safe}%,short_description.ilike.%${safe}%,slug.ilike.%${safe}%`)
+        .limit(48);
+      for (const row of (data as unknown as ProductRow[]) ?? []) {
+        byId.set(row.id, row);
       }
     }
-    if (!products.length) {
-      const safe = q.replace(/%/g, "").slice(0, 80);
-      const { data } = await supabase
-        .from("products")
-        .select(
-          `
-          id, name, slug,
-          brand:brands ( name, slug ),
-          category:categories ( name, slug ),
-          images:product_images ( url, is_primary ),
-          variants:product_variants ( price, is_active )
-        `,
-        )
-        .eq("status", "published")
-        .is("deleted_at", null)
-        .ilike("name", `%${safe}%`)
-        .limit(40);
-      products = (data as unknown as ProductRow[]) ?? [];
-    }
 
-    const seen = new Set<string>();
-    products = products.filter((p) => {
-      if (seen.has(p.id)) return false;
-      seen.add(p.id);
-      return true;
-    });
-
-    const productItems = products.map((p) => ({
-      name: p.name,
-      slug: p.slug,
-      brand: p.brand?.name ?? null,
-      category: p.category?.name ?? null,
-      image: primaryImage(p.images),
-      price: minPrice(p.variants),
-    }));
-
+    // 2) دسته‌هایی که نام‌شان match است → همه محصولات آن دسته‌ها
+    const { data: allCats } = await supabase.from("categories").select("id, name, slug").limit(100);
+    const matchedCatIds: string[] = [];
     const catMap = new Map<string, { name: string; slug: string }>();
-    for (const p of products) {
-      if (p.category?.slug && p.category?.name) {
-        catMap.set(p.category.slug, {
-          name: p.category.name,
-          slug: p.category.slug,
-        });
-      }
-    }
-    const { data: allCats } = await supabase
-      .from("categories")
-      .select("name, slug")
-      .limit(80);
     for (const c of allCats ?? []) {
       const name = String(c.name || "");
       const slug = String(c.slug || "");
+      const id = String(c.id || "");
       if (terms.some((t) => name.includes(t))) {
+        matchedCatIds.push(id);
         catMap.set(slug, { name, slug });
       }
     }
-    const categories = [...catMap.values()].slice(0, 12);
+    if (matchedCatIds.length) {
+      const { data } = await supabase
+        .from("products")
+        .select(SELECT)
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .in("category_id", matchedCatIds)
+        .limit(48);
+      for (const row of (data as unknown as ProductRow[]) ?? []) {
+        byId.set(row.id, row);
+      }
+    }
+
+    const products = [...byId.values()];
+
+    for (const p of products) {
+      if (p.category?.slug && p.category?.name) {
+        catMap.set(p.category.slug, { name: p.category.name, slug: p.category.slug });
+      }
+    }
 
     const brandMap = new Map<string, { name: string; slug: string }>();
     for (const p of products) {
       if (p.brand?.slug && p.brand?.name) {
-        brandMap.set(p.brand.slug, {
-          name: p.brand.name,
-          slug: p.brand.slug,
-        });
+        brandMap.set(p.brand.slug, { name: p.brand.name, slug: p.brand.slug });
       }
     }
-    const { data: allBrands } = await supabase
-      .from("brands")
-      .select("name, slug")
-      .limit(80);
+    const { data: allBrands } = await supabase.from("brands").select("name, slug").limit(80);
     for (const b of allBrands ?? []) {
       const name = String(b.name || "");
       const slug = String(b.slug || "");
@@ -153,7 +114,6 @@ export async function GET(req: NextRequest) {
         brandMap.set(slug, { name, slug });
       }
     }
-    const brands = [...brandMap.values()].slice(0, 12);
 
     let posts: { title: string; slug: string }[] = [];
     try {
@@ -163,25 +123,24 @@ export async function GET(req: NextRequest) {
         .eq("status", "published")
         .ilike("title", "%" + terms[0] + "%")
         .limit(4);
-      posts = (data ?? []).map((p) => ({
-        title: String(p.title),
-        slug: String(p.slug),
-      }));
+      posts = (data ?? []).map((p) => ({ title: String(p.title), slug: String(p.slug) }));
     } catch {}
 
     return NextResponse.json({
-      products: productItems,
-      brands,
-      categories,
+      products: products.map((p) => ({
+        name: p.name,
+        slug: p.slug,
+        brand: p.brand?.name ?? null,
+        category: p.category?.name ?? null,
+        image: primaryImage(p.images),
+        price: minPrice(p.variants),
+      })),
+      categories: [...catMap.values()].slice(0, 12),
+      brands: [...brandMap.values()].slice(0, 12),
       posts,
     });
   } catch (e) {
     console.error("[suggest]", e);
-    return NextResponse.json({
-      products: [],
-      brands: [],
-      categories: [],
-      posts: [],
-    });
+    return NextResponse.json({ products: [], brands: [], categories: [], posts: [] });
   }
 }
