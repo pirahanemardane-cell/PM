@@ -195,10 +195,10 @@ export function CarouselLinks({
     "bg-muted/40 hover:border-foreground/20 flex h-20 w-full items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/60";
 
   const brandBasis =
-    "basis-[calc((100%-0.5rem)/2.2)] pr-4 sm:basis-[calc((100%-1.5rem)/3.5)] lg:basis-[calc((100%-2.5rem)/5)]";
+    "basis-[calc((100%-0.5rem)/2.4)] pr-4 sm:basis-[calc((100%-1.5rem)/4)] lg:basis-[calc((100%-2.5rem)/6)]";
 
   const categoryBasis =
-    "basis-[calc((100%-0.5rem)/2.05)] pr-4 sm:basis-[calc((100%-1.5rem)/3.1)] lg:basis-[calc((100%-2.5rem)/4.2)]";
+    "basis-[calc((100%-0.5rem)/2.4)] pr-4 sm:basis-[calc((100%-1.5rem)/4)] lg:basis-[calc((100%-2.5rem)/5.5)]";
 
   return (
     <section className={cn("w-full", className)}>
@@ -234,7 +234,7 @@ export function CarouselLinks({
                 {variant === "category" ? (
                   <Link
                     href={item.href}
-                    className="group flex h-36 w-full flex-col items-center justify-center gap-3 rounded-2xl border bg-card px-3 py-4 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
+                    className="group flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl border bg-card px-2 py-3 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
                     <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
                       <CategorySvgIcon name={item.label} slug={item.href} className="size-10" />
@@ -246,7 +246,7 @@ export function CarouselLinks({
                 ) : (
                   <Link
                     href={item.href}
-                    className="bg-secondary hover:bg-secondary/90 border-secondary flex h-28 w-full items-center justify-center rounded-2xl border px-3 py-2 shadow-sm transition-colors"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full items-center justify-center rounded-2xl border px-3 py-2 shadow-sm transition-colors"
                     aria-label={item.label}
                   >
                     {item.imageUrl ? (
