@@ -91,6 +91,7 @@ export function ProductGallery({
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
+  const [zoomPos, setZoomPos] = useState<{ x: number; y: number } | null>(null);
   // کاربر خودش تامب زده → اولویت با تامب، نه واریانت
   const [preferThumb, setPreferThumb] = useState(false);
 
@@ -151,6 +152,15 @@ export function ProductGallery({
         <button
           type="button"
           onClick={() => setOpen(true)}
+          onMouseMove={(e) => {
+            if (typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches) {
+              const r = e.currentTarget.getBoundingClientRect();
+              const x = ((e.clientX - r.left) / r.width) * 100;
+              const y = ((e.clientY - r.top) / r.height) * 100;
+              setZoomPos({ x, y });
+            }
+          }}
+          onMouseLeave={() => setZoomPos(null)}
           className="absolute inset-0 z-10 cursor-zoom-in border-0 p-0 text-left"
           aria-label="بزرگ‌نمایی تصویر"
         >
@@ -159,11 +169,22 @@ export function ProductGallery({
             src={main.url}
             alt={ensureAlt(main.alt, { pageName: productName })}
             fill
-            className="object-cover object-center"
+            className={
+              "object-cover object-center transition-transform duration-150 " +
+              (zoomPos ? "scale-[1.75]" : "scale-100")
+            }
+            style={
+              zoomPos
+                ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` }
+                : undefined
+            }
             sizes="(max-width: 1024px) 100vw, 50vw"
             priority
           />
-          <span className="bg-background/80 text-muted-foreground pointer-events-none absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm">
+          <span className="bg-background/80 text-muted-foreground pointer-events-none absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm max-lg:hidden">
+            هاور برای زوم · کلیک برای تمام‌صفحه
+          </span>
+          <span className="bg-background/80 text-muted-foreground pointer-events-none absolute bottom-3 left-3 rounded-lg px-2 py-1 text-[11px] backdrop-blur-sm lg:hidden">
             کلیک برای مشاهده کامل
           </span>
         </button>

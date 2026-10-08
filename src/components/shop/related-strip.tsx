@@ -5,6 +5,7 @@ type Item = {
   title: string;
   image?: string | null;
   subtitle?: string | null;
+  price?: number | null;
 };
 
 export function RelatedStrip({
@@ -41,7 +42,11 @@ export function RelatedStrip({
             </div>
             <div className="space-y-1 p-3">
               <p className="line-clamp-2 text-sm font-medium">{it.title}</p>
-              {it.subtitle ? (
+              {it.price != null && it.price > 0 ? (
+                <p className="text-primary text-xs font-medium">
+                  {Number(it.price).toLocaleString("fa-IR")} تومان
+                </p>
+              ) : it.subtitle ? (
                 <p className="text-muted-foreground text-xs">{it.subtitle}</p>
               ) : null}
             </div>
