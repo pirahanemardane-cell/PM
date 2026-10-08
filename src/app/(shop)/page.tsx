@@ -167,6 +167,7 @@ export default async function HomePage() {
                     return {
                       id: b.id,
                       label: b.name,
+                      labelFa: (b as { name_fa?: string }).name_fa || b.name,
                       href: `/${encodeURIComponent(b.slug)}`,
                       imageUrl:
                         (b as { logo_url?: string | null }).logo_url ||

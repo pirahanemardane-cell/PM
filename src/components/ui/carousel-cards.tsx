@@ -125,7 +125,7 @@ export function CarouselCards({
                     {item.brand && (
                       <p className="text-xs text-muted-foreground">{item.brand}</p>
                     )}
-                    <h3 className="line-clamp-2 text-sm font-medium leading-snug text-primary">
+                    <h3 className="mt-0.5 line-clamp-2 px-1 text-center text-[11px] font-light leading-snug tracking-wide text-primary">
                       {item.title}
                     </h3>
                     {typeof item.rating === "number" && (
@@ -161,6 +161,7 @@ export function CarouselCards({
 export type CarouselLinkItem = {
   id: string;
   label: string;
+  labelFa?: string;
   href: string;
   imageUrl?: string | null;
 };
@@ -234,10 +235,10 @@ export function CarouselLinks({
                 {variant === "category" ? (
                   <Link
                     href={item.href}
-                    className="group flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
+                    className="group flex aspect-square w-full flex-col items-center justify-center gap-2.5 rounded-2xl border bg-card px-1.5 py-2 text-center shadow-sm transition hover:border-primary/30 hover:bg-muted/20 hover:shadow-md"
                   >
-                    <span className="flex size-16 items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
-                      <CategorySvgIcon name={item.label} slug={item.href} className="size-10" />
+                    <span className="flex size-[4.5rem] items-center justify-center rounded-2xl bg-primary/5 ring-1 ring-primary/10 transition group-hover:bg-primary/10">
+                      <CategorySvgIcon name={item.label} slug={item.href} className="size-12" />
                     </span>
                     <span className="line-clamp-2 text-sm font-semibold leading-snug text-primary">
                       {item.label}
@@ -246,12 +247,12 @@ export function CarouselLinks({
                 ) : (
                   <Link
                     href={item.href}
-                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-2 shadow-sm transition-colors"
+                    className="bg-secondary hover:bg-secondary/90 border-secondary flex aspect-square w-full flex-col items-center justify-center gap-2.5 rounded-2xl border px-2 py-2.5 shadow-sm transition-colors"
                     aria-label={item.label}
                   >
                     {item.imageUrl ? (
                       <span
-                        className="block h-14 w-full max-w-[7rem] shrink-0 bg-white dark:bg-[#212529] sm:h-16 sm:max-w-[8rem]"
+                        className="block h-[4.25rem] w-full max-w-[85%] shrink-0 bg-white dark:bg-[#212529] sm:h-20"
                         style={{
                           WebkitMaskImage: `url(${item.imageUrl})`,
                           maskImage: `url(${item.imageUrl})`,
@@ -266,8 +267,8 @@ export function CarouselLinks({
                         aria-label={item.label}
                       />
                     ) : null}
-                    <span className="line-clamp-2 px-0.5 text-center text-xs font-semibold leading-snug text-white dark:text-[#212529]">
-                      {item.label}
+                    <span className="mt-0.5 line-clamp-2 px-1 text-center text-[11px] font-light leading-snug tracking-wide text-white dark:text-[#212529]">
+                      {item.labelFa || item.label}
                     </span>
                   </Link>
                 )}
