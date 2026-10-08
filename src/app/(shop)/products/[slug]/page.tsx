@@ -423,10 +423,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   .image_url ??
                 (p as { primary_image_url?: string }).primary_image_url ??
                 undefined,
-              subtitle:
-                (p as { price?: number }).price != null
-                  ? null
-                  : null,
+              price: (p as { price?: number | null }).price ?? null,
             }))}
           />
         </div>
