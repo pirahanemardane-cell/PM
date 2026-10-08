@@ -70,3 +70,5 @@ npm run dev
 ## مستندات فاز ۷
 - [صفحه محصول](docs/07-PRODUCT-PAGE.md)
 
+## مستندات فاز ۸
+- [وضعیت جستجو](docs/08-SEARCH-STATUS.md)
