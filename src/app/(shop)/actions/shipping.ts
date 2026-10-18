@@ -4,7 +4,17 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getShippingQuote } from "@/lib/shipping/quote";
 import type { ShippingMethodRow } from "@/lib/shipping/types";
 
-export async function listActiveShippingMethodsAction() {
+/**
+ * لیست روش‌های فعال ارسال
+ * اگر province داده شود، فقط روش‌های مجاز برای آن استان/شهر برمی‌گردد.
+ * قانون:
+ * - روشی که هیچ ردیفی در shipping_method_zones ندارد → در همه جا فعال است
+ * - روشی که به منطقه‌ای لینک شده → فقط اگر استان/شهر مشتری در آن منطقه باشد
+ */
+export async function listActiveShippingMethodsAction(input?: {
+  province?: string;
+  city?: string;
+}) {
   try {
     const supabase = createServiceClient();
     const { data, error } = await supabase
@@ -16,7 +26,58 @@ export async function listActiveShippingMethodsAction() {
       .order("sort_order", { ascending: true });
 
     if (error) throw error;
-    return { ok: true as const, items: (data ?? []) as ShippingMethodRow[] };
+    const all = (data ?? []) as ShippingMethodRow[];
+
+    const province = (input?.province || "").trim();
+    const city = (input?.city || "").trim();
+
+    // بدون استان → همه روش‌های فعال
+    if (!province) {
+      return { ok: true as const, items: all };
+    }
+
+    // مناطق منطبق با استان (و در صورت وجود شهر)
+    const { data: locations, error: locErr } = await supabase
+      .from("shipping_zone_locations")
+      .select("zone_id, province, city")
+      .eq("province", province);
+
+    if (locErr) throw locErr;
+
+    const matchedZoneIds = new Set<string>();
+    for (const loc of locations ?? []) {
+      // اگر city در لوکیشن خالی باشد = کل استان
+      // اگر city پر باشد فقط همان شهر
+      if (!loc.city || !city || loc.city === city) {
+        matchedZoneIds.add(loc.zone_id);
+      }
+    }
+
+    // لینک روش ↔ منطقه
+    const { data: links, error: linkErr } = await supabase
+      .from("shipping_method_zones")
+      .select("method_id, zone_id");
+
+    if (linkErr) throw linkErr;
+
+    const methodsWithZones = new Set<string>();
+    const methodsAllowedByZone = new Set<string>();
+
+    for (const link of links ?? []) {
+      methodsWithZones.add(link.method_id);
+      if (matchedZoneIds.has(link.zone_id)) {
+        methodsAllowedByZone.add(link.method_id);
+      }
+    }
+
+    const filtered = all.filter((m) => {
+      // بدون محدودیت منطقه → همه جا
+      if (!methodsWithZones.has(m.id)) return true;
+      // با محدودیت → فقط اگر منطقه منطبق باشد
+      return methodsAllowedByZone.has(m.id);
+    });
+
+    return { ok: true as const, items: filtered };
   } catch (e) {
     console.error("[listActiveShippingMethods]", e);
     return { ok: false as const, items: [] as ShippingMethodRow[] };
