@@ -190,6 +190,8 @@ export class OrderRepository extends BaseRepository {
         shipping_phone,
         shipping_address,
         shipping_city,
+        tracking_number,
+        shipped_at,
         created_at,
         order_items(id, title, size_name, color_name, unit_price, quantity, line_total)
       `

@@ -278,6 +278,8 @@ export type CartLineDTO = {
   colorHex?: string;
   colors?: string[];
   sizes?: string[];
+  /** وزن یک واحد به گرم — برای محاسبه ارسال */
+  weightGrams?: number;
 };
 
 export async function getCartAction(): Promise<{
@@ -321,6 +323,7 @@ export async function getCartAction(): Promise<{
         size: typeof v?.size === "string" ? v.size : v?.size?.name ?? undefined,
         color: v?.color_name ?? (typeof v?.color === "string" ? v.color : v?.color?.name) ?? undefined,
         colorHex: v?.color_hex ?? v?.color?.hex_code ?? undefined,
+        weightGrams: Math.max(0, Number(v?.weight_grams ?? 0) || 0) || undefined,
       };
     });
 

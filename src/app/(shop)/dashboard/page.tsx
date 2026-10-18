@@ -593,6 +593,19 @@ useEffect(() => {
                         {o.shipping_city ? `، ${o.shipping_city}` : ""}
                       </p>
                     ) : null}
+                    {o.tracking_number ? (
+                      <p className="mt-2 text-xs">
+                        <span className="text-muted-foreground">کد رهگیری: </span>
+                        <span className="font-mono font-bold" dir="ltr">
+                          {o.tracking_number}
+                        </span>
+                        {o.status === "shipped"
+                          ? " · ارسال‌شده"
+                          : o.status === "delivered"
+                            ? " · تحویل‌شده"
+                            : ""}
+                      </p>
+                    ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <button
                         type="button"

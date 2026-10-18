@@ -148,6 +148,7 @@ export class CartRepository {
           size,
           color_name,
           color_hex,
+          weight_grams,
           products(id, name, slug, product_images(url, is_primary, sort_order, variant_id))
         )
       `,

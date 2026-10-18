@@ -1,0 +1,64 @@
+"use server";
+
+import { requireAdmin } from "@/lib/admin/require-admin";
+import { createServiceClient } from "@/lib/supabase/service";
+import { revalidatePath } from "next/cache";
+
+export async function listShippingZonesAdminAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const supabase = createServiceClient();
+  const { data: zones, error } = await supabase
+    .from("shipping_zones")
+    .select("id, name, description, sort_order, is_active")
+    .order("sort_order", { ascending: true });
+  if (error) return { ok: false as const, error: "db" as const };
+
+  const { data: locations } = await supabase
+    .from("shipping_zone_locations")
+    .select("id, zone_id, province, city");
+
+  const { data: methods } = await supabase
+    .from("shipping_methods")
+    .select("id, title, provider_code, is_active")
+    .order("sort_order", { ascending: true });
+
+  const { data: links } = await supabase
+    .from("shipping_method_zones")
+    .select("method_id, zone_id");
+
+  return {
+    ok: true as const,
+    zones: zones ?? [],
+    locations: locations ?? [],
+    methods: methods ?? [],
+    links: links ?? [],
+  };
+}
+
+/** برای یک روش: کدام مناطق فعال باشند. خالی = همه جا */
+export async function saveMethodZonesAction(methodId: string, zoneIds: string[]) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!methodId) return { ok: false as const, error: "missing" as const };
+
+  const supabase = createServiceClient();
+  const { error: delErr } = await supabase
+    .from("shipping_method_zones")
+    .delete()
+    .eq("method_id", methodId);
+  if (delErr) return { ok: false as const, error: "db" as const };
+
+  const unique = [...new Set(zoneIds.filter(Boolean))];
+  if (unique.length) {
+    const { error: insErr } = await supabase.from("shipping_method_zones").insert(
+      unique.map((zone_id) => ({ method_id: methodId, zone_id })),
+    );
+    if (insErr) return { ok: false as const, error: "db" as const };
+  }
+
+  revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  return { ok: true as const };
+}

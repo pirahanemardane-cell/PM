@@ -193,10 +193,13 @@ export default function CheckoutPage() {
         return;
       }
 
-      // وزن تقریبی: هر آیتم سبد ~۴۰۰ گرم
+      // وزن واقعی واریانت‌ها؛ اگر نبود هر قلم ۴۰۰ گرم
       const weightGrams = Math.max(
-        400,
-        (typeof items !== "undefined" ? items.length : 1) * 400,
+        100,
+        items.reduce((sum, it) => {
+          const w = Number(it.weightGrams) > 0 ? Number(it.weightGrams) : 400;
+          return sum + w * Number(it.quantity || 1);
+        }, 0),
       );
 
       const res = await quoteShippingAction({
