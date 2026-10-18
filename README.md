@@ -93,3 +93,6 @@ npm run dev
 
 ## مستندات فاز ۱۵
 - [نظرات محصول](docs/15-REVIEWS-STATUS.md)
+
+## مستندات فاز ۱۶
+- [لانچ و SEO](docs/16-LAUNCH-SEO-STATUS.md)

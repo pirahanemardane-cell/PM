@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import { applySeoTemplate } from "@/lib/seo/template";
+import { isSiteIndexable } from "@/lib/seo/indexing";
 
 export async function metadataFromSeoPage(
   page_key: "shop_plp" | "blog_plp",
@@ -25,8 +26,8 @@ export async function metadataFromSeoPage(
       description,
       alternates: data.canonical_url ? { canonical: data.canonical_url } : undefined,
       robots: {
-        index: data.robots_index !== false,
-        follow: data.robots_follow !== false,
+        index: isSiteIndexable() && data.robots_index !== false,
+        follow: isSiteIndexable() && data.robots_follow !== false,
       },
       openGraph: {
         title: data.og_title || title,

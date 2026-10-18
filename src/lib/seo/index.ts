@@ -7,3 +7,4 @@ export * from "./suggest";
 export * from "./image-alt";
 export * from "./summarize";
 export * from "./template";
+export * from "./indexing";

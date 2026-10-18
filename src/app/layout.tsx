@@ -6,6 +6,7 @@ import { AppToaster } from "@/components/ui/app-toaster";
 import { DeferredRealtime } from "@/components/providers/deferred-realtime";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
+import { isSiteIndexable } from "@/lib/seo/indexing";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
 
@@ -64,15 +65,24 @@ export const metadata: Metadata = {
       "فروشگاه تخصصی پیراهن مردانه — پیراهن رسمی، اسپرت، کروات، پاپیون و اکسسوری",
     images: ["/og-image.webp"],
   },
-  robots: {
-    index: false,
-    follow: false,
-    googleBot: {
-      index: false,
-      follow: false,
-      noimageindex: true,
-    },
-  },
+  robots: isSiteIndexable()
+    ? {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+        },
+      }
+    : {
+        index: false,
+        follow: false,
+        googleBot: {
+          index: false,
+          follow: false,
+          noimageindex: true,
+        },
+      },
 };
 
 export default function RootLayout({

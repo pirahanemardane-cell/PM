@@ -1,16 +1,38 @@
 import type { MetadataRoute } from "next";
+import { isSiteIndexable, SITE_URL } from "@/lib/seo/indexing";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
-
-/** فعلاً کل سایت noindex — وقتی آماده انتشار شد allow را برگردانید */
+/**
+ * تا وقتی NEXT_PUBLIC_ALLOW_INDEX=true نباشد کل سایت disallow است.
+ */
 export default function robots(): MetadataRoute.Robots {
+  if (!isSiteIndexable()) {
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+      host: SITE_URL,
+    };
+  }
+
   return {
     rules: [
       {
         userAgent: "*",
-        disallow: "/",
+        allow: "/",
+        disallow: [
+          "/admin",
+          "/admin/",
+          "/dashboard",
+          "/dashboard/",
+          "/checkout",
+          "/checkout/",
+          "/api/",
+          "/login",
+          "/register",
+          "/ورود",
+          "/ثبت-نام",
+        ],
       },
     ],
-    host: siteUrl.replace(/\/$/, ""),
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

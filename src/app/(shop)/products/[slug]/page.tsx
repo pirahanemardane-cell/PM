@@ -24,6 +24,7 @@ import { normalizeProductSlug } from "@/lib/product-slug";
 import { JsonLd } from "@/components/seo/json-ld";
 import { productSchema, breadcrumbSchema } from "@/lib/seo/schema";
 import { applySeoTemplate } from "@/lib/seo/template";
+import { isSiteIndexable, SITE_URL } from "@/lib/seo/indexing";
 
 export const revalidate = 60;
 
@@ -65,18 +66,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     applySeoTemplate(p.meta_description, tplCtx) ||
     p.short_description ||
     undefined;
+  const allow = isSiteIndexable();
+  const canonical =
+    p.canonical_url || `${SITE_URL}/products/${p.slug}`;
   return {
     title,
     description,
-    alternates: p.canonical_url ? { canonical: p.canonical_url } : undefined,
+    alternates: { canonical },
     robots: {
-      index: p.robots_index !== false,
-      follow: p.robots_follow !== false,
+      index: allow && p.robots_index !== false,
+      follow: allow && p.robots_follow !== false,
     },
     openGraph: {
       title: p.og_title || title,
       description: p.og_description || description,
+      url: canonical,
       images: p.og_image_url ? [{ url: p.og_image_url }] : undefined,
+      locale: "fa_IR",
+      type: "website",
     },
   };
 }
