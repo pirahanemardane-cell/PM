@@ -3,134 +3,119 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   listShippingZonesAdminAction,
-  saveMethodZonesAction,
-  createShippingZoneAction,
-  addZoneProvinceAction,
-  removeZoneLocationAction,
-  deleteShippingZoneAction,
+  saveMethodProvincesAction,
 } from "./zones-actions";
 import { IRAN_PROVINCES } from "@/lib/iran-provinces";
 
-type Zone = { id: string; name: string; description: string | null; is_active: boolean };
-type Method = { id: string; title: string; provider_code: string | null; is_active: boolean };
+type Method = {
+  id: string;
+  title: string;
+  provider_code: string | null;
+  is_active: boolean;
+};
 type Loc = { id: string; zone_id: string; province: string; city: string | null };
 type Link = { method_id: string; zone_id: string };
 
 export function ShippingZonesForm() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [zones, setZones] = useState<Zone[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [methods, setMethods] = useState<Method[]>([]);
   const [locations, setLocations] = useState<Loc[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
+  /** methodId → set of selected province names */
+  const [selected, setSelected] = useState<Record<string, string[]>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [newZoneName, setNewZoneName] = useState("");
-  const [addProvince, setAddProvince] = useState<Record<string, string>>({});
 
   async function reload() {
     setLoading(true);
+    setErr(null);
     const res = await listShippingZonesAdminAction();
     setLoading(false);
     if (!res.ok) {
-      setErr("بارگذاری مناطق ناموفق");
+      setErr("بارگذاری ناموفق بود");
       return;
     }
-    setZones(res.zones as Zone[]);
-    setMethods(res.methods as Method[]);
-    setLocations(res.locations as Loc[]);
-    setLinks(res.links as Link[]);
+    const ms = (res.methods ?? []) as Method[];
+    const locs = (res.locations ?? []) as Loc[];
+    const lks = (res.links ?? []) as Link[];
+    setMethods(ms);
+    setLocations(locs);
+    setLinks(lks);
+
+    // از لینک‌ها و لوکیشن‌ها، استان‌های هر روش را بساز
+    const next: Record<string, string[]> = {};
+    for (const m of ms) {
+      const zoneIds = lks
+        .filter((l) => l.method_id === m.id)
+        .map((l) => l.zone_id);
+      if (!zoneIds.length) {
+        next[m.id] = []; // خالی = کل ایران
+        continue;
+      }
+      const provs = [
+        ...new Set(
+          locs
+            .filter((loc) => zoneIds.includes(loc.zone_id))
+            .map((loc) => loc.province)
+            .filter(Boolean),
+        ),
+      ];
+      next[m.id] = provs;
+    }
+    setSelected(next);
   }
 
   useEffect(() => {
     void reload();
   }, []);
 
-  const locsByZone = useMemo(() => {
-    const m = new Map<string, Loc[]>();
-    for (const loc of locations) {
-      const arr = m.get(loc.zone_id) ?? [];
-      arr.push(loc);
-      m.set(loc.zone_id, arr);
-    }
-    return m;
-  }, [locations]);
-
-  function zoneIdsForMethod(methodId: string) {
-    return links.filter((l) => l.method_id === methodId).map((l) => l.zone_id);
+  function toggle(methodId: string, province: string) {
+    setSelected((prev) => {
+      const cur = new Set(prev[methodId] ?? []);
+      if (cur.has(province)) cur.delete(province);
+      else cur.add(province);
+      return { ...prev, [methodId]: [...cur] };
+    });
   }
 
-  async function toggleZone(methodId: string, zoneId: string, checked: boolean) {
-    const current = new Set(zoneIdsForMethod(methodId));
-    if (checked) current.add(zoneId);
-    else current.delete(zoneId);
-    setSaving(methodId);
+  function selectAll(methodId: string) {
+    setSelected((prev) => ({
+      ...prev,
+      [methodId]: [...IRAN_PROVINCES],
+    }));
+  }
+
+  function selectNone(methodId: string) {
+    setSelected((prev) => ({ ...prev, [methodId]: [] }));
+  }
+
+  async function save(methodId: string) {
+    setSavingId(methodId);
     setMsg(null);
     setErr(null);
-    const res = await saveMethodZonesAction(methodId, [...current]);
-    setSaving(null);
+    const provinces = selected[methodId] ?? [];
+    // اگر همه ۳۱ استان تیک خورده = معادل کل ایران (بدون محدودیت)
+    const payload =
+      provinces.length >= IRAN_PROVINCES.length ? [] : provinces;
+    const res = await saveMethodProvincesAction(methodId, payload);
+    setSavingId(null);
     if (!res.ok) {
-      setErr("ذخیره ناموفق");
+      setErr("ذخیره ناموفق بود");
       return;
     }
-    setMsg("مناطق روش ارسال ذخیره شد");
-    await reload();
-  }
-
-  async function onCreateZone(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setMsg(null);
-    const res = await createShippingZoneAction({ name: newZoneName });
-    if (!res.ok) {
-      setErr("ایجاد منطقه ناموفق");
-      return;
-    }
-    setNewZoneName("");
-    setMsg("منطقه جدید ساخته شد");
-    await reload();
-  }
-
-  async function onAddProvince(zoneId: string) {
-    const p = (addProvince[zoneId] || "").trim();
-    if (!p) return;
-    setErr(null);
-    const res = await addZoneProvinceAction(zoneId, p);
-    if (!res.ok) {
-      setErr("افزودن استان ناموفق");
-      return;
-    }
-    setAddProvince((s) => ({ ...s, [zoneId]: "" }));
-    setMsg("استان اضافه شد");
-    await reload();
-  }
-
-  async function onRemoveLoc(id: string) {
-    if (!confirm("این استان از منطقه حذف شود؟")) return;
-    const res = await removeZoneLocationAction(id);
-    if (!res.ok) {
-      setErr("حذف ناموفق");
-      return;
-    }
-    setMsg("استان حذف شد");
-    await reload();
-  }
-
-  async function onDeleteZone(id: string) {
-    if (!confirm("کل این منطقه حذف شود؟ (استان‌ها و اتصال روش‌ها هم پاک می‌شوند)")) return;
-    const res = await deleteShippingZoneAction(id);
-    if (!res.ok) {
-      setErr("حذف منطقه ناموفق");
-      return;
-    }
-    setMsg("منطقه حذف شد");
+    setMsg(
+      payload.length === 0
+        ? "ذخیره شد: ارسال به کل ایران"
+        : `ذخیره شد: ${payload.length} استان`,
+    );
     await reload();
   }
 
   if (loading) {
     return (
-      <div className="border-border text-muted-foreground rounded-xl border p-4 text-sm">
-        در حال بارگذاری مناطق ارسال…
+      <div className="border-border rounded-xl border p-4 text-sm" dir="rtl">
+        در حال بارگذاری پوشش جغرافیایی…
       </div>
     );
   }
@@ -138,128 +123,97 @@ export function ShippingZonesForm() {
   return (
     <div className="border-border space-y-6 rounded-xl border p-4" dir="rtl">
       <div>
-        <h2 className="font-semibold">مناطق ارسال (Zones)</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          اگر برای یک روش هیچ منطقه‌ای تیک نخورد = در همه جا فعال است.
+        <h2 className="font-semibold">پوشش جغرافیایی ارسال</h2>
+        <p className="text-muted-foreground mt-1 text-xs leading-6">
+          برای هر روش ارسال، استان‌هایی که می‌خواهید فعال باشند را تیک بزنید.
+          <br />
+          اگر هیچ استانی تیک نخورد (یا همه تیک بخورد) = ارسال به{" "}
+          <strong>کل ایران</strong>.
         </p>
       </div>
 
-      <form onSubmit={onCreateZone} className="flex flex-wrap items-end gap-2">
-        <label className="block space-y-1 text-sm">
-          <span>منطقه جدید</span>
-          <input
-            value={newZoneName}
-            onChange={(e) => setNewZoneName(e.target.value)}
-            className="border-input bg-background h-10 rounded-xl border px-3"
-            placeholder="مثلاً غرب کشور"
-          />
-        </label>
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground h-10 rounded-xl px-4 text-sm"
-        >
-          افزودن منطقه
-        </button>
-      </form>
-
-      <div className="space-y-4">
-        {zones.map((z) => {
-          const locs = locsByZone.get(z.id) ?? [];
+      {methods.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          هنوز روش ارسالی تعریف نشده است.
+        </p>
+      ) : (
+        methods.map((m) => {
+          const list = selected[m.id] ?? [];
+          const all =
+            list.length === 0 || list.length >= IRAN_PROVINCES.length;
           return (
-            <div key={z.id} className="border-border rounded-lg border p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="font-medium">{z.name}</span>
-                <button
-                  type="button"
-                  onClick={() => void onDeleteZone(z.id)}
-                  className="text-destructive text-xs underline"
-                >
-                  حذف منطقه
-                </button>
+            <div
+              key={m.id}
+              className="border-border space-y-3 rounded-xl border p-4"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium">
+                    {m.title}
+                    {!m.is_active ? (
+                      <span className="text-muted-foreground mr-2 text-xs">
+                        (غیرفعال)
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-muted-foreground text-[11px]">
+                    {all
+                      ? "پوشش: کل ایران"
+                      : `پوشش: ${list.length} استان انتخاب‌شده`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => selectAll(m.id)}
+                    className="border-border rounded-lg border px-2 py-1 text-[11px]"
+                  >
+                    همه
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => selectNone(m.id)}
+                    className="border-border rounded-lg border px-2 py-1 text-[11px]"
+                  >
+                    هیچ‌کدام (= کل ایران)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingId === m.id}
+                    onClick={() => void save(m.id)}
+                    className="bg-primary text-primary-foreground rounded-lg px-3 py-1 text-[11px] disabled:opacity-50"
+                  >
+                    {savingId === m.id ? "…" : "ذخیره"}
+                  </button>
+                </div>
               </div>
-              <ul className="text-muted-foreground mb-2 space-y-1 text-xs">
-                {locs.length === 0 ? (
-                  <li>هنوز استانی ندارد</li>
-                ) : (
-                  locs.map((loc) => (
-                    <li key={loc.id} className="flex items-center gap-2">
-                      <span>{loc.province}</span>
-                      <button
-                        type="button"
-                        onClick={() => void onRemoveLoc(loc.id)}
-                        className="text-destructive text-[10px]"
-                      >
-                        حذف
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={addProvince[z.id] || ""}
-                  onChange={(e) =>
-                    setAddProvince((s) => ({ ...s, [z.id]: e.target.value }))
-                  }
-                  className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
-                >
-                  <option value="">افزودن استان…</option>
-                  {IRAN_PROVINCES.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => void onAddProvince(z.id)}
-                  className="border-border h-9 rounded-lg border px-3 text-xs"
-                >
-                  افزودن
-                </button>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                {IRAN_PROVINCES.map((p) => {
+                  const checked =
+                    list.length === 0
+                      ? false
+                      : list.includes(p);
+                  return (
+                    <label
+                      key={p}
+                      className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-xs"
+                    >
+                      <input
+                        type="checkbox"
+                        className="size-4 shrink-0"
+                        checked={checked}
+                        onChange={() => toggle(m.id, p)}
+                      />
+                      <span>{p}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           );
-        })}
-      </div>
-
-      <div className="space-y-4 border-t pt-4">
-        <p className="text-sm font-medium">اتصال روش ارسال به منطقه</p>
-        {methods.map((m) => {
-          const selected = new Set(zoneIdsForMethod(m.id));
-          return (
-            <div key={m.id} className="border-border rounded-lg border p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium">
-                  {m.title}
-                  {!m.is_active ? (
-                    <span className="text-muted-foreground mr-2 text-xs"> (غیرفعال)</span>
-                  ) : null}
-                </span>
-                <span className="text-muted-foreground text-[11px]">
-                  {selected.size === 0 ? "همه مناطق" : `${selected.size} منطقه`}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {zones.map((z) => (
-                  <label key={z.id} className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      className="size-4"
-                      checked={selected.has(z.id)}
-                      disabled={saving === m.id}
-                      onChange={(e) =>
-                        void toggleZone(m.id, z.id, e.target.checked)
-                      }
-                    />
-                    {z.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        })
+      )}
 
       {err ? <p className="text-destructive text-sm">{err}</p> : null}
       {msg ? <p className="text-sm text-emerald-600">{msg}</p> : null}
