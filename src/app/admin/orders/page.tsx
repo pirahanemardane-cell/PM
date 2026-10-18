@@ -7,6 +7,7 @@ import {
   adminUpdateOrderStatusAction,
   adminUpdatePaymentStatusAction,
   adminHardDeleteOrdersAction,
+  adminSetOrderTrackingAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { AdminBulkBar } from "@/components/admin/bulk-bar";
@@ -42,6 +43,7 @@ type OrderRow = {
   shipping_city?: string | null;
   created_at: string;
   payment_status?: string | null;
+  tracking_number?: string | null;
   order_items?: { title: string; quantity: number; line_total: number }[];
 };
 
@@ -324,6 +326,83 @@ export default function AdminOrdersPage() {
                       {o.created_at
                         ? formatJalaliDateTime(o.created_at)
                         : "—"}
+                      <div className="mt-2 flex flex-col gap-1">
+                        <input
+                          defaultValue={o.tracking_number ?? ""}
+                          placeholder="کد رهگیری پست"
+                          dir="ltr"
+                          className="border-input bg-background h-8 w-36 rounded border px-2 text-[11px]"
+                          id={`trk-${o.id}`}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const el = document.getElementById(`trk-${o.id}`) as HTMLInputElement | null;
+                              void (async () => {
+                                setBusyId(o.id);
+                                const res = await adminSetOrderTrackingAction(o.id, el?.value ?? "");
+                                setBusyId(null);
+                                if (!res.ok) {
+                                  setError("ذخیره کد رهگیری ناموفق بود");
+                                  return;
+                                }
+                                setItems((prev) =>
+                                  prev.map((x) =>
+                                    x.id === o.id
+                                      ? {
+                                          ...x,
+                                          tracking_number: (el?.value ?? "").trim() || null,
+                                          status:
+                                            (el?.value ?? "").trim() &&
+                                            x.status !== "delivered" &&
+                                            x.status !== "cancelled"
+                                              ? "shipped"
+                                              : x.status,
+                                        }
+                                      : x,
+                                  ),
+                                );
+                                window.dispatchEvent(new Event("pm:orders-changed"));
+                              })();
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          disabled={busyId === o.id}
+                          className="text-primary text-[10px] hover:underline"
+                          onClick={() => {
+                            const el = document.getElementById(`trk-${o.id}`) as HTMLInputElement | null;
+                            void (async () => {
+                              setBusyId(o.id);
+                              const res = await adminSetOrderTrackingAction(o.id, el?.value ?? "");
+                              setBusyId(null);
+                              if (!res.ok) {
+                                setError("ذخیره کد رهگیری ناموفق بود");
+                                return;
+                              }
+                              setItems((prev) =>
+                                prev.map((x) =>
+                                  x.id === o.id
+                                    ? {
+                                        ...x,
+                                        tracking_number: (el?.value ?? "").trim() || null,
+                                        status:
+                                          (el?.value ?? "").trim() &&
+                                          x.status !== "delivered" &&
+                                          x.status !== "cancelled"
+                                            ? "shipped"
+                                            : x.status,
+                                      }
+                                    : x,
+                                ),
+                              );
+                              window.dispatchEvent(new Event("pm:orders-changed"));
+                            })();
+                          }}
+                        >
+                          ذخیره رهگیری
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

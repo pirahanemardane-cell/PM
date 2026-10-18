@@ -616,6 +616,8 @@ export async function trackOrderAction(code: string) {
         status: order.status as string,
         total_amount: Number(order.total_amount ?? 0),
         shipping_city: (order as { shipping_city?: string }).shipping_city ?? null,
+        tracking_number: (order as { tracking_number?: string | null }).tracking_number ?? null,
+        shipped_at: (order as { shipped_at?: string | null }).shipped_at ?? null,
         created_at: order.created_at as string,
         items: ((order as { order_items?: unknown[] }).order_items ?? []).map(
           (it: any) => ({

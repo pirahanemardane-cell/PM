@@ -76,7 +76,6 @@ export interface ProductCard1Props {
   className?: string;
 }
 
-function formatToman(_price: number) { return null; } // use <Price />
 
 export function ProductCard1({
   productId,

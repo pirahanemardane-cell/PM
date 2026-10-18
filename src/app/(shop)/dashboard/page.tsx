@@ -159,10 +159,13 @@ export default function BuyerDashboardPage() {
   const [trackCode, setTrackCode] = useState("");
   const [trackLoading, setTrackLoading] = useState(false);
   const [trackResult, setTrackResult] = useState<{
-    orderNumber: string;
+    id: string;
     status: string;
-    total: number;
-    createdAt?: string;
+    total_amount: number;
+    shipping_city?: string | null;
+    tracking_number?: string | null;
+    created_at?: string;
+    items?: { id: string; title: string; size_name?: string | null; quantity: number }[];
   } | null>(null);
   const [trackError, setTrackError] = useState<string | null>(null);
 
@@ -312,6 +315,37 @@ useEffect(() => {
     window.addEventListener("pm:orders-changed", onOrders);
     return () => window.removeEventListener("pm:orders-changed", onOrders);
   }, [tab]);
+
+  // پیگیری زنده: وقتی ادمین وضعیت/رهگیری را عوض کند
+  useEffect(() => {
+    function onOrdersLive() {
+      if (tab === "orders") {
+        void (async () => {
+          const res = await listMyOrdersAction();
+          if (res.ok) setMyOrders(res.items);
+        })();
+      }
+      if (trackResult?.id) {
+        void (async () => {
+          const res = await trackOrderAction(trackResult.id);
+          if (res.ok) setTrackResult(res.order as any);
+        })();
+      }
+    }
+    window.addEventListener("pm:orders-changed", onOrdersLive);
+    return () => window.removeEventListener("pm:orders-changed", onOrdersLive);
+  }, [tab, trackResult?.id]);
+
+  useEffect(() => {
+    if (!trackResult?.id) return;
+    const iv = window.setInterval(() => {
+      void (async () => {
+        const res = await trackOrderAction(trackResult.id);
+        if (res.ok) setTrackResult(res.order as any);
+      })();
+    }, 15000);
+    return () => window.clearInterval(iv);
+  }, [trackResult?.id]);
 
 
   useEffect(() => {
@@ -1071,8 +1105,9 @@ useEffect(() => {
             </div>
           ) : tab === "track" ? (
             <div className="mx-auto max-w-md space-y-4">
+              <h2 className="text-base font-bold text-primary">پیگیری سفارش</h2>
               <p className="text-muted-foreground text-sm">
-                کد سفارش را وارد کنید تا وضعیت را ببینید.
+                کد سفارش خود را وارد کنید تا وضعیت را به‌صورت زنده ببینید.
               </p>
               <form
                 className="flex flex-col gap-3 sm:flex-row"
@@ -1085,22 +1120,25 @@ useEffect(() => {
                   setTrackLoading(false);
                   if (!res.ok) {
                     setTrackError(
-                      res.error === "not_found"
+                      res.error === "not_found" || (typeof res.error === "string" && res.error.includes("یافت"))
                         ? "سفارشی با این کد پیدا نشد."
                         : res.error === "empty"
-                          ? "کد سفارش را وارد کنید."
-                          : "خطا در پیگیری."
+                          ? "کد سفارش خود را وارد کنید."
+                          : typeof res.error === "string" && res.error.length < 80
+                            ? res.error
+                            : "خطا در پیگیری.",
                     );
                     return;
                   }
-                  setTrackResult(res.order);
+                  setTrackResult(res.order as any);
                 }}
               >
                 <input
                   value={trackCode}
                   onChange={(e) => setTrackCode(e.target.value)}
-                  placeholder="مثلاً PM-…"
+                  placeholder="کد سفارش خود را وارد کنید"
                   className="border-border bg-background h-11 flex-1 rounded-xl border px-3 text-sm"
+                  dir="ltr"
                 />
                 <button
                   type="submit"
@@ -1116,22 +1154,58 @@ useEffect(() => {
               {trackResult ? (
                 <div className="border-border space-y-2 rounded-xl border p-4 text-sm">
                   <p>
-                    <span className="text-muted-foreground">کد: </span>
-                    <span className="font-medium">{trackResult.orderNumber}</span>
+                    <span className="text-muted-foreground">کد سفارش: </span>
+                    <span className="font-mono text-xs" dir="ltr">{trackResult.id}</span>
                   </p>
                   <p>
                     <span className="text-muted-foreground">وضعیت: </span>
-                    <span className="font-medium">{trackResult.status}</span>
+                    <span className="font-medium">
+                      {trackResult.status === "pending"
+                        ? "در انتظار"
+                        : trackResult.status === "paid"
+                          ? "پرداخت‌شده"
+                          : trackResult.status === "processing"
+                            ? "در حال آماده‌سازی"
+                            : trackResult.status === "shipped"
+                              ? "ارسال‌شده"
+                              : trackResult.status === "delivered"
+                                ? "تحویل‌شده"
+                                : trackResult.status === "cancelled"
+                                  ? "لغو شده"
+                                  : trackResult.status}
+                    </span>
                   </p>
                   <p>
                     <span className="text-muted-foreground">مبلغ: </span>
-                    {trackResult.total.toLocaleString("fa-IR")} تومان
+                    {Number(trackResult.total_amount || 0).toLocaleString("fa-IR")} تومان
                   </p>
-                  {trackResult.createdAt ? (
+                  {trackResult.created_at ? (
                     <p className="text-muted-foreground text-xs">
-                      {formatJalaliDate(trackResult.createdAt)}
+                      {formatJalaliDate(trackResult.created_at)}
                     </p>
                   ) : null}
+                  {trackResult.tracking_number ? (
+                    <div className="border-border mt-2 space-y-1 rounded-lg border bg-muted/30 p-3 text-xs">
+                      <p>
+                        <span className="text-muted-foreground">کد رهگیری ارسال: </span>
+                        <span className="font-mono font-bold select-all" dir="ltr">
+                          {trackResult.tracking_number}
+                        </span>
+                      </p>
+                      <a
+                        href={iranPostTrackingUrl(trackResult.tracking_number)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline"
+                      >
+                        پیگیری مرسوله در سایت پست
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">
+                      کد رهگیری ارسال پس از تحویل به پست اینجا نمایش داده می‌شود.
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>
