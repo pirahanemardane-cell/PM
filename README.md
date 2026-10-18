@@ -90,3 +90,6 @@ npm run dev
 
 ## مستندات فاز ۱۴
 - [مرجوعی](docs/14-RETURNS-STATUS.md)
+
+## مستندات فاز ۱۵
+- [نظرات محصول](docs/15-REVIEWS-STATUS.md)
