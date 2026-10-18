@@ -234,7 +234,7 @@ export default function BuyerDashboardPage() {
     { id: string; body: string; is_staff: boolean; created_at: string }[]
   >([]);
   const [returnItems, setReturnItems] = useState<
-    { id: string; order_id: string; reason: string; status: string; created_at: string }[]
+    { id: string; order_id: string; reason: string; status: string; admin_note?: string | null; created_at: string }[]
   >([]);
   const [returnLoading, setReturnLoading] = useState(false);
   const [returnOrderId, setReturnOrderId] = useState("");
@@ -504,14 +504,19 @@ useEffect(() => {
         if (ret.ok) setReturnItems(ret.items as typeof returnItems);
         if (ord.ok && Array.isArray((ord as { items?: unknown }).items)) {
           const items = (ord as { items: { id: string; status?: string; created_at?: string; total?: number }[] }).items;
+          const eligible = items.filter((o) =>
+            ["shipped", "delivered"].includes(String(o.status || "")),
+          );
           setReturnOrderOptions(
-            items.map((o) => ({
+            eligible.map((o) => ({
               id: o.id,
-              label: `${o.id.slice(0, 8)}… · ${o.status ?? "—"} · ${
-                o.created_at
-                  ? formatJalaliDate(o.created_at)
-                  : ""
-              }`,
+              label: `${o.id.slice(0, 8)}… · ${
+                o.status === "shipped"
+                  ? "ارسال‌شده"
+                  : o.status === "delivered"
+                    ? "تحویل‌شده"
+                    : (o.status ?? "—")
+              } · ${o.created_at ? formatJalaliDate(o.created_at) : ""}`,
             })),
           );
         }
@@ -1369,10 +1374,43 @@ useEffect(() => {
                     </option>
                   ))}
                 </select>
+                <p className="text-muted-foreground text-xs leading-6">
+                  فقط سفارش‌های ارسال‌شده یا تحویل‌شده تا ۷ روز قابل مرجوعی هستند.
+                </p>
+                <select
+                  className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+                  value={
+                    [
+                      "کالا با توضیحات مطابقت ندارد",
+                      "سایز نامناسب است",
+                      "کالا آسیب دیده رسیده",
+                      "انصراف از خرید",
+                      "سایر",
+                    ].includes(returnReason)
+                      ? returnReason
+                      : returnReason
+                        ? "سایر"
+                        : ""
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "سایر") setReturnReason("");
+                    else setReturnReason(v);
+                  }}
+                >
+                  <option value="">انتخاب دلیل…</option>
+                  <option value="کالا با توضیحات مطابقت ندارد">
+                    کالا با توضیحات مطابقت ندارد
+                  </option>
+                  <option value="سایز نامناسب است">سایز نامناسب است</option>
+                  <option value="کالا آسیب دیده رسیده">کالا آسیب دیده رسیده</option>
+                  <option value="انصراف از خرید">انصراف از خرید</option>
+                  <option value="سایر">سایر (توضیح بنویسید)</option>
+                </select>
                 <textarea
                   className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
                   rows={3}
-                  placeholder="دلیل مرجوعی (بدون لینک)"
+                  placeholder="توضیح بیشتر (حداقل ۵ حرف — بدون لینک)"
                   value={returnReason}
                   onChange={(e) => setReturnReason(e.target.value)}
                 />
@@ -1388,17 +1426,24 @@ useEffect(() => {
                       const map: Record<string, string> = {
                         login_required: "وارد شوید",
                         order_not_found: "سفارش یافت نشد",
-                        order_required: "شناسه سفارش لازم است",
-                        reason_short: "دلیل کوتاه است",
+                        order_required: "سفارش را انتخاب کنید",
+                        order_not_eligible:
+                          "فقط سفارش ارسال‌شده یا تحویل‌شده قابل مرجوعی است",
+                        return_window_expired:
+                          "مهلت ۷ روزه مرجوعی این سفارش تمام شده است",
+                        return_already_open:
+                          "برای این سفارش درخواست باز دارید",
+                        reason_short: "دلیل را کامل‌تر بنویسید",
                       };
                       toast.error(map[res.error] || res.error || "خطا");
                       return;
                     }
-                    toast.success("درخواست ثبت شد");
+                    toast.success("درخواست مرجوعی ثبت شد");
                     setReturnOrderId("");
                     setReturnReason("");
                     const list = await listMyReturnsAction();
                     if (list.ok) setReturnItems(list.items as typeof returnItems);
+                    window.dispatchEvent(new Event("pm:returns-changed"));
                   }}
                 >
                   ثبت درخواست
@@ -1410,19 +1455,39 @@ useEffect(() => {
                 </div>
               ) : (
                 <ul className="space-y-2">
-                  {returnItems.map((r) => (
-                    <li
-                      key={r.id}
-                      className="border-border rounded-xl border p-3 text-sm"
-                    >
-                      <p className="font-mono text-xs">{r.order_id}</p>
-                      <p className="text-muted-foreground mt-1">{r.reason}</p>
-                      <p className="mt-1 text-xs">
-                        {r.status} ·{" "}
-                        {formatJalaliDate(r.created_at)}
-                      </p>
-                    </li>
-                  ))}
+                  {returnItems.map((r) => {
+                    const statusFa: Record<string, string> = {
+                      pending: "در انتظار بررسی",
+                      approved: "تأیید شده",
+                      rejected: "رد شده",
+                      received: "کالا دریافت شد",
+                      refunded: "عودت وجه",
+                    };
+                    return (
+                      <li
+                        key={r.id}
+                        className="border-border rounded-xl border p-3 text-sm"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-mono text-xs" dir="ltr">
+                            {r.order_id}
+                          </p>
+                          <span className="text-xs font-medium text-primary">
+                            {statusFa[r.status] || r.status}
+                          </span>
+                        </div>
+                        <p className="text-muted-foreground mt-1">{r.reason}</p>
+                        {r.admin_note ? (
+                          <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                            یادداشت فروشگاه: {r.admin_note}
+                          </p>
+                        ) : null}
+                        <p className="text-muted-foreground mt-1 text-xs">
+                          {formatJalaliDate(r.created_at)}
+                        </p>
+                      </li>
+                    );
+                  })}
                   {!returnItems.length ? (
                     <p className="text-muted-foreground text-sm">درخواستی نیست</p>
                   ) : null}

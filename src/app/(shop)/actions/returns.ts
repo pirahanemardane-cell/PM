@@ -50,7 +50,7 @@ export async function createReturnAction(input: {
     // سفارش باید مال همین کاربر باشد + وضعیت قابل مرجوعی
     const { data: order, error: oErr } = await supabase
       .from("orders")
-      .select("id, status, created_at")
+      .select("id, status, created_at, shipped_at")
       .eq("id", input.orderId)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -60,6 +60,21 @@ export async function createReturnAction(input: {
     const allowed = new Set(["delivered", "shipped"]);
     if (!allowed.has(String(order.status))) {
       return { ok: false as const, error: "order_not_eligible" };
+    }
+
+    // مهلت مرجوعی: ۷ روز از زمان ارسال/ایجاد سفارش (استاندارد رایج ایران)
+    const baseDate = new Date(
+      String(
+        (order as { shipped_at?: string | null }).shipped_at ||
+          order.created_at ||
+          "",
+      ),
+    );
+    if (!Number.isNaN(baseDate.getTime())) {
+      const days = (Date.now() - baseDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (days > 7) {
+        return { ok: false as const, error: "return_window_expired" };
+      }
     }
 
     // جلوگیری از درخواست باز تکراری روی همان سفارش

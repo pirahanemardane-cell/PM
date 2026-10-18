@@ -145,6 +145,35 @@ export async function adminSetReturnStatusAction(
       }
     }
 
+    // اعلان به مشتری
+    try {
+      const { data: full } = await gate.supabase
+        .from("return_requests")
+        .select("user_id, order_id, status")
+        .eq("id", id)
+        .maybeSingle();
+      const uid = (full as { user_id?: string } | null)?.user_id;
+      if (uid) {
+        const statusFa: Record<string, string> = {
+          pending: "در انتظار بررسی",
+          approved: "تأیید شد",
+          rejected: "رد شد",
+          received: "کالا دریافت شد",
+          refunded: "وجه بازگشت داده شد",
+        };
+        const label = statusFa[status] || status;
+        await gate.supabase.from("notifications").insert({
+          user_id: uid,
+          title: "به‌روزرسانی مرجوعی",
+          body: `وضعیت درخواست مرجوعی شما: ${label}`,
+          type: "order",
+          link: "/dashboard?tab=returns",
+        });
+      }
+    } catch (ne) {
+      console.error("[adminSetReturnStatus notify]", ne);
+    }
+
     return { ok: true as const };
   } catch {
     return { ok: false as const, error: "server" };
