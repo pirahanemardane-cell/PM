@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { toPersianDigits } from "@/lib/numbers";
 import { ShippingActions } from "./actions-client";
+import { FreeShippingForm } from "./free-shipping-form";
 
 export const dynamic = "force-dynamic";
 
@@ -121,6 +122,8 @@ export default async function ShippingAdminPage() {
         <h2 className="mb-3 font-semibold">افزودن روش جدید</h2>
         <ShippingActions mode="create" />
       </div>
+
+      <FreeShippingForm />
     </div>
   );
 }
