@@ -117,6 +117,57 @@ export async function quoteShippingAction(input: {
       parcelValueToman: input.parcelValueToman,
     });
 
+    // Free shipping rules از site_settings
+    if (quote.ok && (input.parcelValueToman ?? 0) > 0) {
+      try {
+        const { data: settings } = await supabase
+          .from("site_settings")
+          .select("key, value")
+          .in("key", [
+            "free_shipping_enabled",
+            "free_shipping_min_amount",
+            "free_shipping_exclude_provider_codes",
+          ]);
+
+        const map = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+        const enabled = (map.get("free_shipping_enabled") || "false").toLowerCase() === "true";
+        const minAmount = Math.max(0, Number(map.get("free_shipping_min_amount") || 0));
+        const exclude = (map.get("free_shipping_exclude_provider_codes") || "")
+          .split(",")
+          .map((x) => x.trim().toLowerCase())
+          .filter(Boolean);
+
+        const code = (method.provider_code || "").toLowerCase();
+        const excluded =
+          exclude.includes(code) ||
+          (method.title || "").includes("پیک") ||
+          code.includes("peyk");
+
+        if (
+          enabled &&
+          minAmount > 0 &&
+          (input.parcelValueToman ?? 0) >= minAmount &&
+          !excluded &&
+          method.pricing_type !== "negotiable"
+        ) {
+          return {
+            ok: true as const,
+            methodId: method.id,
+            title: method.title,
+            quote: {
+              ok: true as const,
+              fee: 0,
+              currency: "IRR" as const,
+              source: "fixed" as const,
+              note: `ارسال رایگان (سفارش بالای ${minAmount.toLocaleString("fa-IR")} تومان)`,
+            },
+          };
+        }
+      } catch (settingsErr) {
+        console.error("[quoteShipping free_shipping settings]", settingsErr);
+      }
+    }
+
     return {
       ok: true as const,
       methodId: method.id,
