@@ -6,8 +6,6 @@ export const SHIPPING_TRACKING_URLS = {
   alopeyk: (code: string) => `https://tracking.alopeyk.com/?id=${encodeURIComponent(code)}`,
   snappbox: (code: string) => `https://tracking.snappbox.com/?id=${encodeURIComponent(code)}`,
   tipax: (code: string) => `https://tracking.tipax.ir/?id=${encodeURIComponent(code)}`,
-  shypit: (code: string) => `https://tracking.shypit.com/?id=${encodeURIComponent(code)}`,
-  pakjson: (code: string) => `https://tracking.pakjson.com/?id=${encodeURIComponent(code)}`,
 } as const;
 
 export type ShippingCarrier = keyof typeof SHIPPING_TRACKING_URLS;
