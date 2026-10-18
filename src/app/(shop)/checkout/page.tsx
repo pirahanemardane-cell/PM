@@ -116,6 +116,7 @@ export default function CheckoutPage() {
     lastName: "",
     phone: "",
     address: "",
+    province: "",
     city: "",
     postal: "",
     note: "",
@@ -135,11 +136,14 @@ export default function CheckoutPage() {
     }[]
   >([]);
 
-  // بارگذاری روش‌های فعال از دیتابیس
+  // بارگذاری روش‌های فعال از دیتابیس (با فیلتر منطقه)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await listActiveShippingMethodsAction();
+      const res = await listActiveShippingMethodsAction({
+        province: form.province || undefined,
+        city: form.city || undefined,
+      });
       if (cancelled) return;
       if (res.ok && res.items.length) {
         setShipMethods(res.items);
@@ -162,7 +166,7 @@ export default function CheckoutPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [form.province, form.city]);
 
   // استعلام هزینه ارسال
   useEffect(() => {
@@ -199,7 +203,7 @@ export default function CheckoutPage() {
         methodId: shipMethod,
         weightGrams,
         destCity: form.city || undefined,
-        destProvince: undefined,
+        destProvince: form.province || undefined,
         parcelValueToman: afterDiscount,
       });
 
@@ -231,7 +235,7 @@ export default function CheckoutPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shipMethod, form.city, shipMethods]);
+  }, [shipMethod, form.city, form.province, shipMethods]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   /** default = آدرس ذخیره‌شده/پیش‌فرض | new = فرم آدرس جدید */
   const [addressMode, setAddressMode] = useState<"default" | "new">("new");
@@ -375,6 +379,7 @@ export default function CheckoutPage() {
       lastName: lastName || f.lastName,
       phone: a.phone || f.phone,
       address: a.address_line || f.address,
+      province: a.province || f.province,
       city: a.city || f.city,
       postal: a.postal_code || f.postal,
     }));
@@ -754,6 +759,7 @@ export default function CheckoutPage() {
                       ["lastName", "نام خانوادگی", "text"],
                       ["phone", "شماره تماس", "tel"],
                       ["postal", "کد پستی", "text"],
+                      ["province", "استان", "text"],
                       ["city", "شهر", "text"],
                     ] as const
                   ).map(([key, label, type]) => (
