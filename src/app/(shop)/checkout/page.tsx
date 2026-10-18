@@ -849,8 +849,18 @@ export default function CheckoutPage() {
                         </span>
                       </span>
                       <span className="shrink-0">
-                        {opt.fee === 0 ? (
-                          "رایگان"
+                        {shipMethod === opt.id ? (
+                          shipLoading ? (
+                            "…"
+                          ) : shipFee === 0 ? (
+                            shipQuoteNote && shipQuoteNote.includes("ارسال رایگان")
+                              ? "رایگان"
+                              : "توافقی"
+                          ) : (
+                            <Price amount={shipFee} size="sm" />
+                          )
+                        ) : opt.fee === 0 ? (
+                          "توافقی"
                         ) : (
                           <Price amount={opt.fee} size="sm" />
                         )}
@@ -1138,7 +1148,11 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">ارسال</span>
                 {shipFee === 0 ? (
-                  <span>رایگان</span>
+                  <span>
+                    {shipQuoteNote && shipQuoteNote.includes("ارسال رایگان")
+                      ? "رایگان"
+                      : "توافقی"}
+                  </span>
                 ) : (
                   <Price amount={shipFee} size="sm" />
                 )}
