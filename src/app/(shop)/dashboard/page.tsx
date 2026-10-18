@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { normalizeIranMobile } from "@/lib/numbers";
 import { useNotifications } from "@/lib/notifications/use-notifications";
 import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { iranPostTrackingUrl } from "@/lib/iran-provinces";
 import { createTestNotificationAction } from "@/app/(shop)/actions/notifications";
 import {
   getCartAction,
@@ -604,6 +605,15 @@ useEffect(() => {
                           : o.status === "delivered"
                             ? " · تحویل‌شده"
                             : ""}
+                        {" · "}
+                        <a
+                          href={iranPostTrackingUrl(o.tracking_number)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline"
+                        >
+                          پیگیری در پست
+                        </a>
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -4,11 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import {
   listShippingZonesAdminAction,
   saveMethodZonesAction,
+  createShippingZoneAction,
+  addZoneProvinceAction,
+  removeZoneLocationAction,
+  deleteShippingZoneAction,
 } from "./zones-actions";
+import { IRAN_PROVINCES } from "@/lib/iran-provinces";
 
 type Zone = { id: string; name: string; description: string | null; is_active: boolean };
 type Method = { id: string; title: string; provider_code: string | null; is_active: boolean };
-type Loc = { zone_id: string; province: string; city: string | null };
+type Loc = { id: string; zone_id: string; province: string; city: string | null };
 type Link = { method_id: string; zone_id: string };
 
 export function ShippingZonesForm() {
@@ -20,6 +25,8 @@ export function ShippingZonesForm() {
   const [links, setLinks] = useState<Link[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [newZoneName, setNewZoneName] = useState("");
+  const [addProvince, setAddProvince] = useState<Record<string, string>>({});
 
   async function reload() {
     setLoading(true);
@@ -39,11 +46,11 @@ export function ShippingZonesForm() {
     void reload();
   }, []);
 
-  const provincesByZone = useMemo(() => {
-    const m = new Map<string, string[]>();
+  const locsByZone = useMemo(() => {
+    const m = new Map<string, Loc[]>();
     for (const loc of locations) {
       const arr = m.get(loc.zone_id) ?? [];
-      arr.push(loc.city ? `${loc.province} / ${loc.city}` : loc.province);
+      arr.push(loc);
       m.set(loc.zone_id, arr);
     }
     return m;
@@ -70,6 +77,56 @@ export function ShippingZonesForm() {
     await reload();
   }
 
+  async function onCreateZone(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    setMsg(null);
+    const res = await createShippingZoneAction({ name: newZoneName });
+    if (!res.ok) {
+      setErr("ایجاد منطقه ناموفق");
+      return;
+    }
+    setNewZoneName("");
+    setMsg("منطقه جدید ساخته شد");
+    await reload();
+  }
+
+  async function onAddProvince(zoneId: string) {
+    const p = (addProvince[zoneId] || "").trim();
+    if (!p) return;
+    setErr(null);
+    const res = await addZoneProvinceAction(zoneId, p);
+    if (!res.ok) {
+      setErr("افزودن استان ناموفق");
+      return;
+    }
+    setAddProvince((s) => ({ ...s, [zoneId]: "" }));
+    setMsg("استان اضافه شد");
+    await reload();
+  }
+
+  async function onRemoveLoc(id: string) {
+    if (!confirm("این استان از منطقه حذف شود؟")) return;
+    const res = await removeZoneLocationAction(id);
+    if (!res.ok) {
+      setErr("حذف ناموفق");
+      return;
+    }
+    setMsg("استان حذف شد");
+    await reload();
+  }
+
+  async function onDeleteZone(id: string) {
+    if (!confirm("کل این منطقه حذف شود؟ (استان‌ها و اتصال روش‌ها هم پاک می‌شوند)")) return;
+    const res = await deleteShippingZoneAction(id);
+    if (!res.ok) {
+      setErr("حذف منطقه ناموفق");
+      return;
+    }
+    setMsg("منطقه حذف شد");
+    await reload();
+  }
+
   if (loading) {
     return (
       <div className="border-border text-muted-foreground rounded-xl border p-4 text-sm">
@@ -79,30 +136,95 @@ export function ShippingZonesForm() {
   }
 
   return (
-    <div className="border-border space-y-4 rounded-xl border p-4" dir="rtl">
+    <div className="border-border space-y-6 rounded-xl border p-4" dir="rtl">
       <div>
         <h2 className="font-semibold">مناطق ارسال (Zones)</h2>
         <p className="text-muted-foreground mt-1 text-xs">
-          اگر برای یک روش هیچ منطقه‌ای تیک نخورد = در <strong>همه جا</strong> فعال است.
-          با تیک زدن منطقه، فقط در همان استان‌ها نمایش داده می‌شود.
+          اگر برای یک روش هیچ منطقه‌ای تیک نخورد = در همه جا فعال است.
         </p>
       </div>
 
-      <div className="space-y-2 text-xs">
-        <p className="font-medium">مناطق تعریف‌شده:</p>
-        <ul className="text-muted-foreground list-inside list-disc space-y-1">
-          {zones.map((z) => (
-            <li key={z.id}>
-              {z.name}
-              {provincesByZone.get(z.id)?.length
-                ? ` — ${provincesByZone.get(z.id)!.join("، ")}`
-                : " — بدون استان (بعداً اضافه کنید)"}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <form onSubmit={onCreateZone} className="flex flex-wrap items-end gap-2">
+        <label className="block space-y-1 text-sm">
+          <span>منطقه جدید</span>
+          <input
+            value={newZoneName}
+            onChange={(e) => setNewZoneName(e.target.value)}
+            className="border-input bg-background h-10 rounded-xl border px-3"
+            placeholder="مثلاً غرب کشور"
+          />
+        </label>
+        <button
+          type="submit"
+          className="bg-primary text-primary-foreground h-10 rounded-xl px-4 text-sm"
+        >
+          افزودن منطقه
+        </button>
+      </form>
 
       <div className="space-y-4">
+        {zones.map((z) => {
+          const locs = locsByZone.get(z.id) ?? [];
+          return (
+            <div key={z.id} className="border-border rounded-lg border p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium">{z.name}</span>
+                <button
+                  type="button"
+                  onClick={() => void onDeleteZone(z.id)}
+                  className="text-destructive text-xs underline"
+                >
+                  حذف منطقه
+                </button>
+              </div>
+              <ul className="text-muted-foreground mb-2 space-y-1 text-xs">
+                {locs.length === 0 ? (
+                  <li>هنوز استانی ندارد</li>
+                ) : (
+                  locs.map((loc) => (
+                    <li key={loc.id} className="flex items-center gap-2">
+                      <span>{loc.province}</span>
+                      <button
+                        type="button"
+                        onClick={() => void onRemoveLoc(loc.id)}
+                        className="text-destructive text-[10px]"
+                      >
+                        حذف
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={addProvince[z.id] || ""}
+                  onChange={(e) =>
+                    setAddProvince((s) => ({ ...s, [z.id]: e.target.value }))
+                  }
+                  className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
+                >
+                  <option value="">افزودن استان…</option>
+                  {IRAN_PROVINCES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => void onAddProvince(z.id)}
+                  className="border-border h-9 rounded-lg border px-3 text-xs"
+                >
+                  افزودن
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="space-y-4 border-t pt-4">
+        <p className="text-sm font-medium">اتصال روش ارسال به منطقه</p>
         {methods.map((m) => {
           const selected = new Set(zoneIdsForMethod(m.id));
           return (

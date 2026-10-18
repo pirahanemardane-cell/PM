@@ -23,6 +23,7 @@ import {
   releaseCheckoutReservationAction,
 } from "@/app/(shop)/actions/stock-reservations";
 import { useShopStore } from "@/lib/shop-store";
+import { IRAN_PROVINCES } from "@/lib/iran-provinces";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
 import { useRtEvent } from "@/hooks/use-rt-event";
@@ -762,7 +763,6 @@ export default function CheckoutPage() {
                       ["lastName", "نام خانوادگی", "text"],
                       ["phone", "شماره تماس", "tel"],
                       ["postal", "کد پستی", "text"],
-                      ["province", "استان", "text"],
                       ["city", "شهر", "text"],
                     ] as const
                   ).map(([key, label, type]) => (
@@ -779,6 +779,24 @@ export default function CheckoutPage() {
                       />
                     </label>
                   ))}
+                  <label className="block space-y-1 text-sm sm:col-span-2">
+                    <span>استان</span>
+                    <select
+                      value={form.province}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, province: e.target.value }))
+                      }
+                      className="border-input bg-background h-10 w-full rounded-xl border px-3"
+                      dir="rtl"
+                    >
+                      <option value="">انتخاب استان…</option>
+                      {IRAN_PROVINCES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
                 <label className="block space-y-1 text-sm">
                   <span>آدرس کامل</span>

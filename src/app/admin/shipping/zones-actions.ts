@@ -37,7 +37,6 @@ export async function listShippingZonesAdminAction() {
   };
 }
 
-/** برای یک روش: کدام مناطق فعال باشند. خالی = همه جا */
 export async function saveMethodZonesAction(methodId: string, zoneIds: string[]) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -58,6 +57,80 @@ export async function saveMethodZonesAction(methodId: string, zoneIds: string[])
     if (insErr) return { ok: false as const, error: "db" as const };
   }
 
+  revalidatePath("/admin/shipping");
+  revalidatePath("/checkout");
+  return { ok: true as const };
+}
+
+export async function createShippingZoneAction(input: {
+  name: string;
+  description?: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const name = (input.name || "").trim();
+  if (!name) return { ok: false as const, error: "missing" as const };
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("shipping_zones").insert({
+    name,
+    description: (input.description || "").trim() || null,
+    is_active: true,
+  });
+  if (error) {
+    console.error("[createShippingZone]", error);
+    return { ok: false as const, error: "db" as const };
+  }
+  revalidatePath("/admin/shipping");
+  return { ok: true as const };
+}
+
+export async function addZoneProvinceAction(zoneId: string, province: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const p = (province || "").trim();
+  if (!zoneId || !p) return { ok: false as const, error: "missing" as const };
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("shipping_zone_locations").insert({
+    zone_id: zoneId,
+    province: p,
+    city: null,
+  });
+  if (error) {
+    // unique conflict = already exists
+    if (String(error.code) === "23505") return { ok: true as const };
+    console.error("[addZoneProvince]", error);
+    return { ok: false as const, error: "db" as const };
+  }
+  revalidatePath("/admin/shipping");
+  return { ok: true as const };
+}
+
+export async function removeZoneLocationAction(locationId: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!locationId) return { ok: false as const, error: "missing" as const };
+
+  const supabase = createServiceClient();
+  const { error } = await supabase
+    .from("shipping_zone_locations")
+    .delete()
+    .eq("id", locationId);
+  if (error) return { ok: false as const, error: "db" as const };
+  revalidatePath("/admin/shipping");
+  return { ok: true as const };
+}
+
+export async function deleteShippingZoneAction(zoneId: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  if (!zoneId) return { ok: false as const, error: "missing" as const };
+
+  const supabase = createServiceClient();
+  // locations + method links cascade via FK
+  const { error } = await supabase.from("shipping_zones").delete().eq("id", zoneId);
+  if (error) return { ok: false as const, error: "db" as const };
   revalidatePath("/admin/shipping");
   revalidatePath("/checkout");
   return { ok: true as const };

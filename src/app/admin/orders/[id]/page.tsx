@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { formatJalaliDateTime } from "@/lib/dates/jalali";
+import { iranPostTrackingUrl } from "@/lib/iran-provinces";
 
 const STATUSES = [
   "pending",
@@ -185,6 +186,15 @@ export default function AdminOrderDetailPage() {
                 <span className="font-mono font-bold" dir="ltr">
                   {order.tracking_number}
                 </span>
+                {" · "}
+                <a
+                  href={iranPostTrackingUrl(order.tracking_number)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  پیگیری در پست
+                </a>
                 {order.shipped_at ? (
                   <span className="text-muted-foreground">
                     {" "}
