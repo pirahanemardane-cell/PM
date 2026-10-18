@@ -52,10 +52,7 @@ const FALLBACK_shipOptions: {
   desc: string;
   fee: number;
 }[] = [
-  { id: "post", title: "پست پیشتاز", desc: "۲ تا ۴ روز کاری", fee: 45000 },
-  { id: "tipax", title: "تیپاکس", desc: "۱ تا ۳ روز کاری", fee: 65000 },
-  { id: "peyk", title: "پیک موتوری", desc: "فقط تهران — توافقی", fee: 0 },
-  { id: "pickup", title: "تحویل حضوری", desc: "از فروشگاه — رایگان", fee: 0 },
+  { id: "post", title: "پست پیشتاز", desc: "۲ تا ۴ روز کاری — نرخ ثابت از پنل ادمین", fee: 45000 },
 ];
 
 function mapCheckoutError(code: string | undefined): string {
