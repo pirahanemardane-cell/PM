@@ -286,6 +286,14 @@ export default function AdminOrdersPage() {
                       >
                         {o.id.slice(0, 8)}…
                       </Link>
+                      <div className="mt-1">
+                        <Link
+                          href={`/admin/orders/${o.id}/label`}
+                          className="text-muted-foreground text-[10px] hover:underline"
+                        >
+                          چاپ برچسب
+                        </Link>
+                      </div>
                     </td>
                     <td className="p-3">
                       <div>{o.shipping_name ?? "—"}</div>
