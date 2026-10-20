@@ -38,7 +38,26 @@ export async function adminUpdateOrderStatusAction(
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
     const repo = new OrderRepository();
+    let fromStatus: string | null = null;
+    try {
+      const prevOrder = await repo.getByIdAdmin(orderId);
+      fromStatus = (prevOrder as { status?: string } | null)?.status ?? null;
+    } catch {
+      /* ignore */
+    }
     await repo.updateStatus(orderId, status);
+    try {
+      await gate.supabase.from("order_status_history").insert({
+        order_id: orderId,
+        from_status: fromStatus,
+        to_status: status,
+        note: "تغییر توسط ادمین",
+        actor_type: "admin",
+        actor_id: gate.userId,
+      });
+    } catch (he) {
+      console.error("[adminUpdateOrderStatus history]", he);
+    }
     void adminWriteLogAction({
       action: "order_status_change",
       entity: "order",
