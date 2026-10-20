@@ -77,6 +77,12 @@ export default function AdminDashboardPage() {
           href: "/admin/discounts",
         },
         {
+          label: "گزارش فروش",
+          value: "—",
+          sub: "۷ / ۳۰ / ۹۰ روز",
+          href: "/admin/reports",
+        },
+        {
           label: "لیست انتظار موجودی",
           value: stats.stockAlertsPending ?? 0,
           sub: "در انتظار اطلاع",

@@ -96,3 +96,6 @@ npm run dev
 
 ## مستندات فاز ۱۶
 - [لانچ و SEO](docs/16-LAUNCH-SEO-STATUS.md)
+
+## مستندات فاز ۱۸
+- [گزارش فروش](docs/18-SALES-REPORTS-STATUS.md)
