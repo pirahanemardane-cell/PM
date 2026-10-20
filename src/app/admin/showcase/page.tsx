@@ -5,7 +5,7 @@ import {
   LoadingBlock,
   EmptyBlock,
   ErrorBlock,
-} from "@/components/ui/ui-state-blocks";
+} from "@/components/ui/ui-state-blocks";\nimport { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export const metadata = {
   title: "UI Showcase | Admin",
@@ -15,12 +15,22 @@ export const metadata = {
 export default function AdminShowcasePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-10 p-4 md:p-6" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold">Showcase سیستم طراحی</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          فقط ادمین — مرجع بصری توکن‌ها و stateهای استاندارد.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Showcase سیستم طراحی</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            فقط ادمین — مرجع بصری توکن‌ها و stateهای استاندارد.
+          </p>
+        </div>
+        <ThemeToggle />
       </div>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">تم</h2>
+        <p className="text-muted-foreground text-xs">
+          روشن/تاریک با next-themes — کلید pm-theme در localStorage.
+        </p>
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">رنگ و دکمه</h2>

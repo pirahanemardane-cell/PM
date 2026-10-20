@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { requestLoginOtp, verifyLoginOtp } from "@/lib/otp/service";
-import { checkRateLimit } from "@/lib/security/rate-limit";
+import { checkRateLimit } from "@/lib/security/rate-limit";\nimport { logger } from "@/lib/logger";
 import {
   getLoginLockStatus,
   recordLoginFailure,
@@ -58,6 +58,7 @@ export async function signInAction(loginId: string, password: string) {
   const ip = await getClientIp();
   const rl = await checkRateLimit({ identifier: ip, type: "auth" });
   if (!rl.success) {
+    logger.warn("[auth] rate limited", { ip });
     return { ok: false as const, error: "تعداد تلاش بیش از حد مجاز. کمی بعد دوباره تلاش کنید." };
   }
   const email = await resolveAuthEmail(loginId);
@@ -88,12 +89,14 @@ export async function signInAction(loginId: string, password: string) {
         error: "ورود موقتاً قفل شد. حدود " + min + " دقیقه دیگر تلاش کنید.",
       };
     }
+    logger.warn("[auth] bad credentials");
     return {
       ok: false as const,
       error: "ایمیل/موبایل یا رمز عبور نادرست است",
     };
   }
   await clearLoginFailures(lockKey);
+  logger.info("[auth] sign-in ok");
   return { ok: true as const };
 }
 

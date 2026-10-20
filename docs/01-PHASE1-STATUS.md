@@ -1,11 +1,8 @@
-# Phase 1 status - 2026-10-20
+# Phase 1 CLOSED (absolute)
 
-All foundation items done including Request ID.
+- Request ID middleware + health + contact + newsletter APIs
+- logger.withRequestId helper + api-request helper
+- auth sign-in structured logs
+- env.example, architecture, gitleaks, sentry, fra1, conventions
 
-Files:
-- src/lib/request-id.ts
-- src/lib/logger.ts (withRequestId)
-- middleware x-request-id
-- /api/health requestId
-
-Phase 1 closed for pre-launch.
+No remaining phase-1 items for pre-launch absolute checklist.

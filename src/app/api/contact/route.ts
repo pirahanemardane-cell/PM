@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { beginApiRequest, apiJson } from "@/lib/api-request";
 
 export async function POST(req: Request) {
+  const { requestId, log } = beginApiRequest(req);
   try {
-    // Rate limit بر اساس IP
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
@@ -16,14 +16,14 @@ export async function POST(req: Request) {
     });
 
     if (!success) {
-      return NextResponse.json(
-        { error: "too_many_requests", retryAfterSec },
+      log.warn("[contact] rate limited", { ip });
+      return apiJson(
+        { error: "too_many_requests", retryAfterSec, requestId },
         {
           status: 429,
-          headers: retryAfterSec
-            ? { "Retry-After": String(retryAfterSec) }
-            : undefined,
-        }
+          requestId,
+          headers: retryAfterSec ? { "Retry-After": String(retryAfterSec) } : {},
+        },
       );
     }
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const message = String(body.message || "").trim().slice(0, 4000);
 
     if (!name || !email || !message) {
-      return NextResponse.json({ error: "invalid" }, { status: 400 });
+      return apiJson({ error: "invalid", requestId }, { status: 400, requestId });
     }
 
     const supabase = createServiceClient();
@@ -47,13 +47,16 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      console.error("contact_messages insert", error);
-      return NextResponse.json({ error: "db" }, { status: 500 });
+      log.error("[contact] db insert", { message: error.message });
+      return apiJson({ error: "db", requestId }, { status: 500, requestId });
     }
 
-    return NextResponse.json({ ok: true });
+    log.info("[contact] ok");
+    return apiJson({ ok: true, requestId }, { requestId });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "server" }, { status: 500 });
+    log.error("[contact] server", {
+      err: e instanceof Error ? e.message : "unknown",
+    });
+    return apiJson({ error: "server", requestId }, { status: 500, requestId });
   }
 }

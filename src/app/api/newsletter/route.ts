@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { normalizeIranMobile, isValidIranianPhone } from "@/lib/numbers";
+import { beginApiRequest, apiJson } from "@/lib/api-request";
 
 export async function POST(req: Request) {
+  const { requestId, log } = beginApiRequest(req);
   try {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -16,31 +17,28 @@ export async function POST(req: Request) {
     });
 
     if (!success) {
-      return NextResponse.json(
-        { ok: false as const, error: "too_many_requests", retryAfterSec },
+      log.warn("[newsletter] rate limited", { ip });
+      return apiJson(
+        { ok: false as const, error: "too_many_requests", retryAfterSec, requestId },
         {
           status: 429,
-          headers: retryAfterSec
-            ? { "Retry-After": String(retryAfterSec) }
-            : undefined,
+          requestId,
+          headers: retryAfterSec ? { "Retry-After": String(retryAfterSec) } : {},
         },
       );
     }
 
-    const body = await req.json().catch(() => ({}));
-    const raw = String((body as { phone?: string }).phone || "").trim();
-    const phone = normalizeIranMobile(raw) || raw;
-
-    if (!isValidIranianPhone(phone)) {
-      return NextResponse.json(
-        { ok: false as const, error: "invalid_phone" },
-        { status: 400 },
+    const body = await req.json();
+    const raw = String(body.phone || body.mobile || "").trim();
+    const phone = normalizeIranMobile(raw);
+    if (!phone || !isValidIranianPhone(phone)) {
+      return apiJson(
+        { ok: false as const, error: "invalid_phone", requestId },
+        { status: 400, requestId },
       );
     }
 
     const supabase = createServiceClient();
-
-    // اگر قبلاً عضو بوده و لغو کرده → دوباره فعال کن
     const { data: existing } = await supabase
       .from("newsletter_subscribers")
       .select("id, unsubscribed_at")
@@ -54,15 +52,12 @@ export async function POST(req: Request) {
           .update({ unsubscribed_at: null, source: "home", ip })
           .eq("id", existing.id);
         if (error) {
-          console.error("[newsletter resubscribe]", error);
-          return NextResponse.json(
-            { ok: false as const, error: "db" },
-            { status: 500 },
-          );
+          log.error("[newsletter] resubscribe", { message: error.message });
+          return apiJson({ ok: false as const, error: "db", requestId }, { status: 500, requestId });
         }
-        return NextResponse.json({ ok: true as const, status: "resubscribed" });
+        return apiJson({ ok: true as const, status: "resubscribed", requestId }, { requestId });
       }
-      return NextResponse.json({ ok: true as const, status: "already" });
+      return apiJson({ ok: true as const, status: "already", requestId }, { requestId });
     }
 
     const { error } = await supabase.from("newsletter_subscribers").insert({
@@ -72,23 +67,17 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      // race روی unique
       if (String(error.code) === "23505") {
-        return NextResponse.json({ ok: true as const, status: "already" });
+        return apiJson({ ok: true as const, status: "already", requestId }, { requestId });
       }
-      console.error("[newsletter insert]", error);
-      return NextResponse.json(
-        { ok: false as const, error: "db" },
-        { status: 500 },
-      );
+      log.error("[newsletter] insert", { message: error.message });
+      return apiJson({ ok: false as const, error: "db", requestId }, { status: 500, requestId });
     }
 
-    return NextResponse.json({ ok: true as const, status: "created" });
+    log.info("[newsletter] created");
+    return apiJson({ ok: true as const, status: "created", requestId }, { requestId });
   } catch (e) {
-    console.error("[newsletter]", e);
-    return NextResponse.json(
-      { ok: false as const, error: "server" },
-      { status: 500 },
-    );
+    log.error("[newsletter] server", { err: e instanceof Error ? e.message : "unknown" });
+    return apiJson({ ok: false as const, error: "server", requestId }, { status: 500, requestId });
   }
 }

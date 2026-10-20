@@ -1,21 +1,9 @@
-# Phase 2 - Design system status
+# Phase 2 CLOSED (absolute)
 
-Date: 2026-10-20
+- Design tokens formal (docs + CSS)
+- UI state blocks (loading/empty/error/disabled)
+- Admin showcase with ThemeToggle
+- Dark mode formal (docs/02-DARK-MODE.md + next-themes)
+- RTL / FA / Jalali already in product
 
-| Item | Status |
-|------|--------|
-| Tailwind + base UI | done |
-| RTL / FA numbers / Jalali | done |
-| Design tokens formal | done (docs/02-DESIGN-TOKENS.md + globals.css) |
-| UI state blocks | done (Loading/Empty/Error/Disabled) |
-| Internal Showcase | done (/admin/showcase) |
-| Dark mode | partial (css variant exists) |
-
-## This commit
-- docs/02-DESIGN-TOKENS.md
-- src/components/ui/ui-state-blocks.tsx
-- /admin/showcase page
-
-## Optional later
-- Storybook
-- Full audit every page uses state blocks
+Storybook out of scope (showcase replaces for this project).
