@@ -1,9 +1,24 @@
-# فاز ۰ — اجرا در کد
+# فاز ۰ — وضعیت
 
-وضعیت: قوانین کسب‌وکار در `src/lib/business-rules.ts` متمرکز شد.
+تاریخ: ۲۰۲۶-۱۰-۲۰
 
-- مرجوعی: مهلت و وضعیت از business-rules
-- لغو مشتری: وضعیت مجاز از business-rules
-- درگاه پرداخت: خارج از این فاز (طبق درخواست)
+| مورد | وضعیت | سند / کد |
+|------|--------|----------|
+| قوانین مرجوعی | done | src/lib/business-rules.ts |
+| قوانین لغو سفارش | done | src/lib/business-rules.ts |
+| سیستم Notification | done (تعریف) | docs/00-NOTIFICATION-AND-ANALYTICS.md + کد اعلان |
+| نقش Admin ساده | done | profiles.role / is_admin() |
+| Permission ریزدانه | deferred | عمداً بعد از پیش‌انتشار |
+| نیازهای SEO | done (پیش‌انتشار) | docs/16-LAUNCH-SEO-STATUS.md |
+| نیازهای Analytics | done (تعریف) | docs/00-NOTIFICATION-AND-ANALYTICS.md |
+| Return/Refund Flow | done | فاز ۱۴ |
+| Admin Order Flow | done | پنل ادمین سفارش |
+| Definition of Done | done | docs/00-DEFINITION-OF-DONE.md |
+| Testing Strategy | done | docs/00-TESTING-STRATEGY.md |
+| Deployment Strategy | done | docs/00-DEPLOYMENT-STRATEGY.md |
 
-قدم بعدی فاز ۱: موارد ناقص زیرساخت (env example، convention، …)
+## این commit
+- سه سند formal فاز ۰ تکمیل شد
+
+## عمداً باز
+- Permission ریزدانه (فاز ۳/۴ پیشرفته)
