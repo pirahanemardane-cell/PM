@@ -1,5 +1,11 @@
 "use server";
 
+import {
+  RETURN_WINDOW_DAYS,
+  isReturnAllowedStatus,
+  isWithinReturnWindow,
+} from "@/lib/business-rules";
+
 import { createClient } from "@/lib/supabase/server";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 
@@ -57,7 +63,10 @@ export async function createReturnAction(input: {
     if (oErr) console.error("[createReturn order check]", oErr);
     if (!order) return { ok: false as const, error: "order_not_found" };
 
-    const allowed = new Set(["delivered", "shipped"]);
+    if (!isReturnAllowedStatus(String(order.status || ""))) {
+      return { ok: false as const, error: "order_not_eligible" };
+    }
+    const allowed = new Set(["delivered", "shipped"]); // kept for compat; primary check above
     if (!allowed.has(String(order.status))) {
       return { ok: false as const, error: "order_not_eligible" };
     }
@@ -72,7 +81,7 @@ export async function createReturnAction(input: {
     );
     if (!Number.isNaN(baseDate.getTime())) {
       const days = (Date.now() - baseDate.getTime()) / (1000 * 60 * 60 * 24);
-      if (days > 7) {
+      if (days > RETURN_WINDOW_DAYS) {
         return { ok: false as const, error: "return_window_expired" };
       }
     }

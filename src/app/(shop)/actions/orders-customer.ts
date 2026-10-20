@@ -1,5 +1,7 @@
 "use server";
 
+import { isCustomerCancellable } from "@/lib/business-rules";
+
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -30,8 +32,7 @@ export async function cancelMyOrderAction(orderId: string, reason?: string) {
 
     const st = String(order.status || "");
     // فقط pending / paid / processing — نه shipped/delivered/cancelled
-    const cancellable = new Set(["pending", "paid", "processing"]);
-    if (!cancellable.has(st)) {
+    if (!isCustomerCancellable(st)) {
       return { ok: false as const, error: "not_cancellable" };
     }
 
