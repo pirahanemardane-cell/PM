@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { requestLoginOtp, verifyLoginOtp } from "@/lib/otp/service";
-import { checkRateLimit } from "@/lib/security/rate-limit";\nimport { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/security/rate-limit";
+import { logger } from "@/lib/logger";
 import {
   getLoginLockStatus,
   recordLoginFailure,

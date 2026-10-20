@@ -5,7 +5,8 @@ import {
   LoadingBlock,
   EmptyBlock,
   ErrorBlock,
-} from "@/components/ui/ui-state-blocks";\nimport { ThemeToggle } from "@/components/theme/theme-toggle";
+} from "@/components/ui/ui-state-blocks";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export const metadata = {
   title: "UI Showcase | Admin",
