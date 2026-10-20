@@ -174,9 +174,10 @@ export function ProductInfiniteList({
 
   if (products.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">محصولی یافت نشد.</p>
-      </div>
+      <EmptyBlock
+        title="محصولی یافت نشد"
+        description="فیلترها را تغییر دهید یا بعداً سر بزنید."
+      />
     );
   }
 
