@@ -941,7 +941,7 @@ export async function validateDiscountAction(
   const { data, error } = await supabase
     .from("discounts")
     .select(
-      "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active",
+      "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active, max_discount_amount, product_ids, category_ids",
     )
     .ilike("code", raw)
     .maybeSingle();
@@ -983,6 +983,8 @@ export async function validateDiscountAction(
 
   if (discountAmount > subtotal) discountAmount = subtotal;
   if (discountAmount < 0) discountAmount = 0;
+  const cap = Number((data as { max_discount_amount?: number | null }).max_discount_amount ?? 0);
+  if (cap > 0 && discountAmount > cap) discountAmount = Math.floor(cap);
 
   return {
     ok: true,

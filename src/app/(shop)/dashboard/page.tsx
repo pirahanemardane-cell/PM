@@ -53,7 +53,13 @@ import {
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
 import { cancelMyOrderAction } from "@/app/(shop)/actions/orders-customer";
-import { changeMyPasswordAction, resendEmailVerificationAction } from "@/app/(shop)/actions/auth";
+import {
+  changeMyPasswordAction,
+  resendEmailVerificationAction,
+  listMySessionsAction,
+  revokeMySessionAction,
+  signOutOtherDevicesAction,
+} from "@/app/(shop)/actions/auth";
 
 const ProductCard = nextDynamic(
   () => import("@/components/product/product-card").then((m) => m.ProductCard),
@@ -130,6 +136,19 @@ export default function BuyerDashboardPage() {
   const [pwBusy, setPwBusy] = useState(false);
   const [pwMsg, setPwMsg] = useState<string | null>(null);
   const [logoutAllBusy, setLogoutAllBusy] = useState(false);
+  const [sessions, setSessions] = useState<
+    {
+      id: string;
+      session_label: string | null;
+      user_agent: string | null;
+      ip_address: string | null;
+      created_at: string;
+      last_seen_at: string;
+      revoked_at: string | null;
+    }[]
+  >([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionRevokeBusy, setSessionRevokeBusy] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
   const displayName = profileForm.phone?.trim() || profileForm.full_name?.trim() || "حساب من";
   const notif = useNotifications(authOk && tab === "notifications");
@@ -386,6 +405,23 @@ useEffect(() => {
       setProfileLoading(false);
     })();
   }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "profile") return;
+    let cancelled = false;
+    (async () => {
+      setSessionsLoading(true);
+      const res = await listMySessionsAction();
+      if (!cancelled) {
+        setSessions(res.ok ? (res.items as typeof sessions) : []);
+        setSessionsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
 
   useEffect(() => {
     if (tab !== "wishlist") return;
@@ -1001,7 +1037,56 @@ useEffect(() => {
                     }}
                   >
                     {logoutAllBusy ? "در حال خروج…" : "خروج از همه دستگاه‌ها"}
+                  
                   </button>
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium">نشست‌های اخیر</p>
+                    <p className="text-muted-foreground text-xs">
+                      دستگاه‌هایی که اخیراً وارد حساب شده‌اند. لغو فقط برچسب محلی را می‌بندد؛ برای قطع کامل از «خروج از همه دستگاه‌ها» استفاده کنید.
+                    </p>
+                    {sessionsLoading ? (
+                      <p className="text-muted-foreground text-xs">در حال بارگذاری…</p>
+                    ) : sessions.length === 0 ? (
+                      <p className="text-muted-foreground text-xs">نشست ثبت‌شده‌ای نیست.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {sessions.map((s) => (
+                          <li
+                            key={s.id}
+                            className="border-border flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs"
+                          >
+                            <div className="min-w-0 space-y-0.5">
+                              <p className="font-medium">{s.session_label || "دستگاه"}</p>
+                              <p className="text-muted-foreground truncate" title={s.user_agent || ""}>
+                                {s.ip_address ? `IP: ${s.ip_address}` : "IP نامشخص"}
+                                {s.created_at
+                                  ? ` — ${formatJalaliDateTime(s.created_at)}`
+                                  : ""}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={sessionRevokeBusy === s.id}
+                              className="border-border hover:bg-muted shrink-0 rounded-md border px-2 py-1 disabled:opacity-50"
+                              onClick={async () => {
+                                setSessionRevokeBusy(s.id);
+                                const res = await revokeMySessionAction(s.id);
+                                setSessionRevokeBusy(null);
+                                if (res.ok) {
+                                  setSessions((prev) => prev.filter((x) => x.id !== s.id));
+                                  toast.success("نشست لغو شد");
+                                } else {
+                                  toast.error("لغو نشست ناموفق بود");
+                                }
+                              }}
+                            >
+                              {sessionRevokeBusy === s.id ? "…" : "لغو"}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
 
                 <div className="border-destructive/30 mt-8 space-y-2 rounded-xl border p-4">
