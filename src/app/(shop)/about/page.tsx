@@ -11,7 +11,7 @@ export default function AboutPage() {
   return (
     <About3
       title="درباره پیراهن مردانه"
-      description=""
+      description="ما روی یک چیز تمرکز کرده‌ایم: پیراهن مردانه با فیت درست، دوخت تمیز و تجربه خرید شفاف. هدفمان این است که قبل از خرید سایز را با اطمینان انتخاب کنید و بعد از خرید پشتیبانی واقعی داشته باشید."
       breakout={{
         src: "/logo.png",
         alt: "پیراهن مردانه",
@@ -21,10 +21,10 @@ export default function AboutPage() {
         buttonText: "مشاهده محصولات",
         buttonUrl: "/products",
       }}
-      companiesTitle="دنیای تخصصی ما"
+      companiesTitle="تمرکز ما"
       companies={[]}
       achievementsTitle="آنچه برای شما می‌سازیم"
-      achievementsDescription="تمرکز روی پیراهن و اکسسوری."
+      achievementsDescription="فروشگاه تخصصی، نه همه‌چیزفروشی."
       achievements={[
         { label: "تمرکز", value: "پیراهن" },
         { label: "فیت", value: "دقیق" },
