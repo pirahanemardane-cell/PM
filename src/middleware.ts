@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { applySecurityHeaders } from "@/lib/security/headers";
+import { applySecurityHeaders } from "@/lib/security/headers";\nimport { REQUEST_ID_HEADER, resolveRequestId } from "@/lib/request-id";
 
 const PERSIAN_ROUTES: Record<string, string> = {
   "/ورود": "/login",
@@ -45,13 +45,18 @@ function decodeSeg(raw: string): string {
   return s;
 }
 
+function requestIdFrom(request: NextRequest): string {
+  return resolveRequestId(request.headers.get(REQUEST_ID_HEADER));
+}
+
 async function sessionRewrite(request: NextRequest, pathname: string) {
+  const rid = requestIdFrom(request);
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   const sessionRes = await updateSession(request);
   const rewrite = NextResponse.rewrite(url);
   sessionRes.cookies.getAll().forEach((c) => rewrite.cookies.set(c.name, c.value));
-  return applySecurityHeaders(rewrite);
+  return applySecurityHeaders(rewrite, rid);
 }
 
 async function supabaseExists(
@@ -110,7 +115,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return applySecurityHeaders(await updateSession(request));
+  return applySecurityHeaders(await updateSession(request), requestIdFrom(request));
 }
 
 export const config = {
