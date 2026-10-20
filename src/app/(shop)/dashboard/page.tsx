@@ -52,7 +52,7 @@ import {
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
 import { cancelMyOrderAction } from "@/app/(shop)/actions/orders-customer";
-import { changeMyPasswordAction } from "@/app/(shop)/actions/auth";
+import { changeMyPasswordAction, resendEmailVerificationAction } from "@/app/(shop)/actions/auth";
 
 const ProductCard = nextDynamic(
   () => import("@/components/product/product-card").then((m) => m.ProductCard),
@@ -820,6 +820,27 @@ useEffect(() => {
                       }}
                     >
                       {emailSaving ? "…" : "ذخیره ایمیل"}
+                    </button>
+                    <button
+                      type="button"
+                      className="border-border hover:bg-muted h-11 shrink-0 rounded-xl border px-3 text-xs"
+                      onClick={async () => {
+                        setProfileMsg(null);
+                        const res = await resendEmailVerificationAction();
+                        if (res.ok) {
+                          setProfileMsg(
+                            res.already
+                              ? "ایمیل از قبل تأیید شده است."
+                              : "ایمیل تأیید ارسال شد (صندوق ورودی را چک کنید).",
+                          );
+                        } else if (res.error === "login_required") {
+                          setProfileMsg("ابتدا وارد شوید.");
+                        } else {
+                          setProfileMsg(res.error === "server" ? "ارسال ناموفق بود." : String(res.error || "خطا"));
+                        }
+                      }}
+                    >
+                      ارسال مجدد تأیید
                     </button>
                   </div>
                 </div>

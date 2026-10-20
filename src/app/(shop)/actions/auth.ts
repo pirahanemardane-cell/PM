@@ -5,6 +5,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { requestLoginOtp, verifyLoginOtp } from "@/lib/otp/service";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import {
+  getLoginLockStatus,
+  recordLoginFailure,
+  clearLoginFailures,
+} from "@/lib/security/login-lockout";
 import { headers } from "next/headers";
 import { onlyDigits, normalizeIranMobile } from "@/lib/numbers";
 
@@ -59,17 +64,36 @@ export async function signInAction(loginId: string, password: string) {
   if (!email) {
     return { ok: false as const, error: "شناسه ورود نامعتبر است" };
   }
+  const lockKey = email.toLowerCase() + "|" + ip;
+  const lock = await getLoginLockStatus(lockKey);
+  if (lock.locked) {
+    const sec = lock.retryAfterSec ?? 900;
+    const min = Math.max(1, Math.ceil(sec / 60));
+    return {
+      ok: false as const,
+      error: "به دلیل تلاش‌های ناموفق، ورود تا حدود " + min + " دقیقه قفل است.",
+    };
+  }
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
   if (error) {
+    const fail = await recordLoginFailure(lockKey);
+    if (fail.locked) {
+      const min = Math.max(1, Math.ceil((fail.retryAfterSec ?? 900) / 60));
+      return {
+        ok: false as const,
+        error: "ورود موقتاً قفل شد. حدود " + min + " دقیقه دیگر تلاش کنید.",
+      };
+    }
     return {
       ok: false as const,
       error: "ایمیل/موبایل یا رمز عبور نادرست است",
     };
   }
+  await clearLoginFailures(lockKey);
   return { ok: true as const };
 }
 
@@ -254,4 +278,31 @@ export async function changeMyPasswordAction(
     return { ok: false as const, error: "server" as const };
   }
   return { ok: true as const };
+}
+
+export async function resendEmailVerificationAction() {
+  const ip = await getClientIp();
+  const rl = await checkRateLimit({ identifier: ip + ":verify", type: "auth" });
+  if (!rl.success) {
+    return { ok: false as const, error: "تعداد درخواست بیش از حد. کمی بعد تلاش کنید." };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) {
+    return { ok: false as const, error: "login_required" as const };
+  }
+  if (user.email_confirmed_at) {
+    return { ok: true as const, already: true as const };
+  }
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: user.email,
+  });
+  if (error) {
+    console.error("[resendEmailVerification]", error);
+    return { ok: false as const, error: "server" as const };
+  }
+  return { ok: true as const, already: false as const };
 }

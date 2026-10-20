@@ -1,26 +1,25 @@
-# فاز ۴ — احراز هویت و مجوزدهی (وضعیت)
+# Phase 4 - Auth status
 
-نسخه: ۱.۰ — ۲۰۲۶-۱۰-۰۷  
-وضعیت: بسته برای این مرحله (اسکلت امن کافی برای پیش‌انتشار)
+Updated: 2026-10-20
 
-## انجام‌شده
-- ورود با Supabase Auth (ایمیل/جلسه)
-- نقش admin در profiles + تابع is_admin()
-- RLS روی جداول حساس (orders, reviews, returns, profiles, …)
-- Service Role فقط سمت سرور
-- Rate limit روی contact (و آمادگی برای API)
+| Item | Status |
+|------|--------|
+| Supabase Auth login/session | done |
+| Profile + addresses | done |
+| Rate limit on login/signup | done (checkRateLimit auth) |
+| Temp lock after failed logins | done (5 fails / 15 min lock) |
+| Email verification resend | done (resendEmailVerificationAction + profile UI) |
+| OTP mobile skeleton | done (lib/otp + actions) |
+| Admin role + staff | done (admin users) |
+| Fine-grained permission table | deferred (role-based sufficient pre-launch) |
+| Automated security tests | partial (rate-limit unit tests) |
+| Active sessions device list | deferred (needs session store) |
 
-## انجام‌نشده (عمداً عقب‌افتاده)
-- OTP موبایل ایرانی
-- تأیید ایمیل formal کامل
-- سیستم Permission ریزدانه (جدول جدا)
-- تست‌های امنیتی اتوماتیک (IDOR, escalation, …)
-- مدیریت نشست‌های فعال کاربر
+## Lockout rules
+- Key: email|ip
+- 5 failures in 15 minutes window
+- Lock 15 minutes
+- Cleared on successful login
 
-## معیار پذیرش این مرحله
-- [x] کاربر عادی به داده دیگران دسترسی ندارد (RLS)
-- [x] ادمین با role=admin شناخته می‌شود
-- [x] کلید service role در کلاینت نیست
-
-## فاز بعدی مرتبط
-- OTP و امنیت پیشرفته → بعد از کاتالوگ و نزدیک لانچ
+## Phase 11
+Payment auth flows out of scope here.
