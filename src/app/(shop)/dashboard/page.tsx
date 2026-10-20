@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 import { CustomerDashboardShell } from "@/components/ui/dashboard-sidebar";
 import { toast } from "@/lib/toaster";
 import { createClient } from "@/lib/supabase/client";
@@ -1268,7 +1269,7 @@ useEffect(() => {
               {shopLoading ? (
                 <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
               ) : shopProducts.length === 0 ? (
-                <p className="text-muted-foreground text-sm">محصولی یافت نشد.</p>
+                <EmptyBlock title="محصولی یافت نشد" description="در این بخش موردی برای نمایش نیست." />
               ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {shopProducts.map((product) => (
@@ -1668,7 +1669,7 @@ useEffect(() => {
               <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
             ) : serverCart.length === 0 && cart.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                موردی در این بخش نیست.
+                <EmptyBlock title="موردی نیست" description="در این بخش چیزی برای نمایش وجود ندارد." />
               </p>
             ) : serverCart.length > 0 ? (
               <>
@@ -1861,7 +1862,7 @@ useEffect(() => {
               if (list.length === 0) {
                 return (
                   <p className="text-muted-foreground text-sm">
-                    موردی در این بخش نیست.
+                    <EmptyBlock title="موردی نیست" description="در این بخش چیزی برای نمایش وجود ندارد." />
                   </p>
                 );
               }

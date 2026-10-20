@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import {
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
   expandTypoVariants,
   normalizeSearchQuery,
 } from "@/lib/search/normalize";
@@ -150,7 +151,10 @@ export default async function SearchResultsPage({ searchParams }: Props) {
           </Link>
         </div>
         {products.length === 0 ? (
-          <p className="text-muted-foreground text-sm">محصولی یافت نشد.</p>
+          <EmptyBlock
+          title="محصولی یافت نشد"
+          description="عبارت دیگری را امتحان کنید یا به فروشگاه برگردید."
+        />
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {products.map((p) => {

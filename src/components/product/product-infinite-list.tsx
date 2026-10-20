@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 import {
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
   loadProductsPage,
   type LoadProductsResult,
 } from "@/app/(shop)/products/actions";

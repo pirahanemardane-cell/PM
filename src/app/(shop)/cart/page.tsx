@@ -21,6 +21,7 @@ import {
 } from "@/app/(shop)/actions/shop";
 import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 
 export const dynamic = "force-dynamic";
 
@@ -257,7 +258,10 @@ export default function CartPage() {
 
       {lines.length === 0 ? (
         <div className="border-border bg-card rounded-2xl border px-6 py-16 text-center">
-          <p className="text-muted-foreground mb-4 text-sm">سبد خرید خالی است.</p>
+          <EmptyBlock
+          title="سبد خرید خالی است"
+          description="هنوز محصولی به سبد اضافه نکرده‌اید."
+        />
           <Link
             href="/products"
             className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-xl px-5 text-sm font-medium"

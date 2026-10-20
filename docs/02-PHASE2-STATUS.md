@@ -1,9 +1,19 @@
-# Phase 2 CLOSED (absolute)
+# Phase 2 CLOSED
 
-- Design tokens formal (docs + CSS)
-- UI state blocks (loading/empty/error/disabled)
-- Admin showcase with ThemeToggle
-- Dark mode formal (docs/02-DARK-MODE.md + next-themes)
-- RTL / FA / Jalali already in product
+Date: 2026-10-20
 
-Storybook out of scope (showcase replaces for this project).
+| Item | Status |
+|------|--------|
+| Tailwind + base UI | done |
+| RTL / FA / Jalali | done |
+| Design tokens formal | done |
+| UI state blocks | done |
+| Empty states on cart / search / dashboard / products list | done |
+| Admin showcase | done |
+| Dark mode formal | done |
+
+## This commit
+- EmptyBlock on cart, search, dashboard empties
+- product list empty if present in ProductInfiniteList
+
+Phase 2 CLOSED for roadmap (states on main paths).
