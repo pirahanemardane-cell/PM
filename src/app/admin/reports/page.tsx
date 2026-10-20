@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { adminSalesReportAction } from "@/app/admin/actions/stats";
+import {
+  adminSalesReportAction,
+  adminExportOrdersCsvAction,
+} from "@/app/admin/actions/stats";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { toPersianDigits } from "@/lib/numbers";
 
@@ -34,6 +37,7 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +55,80 @@ export default function AdminReportsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function exportCsv() {
+    setExporting(true);
+    const res = await adminExportOrdersCsvAction(days);
+    setExporting(false);
+    if (!res.ok || !("rows" in res)) {
+      setError("خروجی CSV ناموفق بود");
+      return;
+    }
+    const rows = res.rows as {
+      id: string;
+      status: string;
+      payment_status: string;
+      total_amount: number;
+      discount_amount: number;
+      shipping_name: string;
+      shipping_phone: string;
+      shipping_city: string;
+      shipping_address: string;
+      tracking_number: string;
+      created_at: string;
+    }[];
+    const header = [
+      "id",
+      "status",
+      "payment_status",
+      "total_amount",
+      "discount_amount",
+      "shipping_name",
+      "shipping_phone",
+      "shipping_city",
+      "shipping_address",
+      "tracking_number",
+      "created_at",
+    ];
+    const escape = (v: string | number) => {
+      const s = String(v ?? "");
+      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const lines = [
+      header.join(","),
+      ...rows.map((r) =>
+        [
+          r.id,
+          r.status,
+          r.payment_status,
+          r.total_amount,
+          r.discount_amount,
+          r.shipping_name,
+          r.shipping_phone,
+          r.shipping_city,
+          r.shipping_address,
+          r.tracking_number,
+          r.created_at,
+        ]
+          .map(escape)
+          .join(","),
+      ),
+    ];
+    // BOM for Excel UTF-8
+    const blob = new Blob(["\ufeff" + lines.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pm-orders-${days}d.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
 
   return (
     <div className="space-y-6 p-6" dir="rtl">

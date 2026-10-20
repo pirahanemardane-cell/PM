@@ -148,3 +148,46 @@ export async function adminSalesReportAction(days = 30) {
     return { ok: false as const, error: "server" as const, report: null };
   }
 }
+
+/** داده خام برای ساخت CSV در کلاینت */
+export async function adminExportOrdersCsvAction(days = 30) {
+  const gate = await requireAdmin();
+  if (!gate.ok) {
+    return { ok: false as const, error: gate.error, rows: [] as const };
+  }
+
+  const d = Math.min(365, Math.max(1, Number(days) || 30));
+  const since = new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
+
+  try {
+    const { data, error } = await gate.supabase
+      .from("orders")
+      .select(
+        "id, status, payment_status, total_amount, discount_amount, shipping_name, shipping_phone, shipping_city, shipping_address, tracking_number, created_at",
+      )
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    if (error) throw error;
+
+    const rows = (data ?? []).map((o: Record<string, unknown>) => ({
+      id: String(o.id ?? ""),
+      status: String(o.status ?? ""),
+      payment_status: String(o.payment_status ?? ""),
+      total_amount: Number(o.total_amount) || 0,
+      discount_amount: Number(o.discount_amount) || 0,
+      shipping_name: String(o.shipping_name ?? ""),
+      shipping_phone: String(o.shipping_phone ?? ""),
+      shipping_city: String(o.shipping_city ?? ""),
+      shipping_address: String(o.shipping_address ?? "").replace(/\n/g, " "),
+      tracking_number: String(o.tracking_number ?? ""),
+      created_at: String(o.created_at ?? ""),
+    }));
+
+    return { ok: true as const, rows, days: d };
+  } catch (e) {
+    console.error("[adminExportOrdersCsv]", e);
+    return { ok: false as const, error: "server" as const, rows: [] as const };
+  }
+}

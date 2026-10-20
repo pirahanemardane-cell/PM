@@ -99,3 +99,6 @@ npm run dev
 
 ## مستندات فاز ۱۸
 - [گزارش فروش](docs/18-SALES-REPORTS-STATUS.md)
+
+## مستندات فاز ۱۹
+- [خروجی CSV](docs/19-EXPORT-OPS-STATUS.md)
