@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { applySecurityHeaders } from "@/lib/security/headers";\nimport { REQUEST_ID_HEADER, resolveRequestId } from "@/lib/request-id";
+import { applySecurityHeaders } from "@/lib/security/headers";
+import { REQUEST_ID_HEADER, resolveRequestId } from "@/lib/request-id";
 
 const PERSIAN_ROUTES: Record<string, string> = {
   "/ورود": "/login",
