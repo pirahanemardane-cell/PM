@@ -3,10 +3,10 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import {
-import { EmptyBlock } from "@/components/ui/ui-state-blocks";
   expandTypoVariants,
   normalizeSearchQuery,
 } from "@/lib/search/normalize";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 
 export const dynamic = "force-dynamic";
 

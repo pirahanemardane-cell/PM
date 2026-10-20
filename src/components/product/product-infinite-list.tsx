@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { ProductWithRelations } from "@/repositories/product.repository";
 import {
-import { EmptyBlock } from "@/components/ui/ui-state-blocks";
   loadProductsPage,
   type LoadProductsResult,
 } from "@/app/(shop)/products/actions";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 import { ProductCard } from "./product-card";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { useRtEvent } from "@/hooks/use-rt-event";
