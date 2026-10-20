@@ -17,33 +17,28 @@
 
 ## Commit Convention
 
-فرمت:
-cat > docs/00-DEFINITION-OF-DONE.md << 'EOF'
-# Definition of Done — پیراهن مردانه
+فرمت: `type(scope): summary کوتاه انگلیسی`
 
-یک کار وقتی «تمام» است که همه موارد مرتبط برقرار باشد.
+typeهای مجاز:
+- `feat` — قابلیت جدید
+- `fix` — رفع باگ
+- `docs` — فقط مستندات
+- `chore` — نگهداری / تنظیمات
+- `refactor` — بازنویسی بدون تغییر رفتار
+- `test` — تست
+- `perf` — بهبود عملکرد
+- `security` — امنیت
 
-## برای هر تغییر کد
-- [ ] با Coding Standards و Git Convention هم‌خوان است
-- [ ] Typecheck / build محلی یا CI بدون خطای جدید
-- [ ] مسیر کاربر مرتبط دستی تست شده
-- [ ] پیام خطای کاربر فارسی و قابل فهم است
-- [ ] داده حساس بدون RLS یا با دور زدن auth اضافه نشده
-- [ ] مستندات `docs/` در صورت تغییر رفتار به‌روز شده (در صورت نیاز)
-- [ ] روی `main` push/PR شده و دیپلوی Vercel موفق است
+مثال:
+- `feat(phase-3): audit_logs and shipment_events`
+- `fix(contact): repair JSX syntax`
+- `docs(phase-0): testing and deployment strategy`
 
-## برای قابلیت فروشگاهی
-- [ ] حالت خالی / بارگذاری / خطا در UI در نظر گرفته شده
-- [ ] RTL و اعداد/تاریخ فارسی درست است
-- [ ] موبایل قابل استفاده است
+## ممنوع
 
-## برای تغییر دیتابیس
-- [ ] فایل migration در `supabase/migrations` (یا دستور SQL مستند)
-- [ ] RLS/Policy در صورت جدول جدید
-- [ ] داده اولیه لازم (seed) در صورت نیاز
+- commit کردن `.env` واقعی و کلیدها
+- force-push روی `main` بدون هماهنگی
+- پیام commit مبهم مثل `update` یا `wip`
 
-## برای لانچ عمومی (آینده)
-- [ ] کاتالوگ و محتوای واقعی
-- [ ] پرداخت واقعی و تست‌شده
-- [ ] برداشتن noindex و ارسال sitemap
-- [ ] Health و مانیتورینگ سبز
+مکمل گردش کار: `docs/01-BRANCH-AND-WORKFLOW.md`
+Definition of Done جدا است: `docs/00-DEFINITION-OF-DONE.md`
