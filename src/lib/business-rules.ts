@@ -33,7 +33,7 @@ export const CUSTOMER_CANCEL_BLOCKED_STATUSES = [
 ] as const;
 
 /** نقش‌های سیستم */
-export const ROLES = ["guest", "customer", "admin"] as const;
+export const ROLES = ["guest", "customer", "staff", "admin"] as const;
 
 export function isReturnAllowedStatus(status: string): boolean {
   return (RETURN_ALLOWED_ORDER_STATUSES as readonly string[]).includes(status);
