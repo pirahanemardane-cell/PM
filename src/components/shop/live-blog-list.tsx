@@ -6,6 +6,7 @@ import { listPublishedPostsAction } from "@/app/(shop)/actions/blog-public";
 import { formatJalaliDate } from "@/lib/dates/jalali";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 
 type Post = {
   id: string;
@@ -37,7 +38,10 @@ export function LiveBlogList({ initialItems }: { initialItems: Post[] }) {
   });
 
   if (!items.length) {
-    return <p className="text-muted-foreground text-sm">هنوز مقاله‌ای منتشر نشده است.</p>;
+    return <EmptyBlock
+      title="هنوز مقاله‌ای نیست"
+      description="به‌زودی مطالب بلاگ اینجا منتشر می‌شود."
+    />;
   }
 
   return (

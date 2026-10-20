@@ -5,8 +5,15 @@ import {
   LoadingBlock,
   EmptyBlock,
   ErrorBlock,
+  DisabledOverlay,
 } from "@/components/ui/ui-state-blocks";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export const metadata = {
   title: "UI Showcase | Admin",
@@ -20,7 +27,7 @@ export default function AdminShowcasePage() {
         <div>
           <h1 className="text-2xl font-bold">Showcase سیستم طراحی</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            فقط ادمین — مرجع بصری توکن‌ها و stateهای استاندارد.
+            فقط ادمین — مرجع بصری توکن‌ها، Accordion و stateهای استاندارد.
           </p>
         </div>
         <ThemeToggle />
@@ -58,6 +65,24 @@ export default function AdminShowcasePage() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Accordion</h2>
+        <Accordion type="single" collapsible className="w-full max-w-md">
+          <AccordionItem value="a">
+            <AccordionTrigger>ارسال چقدر طول می‌کشد؟</AccordionTrigger>
+            <AccordionContent>
+              بسته به روش ارسال معمولاً ۲ تا ۵ روز کاری.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="b">
+            <AccordionTrigger>مرجوعی چگونه است؟</AccordionTrigger>
+            <AccordionContent>
+              تا ۷ روز پس از تحویل طبق قوانین مرجوعی.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-lg font-semibold">Stateها</h2>
         <LoadingBlock className="border-border rounded-xl border" />
         <EmptyBlock
@@ -65,6 +90,11 @@ export default function AdminShowcasePage() {
           description="هنوز موردی ثبت نشده است."
         />
         <ErrorBlock title="خطای نمونه" description="این فقط نمایش است." />
+        <DisabledOverlay disabled>
+          <div className="border-border rounded-xl border p-4 text-sm">
+            بلوک غیرفعال (DisabledOverlay)
+          </div>
+        </DisabledOverlay>
       </section>
 
       <section className="space-y-2">

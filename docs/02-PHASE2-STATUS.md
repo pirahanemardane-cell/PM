@@ -1,4 +1,4 @@
-# Phase 2 CLOSED
+# Phase 2 CLOSED (absolute)
 
 Date: 2026-10-20
 
@@ -7,13 +7,12 @@ Date: 2026-10-20
 | Tailwind + base UI | done |
 | RTL / FA / Jalali | done |
 | Design tokens formal | done |
-| UI state blocks | done |
-| Empty states on cart / search / dashboard / products list | done |
-| Admin showcase | done |
+| Accordion (component + showcase) | done |
+| UI state blocks loading/empty/error/disabled | done |
+| Empty: cart / search / products / dashboard | done |
+| Empty: brands / blog | done |
 | Dark mode formal | done |
+| Admin showcase | done |
+| Storybook separate | out of scope (showcase) |
 
-## This commit
-- EmptyBlock on cart, search, dashboard empties
-- product list empty if present in ProductInfiniteList
-
-Phase 2 CLOSED for roadmap (states on main paths).
+Phase 2 CLOSED. No remaining design-system items for roadmap.

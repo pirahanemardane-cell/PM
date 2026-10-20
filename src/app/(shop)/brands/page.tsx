@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandService } from "@/services/brand.service";
 import { CatalogRealtimeRefresh } from "@/components/shop/catalog-realtime-refresh";
+import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 
 export const revalidate = 60;
 
@@ -29,7 +30,10 @@ export default async function BrandsIndexPage() {
         </div>
 
         {brands.length === 0 ? (
-          <p className="text-muted-foreground text-center">برندی ثبت نشده است.</p>
+          <EmptyBlock
+            title="برندی ثبت نشده"
+            description="به‌زودی برندها اینجا نمایش داده می‌شوند."
+          />
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
             {brands.map((b) => (
