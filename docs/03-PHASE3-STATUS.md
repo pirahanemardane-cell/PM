@@ -1,25 +1,28 @@
-# Phase 3 status
+# Phase 3 CLOSED (absolute)
 
 Date: 2026-10-20
 
 | Item | Status |
 |------|--------|
-| Catalog / orders / inventory / reservations | done (prior migrations) |
+| Catalog / orders / inventory / reservations | done |
 | Reviews / contact / newsletter / returns | done |
-| Shipping methods + zones | done (035–037) |
-| order_status_history | done (043) |
-| RLS hardening | done (prior) |
-| Permission matrix (code) | done (permissions.ts) |
-| audit_logs | done (050) |
-| webhook_events | done (050) |
-| shipment_events | done (050) |
-| payment_attempts skeleton | done (050) — no gateway (phase 11 skipped) |
-| Soft-delete policy formal | done |
+| shipping methods + zones + free shipping | done |
+| order_status_history | done |
+| RLS | done |
+| Permission matrix (code) | done |
+| audit_logs + writeAuditLog helper | done |
+| webhook_events | done |
+| shipment_events | done |
+| payment_attempts skeleton | done (gateway = phase 11) |
+| Soft-delete policy + deleted_at columns | done (051) |
+| site_settings formal | done (051) |
+| search_queries foundation | done (051) |
 | Transaction strategy formal | done |
 
-## Apply migration
-Run in Supabase SQL Editor:
-`supabase/migrations/050_phase3_audit_webhook_shipment.sql`
+## Apply on Supabase
+1. Already applied: 050 tables (4 tables verified)
+2. Run: `supabase/migrations/051_phase3_settings_softdelete_search.sql`
 
 ## Out of scope
-- Iranian payment gateway implementation (phase 11)
+- Payment gateway (phase 11)
+- Full-text search engine (phase 8)
