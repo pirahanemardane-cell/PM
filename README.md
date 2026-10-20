@@ -102,3 +102,6 @@ npm run dev
 
 ## مستندات فاز ۱۹
 - [خروجی CSV](docs/19-EXPORT-OPS-STATUS.md)\n\n## مستندات فاز ۲۰\n- [سلامت سیستم](docs/20-HEALTH-STATUS.md)\n
+
+## مستندات فاز ۲۱
+- [منوی ادمین](docs/21-ADMIN-NAV-STATUS.md)

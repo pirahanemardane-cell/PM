@@ -27,6 +27,8 @@ import {
   Percent,
   Menu,
   X,
+  Activity,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +53,10 @@ const NAV = [
   { href: "/admin/shipping", label: "ارسال", icon: Package },
   { href: "/admin/returns", label: "مرجوعی", icon: Package },
   { href: "/admin/stock-alerts", label: "لیست انتظار موجودی", icon: Bell },
-  { href: "/admin/analytics", label: "گزارش‌ها", icon: BarChart3 },
+  { href: "/admin/reports", label: "گزارش فروش", icon: FileSpreadsheet },
+  { href: "/admin/analytics", label: "آمار", icon: BarChart3 },
+  { href: "/admin/health", label: "سلامت سیستم", icon: Activity },
+  { href: "/admin/seo", label: "سئو", icon: FileText },
   { href: "/admin/logs", label: "لاگ‌ها", icon: FileText },
   { href: "/admin/pages", label: "محتوای صفحات", icon: FileText },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },
