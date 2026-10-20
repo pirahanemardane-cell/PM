@@ -677,12 +677,34 @@ useEffect(() => {
                             return;
                           }
                           setReorderMsg(`${res.added} قلم به سبد اضافه شد.`);
-                          // برو تب سبد
                           window.location.href = "/dashboard?tab=cart";
                         }}
                       >
                         {reorderBusy === o.id ? "…" : "خرید مجدد"}
                       </button>
+                      {["pending", "paid", "processing"].includes(String(o.status)) ? (
+                        <button
+                          type="button"
+                          className="border-destructive text-destructive h-9 rounded-lg border px-3 text-xs font-medium"
+                          onClick={async () => {
+                            if (!confirm("سفارش لغو شود؟")) return;
+                            const res = await cancelMyOrderAction(o.id);
+                            if (!res.ok) {
+                              const map: Record<string, string> = {
+                                not_cancellable: "این سفارش دیگر قابل لغو نیست",
+                                not_found: "سفارش یافت نشد",
+                                login_required: "وارد شوید",
+                              };
+                              toast.error(map[res.error] || "لغو ناموفق");
+                              return;
+                            }
+                            toast.success("سفارش لغو شد");
+                            window.dispatchEvent(new Event("pm:orders-changed"));
+                          }}
+                        >
+                          لغو سفارش
+                        </button>
+                      ) : null}
                       <span className="text-muted-foreground text-[11px]" dir="ltr">
                         #{String(o.id).slice(0, 8)}
                       </span>
