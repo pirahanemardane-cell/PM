@@ -108,3 +108,6 @@ npm run dev
 
 ## مستندات فاز ۲۲
 - [تنظیمات فروشگاه](docs/22-STORE-SETTINGS-STATUS.md)
+
+## مستندات فاز ۲۳
+- [نمایش تماس پشتیبانی](docs/23-STORE-CONTACT-DISPLAY-STATUS.md)

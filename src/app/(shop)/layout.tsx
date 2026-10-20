@@ -3,6 +3,7 @@ import { BackToTop } from "@/components/layout/back-to-top";
 import { NotificationsProvider } from "@/lib/notifications/notifications-provider";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { FooterContact } from "@/components/layout/footer-contact";
 import { SiteLoaderProvider } from "@/components/layout/site-loader";
 import { AppBreadcrumb } from "@/components/ui/app-breadcrumb";
 
@@ -23,7 +24,12 @@ export default function ShopLayout({
               {children}
             </div>
           </div>
-          <SiteFooter />
+          <div className="border-border border-t">
+            <div className="mx-auto flex w-full max-w-6xl flex-wrap items-start justify-between gap-4 px-4 py-4">
+              <FooterContact />
+            </div>
+            <SiteFooter />
+          </div>
           <BackToTop />
         </div>
       </NotificationsProvider>
