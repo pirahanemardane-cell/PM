@@ -52,6 +52,7 @@ import {
   createReturnAction,
 } from "@/app/(shop)/actions/returns";
 import { cancelMyOrderAction } from "@/app/(shop)/actions/orders-customer";
+import { changeMyPasswordAction } from "@/app/(shop)/actions/auth";
 
 const ProductCard = nextDynamic(
   () => import("@/components/product/product-card").then((m) => m.ProductCard),
@@ -122,6 +123,12 @@ export default function BuyerDashboardPage() {
   const [emailSaving, setEmailSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const [logoutAllBusy, setLogoutAllBusy] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
   const displayName = profileForm.phone?.trim() || profileForm.full_name?.trim() || "حساب من";
   const notif = useNotifications(authOk && tab === "notifications");
@@ -857,6 +864,124 @@ useEffect(() => {
                 >
                   {profileSaving ? "در حال ذخیره…" : "ذخیره پروفایل"}
                 </button>
+                <div className="border-border mt-8 space-y-3 rounded-xl border p-4">
+                  <p className="text-sm font-medium">تغییر رمز عبور</p>
+                  <p className="text-muted-foreground text-xs">
+                    رمز جدید حداقل ۸ کاراکتر باشد.
+                  </p>
+                  <div>
+                    <label className="mb-1 block text-xs">رمز فعلی</label>
+                    <input
+                      type="password"
+                      className="border-input bg-background h-10 w-full rounded-lg border px-3 text-sm"
+                      value={pwCurrent}
+                      onChange={(e) => setPwCurrent(e.target.value)}
+                      autoComplete="current-password"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs">رمز جدید</label>
+                    <input
+                      type="password"
+                      className="border-input bg-background h-10 w-full rounded-lg border px-3 text-sm"
+                      value={pwNew}
+                      onChange={(e) => setPwNew(e.target.value)}
+                      autoComplete="new-password"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs">تکرار رمز جدید</label>
+                    <input
+                      type="password"
+                      className="border-input bg-background h-10 w-full rounded-lg border px-3 text-sm"
+                      value={pwConfirm}
+                      onChange={(e) => setPwConfirm(e.target.value)}
+                      autoComplete="new-password"
+                      dir="ltr"
+                    />
+                  </div>
+                  {pwMsg ? (
+                    <p
+                      className={
+                        pwMsg.includes("موفق")
+                          ? "text-sm text-green-600"
+                          : "text-destructive text-sm"
+                      }
+                    >
+                      {pwMsg}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={pwBusy}
+                    className="bg-primary text-primary-foreground h-10 w-full rounded-lg text-sm font-medium disabled:opacity-50"
+                    onClick={async () => {
+                      setPwMsg(null);
+                      if (pwNew.length < 8) {
+                        setPwMsg("رمز جدید باید حداقل ۸ کاراکتر باشد.");
+                        return;
+                      }
+                      if (pwNew !== pwConfirm) {
+                        setPwMsg("تکرار رمز با رمز جدید یکی نیست.");
+                        return;
+                      }
+                      setPwBusy(true);
+                      const res = await changeMyPasswordAction(pwCurrent, pwNew);
+                      setPwBusy(false);
+                      if (res.ok) {
+                        setPwCurrent("");
+                        setPwNew("");
+                        setPwConfirm("");
+                        setPwMsg("رمز با موفقیت تغییر کرد.");
+                        toast.success("رمز عبور به‌روز شد");
+                      } else {
+                        const map: Record<string, string> = {
+                          weak: "رمز جدید باید حداقل ۸ کاراکتر باشد.",
+                          bad_current: "رمز فعلی اشتباه است.",
+                          login_required: "ابتدا وارد حساب شوید.",
+                          server: "خطای سرور. دوباره تلاش کنید.",
+                        };
+                        setPwMsg(map[res.error || ""] || "تغییر رمز ناموفق بود.");
+                      }
+                    }}
+                  >
+                    {pwBusy ? "در حال ذخیره…" : "ذخیره رمز جدید"}
+                  </button>
+                </div>
+
+                <div className="border-border mt-4 space-y-2 rounded-xl border p-4">
+                  <p className="text-sm font-medium">امنیت نشست</p>
+                  <p className="text-muted-foreground text-xs">
+                    خروج از همه دستگاه‌ها جلسه‌های فعال را می‌بندد. بعد از آن باید دوباره وارد شوید.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={logoutAllBusy}
+                    className="border-border hover:bg-muted h-10 w-full rounded-lg border text-sm disabled:opacity-50"
+                    onClick={async () => {
+                      setLogoutAllBusy(true);
+                      try {
+                        const supabase = createClient();
+                        // scope global: همه refresh tokenها باطل می‌شوند
+                        await supabase.auth.signOut({ scope: "global" });
+                      } catch {
+                        try {
+                          const supabase = createClient();
+                          await supabase.auth.signOut();
+                        } catch {
+                          /* ignore */
+                        }
+                      }
+                      setLogoutAllBusy(false);
+                      window.location.href = "/login";
+                    }}
+                  >
+                    {logoutAllBusy ? "در حال خروج…" : "خروج از همه دستگاه‌ها"}
+                  </button>
+                </div>
+
                 <div className="border-destructive/30 mt-8 space-y-2 rounded-xl border p-4">
                   <p className="text-destructive text-sm font-medium">حذف حساب کاربری</p>
                   <p className="text-muted-foreground text-xs">
