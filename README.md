@@ -105,3 +105,6 @@ npm run dev
 
 ## مستندات فاز ۲۱
 - [منوی ادمین](docs/21-ADMIN-NAV-STATUS.md)
+
+## مستندات فاز ۲۲
+- [تنظیمات فروشگاه](docs/22-STORE-SETTINGS-STATUS.md)

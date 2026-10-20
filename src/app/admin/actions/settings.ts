@@ -72,3 +72,99 @@ export async function adminChangePasswordAction(
     return { ok: false as const, error: "server" as const };
   }
 }
+
+const STORE_KEYS = [
+  "free_shipping_enabled",
+  "free_shipping_min_amount",
+  "order_sms_enabled",
+  "store_support_phone",
+  "store_support_email",
+] as const;
+
+export type StoreSettingsMap = Record<(typeof STORE_KEYS)[number], string>;
+
+export async function adminGetStoreSettingsAction() {
+  const gate = await requireAdmin();
+  if (!gate.ok) {
+    return { ok: false as const, error: gate.error, settings: null };
+  }
+  try {
+    const { data, error } = await gate.supabase
+      .from("site_settings")
+      .select("key, value")
+      .in("key", [...STORE_KEYS]);
+    if (error) throw error;
+
+    const map: StoreSettingsMap = {
+      free_shipping_enabled: "true",
+      free_shipping_min_amount: "2000000",
+      order_sms_enabled: "true",
+      store_support_phone: "",
+      store_support_email: "",
+    };
+    for (const row of data ?? []) {
+      const k = String((row as { key?: string }).key || "");
+      if (k in map) {
+        map[k as keyof StoreSettingsMap] = String(
+          (row as { value?: string }).value ?? "",
+        );
+      }
+    }
+    return { ok: true as const, settings: map };
+  } catch (e) {
+    console.error("[adminGetStoreSettings]", e);
+    return { ok: false as const, error: "server" as const, settings: null };
+  }
+}
+
+export async function adminSaveStoreSettingsAction(input: {
+  free_shipping_enabled: boolean;
+  free_shipping_min_amount: string;
+  order_sms_enabled: boolean;
+  store_support_phone: string;
+  store_support_email: string;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+
+  const minRaw = String(input.free_shipping_min_amount || "").replace(/,/g, "");
+  const min = Math.max(0, Math.round(Number(minRaw) || 0));
+
+  const rows = [
+    {
+      key: "free_shipping_enabled",
+      value: input.free_shipping_enabled ? "true" : "false",
+    },
+    { key: "free_shipping_min_amount", value: String(min) },
+    {
+      key: "order_sms_enabled",
+      value: input.order_sms_enabled ? "true" : "false",
+    },
+    {
+      key: "store_support_phone",
+      value: (input.store_support_phone || "").trim(),
+    },
+    {
+      key: "store_support_email",
+      value: (input.store_support_email || "").trim(),
+    },
+  ];
+
+  try {
+    for (const row of rows) {
+      const { error } = await gate.supabase.from("site_settings").upsert(
+        {
+          key: row.key,
+          value: row.value,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      );
+      if (error) throw error;
+    }
+    return { ok: true as const };
+  } catch (e) {
+    console.error("[adminSaveStoreSettings]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
