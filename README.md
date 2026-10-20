@@ -111,3 +111,9 @@ npm run dev
 
 ## مستندات فاز ۲۳
 - [نمایش تماس پشتیبانی](docs/23-STORE-CONTACT-DISPLAY-STATUS.md)
+
+## Key docs
+- docs/01-ARCHITECTURE.md
+- docs/00-GIT-CONVENTION.md
+- docs/00-DEFINITION-OF-DONE.md
+- docs/SECURITY.md
