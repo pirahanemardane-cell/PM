@@ -35,9 +35,9 @@ function money(n: number) {
 export default function AdminReportsPage() {
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
-  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,77 +58,66 @@ export default function AdminReportsPage() {
 
   async function exportCsv() {
     setExporting(true);
-    const res = await adminExportOrdersCsvAction(days);
-    setExporting(false);
-    if (!res.ok || !("rows" in res)) {
-      setError("خروجی CSV ناموفق بود");
-      return;
+    setError(null);
+    try {
+      const res = await adminExportOrdersCsvAction(days);
+      if (!res.ok) {
+        setError("خروجی CSV ناموفق بود");
+        return;
+      }
+      const header = [
+        "id",
+        "status",
+        "payment_status",
+        "total_amount",
+        "discount_amount",
+        "shipping_name",
+        "shipping_phone",
+        "shipping_city",
+        "shipping_address",
+        "tracking_number",
+        "created_at",
+      ];
+      const escape = (v: string | number) => {
+        const s = String(v ?? "");
+        if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      };
+      const lines = [
+        header.join(","),
+        ...res.rows.map((r) =>
+          [
+            r.id,
+            r.status,
+            r.payment_status,
+            r.total_amount,
+            r.discount_amount,
+            r.shipping_name,
+            r.shipping_phone,
+            r.shipping_city,
+            r.shipping_address,
+            r.tracking_number,
+            r.created_at,
+          ]
+            .map(escape)
+            .join(","),
+        ),
+      ];
+      const blob = new Blob(["\ufeff" + lines.join("\n")], {
+        type: "text/csv;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pm-orders-${days}d.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
     }
-    const rows = res.rows as {
-      id: string;
-      status: string;
-      payment_status: string;
-      total_amount: number;
-      discount_amount: number;
-      shipping_name: string;
-      shipping_phone: string;
-      shipping_city: string;
-      shipping_address: string;
-      tracking_number: string;
-      created_at: string;
-    }[];
-    const header = [
-      "id",
-      "status",
-      "payment_status",
-      "total_amount",
-      "discount_amount",
-      "shipping_name",
-      "shipping_phone",
-      "shipping_city",
-      "shipping_address",
-      "tracking_number",
-      "created_at",
-    ];
-    const escape = (v: string | number) => {
-      const s = String(v ?? "");
-      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
-    const lines = [
-      header.join(","),
-      ...rows.map((r) =>
-        [
-          r.id,
-          r.status,
-          r.payment_status,
-          r.total_amount,
-          r.discount_amount,
-          r.shipping_name,
-          r.shipping_phone,
-          r.shipping_city,
-          r.shipping_address,
-          r.tracking_number,
-          r.created_at,
-        ]
-          .map(escape)
-          .join(","),
-      ),
-    ];
-    // BOM for Excel UTF-8
-    const blob = new Blob(["\ufeff" + lines.join("\n")], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pm-orders-${days}d.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
   }
-
 
   return (
     <div className="space-y-6 p-6" dir="rtl">
@@ -154,11 +143,25 @@ export default function AdminReportsPage() {
               {toPersianDigits(String(d))} روز
             </button>
           ))}
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={() => void exportCsv()}
+            className="border-border rounded-xl border px-3 py-1.5 text-sm disabled:opacity-50"
+          >
+            {exporting ? "…" : "خروجی CSV"}
+          </button>
           <Link
             href="/admin/dashboard"
             className="border-border rounded-xl border px-3 py-1.5 text-sm"
           >
             داشبورد
+          </Link>
+          <Link
+            href="/admin/backup"
+            className="border-border rounded-xl border px-3 py-1.5 text-sm"
+          >
+            بک‌آپ
           </Link>
         </div>
       </div>
@@ -190,10 +193,7 @@ export default function AdminReportsPage() {
                 value: `${money(report.revenueAll)} تومان`,
               },
             ].map((c) => (
-              <div
-                key={c.label}
-                className="border-border rounded-xl border p-4"
-              >
+              <div key={c.label} className="border-border rounded-xl border p-4">
                 <p className="text-muted-foreground text-xs">{c.label}</p>
                 <p className="mt-2 text-lg font-bold">{c.value}</p>
               </div>
