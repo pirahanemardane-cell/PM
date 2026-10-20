@@ -1,25 +1,24 @@
-# Phase 4 - Auth status
+# Phase 4 CLOSED
 
-Updated: 2026-10-20
+Date: 2026-10-20
 
 | Item | Status |
 |------|--------|
-| Supabase Auth login/session | done |
+| Login / Session Supabase | done |
 | Profile + addresses | done |
-| Rate limit on login/signup | done (checkRateLimit auth) |
-| Temp lock after failed logins | done (5 fails / 15 min lock) |
-| Email verification resend | done (resendEmailVerificationAction + profile UI) |
-| OTP mobile skeleton | done (lib/otp + actions) |
-| Admin role + staff | done (admin users) |
-| Fine-grained permission table | deferred (role-based sufficient pre-launch) |
-| Automated security tests | partial (rate-limit unit tests) |
-| Active sessions device list | deferred (needs session store) |
+| Email verification resend | done |
+| OTP mobile (Melipayamak + challenges) | done |
+| Rate limit login/signup | done |
+| Temp lock 5 fails / 15 min | done + unit test |
+| Password change | done |
+| Permission matrix + requirePermission | done |
+| Admin role authorization | done |
+| Active sessions list + revoke | done (user_sessions) |
+| Security tests automated | partial (rate-limit + lockout) |
 
-## Lockout rules
-- Key: email|ip
-- 5 failures in 15 minutes window
-- Lock 15 minutes
-- Cleared on successful login
+## Apply SQL
+`supabase/migrations/052_phase4_user_sessions.sql`
 
-## Phase 11
-Payment auth flows out of scope here.
+## Out of scope here
+- Full E2E auth suite (phase 25)
+- Queue workers for SMS (phase 29)

@@ -13,6 +13,7 @@ import {
 } from "@/lib/security/login-lockout";
 import { headers } from "next/headers";
 import { onlyDigits, normalizeIranMobile } from "@/lib/numbers";
+import { recordUserSession } from "@/lib/security/sessions";
 
 async function getClientIp(): Promise<string> {
   try {
@@ -97,6 +98,17 @@ export async function signInAction(loginId: string, password: string) {
     };
   }
   await clearLoginFailures(lockKey);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.id) {
+    let ua: string | null = null;
+    try {
+      const h = await headers();
+      ua = h.get("user-agent");
+    } catch {}
+    await recordUserSession({ userId: user.id, userAgent: ua, ipAddress: ip });
+  }
   logger.info("[auth] sign-in ok");
   return { ok: true as const };
 }
@@ -309,4 +321,63 @@ export async function resendEmailVerificationAction() {
     return { ok: false as const, error: "server" as const };
   }
   return { ok: true as const, already: false as const };
+}
+
+export async function listMySessionsAction() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false as const, error: "login_required" as const, items: [] };
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .select("id, session_label, user_agent, ip_address, created_at, last_seen_at, revoked_at")
+    .eq("user_id", user.id)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) {
+    console.error("[listMySessions]", error);
+    return { ok: false as const, error: "server" as const, items: [] };
+  }
+  return { ok: true as const, items: data ?? [] };
+}
+
+export async function revokeMySessionAction(sessionId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false as const, error: "login_required" as const };
+  const { error } = await supabase
+    .from("user_sessions")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", sessionId)
+    .eq("user_id", user.id);
+  if (error) {
+    console.error("[revokeMySession]", error);
+    return { ok: false as const, error: "server" as const };
+  }
+  return { ok: true as const };
+}
+
+export async function signOutOtherDevicesAction() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false as const, error: "login_required" as const };
+  try {
+    // @ts-expect-error scope supported in recent supabase-js
+    await supabase.auth.signOut({ scope: "others" });
+  } catch {
+    /* ignore if unsupported */
+  }
+  const admin = createServiceClient();
+  await admin
+    .from("user_sessions")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .is("revoked_at", null);
+  return { ok: true as const };
 }
