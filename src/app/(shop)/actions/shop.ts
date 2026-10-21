@@ -446,6 +446,15 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     const raw = await cartRepo.listItems(cartId);
     if (!raw.length) return { ok: false as const, error: "empty_cart" };
 
+    const cartItemsForDiscount = (raw as any[]).map((row) => {
+      const v = row.product_variants;
+      return {
+        productId: String(v?.product_id ?? v?.products?.id ?? ""),
+        price: Number(v?.price ?? 0),
+        quantity: Number(row.quantity ?? 0),
+      };
+    });
+
     const items = raw.map((row: any) => {
       const v = row.product_variants;
       const prod = v?.products;
