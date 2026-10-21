@@ -236,6 +236,19 @@ export async function verifyOtpAction(phone: string, code: string) {
     return { ok: false as const, error: "server" as const };
   }
 
+  // ثبت نشست فعال (دستگاه/IP) برای ورود با OTP
+  try {
+    const ip = await getClientIp();
+    let ua: string | null = null;
+    try {
+      const h = await headers();
+      ua = h.get("user-agent");
+    } catch {}
+    await recordUserSession({ userId, userAgent: ua, ipAddress: ip });
+  } catch (e) {
+    console.warn("[otp recordUserSession]", e);
+  }
+
   try {
     const { data: prof2 } = await admin
       .from("profiles")
@@ -329,13 +342,39 @@ export async function listMySessionsAction() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, error: "login_required" as const, items: [] };
-  const { data, error } = await supabase
+
+  let { data, error } = await supabase
     .from("user_sessions")
     .select("id, session_label, user_agent, ip_address, created_at, last_seen_at, revoked_at")
     .eq("user_id", user.id)
     .is("revoked_at", null)
     .order("created_at", { ascending: false })
     .limit(20);
+
+  // اگر هنوز نشستی نیست، همین الان یکی ثبت کن (لاگین قبلی / OTP / کوکی)
+  if (!error && (!data || data.length === 0)) {
+    try {
+      const ip = await getClientIp();
+      let ua: string | null = null;
+      try {
+        const h = await headers();
+        ua = h.get("user-agent");
+      } catch {}
+      await recordUserSession({ userId: user.id, userAgent: ua, ipAddress: ip });
+      const again = await supabase
+        .from("user_sessions")
+        .select("id, session_label, user_agent, ip_address, created_at, last_seen_at, revoked_at")
+        .eq("user_id", user.id)
+        .is("revoked_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      data = again.data;
+      error = again.error;
+    } catch (e) {
+      console.warn("[listMySessions ensure]", e);
+    }
+  }
+
   if (error) {
     console.error("[listMySessions]", error);
     return { ok: false as const, error: "server" as const, items: [] };
