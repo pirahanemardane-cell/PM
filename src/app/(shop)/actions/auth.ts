@@ -349,7 +349,7 @@ export async function listMySessionsAction() {
     .eq("user_id", user.id)
     .is("revoked_at", null)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(5);
 
   // اگر هنوز نشستی نیست، همین الان یکی ثبت کن (لاگین قبلی / OTP / کوکی)
   if (!error && (!data || data.length === 0)) {
@@ -367,7 +367,7 @@ export async function listMySessionsAction() {
         .eq("user_id", user.id)
         .is("revoked_at", null)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(5);
       data = again.data;
       error = again.error;
     } catch (e) {
