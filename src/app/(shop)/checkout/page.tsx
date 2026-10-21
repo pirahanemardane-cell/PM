@@ -76,6 +76,7 @@ function mapCheckoutError(code: string | undefined): string {
     discount_empty: "کد تخفیف وارد نشده است.",
     discount_db: "خطا در بررسی کد تخفیف.",
     discount_bad_subtotal: "مبلغ سبد نامعتبر است.",
+    discount_not_applicable: "این کد برای محصولات سبد شما قابل استفاده نیست.",
     insufficient_stock: "موجودی یکی از اقلام کافی نیست.",
   };
   if (map[code]) return map[code];
@@ -1020,9 +1021,15 @@ export default function CheckoutPage() {
                       onClick={async () => {
                         setDiscountLoading(true);
                         setDiscountError(null);
+                        const lines = items.map((it) => ({
+                          productId: it.productId,
+                          price: Number(it.price),
+                          quantity: Number(it.quantity),
+                        }));
                         const res = await validateDiscountAction(
                           discountCode,
                           subtotal,
+                          lines,
                         );
                         setDiscountLoading(false);
                         if (!res.ok) {

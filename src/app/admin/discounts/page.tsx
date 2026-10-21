@@ -59,6 +59,9 @@ export default function AdminDiscountsPage() {
     starts_at: "",
     ends_at: "",
     once_per_user: false,
+    max_discount_amount: "",
+    product_ids: "",
+    category_ids: "",
   });
 
   
@@ -178,6 +181,11 @@ export default function AdminDiscountsPage() {
         : null,
       ends_at: form.ends_at ? jalaliInputToIso(form.ends_at) : null,
       once_per_user: form.once_per_user,
+      max_discount_amount: form.max_discount_amount
+        ? Number(form.max_discount_amount)
+        : null,
+      product_ids: form.product_ids || null,
+      category_ids: form.category_ids || null,
     });
     setCreating(false);
     if (!res.ok) {
@@ -201,6 +209,9 @@ export default function AdminDiscountsPage() {
       starts_at: "",
       ends_at: "",
       once_per_user: false,
+      max_discount_amount: "",
+      product_ids: "",
+      category_ids: "",
     });
     void load();
   }
@@ -328,6 +339,34 @@ export default function AdminDiscountsPage() {
             />
             یک‌بار برای هر کاربر
           </label>
+          <input
+            type="number"
+            min={0}
+            placeholder="سقف مبلغ تخفیف (تومان)"
+            value={form.max_discount_amount}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, max_discount_amount: e.target.value }))
+            }
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
+          />
+          <input
+            placeholder="UUID محصولات (کاما، خالی=همه)"
+            value={form.product_ids}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, product_ids: e.target.value }))
+            }
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm sm:col-span-2"
+            dir="ltr"
+          />
+          <input
+            placeholder="UUID دسته‌ها (کاما، خالی=همه)"
+            value={form.category_ids}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, category_ids: e.target.value }))
+            }
+            className="border-input bg-background h-10 rounded-xl border px-3 text-sm sm:col-span-2"
+            dir="ltr"
+          />
           <button
             type="submit"
             disabled={creating}

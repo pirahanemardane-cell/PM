@@ -291,6 +291,14 @@ export async function getCartAction(): Promise<{
     const cartId = await resolveCartId();
     const cartRepo = new CartRepository();
     const rows = await cartRepo.listItems(cartId);
+    const cartItemsForDiscount = (rows as any[]).map((row) => {
+      const v = row.product_variants;
+      return {
+        productId: String(v?.product_id ?? v?.products?.id ?? ""),
+        price: Number(v?.price ?? 0),
+        quantity: Number(row.quantity ?? 0),
+      };
+    });
 
     const items: CartLineDTO[] = (rows as any[]).map((row) => {
       const v = row.product_variants;
@@ -462,7 +470,7 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     let discountCode: string | null = null;
     let discountAmount = 0;
     if (payload.discountCode?.trim()) {
-      const v = await validateDiscountAction(payload.discountCode, subtotal);
+      const v = await validateDiscountAction(payload.discountCode, subtotal, cartItemsForDiscount);
       if (!v.ok) {
         return { ok: false as const, error: `discount_${v.error}` };
       }
@@ -941,10 +949,58 @@ export type DiscountPreview = {
   finalTotal: number;
 };
 
-/** اعتبارسنجی کد تخفیف برای مبلغ فعلی سبد */
+export type DiscountCartLine = {
+  productId: string;
+  price: number;
+  quantity: number;
+};
+
+/** مبلغ پایه تخفیف با محدودیت محصول/دسته */
+async function eligibleDiscountBase(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  subtotal: number,
+  productIds: string[] | null | undefined,
+  categoryIds: string[] | null | undefined,
+  lines?: DiscountCartLine[] | null,
+): Promise<{ base: number; error?: string }> {
+  const pids = (productIds ?? []).filter(Boolean);
+  const cids = (categoryIds ?? []).filter(Boolean);
+  if (!pids.length && !cids.length) return { base: subtotal };
+  if (!lines?.length) return { base: 0, error: "not_applicable" };
+
+  const allowed = new Set<string>(pids);
+  if (cids.length) {
+    const cartPids = [...new Set(lines.map((l) => l.productId).filter(Boolean))];
+    if (cartPids.length) {
+      const { data: prows } = await supabase
+        .from("products")
+        .select("id, category_id")
+        .in("id", cartPids);
+      for (const r of prows ?? []) {
+        const cid = String((r as { category_id?: string }).category_id ?? "");
+        if (cid && cids.includes(cid)) {
+          allowed.add(String((r as { id: string }).id));
+        }
+      }
+    }
+  }
+  if (!allowed.size) return { base: 0, error: "not_applicable" };
+
+  let base = 0;
+  for (const line of lines) {
+    if (allowed.has(line.productId)) {
+      base += Math.floor(Number(line.price) * Number(line.quantity));
+    }
+  }
+  if (base <= 0) return { base: 0, error: "not_applicable" };
+  return { base };
+}
+
+/** اعتبارسنجی کد تخفیف: سقف مبلغ + محدودیت محصول/دسته */
 export async function validateDiscountAction(
   code: string,
   subtotal: number,
+  lines?: DiscountCartLine[] | null,
 ): Promise<
   | {
       ok: true;
@@ -997,20 +1053,38 @@ export async function validateDiscountAction(
   const minOrder = Number(data.min_order_amount ?? 0);
   if (subtotal < minOrder) return { ok: false, error: "min_order" };
 
-  const value = Number(data.value);
-  const t = String(data.type || "").toLowerCase();
+  const row = data as {
+    product_ids?: string[] | null;
+    category_ids?: string[] | null;
+    max_discount_amount?: number | null;
+    type: string;
+    value: number;
+    code: string;
+  };
+
+  const { base, error: eligErr } = await eligibleDiscountBase(
+    supabase,
+    subtotal,
+    row.product_ids,
+    row.category_ids,
+    lines,
+  );
+  if (eligErr) return { ok: false, error: eligErr };
+
+  const value = Number(row.value);
+  const t = String(row.type || "").toLowerCase();
   let discountAmount = 0;
   if (t === "percentage" || t === "percent") {
-    discountAmount = Math.floor((subtotal * value) / 100);
+    discountAmount = Math.floor((base * value) / 100);
   } else if (t === "fixed" || t === "amount") {
     discountAmount = Math.floor(value);
   } else {
     return { ok: false, error: "bad_type" };
   }
 
-  if (discountAmount > subtotal) discountAmount = subtotal;
+  if (discountAmount > base) discountAmount = base;
   if (discountAmount < 0) discountAmount = 0;
-  const cap = Number((data as { max_discount_amount?: number | null }).max_discount_amount ?? 0);
+  const cap = Number(row.max_discount_amount ?? 0);
   if (cap > 0 && discountAmount > cap) discountAmount = Math.floor(cap);
 
   return {
@@ -1020,7 +1094,7 @@ export async function validateDiscountAction(
       type: data.type,
       value,
       discountAmount,
-      finalTotal: subtotal - discountAmount,
+      finalTotal: Math.max(0, subtotal - discountAmount),
     },
   };
 }

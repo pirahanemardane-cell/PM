@@ -11,7 +11,7 @@ export async function adminListDiscountsAction(limit = 50) {
     const { data, error } = await gate.supabase
       .from("discounts")
       .select(
-        "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active, once_per_user, created_at",
+        "id, code, type, value, min_order_amount, max_uses, used_count, starts_at, ends_at, is_active, once_per_user, created_at, max_discount_amount, product_ids, category_ids",
       )
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -39,6 +39,15 @@ export async function adminSetDiscountActiveAction(id: string, isActive: boolean
   }
 }
 
+function parseUuidList(raw?: string | null): string[] | null {
+  if (!raw || !String(raw).trim()) return null;
+  const ids = String(raw)
+    .split(/[\s,]+/)
+    .map((x) => x.trim())
+    .filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  return ids.length ? ids : null;
+}
+
 export async function adminCreateDiscountAction(input: {
   code: string;
   type: "percentage" | "fixed";
@@ -48,6 +57,9 @@ export async function adminCreateDiscountAction(input: {
   starts_at?: string | null;
   ends_at?: string | null;
   once_per_user?: boolean;
+  max_discount_amount?: number | null;
+  product_ids?: string | null;
+  category_ids?: string | null;
 }) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -75,6 +87,9 @@ export async function adminCreateDiscountAction(input: {
         ends_at: input.ends_at ?? null,
         is_active: true,
         once_per_user: Boolean(input.once_per_user),
+        max_discount_amount: input.max_discount_amount ?? null,
+        product_ids: parseUuidList(input.product_ids),
+        category_ids: parseUuidList(input.category_ids),
       })
       .select("id")
       .single();
