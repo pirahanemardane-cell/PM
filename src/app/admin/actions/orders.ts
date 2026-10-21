@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/admin/require-admin";
 import { OrderRepository } from "@/repositories/order.repository";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PREDEFINED_NOTIFICATIONS } from "@/lib/notifications/templates";
+import { writeFinancialAudit } from "@/lib/finance/audit";
 
 const STATUS_TEMPLATE: Record<string, string> = {
   processing: "order_processing",
@@ -199,7 +200,7 @@ export async function adminHardDeleteOrdersAction(ids: string[]) {
 /** تأیید یا رد پرداخت آنلاین توسط ادمین — مشتری با polling/RT می‌بیند */
 export async function adminUpdatePaymentStatusAction(
   orderId: string,
-  paymentStatus: "pending" | "paid" | "failed",
+  paymentStatus: "pending" | "paid" | "failed" | "refunded",
 ) {
   const gate = await requireAdmin();
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -216,6 +217,9 @@ export async function adminUpdatePaymentStatusAction(
     if (paymentStatus === "failed") {
       // فقط payment؛ status را لغو اجباری نمی‌کنیم تا ادمین جدا تصمیم بگیرد
     }
+    if (paymentStatus === "refunded") {
+      // فقط وضعیت پرداخت؛ سفارش ممکن است delivered/cancelled باشد
+    }
     const { error } = await service
       .from("orders")
       .update(patch)
@@ -227,6 +231,12 @@ export async function adminUpdatePaymentStatusAction(
       entity: "order",
       entity_id: orderId,
       meta: paymentStatus,
+    });
+    void writeFinancialAudit({
+      eventType: "payment_status_change",
+      orderId,
+      meta: { paymentStatus },
+      actorId: gate.userId ?? null,
     });
 
     return { ok: true as const };
@@ -303,3 +313,79 @@ export async function adminSetOrderTrackingAction(
   }
 }
 
+
+/** یادداشت سفارش — visibility: customer (قابل‌مشاهده مشتری) یا internal */
+export async function adminAddOrderNoteAction(
+  orderId: string,
+  body: string,
+  visibility: "customer" | "internal" = "internal",
+) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  const textBody = (body || "").trim();
+  if (!textBody) return { ok: false as const, error: "empty" as const };
+  if (textBody.length > 2000) return { ok: false as const, error: "too_long" as const };
+  try {
+    const service = createServiceClient();
+    const { data, error } = await service
+      .from("order_notes")
+      .insert({
+        order_id: orderId,
+        body: textBody,
+        visibility,
+        actor_type: "admin",
+        actor_id: gate.userId ?? null,
+      })
+      .select("id, order_id, body, visibility, actor_type, created_at")
+      .single();
+    if (error) throw error;
+    void adminWriteLogAction({
+      action: "order_note_add",
+      entity: "order",
+      entity_id: orderId,
+      meta: visibility,
+    });
+    return { ok: true as const, note: data };
+  } catch (e) {
+    console.error("[adminAddOrderNote]", e);
+    return { ok: false as const, error: "server" };
+  }
+}
+
+export async function adminListOrderNotesAction(orderId: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] as const };
+  try {
+    const service = createServiceClient();
+    const { data, error } = await service
+      .from("order_notes")
+      .select("id, body, visibility, actor_type, actor_id, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return { ok: true as const, items: data ?? [] };
+  } catch (e) {
+    console.error("[adminListOrderNotes]", e);
+    return { ok: false as const, error: "server", items: [] as const };
+  }
+}
+
+export async function adminListFinancialAuditForOrderAction(orderId: string) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error, items: [] as const };
+  try {
+    const service = createServiceClient();
+    const { data, error } = await service
+      .from("financial_audit_logs")
+      .select("id, event_type, amount, meta, actor_id, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    return { ok: true as const, items: data ?? [] };
+  } catch (e) {
+    console.error("[adminListFinancialAudit]", e);
+    return { ok: false as const, error: "server", items: [] as const };
+  }
+}

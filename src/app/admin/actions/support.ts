@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
+import { writeFinancialAudit } from "@/lib/finance/audit";
 
 export async function adminListTicketsAction(opts?: {
   status?: "all" | "open" | "in_progress" | "closed";
@@ -142,6 +143,38 @@ export async function adminSetReturnStatusAction(
         }
       } catch (re) {
         console.error("[adminSetReturnStatus stock restore]", re);
+      }
+    }
+
+    // لاگ مالی هنگام عودت وجه
+    if (status === "refunded") {
+      void writeFinancialAudit({
+        eventType: "refund_marked",
+        orderId: prev?.order_id ?? null,
+        returnId: id,
+        meta: { from: prev?.status, adminNote: adminNote ?? null },
+        actorId: gate.userId ?? null,
+      });
+      // وضعیت پرداخت سفارش را در صورت امکان refunded کن
+      if (prev?.order_id) {
+        try {
+          const { createServiceClient } = await import("@/lib/supabase/service");
+          const service = createServiceClient();
+          await service
+            .from("orders")
+            .update({
+              payment_status: "refunded",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", prev.order_id);
+          await service
+            .from("return_requests")
+            .update({ refunded_at: new Date().toISOString() })
+            .eq("id", id)
+            .is("refunded_at", null);
+        } catch (pe) {
+          console.error("[refund order payment_status]", pe);
+        }
       }
     }
 

@@ -215,7 +215,15 @@ export default function AdminReturnsPage() {
                     </Link>
                   </td>
                   <td className="text-muted-foreground max-w-xs p-3 text-xs">
-                    {r.reason}
+                    <p>{r.reason}</p>
+                    {r.admin_note ? (
+                      <p className="text-primary mt-1">یادداشت: {r.admin_note}</p>
+                    ) : null}
+                    {r.status === "refunded" ? (
+                      <p className="mt-1 font-medium text-emerald-700 dark:text-emerald-400">
+                        عودت وجه ثبت شد
+                      </p>
+                    ) : null}
                   </td>
                   <td className="p-3">
                     <select

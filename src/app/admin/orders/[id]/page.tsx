@@ -7,6 +7,10 @@ import {
   adminGetOrderAction,
   adminUpdateOrderStatusAction,
   adminSetOrderTrackingAction,
+  adminAddOrderNoteAction,
+  adminListOrderNotesAction,
+  adminListFinancialAuditForOrderAction,
+  adminUpdatePaymentStatusAction,
 } from "@/app/admin/actions/orders";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { formatJalaliDateTime } from "@/lib/dates/jalali";
@@ -38,6 +42,14 @@ export default function AdminOrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [tracking, setTracking] = useState("");
+  const [notes, setNotes] = useState<
+    { id: string; body: string; visibility: string; created_at: string }[]
+  >([]);
+  const [noteBody, setNoteBody] = useState("");
+  const [noteVis, setNoteVis] = useState<"internal" | "customer">("internal");
+  const [finLogs, setFinLogs] = useState<
+    { id: string; event_type: string; amount: number | null; created_at: string; meta?: unknown }[]
+  >([]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -57,6 +69,12 @@ export default function AdminOrderDetailPage() {
     }
     setOrder(res.order);
     setTracking(String((res.order as any)?.tracking_number ?? ""));
+    const [nRes, fRes] = await Promise.all([
+      adminListOrderNotesAction(id),
+      adminListFinancialAuditForOrderAction(id),
+    ]);
+    if (nRes.ok) setNotes((nRes.items as any) ?? []);
+    if (fRes.ok) setFinLogs((fRes.items as any) ?? []);
   }, [id]);
 
   useEffect(() => {
@@ -225,6 +243,139 @@ export default function AdminOrderDetailPage() {
           <p className="text-muted-foreground text-xs">
             {formatJalaliDateTime(order.created_at)}
           </p>
+        </div>
+
+        {/* یادداشت مشتری از چک‌اوت */}
+        {order.note ? (
+          <div className="border-border bg-amber-50 dark:bg-amber-950/20 rounded-2xl border p-4 text-sm">
+            <p className="font-medium text-primary mb-1">یادداشت مشتری</p>
+            <p className="text-sm whitespace-pre-wrap">{order.note}</p>
+          </div>
+        ) : null}
+
+        {/* وضعیت پرداخت + بازپرداخت */}
+        <div className="border-border bg-card space-y-2 rounded-2xl border p-4 text-sm print:hidden">
+          <p className="font-medium text-primary">وضعیت پرداخت</p>
+          <p className="text-xs text-muted-foreground">
+            فعلی:{" "}
+            {(
+              {
+                pending: "در انتظار",
+                paid: "پرداخت‌شده",
+                failed: "ناموفق",
+                refunded: "عودت‌شده",
+              } as Record<string, string>
+            )[String(order.payment_status ?? "pending")] ?? order.payment_status}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["pending", "paid", "failed", "refunded"] as const).map((ps) => (
+              <button
+                key={ps}
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  const res = await adminUpdatePaymentStatusAction(id, ps);
+                  setBusy(false);
+                  if (!res.ok) {
+                    setError("تغییر وضعیت پرداخت ناموفق");
+                    return;
+                  }
+                  await load();
+                }}
+                className="border-border rounded-lg border px-3 py-1.5 text-xs"
+              >
+                {{
+                  pending: "در انتظار",
+                  paid: "پرداخت‌شده",
+                  failed: "ناموفق",
+                  refunded: "عودت وجه",
+                }[ps]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* یادداشت‌های ادمین */}
+        <div className="border-border bg-card space-y-3 rounded-2xl border p-4 text-sm print:hidden">
+          <p className="font-medium text-primary">یادداشت‌های سفارش</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <textarea
+              value={noteBody}
+              onChange={(e) => setNoteBody(e.target.value)}
+              rows={2}
+              placeholder="یادداشت پشتیبانی / انبار / پیک…"
+              className="border-input bg-background flex-1 rounded-xl border px-3 py-2 text-sm"
+            />
+            <div className="flex flex-col gap-2">
+              <select
+                value={noteVis}
+                onChange={(e) =>
+                  setNoteVis(e.target.value as "internal" | "customer")
+                }
+                className="border-input bg-background h-9 rounded-lg border px-2 text-xs"
+              >
+                <option value="internal">داخلی (فقط ادمین)</option>
+                <option value="customer">قابل‌مشاهده مشتری</option>
+              </select>
+              <button
+                type="button"
+                disabled={busy || !noteBody.trim()}
+                onClick={async () => {
+                  setBusy(true);
+                  const res = await adminAddOrderNoteAction(id, noteBody, noteVis);
+                  setBusy(false);
+                  if (!res.ok) {
+                    setError("ثبت یادداشت ناموفق");
+                    return;
+                  }
+                  setNoteBody("");
+                  await load();
+                }}
+                className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-xs font-medium disabled:opacity-50"
+              >
+                ثبت یادداشت
+              </button>
+            </div>
+          </div>
+          <ul className="space-y-2 max-h-48 overflow-y-auto">
+            {notes.map((n) => (
+              <li
+                key={n.id}
+                className="border-border rounded-xl border px-3 py-2 text-xs"
+              >
+                <span className="text-muted-foreground">
+                  {n.visibility === "customer" ? "مشتری می‌بیند" : "داخلی"} ·{" "}
+                  {new Date(n.created_at).toLocaleString("fa-IR")}
+                </span>
+                <p className="mt-1 whitespace-pre-wrap text-sm">{n.body}</p>
+              </li>
+            ))}
+            {!notes.length ? (
+              <li className="text-muted-foreground text-xs">یادداشتی ثبت نشده</li>
+            ) : null}
+          </ul>
+        </div>
+
+        {/* لاگ مالی */}
+        <div className="border-border bg-card space-y-2 rounded-2xl border p-4 text-sm print:hidden">
+          <p className="font-medium text-primary">لاگ مالی این سفارش</p>
+          <ul className="space-y-1 text-xs">
+            {finLogs.map((f) => (
+              <li key={f.id} className="border-border flex justify-between gap-2 border-b py-1">
+                <span>{f.event_type}</span>
+                <span className="text-muted-foreground">
+                  {f.amount != null
+                    ? Number(f.amount).toLocaleString("fa-IR")
+                    : "—"}{" "}
+                  · {new Date(f.created_at).toLocaleString("fa-IR")}
+                </span>
+              </li>
+            ))}
+            {!finLogs.length ? (
+              <li className="text-muted-foreground">رویدادی ثبت نشده</li>
+            ) : null}
+          </ul>
         </div>
 
         <div className="border-border overflow-hidden rounded-2xl border">
