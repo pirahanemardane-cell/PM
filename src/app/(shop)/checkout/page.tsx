@@ -2,7 +2,7 @@ import { getTrackingUrl } from "@/lib/iran-shipping-tracking";
 "use client";
 
 import { Price } from "@/components/ui/price";
-import { normalizeIranMobile } from "@/lib/numbers";
+import { normalizeIranMobile, normalizeIranPostalCode } from "@/lib/numbers";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -427,20 +427,39 @@ export default function CheckoutPage() {
     setStep(2);
   }
 
-  function goFrom2() {
-    setError(null);
-    if (
-      !form.firstName.trim() ||
-      !form.lastName.trim() ||
-      !form.phone.trim() ||
-      !form.address.trim() ||
-      !form.postal.trim()
-    ) {
-      setError("نام، نام خانوادگی، موبایل، آدرس و کد پستی الزامی است.");
-      return;
+  function validateRecipient(): string | null {
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      return "نام و نام خانوادگی الزامی است.";
+    }
+    if (!form.phone.trim()) {
+      return "شماره موبایل الزامی است.";
     }
     if (!normalizeIranMobile(form.phone.trim())) {
-      setError("شماره موبایل نامعتبر است.");
+      return "شماره موبایل معتبر نیست (مثال: ۰۹۱۲۱۲۳۴۵۶۷).";
+    }
+    if (!form.province.trim()) {
+      return "استان را انتخاب کنید.";
+    }
+    if (!form.city.trim()) {
+      return "شهر الزامی است.";
+    }
+    if (!form.address.trim() || form.address.trim().length < 8) {
+      return "آدرس کامل را وارد کنید (حداقل ۸ کاراکتر).";
+    }
+    if (!form.postal.trim()) {
+      return "کد پستی ۱۰ رقمی الزامی است.";
+    }
+    if (!normalizeIranPostalCode(form.postal.trim())) {
+      return "کد پستی باید دقیقاً ۱۰ رقم باشد.";
+    }
+    return null;
+  }
+
+  function goFrom2() {
+    setError(null);
+    const err = validateRecipient();
+    if (err) {
+      setError(err);
       return;
     }
     setStep(3);
@@ -457,6 +476,23 @@ export default function CheckoutPage() {
 
   async function handlePay() {
     setError(null);
+    // اعتبارسنجی تا لبه پرداخت (استاندارد فروشگاه‌های ایرانی)
+    const recipErr = validateRecipient();
+    if (recipErr) {
+      setError(recipErr);
+      setStep(2);
+      return;
+    }
+    if (!shipMethod) {
+      setError("روش ارسال را انتخاب کنید.");
+      setStep(3);
+      return;
+    }
+    if (!items.length) {
+      setError("سبد خرید خالی است.");
+      setStep(1);
+      return;
+    }
     setSubmitting(true);
     setPayStatus(null);
 
@@ -469,7 +505,8 @@ export default function CheckoutPage() {
       phone: normalizeIranMobile(form.phone.trim()) || form.phone.trim(),
       address: form.address.trim(),
       city: form.city.trim() || undefined,
-      postal: form.postal.trim() || undefined,
+      province: form.province.trim() || undefined,
+      postal: normalizeIranPostalCode(form.postal.trim()) || form.postal.trim(),
       note:
         [
           form.note.trim(),
@@ -485,7 +522,10 @@ export default function CheckoutPage() {
 
     if (!res.ok) {
       if (res.error === "login_required") {
-        window.location.href = "/ورود?next=/checkout";
+        // مسیر مهمان باید کار کند؛ اگر هنوز login_required آمد، پیام بده نه ریدایرکت اجباری
+        setPayStatus("failed");
+        setError("ثبت سفارش ممکن نشد. دوباره تلاش کنید یا وارد حساب شوید.");
+        setStep(5);
         return;
       }
       setPayStatus("failed");
@@ -669,6 +709,9 @@ export default function CheckoutPage() {
             {step === 2 ? (
               <>
                 <h2 className="font-semibold text-primary">۲. اطلاعات گیرنده</h2>
+                <p className="text-muted-foreground text-xs">
+                  خرید بدون ثبت‌نام ممکن است. شماره موبایل برای هماهنگی ارسال الزامی است.
+                </p>
 
                 {savedAddresses.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2">
@@ -760,11 +803,11 @@ export default function CheckoutPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   {(
                     [
-                      ["firstName", "نام", "text"],
-                      ["lastName", "نام خانوادگی", "text"],
-                      ["phone", "شماره تماس", "tel"],
-                      ["postal", "کد پستی", "text"],
-                      ["city", "شهر", "text"],
+                      ["firstName", "نام *", "text"],
+                      ["lastName", "نام خانوادگی *", "text"],
+                      ["phone", "شماره موبایل *", "tel"],
+                      ["postal", "کد پستی ۱۰ رقمی *", "text"],
+                      ["city", "شهر *", "text"],
                     ] as const
                   ).map(([key, label, type]) => (
                     <label key={key} className="block space-y-1 text-sm">
@@ -776,12 +819,28 @@ export default function CheckoutPage() {
                           setForm((f) => ({ ...f, [key]: e.target.value }))
                         }
                         className="border-input bg-background h-10 w-full rounded-xl border px-3"
-                        dir="rtl"
+                        dir={key === "phone" || key === "postal" ? "ltr" : "rtl"}
+                        inputMode={key === "phone" || key === "postal" ? "numeric" : undefined}
+                        placeholder={
+                          key === "phone"
+                            ? "09121234567"
+                            : key === "postal"
+                              ? "1234567890"
+                              : undefined
+                        }
+                        autoComplete={
+                          key === "phone"
+                            ? "tel"
+                            : key === "postal"
+                              ? "postal-code"
+                              : undefined
+                        }
+                        required
                       />
                     </label>
                   ))}
                   <label className="block space-y-1 text-sm sm:col-span-2">
-                    <span>استان</span>
+                    <span>استان *</span>
                     <select
                       value={form.province}
                       onChange={(e) =>
@@ -800,7 +859,7 @@ export default function CheckoutPage() {
                   </label>
                 </div>
                 <label className="block space-y-1 text-sm">
-                  <span>آدرس کامل</span>
+                  <span>آدرس کامل *</span>
                   <textarea
                     value={form.address}
                     onChange={(e) =>

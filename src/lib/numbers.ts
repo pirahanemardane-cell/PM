@@ -48,6 +48,17 @@ export function isValidIranMobile(input: string): boolean {
   return normalizeIranMobile(input) !== null;
 }
 
+/** کد پستی ایران: ۱۰ رقم */
+export function normalizeIranPostalCode(input: string): string | null {
+  const d = toEnglishDigits(String(input ?? "")).replace(/\D/g, "");
+  return /^\d{10}$/.test(d) ? d : null;
+}
+
+export function isValidIranPostalCode(input: string): boolean {
+  return normalizeIranPostalCode(input) !== null;
+}
+
+
 /** عدد از رشته با ارقام فارسی/عربی و جداکننده */
 export function parseLocaleNumber(input: string): number | null {
   const n = toEnglishDigits(String(input ?? ""))

@@ -1,7 +1,7 @@
 import { BaseRepository } from "./base.repository";
 
 export type CreateOrderInput = {
-  userId: string;
+  userId: string | null;
   items: {
     variantId: string;
     productId: string;
@@ -33,11 +33,13 @@ export class OrderRepository extends BaseRepository {
 
     // 1) موجودی: اگر رزرو active کاربر هست → consume؛ وگرنه decrement اتمی
     await service.rpc("release_expired_stock_reservations");
-    const { data: activeRes } = await service
-      .from("stock_reservations")
-      .select("id, variant_id, quantity")
-      .eq("user_id", input.userId)
-      .eq("status", "active");
+    const { data: activeRes } = input.userId
+      ? await service
+          .from("stock_reservations")
+          .select("id, variant_id, quantity")
+          .eq("user_id", input.userId)
+          .eq("status", "active")
+      : { data: [] as { id: string; variant_id: string; quantity: number }[] };
 
     const resByVariant = new Map<string, number>();
     for (const r of activeRes ?? []) {
@@ -85,10 +87,12 @@ export class OrderRepository extends BaseRepository {
     }
 
     // رزروهای active کاربر را consumed کن (موجودی برنمی‌گردد)
-    try {
-      await service.rpc("consume_user_reservations", { p_user_id: input.userId });
-    } catch (ce) {
-      console.error("[createFromCart] consume reservations", ce);
+    if (input.userId) {
+      try {
+        await service.rpc("consume_user_reservations", { p_user_id: input.userId });
+      } catch (ce) {
+        console.error("[createFromCart] consume reservations", ce);
+      }
     }
 
     const total = input.items.reduce(

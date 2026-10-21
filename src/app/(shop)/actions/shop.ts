@@ -9,7 +9,7 @@ import { OrderRepository } from "@/repositories/order.repository";
 import { cookies } from "next/headers";
 import { assertNoLinkOrImage } from "@/lib/sanitize-user-text";
 import { randomUUID } from "crypto";
-import { normalizePhone, normalizeIranMobile, toEnglishDigits } from "@/lib/numbers";
+import { normalizePhone, normalizeIranMobile, normalizeIranPostalCode, toEnglishDigits } from "@/lib/numbers";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -419,6 +419,7 @@ export type CreateOrderPayload = {
   phone: string;
   address: string;
   city?: string;
+  province?: string;
   postal?: string;
   note?: string;
   discountCode?: string;
@@ -428,13 +429,12 @@ export type CreateOrderPayload = {
 export async function createOrderAction(payload: CreateOrderPayload) {
   try {
     const user = await requireUser();
-    if (!user) return { ok: false as const, error: "login_required" };
-
+    // Guest checkout: بدون حساب هم مجاز است (استاندارد فروشگاه‌های ایرانی)
     const cartRepo = new CartRepository();
-    const cartId = await cartRepo.getOrCreateCart({
-      userId: user.id,
-      sessionId: null,
-    });
+    const sessionId = await getSessionId();
+    const cartId = user?.id
+      ? await cartRepo.getOrCreateCart({ userId: user.id, sessionId: null })
+      : await cartRepo.getOrCreateCart({ userId: null, sessionId });
     const raw = await cartRepo.listItems(cartId);
     if (!raw.length) return { ok: false as const, error: "empty_cart" };
 
@@ -478,6 +478,9 @@ export async function createOrderAction(payload: CreateOrderPayload) {
         .ilike("code", discountCode)
         .maybeSingle();
       if ((dRow as { once_per_user?: boolean } | null)?.once_per_user) {
+        if (!user?.id) {
+          return { ok: false as const, error: "discount_login_required" };
+        }
         const { data: prior } = await supabaseInc
           .from("orders")
           .select("id")
@@ -506,6 +509,9 @@ export async function createOrderAction(payload: CreateOrderPayload) {
 
     const nameOk = assertNoLinkOrImage(payload.name, "نام");
     if (!nameOk.ok) return { ok: false as const, error: nameOk.error };
+    if (!nameOk.text.trim() || nameOk.text.trim().length < 3) {
+      return { ok: false as const, error: "نام گیرنده الزامی است" };
+    }
     const phoneNorm = normalizeIranMobile(payload.phone || "");
     if (!phoneNorm) {
       return { ok: false as const, error: "شماره موبایل نامعتبر است" };
@@ -514,33 +520,54 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     if (!phoneOk.ok) return { ok: false as const, error: phoneOk.error };
     const addrOk = assertNoLinkOrImage(payload.address, "آدرس");
     if (!addrOk.ok) return { ok: false as const, error: addrOk.error };
+    if (!addrOk.text.trim() || addrOk.text.trim().length < 8) {
+      return { ok: false as const, error: "آدرس کامل الزامی است" };
+    }
     const cityOk = assertNoLinkOrImage(payload.city ?? "", "شهر");
     if (!cityOk.ok) return { ok: false as const, error: cityOk.error };
+    if (!cityOk.text.trim()) {
+      return { ok: false as const, error: "شهر الزامی است" };
+    }
+    const provinceOk = assertNoLinkOrImage(payload.province ?? "", "استان");
+    if (!provinceOk.ok) return { ok: false as const, error: provinceOk.error };
+    const postalNorm = normalizeIranPostalCode(payload.postal || "");
+    if (!postalNorm) {
+      return { ok: false as const, error: "کد پستی باید ۱۰ رقم باشد" };
+    }
     const noteOk = assertNoLinkOrImage(payload.note ?? "", "یادداشت");
     if (!noteOk.ok) return { ok: false as const, error: noteOk.error };
 
-const orderRepo = new OrderRepository();
+    const addressLine = [
+      provinceOk.text.trim() || null,
+      cityOk.text.trim() || null,
+      addrOk.text.trim(),
+    ]
+      .filter(Boolean)
+      .join("، ");
+
+    const orderRepo = new OrderRepository();
     const orderId = await orderRepo.createFromCart({
-      userId: user.id,
+      userId: user?.id ?? null,
       items,
       shipping: {
         name: nameOk.text,
         phone: phoneOk.text,
-        address: addrOk.text,
+        address: addressLine,
         city: cityOk.text || undefined,
-        postal: payload.postal,
+        postal: postalNorm,
       },
       note: noteOk.text || undefined,
       discountCode,
       discountAmount,
       paymentMethod: payload.paymentMethod === "online" ? "online" : "cod",
-      // اگر repo هنوز total را خودش از items می‌سازد، داخل repo:
-      // total = subtotal - discountAmount
     });
 
     await cartRepo.clearCart(cartId);
 
-    // ذخیره آدرس در دفترچه برای خریدهای بعدی
+    // ذخیره آدرس فقط برای کاربر لاگین‌شده
+    if (!user?.id) {
+      return { ok: true as const, orderId };
+    }
     try {
       const addrRepo = new AddressRepository();
       const existing = await addrRepo.list(user.id);
