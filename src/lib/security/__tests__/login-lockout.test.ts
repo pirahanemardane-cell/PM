@@ -6,7 +6,8 @@ import {
 } from "@/lib/security/login-lockout";
 
 describe("login-lockout", () => {
-  const key = "test-user|127.0.0.1";
+  const key = `test-user|127.0.0.1|${Date.now()}`;
+
   beforeEach(async () => {
     await clearLoginFailures(key);
   });

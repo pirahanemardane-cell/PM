@@ -1,54 +1,37 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { rateLimit, rateLimitCleanup, isUpstashConfigured } from "../rate-limit";
+import { checkRateLimit, rateLimitCleanup } from "@/lib/security/rate-limit";
 
-describe("rate-limit (memory fallback)", () => {
+describe("checkRateLimit (memory fallback)", () => {
   beforeEach(() => {
     rateLimitCleanup();
   });
 
-  it("allows requests under the limit", () => {
-    const key = "test:allow";
+  it("auth: allows under limit then blocks", async () => {
+    const id = `auth-test-${Date.now()}`;
     for (let i = 0; i < 5; i++) {
-      const result = rateLimit({ key, limit: 5, windowMs: 60_000 });
-      expect(result.ok).toBe(true);
+      const r = await checkRateLimit({ identifier: id, type: "auth" });
+      expect(r.success).toBe(true);
     }
+    const blocked = await checkRateLimit({ identifier: id, type: "auth" });
+    expect(blocked.success).toBe(false);
+    expect(blocked.retryAfterSec).toBeGreaterThan(0);
   });
 
-  it("blocks when limit is exceeded", () => {
-    const key = "test:block";
+  it("contact: blocks after 5 in window", async () => {
+    const id = `contact-test-${Date.now()}`;
     for (let i = 0; i < 5; i++) {
-      rateLimit({ key, limit: 5, windowMs: 60_000 });
+      const r = await checkRateLimit({ identifier: id, type: "contact" });
+      expect(r.success).toBe(true);
     }
-    const result = rateLimit({ key, limit: 5, windowMs: 60_000 });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.retryAfterSec).toBeGreaterThan(0);
-    }
+    const blocked = await checkRateLimit({ identifier: id, type: "contact" });
+    expect(blocked.success).toBe(false);
   });
 
-  it("isUpstashConfigured returns boolean", () => {
-    expect(typeof isUpstashConfigured()).toBe("boolean");
-  });
-});
-
-describe("health endpoint shape (unit)", () => {
-  it("expected health response structure", () => {
-    const mockHealth = {
-      ok: true,
-      service: "pirahanmardane",
-      checks: {
-        app: "ok",
-        supabase: "ok",
-        rateLimit: "upstash",
-        r2: "ok",
-        sentry: "ok",
-        cronBackup: "ok",
-      },
-    };
-
-    expect(mockHealth.ok).toBe(true);
-    expect(mockHealth.service).toBe("pirahanmardane");
-    expect(mockHealth.checks).toHaveProperty("rateLimit");
-    expect(["upstash", "memory-fallback"]).toContain(mockHealth.checks.rateLimit);
+  it("api: higher limit than auth", async () => {
+    const id = `api-test-${Date.now()}`;
+    for (let i = 0; i < 10; i++) {
+      const r = await checkRateLimit({ identifier: id, type: "api" });
+      expect(r.success).toBe(true);
+    }
   });
 });
