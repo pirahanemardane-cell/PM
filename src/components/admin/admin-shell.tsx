@@ -57,6 +57,7 @@ const NAV = [
   { href: "/admin/analytics", label: "آمار", icon: BarChart3 },
   { href: "/admin/health", label: "سلامت سیستم", icon: Activity },
   { href: "/admin/seo", label: "سئو", icon: FileText },
+  { href: "/admin/seo/redirects", label: "ریدایرکت‌ها", icon: FileText },
   { href: "/admin/logs", label: "لاگ‌ها", icon: FileText },
   { href: "/admin/pages", label: "محتوای صفحات", icon: FileText },
   { href: "/admin/settings", label: "تنظیمات", icon: Settings },

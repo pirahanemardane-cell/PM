@@ -89,8 +89,54 @@ async function supabaseExists(
   }
 }
 
+
+async function lookupUrlRedirect(
+  pathname: string,
+): Promise<{ to: string; code: number } | null> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!base || !key) return null;
+  let p = pathname;
+  try {
+    p = decodeURIComponent(pathname);
+  } catch {
+    /* ignore */
+  }
+  if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+  try {
+    const q = `from_path=eq.${encodeURIComponent(p)}&is_active=eq.true&select=to_path,status_code&limit=1`;
+    const res = await fetch(`${base}/rest/v1/url_redirects?${q}`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
+      next: { revalidate: 30 },
+    } as RequestInit);
+    if (!res.ok) return null;
+    const rows = (await res.json()) as { to_path?: string; status_code?: number }[];
+    if (!Array.isArray(rows) || !rows[0]?.to_path) return null;
+    const code = Number(rows[0].status_code) || 301;
+    return { to: String(rows[0].to_path), code };
+  } catch {
+    return null;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ریدایرکت formal از DB (۳۰۱ و ...)
+  try {
+    const hit = await lookupUrlRedirect(pathname);
+    if (hit) {
+      const url = request.nextUrl.clone();
+      url.pathname = hit.to;
+      return NextResponse.redirect(url, hit.code as 301 | 302 | 307 | 308);
+    }
+  } catch {
+    /* ignore lookup errors */
+  }
 
   let dest = PERSIAN_ROUTES[pathname];
   if (!dest) {

@@ -9,6 +9,7 @@ import { adminWriteLogAction } from "@/app/admin/actions/logs";
 
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { normalizeProductSlug } from "@/lib/product-slug";
+import { productPathFromSlug, upsertUrlRedirect } from "@/lib/seo/redirects";
 
 function slugify(input: string): string {
   return (
@@ -553,6 +554,21 @@ export async function adminUpdateProductAction(
       const s = normalizeProductSlug((input.slug || "").trim());
       if (s) patch.slug = s;
     }
+
+    // ۳۰۱ خودکار وقتی اسلاگ محصول عوض می‌شود
+    let oldSlugForRedirect: string | null = null;
+    if (patch.slug) {
+      const { data: prev } = await gate.supabase
+        .from("products")
+        .select("slug")
+        .eq("id", id)
+        .maybeSingle();
+      const prevSlug = String(prev?.slug ?? "").trim();
+      const nextSlug = String(patch.slug).trim();
+      if (prevSlug && nextSlug && prevSlug !== nextSlug) {
+        oldSlugForRedirect = prevSlug;
+      }
+    }
     if (input.category_id !== undefined) {
       if (!input.category_id) return { ok: false as const, error: "validation", detail: "category" };
       patch.category_id = input.category_id;
@@ -595,6 +611,19 @@ export async function adminUpdateProductAction(
           error: "server" as const,
           detail: pErr.message,
         };
+      }
+      if (oldSlugForRedirect && patch.slug) {
+        try {
+          await upsertUrlRedirect({
+            fromPath: productPathFromSlug(oldSlugForRedirect),
+            toPath: productPathFromSlug(String(patch.slug)),
+            statusCode: 301,
+            source: "product_slug_change",
+            note: `product ${id}`,
+          });
+        } catch (re) {
+          console.warn("[adminUpdateProduct slug redirect]", re);
+        }
       }
     }
 
