@@ -576,7 +576,8 @@ export type Database = {
 
       orders: {
         Row: {
-          id: string; user_id: string; status: string; total_amount: number;
+          id: string; user_id: string | null; status: string; payment_status: string;
+          total_amount: number;
           shipping_name: string | null; shipping_phone: string | null;
           shipping_address: string | null; shipping_city: string | null;
           shipping_postal: string | null; note: string | null; discount_code: string | null; discount_amount: number | null; paid_at: string | null;
@@ -584,7 +585,8 @@ export type Database = {
           created_at: string; updated_at: string;
         };
         Insert: {
-          id?: string; user_id: string; status?: string; total_amount?: number;
+          id?: string; user_id?: string | null; status?: string; payment_status?: string;
+          total_amount?: number;
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
@@ -592,7 +594,8 @@ export type Database = {
           created_at?: string; updated_at?: string;
         };
         Update: {
-          id?: string; user_id?: string; status?: string; total_amount?: number;
+          id?: string; user_id?: string | null; status?: string; payment_status?: string;
+          total_amount?: number;
           shipping_name?: string | null; shipping_phone?: string | null;
           shipping_address?: string | null; shipping_city?: string | null;
           shipping_postal?: string | null; note?: string | null; discount_code?: string | null; discount_amount?: number | null; paid_at?: string | null;
@@ -751,6 +754,41 @@ export type Database = {
         Update: { id?: string; product_id?: string; price?: number; recorded_at?: string; };
         Relationships: [];
       };
+
+      user_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          session_label: string | null;
+          user_agent: string | null;
+          ip_address: string | null;
+          created_at: string;
+          last_seen_at: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          session_label?: string | null;
+          user_agent?: string | null;
+          ip_address?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          session_label?: string | null;
+          user_agent?: string | null;
+          ip_address?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+
       site_settings: {
         Row: { key: string; value: Json | null; updated_at: string; };
         Insert: { key: string; value?: Json | null; updated_at?: string; };

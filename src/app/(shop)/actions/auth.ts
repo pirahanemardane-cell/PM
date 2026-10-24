@@ -407,8 +407,7 @@ export async function signOutOtherDevicesAction() {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, error: "login_required" as const };
   try {
-    // @ts-expect-error scope supported in recent supabase-js
-    await supabase.auth.signOut({ scope: "others" });
+    await supabase.auth.signOut({ scope: "others" } as { scope: "others" });
   } catch {
     /* ignore if unsupported */
   }
