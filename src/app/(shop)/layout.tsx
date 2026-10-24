@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { FooterContact } from "@/components/layout/footer-contact";
 import { SiteLoaderProvider } from "@/components/layout/site-loader";
 import { AppBreadcrumb } from "@/components/ui/app-breadcrumb";
+import { SkipToContent } from "@/components/a11y/skip-to-content";
 
 export default function ShopLayout({
   children,
@@ -16,12 +17,15 @@ export default function ShopLayout({
     <SiteLoaderProvider>
       <NotificationsProvider>
         <div className="flex min-h-screen flex-col">
+          <SkipToContent />
           <SiteHeader />
           <div className="flex-1">
             <div className="w-full max-w-none">
               <AppBreadcrumb />
               <ScrollToTop />
-              {children}
+              <main id="main-content" tabIndex={-1} className="outline-none">
+                {children}
+              </main>
             </div>
           </div>
           <div className="border-border border-t">
