@@ -3,7 +3,7 @@
 import { cartRemove, cartSetQty } from "@/lib/cart-api";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveColorHex } from "@/lib/colors";
 import {
   sizeAvailable,
@@ -22,6 +22,7 @@ import {
 import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { EmptyBlock } from "@/components/ui/ui-state-blocks";
+import { track } from "@/lib/analytics/track";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,13 @@ export default function CartPage() {
   }, [unifiedLines]);
 
   const total = unifiedTotal;
+
+  useEffect(() => {
+    void track({
+      event_name: "view_cart",
+      value: total,
+    });
+  }, []);
 
   function setBusy(key: string, v: boolean) {
     setBusyMap((m) => ({ ...m, [key]: v }));

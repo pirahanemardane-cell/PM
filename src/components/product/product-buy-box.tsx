@@ -15,6 +15,7 @@ import { RT } from "@/lib/realtime/events";
 import { createClient } from "@/lib/supabase/client";
 import { resolveColorHex } from "@/lib/colors";
 import { ProductWishCompareInline } from "@/components/product/product-wish-compare";
+import { track } from "@/lib/analytics/track";
 
 export type VariantOpt = {
   id: string;
@@ -217,6 +218,13 @@ export function ProductBuyBox({
         );
         return;
       }
+      void track({
+        event_name: "add_to_cart",
+        product_id: productId,
+        variant_id: match.id,
+        quantity: addQty,
+        value: Number(price ?? 0) * addQty,
+      });
       toast.success("به سبد خرید اضافه شد");
     } catch (e) {
       console.error("[addToCart]", e);

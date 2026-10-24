@@ -30,6 +30,7 @@ import { toPersianDigits } from "@/lib/numbers";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
 import { getMyOrderStatusAction } from "@/app/(shop)/actions/order-status";
+import { track } from "@/lib/analytics/track";
 
 export const dynamic = "force-dynamic";
 
@@ -315,6 +316,10 @@ export default function CheckoutPage() {
     };
   }, []);
 
+  useEffect(() => {
+    void track({ event_name: "begin_checkout" });
+  }, []);
+
   useRtEvent(RT.cart, () => {
     if (orderPlacedRef.current) return;
     void reloadCart();
@@ -537,11 +542,16 @@ export default function CheckoutPage() {
 
     orderPlacedRef.current = true;
     clearCartLocal();
-    const track = shortTrack(res.orderId);
+    const trackCode = shortTrack(res.orderId);
     setDoneOrder({
       id: res.orderId,
       total: payable,
-      track,
+      track: trackCode,
+    });
+    void track({
+      event_name: "purchase",
+      order_id: res.orderId,
+      value: payable,
     });
     // COD = موفق (پرداخت هنگام تحویل) | آنلاین = معلق تا تأیید درگاه
     setPayStatus(payMethod === "cod" ? "success" : "pending");

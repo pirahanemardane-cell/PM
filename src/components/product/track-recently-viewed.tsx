@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useShopStore, type ShopProduct } from "@/lib/shop-store";
+import { track } from "@/lib/analytics/track";
 
 export function TrackRecentlyViewed(props: {
   id: string;
@@ -30,6 +31,12 @@ export function TrackRecentlyViewed(props: {
       const next = [item, ...prev.filter((x) => x.id !== item.id)].slice(0, 20);
       localStorage.setItem(key, JSON.stringify(next));
     } catch {}
+
+    void track({
+      event_name: "view_item",
+      product_id: props.id,
+      value: props.price,
+    });
   }, [props.id, props.title, props.price, props.image, props.brand, props.href, add]);
 
   return null;
