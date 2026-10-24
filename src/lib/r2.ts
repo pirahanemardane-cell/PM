@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
 
 function requireEnv(name: string): string {
   const v = process.env[name]?.trim();
@@ -55,4 +60,32 @@ export async function r2DeleteObject(key: string) {
       Key: key,
     }),
   );
+}
+
+
+/** لیست کلیدهای یک پیشوند (صفحه‌بندی) */
+export async function r2ListObjectKeys(opts: {
+  prefix?: string;
+  maxKeys?: number;
+}): Promise<string[]> {
+  const client = getR2Client();
+  const bucket = getR2Bucket();
+  const maxKeys = Math.min(Math.max(opts.maxKeys ?? 5000, 1), 20000);
+  const keys: string[] = [];
+  let token: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: opts.prefix || undefined,
+        ContinuationToken: token,
+        MaxKeys: Math.min(1000, maxKeys - keys.length),
+      }),
+    );
+    for (const obj of res.Contents ?? []) {
+      if (obj.Key) keys.push(obj.Key);
+    }
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token && keys.length < maxKeys);
+  return keys;
 }

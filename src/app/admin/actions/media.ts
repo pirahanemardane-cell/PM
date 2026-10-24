@@ -521,3 +521,26 @@ export async function adminSetPrimaryProductImageAction(input: {
   return { ok: true as const, imageId: primaryId };
 }
 
+
+
+/** گزارش/پاک‌سازی orphan — پیش‌فرض dryRun=true */
+export async function adminRunOrphanMediaCleanupAction(input?: {
+  dryRun?: boolean;
+  minAgeHours?: number;
+  maxDelete?: number;
+}) {
+  const gate = await requireAdmin();
+  if (!gate.ok) return { ok: false as const, error: gate.error };
+  try {
+    const { runOrphanMediaCleanup } = await import("@/lib/media/orphan-cleanup");
+    const result = await runOrphanMediaCleanup({
+      dryRun: input?.dryRun !== false,
+      minAgeHours: input?.minAgeHours ?? 72,
+      maxDelete: input?.maxDelete ?? 50,
+    });
+    return { ok: true as const, result };
+  } catch (e) {
+    console.error("[adminRunOrphanMediaCleanup]", e);
+    return { ok: false as const, error: "server" as const };
+  }
+}
