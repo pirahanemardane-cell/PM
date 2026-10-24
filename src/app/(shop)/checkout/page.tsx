@@ -477,11 +477,19 @@ export default function CheckoutPage() {
       setError("روش ارسال را انتخاب کنید.");
       return;
     }
+    void track({
+      event_name: "add_shipping_info",
+      value: payable,
+    });
     setStep(4);
   }
 
   async function handlePay() {
     setError(null);
+    void track({
+      event_name: "add_payment_info",
+      value: payable,
+    });
     // اعتبارسنجی تا لبه پرداخت (استاندارد فروشگاه‌های ایرانی)
     const recipErr = validateRecipient();
     if (recipErr) {

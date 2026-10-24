@@ -7,6 +7,7 @@ import {
   normalizeSearchQuery,
 } from "@/lib/search/normalize";
 import { EmptyBlock } from "@/components/ui/ui-state-blocks";
+import { TrackSearch } from "@/components/analytics/track-search";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-6xl space-y-10 px-4 py-8 md:py-12" dir="rtl">
+      <TrackSearch term={q} resultCount={products.length} />
       <header className="space-y-1">
         <h1 className="text-xl font-bold text-primary md:text-2xl">
           نتایج جستجو برای «{q}»
