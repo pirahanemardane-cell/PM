@@ -10,7 +10,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "analyze": "ANALYZE=true next build",
-    "analyze:turbo": "ANALYZE=true next build"
+    "analyze:turbo": "ANALYZE=true next build",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/smoke.spec.ts e2e/checkout-guest.spec.ts"
   },
   "dependencies": {
     "@ark-ui/react": "^5.39.2",
@@ -74,6 +78,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4",
-    "@next/bundle-analyzer": "^15.5.25"
+    "@next/bundle-analyzer": "^15.5.25",
+    "@playwright/test": "^1.55.0"
   }
 }
