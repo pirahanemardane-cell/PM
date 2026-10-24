@@ -49,6 +49,8 @@ export default function AdminAnalyticsPage() {
   const [devices, setDevices] = useState<Record<string, number>>({});
   const [lowConvertProducts, setLowConvertProducts] = useState<any[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [returnCount, setReturnCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -98,6 +100,20 @@ export default function AdminAnalyticsPage() {
             .slice(0, 10);
           setLowConvertProducts(low);
         }
+
+        // نرخ مرجوعی
+        const { count: retCount } = await supabase
+          .from("return_requests")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", from);
+
+        const { count: ordCount } = await supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", from);
+
+        setReturnCount(retCount ?? 0);
+        setOrderCount(ordCount ?? 0);
       } catch (err: any) {
         setError(err.message || "خطا در بارگذاری");
       } finally {
@@ -152,11 +168,19 @@ export default function AdminAnalyticsPage() {
         <div className="py-20 text-center text-muted-foreground">در حال بارگذاری...</div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Kpi label="مشاهده محصول" value={(funnel.view_item || 0).toLocaleString("fa-IR")} />
             <Kpi label="افزودن به سبد" value={(funnel.add_to_cart || 0).toLocaleString("fa-IR")} />
             <Kpi label="خرید موفق" value={(funnel.purchase || 0).toLocaleString("fa-IR")} />
             <Kpi label="درآمد (تومان)" value={totalRevenue.toLocaleString("fa-IR")} />
+            <Kpi
+              label="نرخ مرجوعی"
+              value={
+                orderCount > 0
+                  ? ((returnCount / orderCount) * 100).toFixed(1) + "%"
+                  : "—"
+              }
+            />
           </div>
 
           <div className="rounded-2xl border bg-card p-6">
