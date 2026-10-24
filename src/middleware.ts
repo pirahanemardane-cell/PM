@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { applySecurityHeaders } from "@/lib/security/headers";
 import { REQUEST_ID_HEADER, resolveRequestId } from "@/lib/request-id";
+import { assertApiCsrf } from "@/lib/security/csrf-origin";
 
 const PERSIAN_ROUTES: Record<string, string> = {
   "/ورود": "/login",
@@ -125,6 +126,24 @@ async function lookupUrlRedirect(
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // CSRF formal: Origin / Sec-Fetch-Site روی APIهای state-changing
+  if (pathname.startsWith("/api/")) {
+    const csrf = assertApiCsrf({
+      method: request.method,
+      pathname,
+      origin: request.headers.get("origin"),
+      referer: request.headers.get("referer"),
+      secFetchSite: request.headers.get("sec-fetch-site"),
+    });
+    if (!csrf.ok) {
+      return NextResponse.json(
+        { ok: false, error: "csrf_rejected", reason: csrf.reason },
+        { status: 403 },
+      );
+    }
+  }
+
 
   // ریدایرکت formal از DB (۳۰۱ و ...)
   try {
