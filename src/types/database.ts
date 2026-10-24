@@ -896,6 +896,41 @@ export type Database = {
         Relationships: [];
       };
 
+
+      stock_alerts: {
+        Row: {
+          id: string;
+          user_id: string;
+          product_id: string | null;
+          variant_id: string | null;
+          email: string | null;
+          phone: string | null;
+          notified_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          product_id?: string | null;
+          variant_id?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          notified_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          product_id?: string | null;
+          variant_id?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          notified_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
       site_settings: {
         Row: { key: string; value: Json | null; updated_at: string; };
         Insert: { key: string; value?: Json | null; updated_at?: string; };
@@ -912,6 +947,22 @@ export type Database = {
       };
       increment_variant_stock: {
         Args: { p_variant_id: string; p_qty: number };
+        Returns: undefined;
+      };
+      reserve_variant_stock: {
+        Args: { p_variant_id: string; p_qty: number; p_user_id?: string };
+        Returns: undefined;
+      };
+      release_all_user_reservations: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      release_expired_stock_reservations: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+      extend_user_reservations: {
+        Args: { p_user_id: string };
         Returns: undefined;
       };
     };
