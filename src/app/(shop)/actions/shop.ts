@@ -663,7 +663,7 @@ export async function trackOrderAction(code: string) {
         tracking_number: (order as { tracking_number?: string | null }).tracking_number ?? null,
         shipped_at: (order as { shipped_at?: string | null }).shipped_at ?? null,
         created_at: order.created_at as string,
-        items: ((order as { order_items?: unknown[] }).order_items ?? []).map(
+        items: ((order as unknown as { order_items?: unknown[] }).order_items ?? []).map(
           (it: any) => ({
             id: it.id,
             title: it.title,

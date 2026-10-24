@@ -129,7 +129,12 @@ export async function quoteShippingAction(input: {
             "free_shipping_exclude_provider_codes",
           ]);
 
-        const map = new Map((settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+        const map = new Map(
+          (settings ?? []).map((s) => [
+            s.key,
+            typeof s.value === "string" ? s.value : s.value == null ? "" : String(s.value),
+          ]),
+        );
         const enabled = (map.get("free_shipping_enabled") || "false").toLowerCase() === "true";
         const minAmount = Math.max(0, Number(map.get("free_shipping_min_amount") || 0));
         const exclude = (map.get("free_shipping_exclude_provider_codes") || "")

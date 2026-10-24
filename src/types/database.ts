@@ -789,6 +789,101 @@ export type Database = {
         Relationships: [];
       };
 
+
+      shipping_methods: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          fee: number;
+          is_active: boolean;
+          sort_order: number;
+          provider_code: string | null;
+          pricing_type: string | null;
+          api_config: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          fee?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          provider_code?: string | null;
+          pricing_type?: string | null;
+          api_config?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          fee?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          provider_code?: string | null;
+          pricing_type?: string | null;
+          api_config?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      shipping_zones: {
+        Row: { id: string; name: string; is_active: boolean; created_at: string; };
+        Insert: { id?: string; name: string; is_active?: boolean; created_at?: string; };
+        Update: { id?: string; name?: string; is_active?: boolean; created_at?: string; };
+        Relationships: [];
+      };
+      shipping_zone_locations: {
+        Row: { id: string; zone_id: string; province: string; city: string | null; };
+        Insert: { id?: string; zone_id: string; province: string; city?: string | null; };
+        Update: { id?: string; zone_id?: string; province?: string; city?: string | null; };
+        Relationships: [];
+      };
+      shipping_method_zones: {
+        Row: { method_id: string; zone_id: string; };
+        Insert: { method_id: string; zone_id: string; };
+        Update: { method_id?: string; zone_id?: string; };
+        Relationships: [];
+      };
+      order_status_history: {
+        Row: {
+          id: string;
+          order_id: string;
+          from_status: string | null;
+          to_status: string;
+          note: string | null;
+          actor_type: string | null;
+          actor_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          from_status?: string | null;
+          to_status: string;
+          note?: string | null;
+          actor_type?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          from_status?: string | null;
+          to_status?: string;
+          note?: string | null;
+          actor_type?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
       site_settings: {
         Row: { key: string; value: Json | null; updated_at: string; };
         Insert: { key: string; value?: Json | null; updated_at?: string; };
@@ -802,6 +897,10 @@ export type Database = {
       increment_discount_use: {
         Args: { p_code: string };
         Returns: boolean;
+      };
+      increment_variant_stock: {
+        Args: { p_variant_id: string; p_qty: number };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;
