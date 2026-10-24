@@ -181,7 +181,7 @@ export async function adminExportOrdersCsvAction(days = 30): Promise<
     const { data, error } = await gate.supabase
       .from("orders")
       .select(
-        "id, status, total_amount, discount_amount, shipping_name, shipping_phone, shipping_city, shipping_address, tracking_number, created_at",
+        "id, status, payment_status, total_amount, discount_amount, shipping_name, shipping_phone, shipping_city, shipping_address, tracking_number, created_at",
       )
       .gte("created_at", since)
       .order("created_at", { ascending: false })
