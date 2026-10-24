@@ -1264,7 +1264,7 @@ export async function getLiveRecentlyViewedAction(ids: string[]): Promise<{
 
     const byId = new Map<string, LiveRecentProductDTO>();
     for (const p of data ?? []) {
-      const row = p as {
+      const row = p as unknown as {
         id: string;
         name?: string | null;
         slug?: string | null;

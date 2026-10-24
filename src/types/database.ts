@@ -684,18 +684,27 @@ export type Database = {
           id: string; category_id: string | null; author_id: string | null; title: string; slug: string;
           excerpt: string | null; body: string | null; cover_url: string | null; status: string;
           published_at: string | null; meta_title: string | null; meta_description: string | null;
+          og_title: string | null;
+          og_description: string | null;
+          og_image: string | null;
           created_at: string; updated_at: string;
         };
         Insert: {
           id?: string; category_id?: string | null; author_id?: string | null; title: string; slug: string;
           excerpt?: string | null; body?: string | null; cover_url?: string | null; status?: string;
           published_at?: string | null; meta_title?: string | null; meta_description?: string | null;
+          og_title?: string | null;
+          og_description?: string | null;
+          og_image?: string | null;
           created_at?: string; updated_at?: string;
         };
         Update: {
           id?: string; category_id?: string | null; author_id?: string | null; title?: string; slug?: string;
           excerpt?: string | null; body?: string | null; cover_url?: string | null; status?: string;
           published_at?: string | null; meta_title?: string | null; meta_description?: string | null;
+          og_title?: string | null;
+          og_description?: string | null;
+          og_image?: string | null;
           created_at?: string; updated_at?: string;
         };
         Relationships: [];
@@ -906,6 +915,7 @@ export type Database = {
           email: string | null;
           phone: string | null;
           notified_at: string | null;
+          status: string;
           created_at: string;
         };
         Insert: {
@@ -916,6 +926,7 @@ export type Database = {
           email?: string | null;
           phone?: string | null;
           notified_at?: string | null;
+          status?: string;
           created_at?: string;
         };
         Update: {
@@ -926,6 +937,7 @@ export type Database = {
           email?: string | null;
           phone?: string | null;
           notified_at?: string | null;
+          status?: string;
           created_at?: string;
         };
         Relationships: [];
