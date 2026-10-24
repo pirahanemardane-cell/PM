@@ -1099,7 +1099,7 @@ export async function validateDiscountAction(
   return {
     ok: true,
     discount: {
-      code: data.code,
+      code: String(data.code ?? raw),
       type: data.type,
       value,
       discountAmount,

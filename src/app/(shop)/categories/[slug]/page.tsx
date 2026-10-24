@@ -104,7 +104,7 @@ export default async function CategoryListingPage({
 
   const rootsResult = await categoryService.getRoots();
   const categories = rootsResult.success
-    ? rootsResult.data.map((c) => ({ name: c.name, slug: c.slug }))
+    ? (rootsResult.data ?? []).map((c) => ({ name: c.name, slug: c.slug }))
     : [];
 
   const brandSlug = typeof sp.brand === "string" ? sp.brand : undefined;

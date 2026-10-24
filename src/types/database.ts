@@ -687,6 +687,7 @@ export type Database = {
           og_title: string | null;
           og_description: string | null;
           og_image: string | null;
+          og_image_url: string | null;
           created_at: string; updated_at: string;
         };
         Insert: {
@@ -696,6 +697,7 @@ export type Database = {
           og_title?: string | null;
           og_description?: string | null;
           og_image?: string | null;
+          og_image_url?: string | null;
           created_at?: string; updated_at?: string;
         };
         Update: {
@@ -705,6 +707,7 @@ export type Database = {
           og_title?: string | null;
           og_description?: string | null;
           og_image?: string | null;
+          og_image_url?: string | null;
           created_at?: string; updated_at?: string;
         };
         Relationships: [];
@@ -722,9 +725,9 @@ export type Database = {
         Relationships: [];
       };
       support_tickets: {
-        Row: { id: string; user_id: string; subject: string; status: string; priority: string | null; category: string | null; created_at: string; updated_at: string; };
-        Insert: { id?: string; user_id: string; subject: string; status?: string; priority?: string | null; category?: string | null; created_at?: string; updated_at?: string; };
-        Update: { id?: string; user_id?: string; subject?: string; status?: string; priority?: string | null; category?: string | null; created_at?: string; updated_at?: string; };
+        Row: { id: string; user_id: string; subject: string; status: string; priority: string | null; category: string | null; order_id: string | null; created_at: string; updated_at: string; };
+        Insert: { id?: string; user_id: string; subject: string; status?: string; priority?: string | null; category?: string | null; order_id?: string | null; created_at?: string; updated_at?: string; };
+        Update: { id?: string; user_id?: string; subject?: string; status?: string; priority?: string | null; category?: string | null; order_id?: string | null; created_at?: string; updated_at?: string; };
         Relationships: [];
       };
       support_ticket_messages: {
@@ -909,7 +912,7 @@ export type Database = {
       stock_alerts: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
           product_id: string | null;
           variant_id: string | null;
           email: string | null;
@@ -920,7 +923,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          user_id: string;
+          user_id?: string | null;
           product_id?: string | null;
           variant_id?: string | null;
           email?: string | null;
@@ -931,7 +934,7 @@ export type Database = {
         };
         Update: {
           id?: string;
-          user_id?: string;
+          user_id?: string | null;
           product_id?: string | null;
           variant_id?: string | null;
           email?: string | null;

@@ -121,11 +121,11 @@ export default async function BrandListingPage({ params, searchParams }: Props) 
 
   const rootsResult = await categoryService.getRoots();
   const categories = rootsResult.success
-    ? (rootsResult.data as NonNullable<typeof rootsResult.data>).map((c) => ({ name: c.name, slug: c.slug }))
+    ? (rootsResult.data ?? []).map((c: { name: string; slug: string }) => ({ name: c.name, slug: c.slug }))
     : [];
 
   const facetsResult = await attributeService.getFilterableFacets();
-  const allFacets = facetsResult.success ? facetsResult.data : [];
+  const allFacets = facetsResult.success ? (facetsResult.data ?? []) : [];
   const allowed = new Set(facetSlugsForCategory(categorySlug));
   const facets = allFacets.filter((f) => allowed.has(f.slug));
 
