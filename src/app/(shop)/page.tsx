@@ -72,14 +72,13 @@ export default async function HomePage() {
   const categoriesResult = pick(3, { success: false as const, data: null });
   const brandsResult = pick(4, { success: false as const, data: null });
 
-  const featured: ProductWithRelations[] =
-    featuredResult.success && featuredResult.data
-      ? (featuredResult.data.data as ProductWithRelations[])
-      : [];
-  const newest: ProductWithRelations[] =
-    newResult.success && newResult.data
-      ? (newResult.data.data as ProductWithRelations[])
-      : [];
+  const pageData = (r: { success?: boolean; data?: unknown }) => {
+    if (!r?.success || !r.data || typeof r.data !== "object") return [] as ProductWithRelations[];
+    const inner = (r.data as { data?: unknown }).data;
+    return Array.isArray(inner) ? (inner as ProductWithRelations[]) : [];
+  };
+  const featured: ProductWithRelations[] = pageData(featuredResult as { success?: boolean; data?: unknown });
+  const newest: ProductWithRelations[] = pageData(newResult as { success?: boolean; data?: unknown });
   const categories =
     categoriesResult.success && categoriesResult.data
       ? categoriesResult.data
@@ -87,10 +86,9 @@ export default async function HomePage() {
   const brands =
     brandsResult.success && brandsResult.data ? brandsResult.data : [];
 
-  const bestsellersRaw: ProductWithRelations[] =
-    bestsellerResult.success && bestsellerResult.data
-      ? (bestsellerResult.data.data as ProductWithRelations[])
-      : [];
+  const bestsellersRaw: ProductWithRelations[] = pageData(
+    bestsellerResult as { success?: boolean; data?: unknown },
+  );
   const bestsellers =
     bestsellersRaw.length > 0
       ? bestsellersRaw

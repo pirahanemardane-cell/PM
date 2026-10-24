@@ -13,9 +13,14 @@ import { ProductFiltersSidebar } from "./product-filters-sidebar";
 import type { AttributeWithOptions } from "@/repositories/attribute.repository";
 import { cn } from "@/lib/utils";
 
+type Chip = { id: string; name: string; slug: string; hex?: string | null };
 type Props = {
   facets: AttributeWithOptions[];
   current: Record<string, string>;
+  colors?: Chip[];
+  sizes?: Chip[];
+  colorSlug?: string;
+  sizeSlug?: string;
   categories?: { name: string; slug: string }[];
   categorySlug?: string;
   brandSlug?: string;

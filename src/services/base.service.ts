@@ -6,7 +6,7 @@ export abstract class BaseService {
     return { success: true, data, error: null };
   }
 
-  protected failure(error: string): ApiResponse<never> {
+  protected failure<T = null>(error: string): ApiResponse<T> {
     return { success: false, data: null, error };
   }
 

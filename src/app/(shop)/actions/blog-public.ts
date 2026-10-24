@@ -34,7 +34,8 @@ export async function getPublishedPostBySlugAction(slug: string) {
       .maybeSingle();
     if (error) throw error;
     if (!data) return { ok: false as const, post: null, error: "not_found" };
-    return { ok: true as const, post: data };
+    // cast: generated DB types may lag behind real columns (robots_*, og_*)
+    return { ok: true as const, post: data as Record<string, unknown> };
   } catch (e) {
     console.error("[getPublishedPost]", e);
     return { ok: false as const, post: null, error: "server" };

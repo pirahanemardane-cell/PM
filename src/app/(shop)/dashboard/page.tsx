@@ -107,9 +107,10 @@ export default function BuyerDashboardPage() {
   // سازگاری با UI قبلی
   const serverCart = serverLines as unknown as CartLineDTO[];
   const setServerCart = (updater: CartLineDTO[] | ((prev: CartLineDTO[]) => CartLineDTO[])) => {
-    const store = useServerCartStore.getState();
-    const next = typeof updater === "function" ? updater(store.lines as unknown as CartLineDTO[]) : updater;
-    store.setLines(next as unknown as import("@/lib/server-cart-store").ServerCartLine[]);
+    const state = useServerCartStore.getState();
+    const prev = state.lines as unknown as CartLineDTO[];
+    const next = typeof updater === "function" ? updater(prev) : updater;
+    state.setLines(next as unknown as import("@/lib/server-cart-store").ServerCartLine[]);
   };
   const [cartLoading, setCartLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);

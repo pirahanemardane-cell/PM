@@ -130,7 +130,7 @@ export default async function CategoryListingPage({
 
   const attributeService = new AttributeService();
   const facetsResult = await attributeService.getFilterableFacets();
-  const allFacets = facetsResult.success ? facetsResult.data : [];
+  const allFacets = (facetsResult.success && facetsResult.data) ? facetsResult.data : [];
   const allowed = new Set(facetSlugsForCategory(slug));
   const facets = allFacets.filter((f) => allowed.has(f.slug));
 
