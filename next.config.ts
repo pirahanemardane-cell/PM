@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   compress: true,
@@ -19,6 +24,9 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-navigation-menu",
       "date-fns",
       "date-fns-jalali",
+      "framer-motion",
+      "embla-carousel-react",
+      "lucide-react",
     ],
   },
 
@@ -118,4 +126,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

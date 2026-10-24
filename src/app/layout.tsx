@@ -7,6 +7,7 @@ import { DeferredRealtime } from "@/components/providers/deferred-realtime";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 import { isSiteIndexable } from "@/lib/seo/indexing";
+import { WebVitalsReporter } from "@/components/performance/web-vitals-reporter";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pirahanmardane.ir";
 
@@ -130,6 +131,7 @@ export default function RootLayout({
           <Toaster theme="light" position="top-left" richColors closeButton />
           <DeferredRealtime />
           <AppToaster />
+          <WebVitalsReporter />
         </ThemeProvider>
       </body>
     </html>
