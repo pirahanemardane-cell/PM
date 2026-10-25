@@ -41,9 +41,9 @@
 ## F) اتوماتیک — ثبت نتیجه
 | چک | نتیجه | تاریخ |
 |----|--------|-------|
-| npm test |  |  |
-| bash scripts/security-smoke.sh |  |  |
-| npm run test:e2e:smoke |  |  |
+| npm test                       | PASS 47/47 | 2026-10-25 |
+| bash scripts/security-smoke.sh | PASS       | 2026-10-25 |
+| npm run test:e2e:smoke         | N/A mac12  | 2026-10-25 |
 | Vercel build |  |  |
 | GitHub CI |  |  |
 
