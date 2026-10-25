@@ -182,3 +182,19 @@ export async function processPendingJobs(limit = 10) {
   }
   return { ok: true as const, processed };
 }
+
+/** enqueue + تلاش فوری برای پردازش (مناسب Hobby بدون کرون هر ۵ دقیقه) */
+export async function enqueueAndKick(
+  jobType: JobType | string,
+  payload: Record<string, unknown> = {},
+  opts?: { delaySeconds?: number; maxAttempts?: number },
+) {
+  const enq = await enqueueJob(jobType, payload, opts);
+  // best-effort; خطا مانع enqueue نیست
+  try {
+    await processPendingJobs(5);
+  } catch (e) {
+    console.warn("[enqueueAndKick process]", e);
+  }
+  return enq;
+}

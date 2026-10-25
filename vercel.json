@@ -64,7 +64,7 @@
     },
     {
       "path": "/api/cron/jobs",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }
