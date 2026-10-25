@@ -37,10 +37,14 @@ npm run dev
 ## استقرار
 هر push روی branch اصلی به‌صورت خودکار روی Vercel دیپلوی می‌شود.
 
-## وضعیت فعلی (اکتبر ۲۰۲۶)
-- سایت زنده است اما هنوز noindex (پیش‌انتشار)
-- کاتالوگ محصول واقعی هنوز وارد نشده
-- درگاه پرداخت و باشگاه مشتریان کامل در فاز بعدی
+## وضعیت فعلی (۲۵ اکتبر ۲۰۲۶)
+
+- Production: https://pirahanmardane.ir — از `main` روی Vercel
+- QA Formal: unit + security-smoke + smoke دستی + QA دستی کوتاه → **PASS** (2026-10-25)
+- Backup: cron روزانه + تأیید دستی curl → فایل R2 `backups/db/…` (2026-10-25)
+- پیش‌انتشار: `noindex` تا تصمیم مالک برای ایندکس
+- **موکول عمدی مالک:** درگاه پرداخت production · ENV پیامک production
+- چک‌لیست‌ها: [QA](docs/30-QA-CHECKLIST.md) · [Release/Ops](docs/31-RELEASE-OPS-CHECKLIST.md)
 
 ## تماس
 برای سوالات فنی به صاحب پروژه مراجعه کنید.
