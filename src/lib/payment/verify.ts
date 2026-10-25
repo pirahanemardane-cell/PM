@@ -1,4 +1,5 @@
 import { notifyPaymentSuccess } from "@/lib/sms/transactional";
+import { emailPaymentSuccess } from "@/lib/email/send";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type PaymentVerifyInput = {
@@ -52,7 +53,7 @@ export async function verifyAndApplyPayment(
 
   const { data: order, error: orderErr } = await service
     .from("orders")
-    .select("id, total, total_amount, payment_status, status, shipping_phone, shipping_name")
+    .select("id, total, total_amount, payment_status, status, shipping_phone, shipping_name, shipping_email, user_id")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -194,6 +195,37 @@ export async function verifyAndApplyPayment(
     await notifyPaymentSuccess({ phone, name, orderId, amount: total });
   } catch (smsErr) {
     console.warn("[sms payment]", smsErr);
+  }
+
+  
+  try {
+    let emailTo = String((order as { shipping_email?: string }).shipping_email ?? "").trim();
+    if (!emailTo) {
+      try {
+        const uid = String((order as { user_id?: string }).user_id ?? "");
+        if (uid) {
+          const { data: u } = await service.auth.admin.getUserById(uid);
+          emailTo = String(u?.user?.email ?? "").trim();
+        }
+      } catch {
+        /* optional */
+      }
+    }
+    if (emailTo) {
+      await emailPaymentSuccess({
+        to: emailTo,
+        name: String((order as { shipping_name?: string }).shipping_name ?? "مشتری"),
+        orderId,
+        amount: String(
+          (order as { total_amount?: number }).total_amount ??
+            (order as { total?: number }).total ??
+            amount ??
+            "",
+        ),
+      });
+    }
+  } catch (emErr) {
+    console.warn("[email payment]", emErr);
   }
 
   return { ok: true, alreadyProcessed: false, refId, paymentStatus: "paid" };

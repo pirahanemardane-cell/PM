@@ -1,5 +1,6 @@
 "use server";
 import { notifyOrderPlaced } from "@/lib/sms/transactional";
+import { emailOrderPlaced } from "@/lib/email/send";
 
 import { createClient } from "@/lib/supabase/server";
 import { WishlistRepository } from "@/repositories/wishlist.repository";
@@ -597,6 +598,23 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       console.warn("[sms order placed]", smsErr);
     }
 
+      try {
+        const emailTo =
+          String((payload as { email?: string }).email ?? "").trim() ||
+          (user && typeof user === "object" && "email" in user
+            ? String((user as { email?: string }).email ?? "")
+            : "");
+        if (emailTo) {
+          await emailOrderPlaced({
+            to: emailTo,
+            customerName: nameOk.text,
+            orderId,
+            amount: String((payload as { total?: number }).total ?? ""),
+          });
+        }
+      } catch (emErr) {
+        console.warn("[email order placed]", emErr);
+      }
 
     // ذخیره آدرس فقط برای کاربر لاگین‌شده
     if (!user?.id) {

@@ -1,5 +1,6 @@
 "use server";
 import { notifyShipped } from "@/lib/sms/transactional";
+import { emailShipped } from "@/lib/email/send";
 
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
 
@@ -311,6 +312,30 @@ export async function adminSetOrderTrackingAction(
           await notifyShipped({ phone, name, orderId, tracking: code });
         } catch (smsErr) {
           console.warn("[sms shipped]", smsErr);
+
+        try {
+          let emailTo = String((order as { shipping_email?: string } | null)?.shipping_email ?? "").trim();
+          if (!emailTo) {
+            const uid = String((order as { user_id?: string } | null)?.user_id ?? "");
+            if (uid) {
+              try {
+                const { data: u } = await service.auth.admin.getUserById(uid);
+                emailTo = String(u?.user?.email ?? "").trim();
+              } catch { /* */ }
+            }
+          }
+          if (emailTo) {
+            await emailShipped({
+              to: emailTo,
+              customerName: String((order as { shipping_name?: string } | null)?.shipping_name ?? "مشتری"),
+              orderId,
+              tracking: code,
+            });
+          }
+        } catch (emErr) {
+          console.warn("[email shipped]", emErr);
+        }
+
         }
 
       }
