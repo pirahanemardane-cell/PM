@@ -1,5 +1,6 @@
-import { getTrackingUrl } from "@/lib/iran-shipping-tracking";
 "use client";
+
+import { getTrackingUrl } from "@/lib/iran-shipping-tracking";
 
 import { Price } from "@/components/ui/price";
 import { normalizeIranMobile, normalizeIranPostalCode } from "@/lib/numbers";
