@@ -605,23 +605,3 @@ summary:focus-visible {
   scroll-margin-bottom: 1rem;
 }
 /* لینک پرش به محتوا */
-.skip-to-content {
-  position: absolute;
-  inset-inline-start: 1rem;
-  top: 0.75rem;
-  z-index: 10000;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  background: #13ABC4;
-  color: #212529;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transform: translateY(-120%);
-  transition: transform 0.15s ease;
-}
-.skip-to-content:focus,
-.skip-to-content:focus-visible {
-  transform: translateY(0);
-  outline: 2px solid #212529;
-  outline-offset: 2px;
-}
