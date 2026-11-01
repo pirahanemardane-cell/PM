@@ -1,3 +1,4 @@
+import { notifyShipped } from "@/lib/sms/transactional";
 "use server";
 
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
@@ -303,6 +304,15 @@ export async function adminSetOrderTrackingAction(
         }
       } catch (ne) {
         console.error("[adminSetOrderTracking notify]", ne);
+
+        try {
+          const phone = String((order as { shipping_phone?: string } | null)?.shipping_phone ?? "");
+          const name = String((order as { shipping_name?: string } | null)?.shipping_name ?? "مشتری");
+          await notifyShipped({ phone, name, orderId, tracking: code });
+        } catch (smsErr) {
+          console.warn("[sms shipped]", smsErr);
+        }
+
       }
     }
 

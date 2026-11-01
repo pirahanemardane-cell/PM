@@ -1,3 +1,4 @@
+import { notifyPaymentSuccess } from "@/lib/sms/transactional";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type PaymentVerifyInput = {
@@ -51,7 +52,7 @@ export async function verifyAndApplyPayment(
 
   const { data: order, error: orderErr } = await service
     .from("orders")
-    .select("id, total, payment_status, status")
+    .select("id, total, total_amount, payment_status, status, shipping_phone, shipping_name")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -178,6 +179,21 @@ export async function verifyAndApplyPayment(
     });
   } catch {
     /* optional */
+  }
+
+  
+  try {
+    const phone = String((order as { shipping_phone?: string }).shipping_phone ?? "");
+    const name = String((order as { shipping_name?: string }).shipping_name ?? "مشتری");
+    const total = String(
+      (order as { total_amount?: number }).total_amount ??
+        (order as { total?: number }).total ??
+        amount ??
+        "",
+    );
+    await notifyPaymentSuccess({ phone, name, orderId, amount: total });
+  } catch (smsErr) {
+    console.warn("[sms payment]", smsErr);
   }
 
   return { ok: true, alreadyProcessed: false, refId, paymentStatus: "paid" };

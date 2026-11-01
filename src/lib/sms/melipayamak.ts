@@ -1,16 +1,17 @@
 /**
- * ملی‌پیامک
- * 1) الگو تأییدشده: BaseServiceNumber + MELIPAYAMAK_BODY_ID
- * 2) fallback: SendOtp (متن ثابت سامانه)
- * مستند REST: https://rest.payamak-panel.com/api/SendSMS/...
+ * ملی‌پیامک — الگو + OTP
  */
-
 export type MeliResult =
   | { ok: true; recId: string }
   | { ok: false; error: string; raw?: string };
 
-function requireEnv(name: string): string {
+function env(name: string): string | undefined {
   const v = process.env[name]?.trim();
+  return v || undefined;
+}
+
+function requireEnv(name: string): string {
+  const v = env(name);
   if (!v) throw new Error(`Missing env: ${name}`);
   return v;
 }
@@ -18,7 +19,6 @@ function requireEnv(name: string): string {
 function parseResponse(body: string): MeliResult {
   const t = (body || "").trim().replace(/^"|"$/g, "");
   if (!t) return { ok: false, error: "empty_response", raw: body };
-
   try {
     const j = JSON.parse(t) as Record<string, unknown>;
     const val = String(j.Value ?? j.value ?? j.RecId ?? j.recId ?? "");
@@ -31,7 +31,6 @@ function parseResponse(body: string): MeliResult {
   } catch {
     /* plain */
   }
-
   if (/^\d{5,}$/.test(t)) return { ok: true, recId: t };
   if (/^-?\d+$/.test(t)) {
     const n = Number(t);
@@ -54,50 +53,51 @@ async function postForm(path: string, fields: Record<string, string>): Promise<M
   return parseResponse(text);
 }
 
-/** ارسال با الگوی تأییدشده — text = مقادیر متغیرها با ; */
-export async function meliSendByPattern(opts: {
+export async function meliSendByBodyId(opts: {
   to: string;
-  /** مثلاً فقط کد: "123456" یا چند متغیر: "علی;123456" */
+  bodyId: string;
   text: string;
 }): Promise<MeliResult> {
-  const username = requireEnv("MELIPAYAMAK_USERNAME");
-  const password = requireEnv("MELIPAYAMAK_PASSWORD");
-  const bodyId = requireEnv("MELIPAYAMAK_BODY_ID");
-
+  const username = env("MELIPAYAMAK_USERNAME");
+  const password = env("MELIPAYAMAK_PASSWORD");
+  if (!username || !password) return { ok: false, error: "config_missing_credentials" };
+  if (!opts.bodyId?.trim()) return { ok: false, error: "config_missing_body_id" };
   return postForm("BaseServiceNumber", {
     username,
     password,
     to: opts.to,
     text: opts.text,
-    bodyId,
+    bodyId: opts.bodyId.trim(),
   });
 }
 
-/** SendOtp ساده — متن ثابت سامانه */
-export async function meliSendOtp(opts: {
-  to: string;
-  code: number;
-}): Promise<MeliResult> {
-  const username = requireEnv("MELIPAYAMAK_USERNAME");
-  const password = requireEnv("MELIPAYAMAK_PASSWORD");
-  const from = requireEnv("MELIPAYAMAK_FROM");
-
-  return postForm("SendOtp", {
-    username,
-    password,
-    to: opts.to,
-    from,
-    code: String(opts.code),
-  });
+export async function meliSendByPattern(opts: { to: string; text: string }): Promise<MeliResult> {
+  const bodyId = env("MELIPAYAMAK_BODY_ID");
+  if (!bodyId) return { ok: false, error: "config_missing_body_id" };
+  return meliSendByBodyId({ to: opts.to, bodyId, text: opts.text });
 }
 
-/** ترجیح: الگو اگر BODY_ID باشد، وگرنه SendOtp */
-export async function meliSendLoginCode(opts: {
-  to: string;
-  code: string;
-}): Promise<MeliResult> {
-  if (process.env.MELIPAYAMAK_BODY_ID?.trim()) {
-    return meliSendByPattern({ to: opts.to, text: opts.code });
+export async function meliSendOtp(opts: { to: string; code: number }): Promise<MeliResult> {
+  try {
+    const username = requireEnv("MELIPAYAMAK_USERNAME");
+    const password = requireEnv("MELIPAYAMAK_PASSWORD");
+    const from = requireEnv("MELIPAYAMAK_FROM");
+    return postForm("SendOtp", {
+      username,
+      password,
+      to: opts.to,
+      from,
+      code: String(opts.code),
+    });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "config" };
+  }
+}
+
+export async function meliSendLoginCode(opts: { to: string; code: string }): Promise<MeliResult> {
+  if (env("MELIPAYAMAK_BODY_ID") || env("MELIPAYAMAK_BODY_OTP_LOGIN")) {
+    const bodyId = env("MELIPAYAMAK_BODY_OTP_LOGIN") || env("MELIPAYAMAK_BODY_ID")!;
+    return meliSendByBodyId({ to: opts.to, bodyId, text: opts.code });
   }
   return meliSendOtp({ to: opts.to, code: Number(opts.code) });
 }

@@ -1,3 +1,4 @@
+import { notifyOrderPlaced } from "@/lib/sms/transactional";
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -580,6 +581,22 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     });
 
     await cartRepo.clearCart(cartId);
+    // SMS تراکنشی (fail-soft)
+    try {
+      await notifyOrderPlaced({
+        customerPhone: phoneOk.text,
+        customerName: nameOk.text,
+        orderId,
+        amount: String(
+          (payload as { total?: number; totalAmount?: number }).total ??
+            (payload as { totalAmount?: number }).totalAmount ??
+            "",
+        ),
+      });
+    } catch (smsErr) {
+      console.warn("[sms order placed]", smsErr);
+    }
+
 
     // ذخیره آدرس فقط برای کاربر لاگین‌شده
     if (!user?.id) {
