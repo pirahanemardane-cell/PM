@@ -1,5 +1,5 @@
-import { notifyOrderPlaced } from "@/lib/sms/transactional";
 "use server";
+import { notifyOrderPlaced } from "@/lib/sms/transactional";
 
 import { createClient } from "@/lib/supabase/server";
 import { WishlistRepository } from "@/repositories/wishlist.repository";

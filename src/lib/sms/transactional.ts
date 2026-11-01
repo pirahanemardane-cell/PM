@@ -20,14 +20,14 @@ export async function sendPatternSms(
 ): Promise<MeliResult & { skipped?: boolean }> {
   const bodyId = resolveBodyId(key);
   if (!bodyId) {
-    console.warn(\`[sms] skip \${key}: missing \${SMS_PATTERNS[key].envKey}\`);
+    console.warn("[sms] skip " + key + ": missing " + SMS_PATTERNS[key].envKey);
     return { ok: false, error: "missing_body_id", skipped: true };
   }
   if (!to?.trim()) return { ok: false, error: "empty_phone" };
   try {
     return await meliSendByBodyId({ to: to.trim(), bodyId, text: joinVars(vars) });
   } catch (e) {
-    console.error(\`[sms] \${key}\`, e);
+    console.error("[sms] " + key, e);
     return { ok: false, error: e instanceof Error ? e.message : "send_failed" };
   }
 }

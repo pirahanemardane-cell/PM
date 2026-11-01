@@ -1,5 +1,5 @@
-import { notifyShipped } from "@/lib/sms/transactional";
 "use server";
+import { notifyShipped } from "@/lib/sms/transactional";
 
 import { adminWriteLogAction } from "@/app/admin/actions/logs";
 
