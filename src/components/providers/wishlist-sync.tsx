@@ -25,7 +25,7 @@ export function WishlistSync() {
           title: i.title,
           price: i.price,
           image: i.image,
-          href: i.slug ? `/products/${i.slug}` : undefined,
+          href: i.slug ? `/محصولات/${i.slug}` : undefined,
         }));
         useShopStore.setState({ wishlist: mapped });
         return;

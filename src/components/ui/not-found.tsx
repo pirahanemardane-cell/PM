@@ -37,9 +37,9 @@ export function NotFound({
     e.preventDefault();
     const term = q.trim();
     if (term) {
-      router.push(`/products?q=${encodeURIComponent(term)}`);
+      router.push(`/محصولات?q=${encodeURIComponent(term)}`);
     } else {
-      router.push("/products");
+      router.push("/محصولات");
     }
   }
 

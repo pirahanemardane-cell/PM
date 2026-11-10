@@ -83,7 +83,7 @@ export function NotificationBell({ className, variant = "header" }: Props) {
                 </button>
               ) : null}
               <Link
-                href="/dashboard?tab=notifications"
+                href="/داشبورد?tab=notifications"
                 className="text-muted-foreground text-xs hover:underline"
                 onClick={() => setOpen(false)}
               >

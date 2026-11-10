@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: p.canonical_url ? { canonical: p.canonical_url } : undefined,
+    alternates: { canonical: p.canonical_url || `/بلاگ/${slug}` },
     robots: {
       index: p.robots_index !== false,
       follow: p.robots_follow !== false,
@@ -82,11 +82,11 @@ export default async function BlogPostPage({ params }: Props) {
           breadcrumbSchema([
             { name: "خانه", url: siteBase + "/" },
             { name: "بلاگ", url: siteBase + "/blog" },
-            { name: post.title, url: siteBase + "/blog/" + slug },
+            { name: post.title, url: siteBase + "/بلاگ/" + slug },
           ]),
         ]}
       />
-      <Link href="/blog" className="text-primary text-sm underline">
+      <Link href="/بلاگ" className="text-primary text-sm underline">
         ← بازگشت به بلاگ
       </Link>
       {post.category?.name ? (

@@ -114,7 +114,7 @@ function buildHref(
   if (maxP != null && maxP > 0) params.set("maxPrice", String(maxP));
 
   const qs = params.toString();
-  return qs ? `/products?${qs}` : "/products";
+  return qs ? `/محصولات?${qs}` : "/محصولات";
 }
 
 function FilterLink({

@@ -1460,7 +1460,7 @@ export async function getLiveRecentlyViewedAction(ids: string[]): Promise<{
         price,
         image,
         brand,
-        href: slug ? `/products/${slug}` : `/products/${row.id}`,
+        href: slug ? `/محصولات/${slug}` : `/محصولات/${row.id}`,
       });
     }
 

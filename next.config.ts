@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
+import { nextFaRewrites } from "./src/lib/seo/fa-routes";
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
@@ -88,17 +89,8 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    return [
-      { source: "/علاقه-مندی-ها", destination: "/dashboard?tab=wishlist" },
-      { source: "/مقایسه", destination: "/dashboard?tab=compare" },
-      { source: "/سبد-خرید", destination: "/cart" },
-      { source: "/آخرین-مشاهده-ها", destination: "/dashboard?tab=recent" },
-      { source: "/محصولات", destination: "/products" },
-      { source: "/ورود", destination: "/login" },
-      { source: "/%D9%88%D8%B1%D9%88%D8%AF", destination: "/login" },
-      { source: "/ثبت-نام", destination: "/register" },
-      { source: "/%D8%AB%D8%A8%D8%AA-%D9%86%D8%A7%D9%85", destination: "/register" },
-    ];
+    // Persian-canonical paths → English app routes (proxy also rewrites + 301s EN→FA)
+    return nextFaRewrites();
   },
 
   images: {

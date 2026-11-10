@@ -33,7 +33,7 @@ export default function CheckoutError({
           تلاش مجدد
         </button>
         <Link
-          href="/products"
+          href="/محصولات"
           className="border-border rounded-xl border px-4 py-2 text-sm"
         >
           بازگشت به فروشگاه

@@ -233,7 +233,7 @@ export default async function HomePage() {
             return homeCats.length > 0 ? (
               <CarouselLinks
                 title="دسته‌بندی‌ها"
-                viewAllHref="/products"
+                viewAllHref="/محصولات"
                 variant="category"
                 items={homeCats.map((cat) => ({
                   id: cat.id,
@@ -249,7 +249,7 @@ export default async function HomePage() {
           {newest.length > 0 ? (
             <ProductCarousel
               title="محصولات جدید"
-              viewAllHref="/products?sort=newest"
+              viewAllHref="/محصولات?sort=newest"
               products={newest}
               liveQuery={{ sort: "newest", pageSize: 8 }}
             />
@@ -268,7 +268,7 @@ export default async function HomePage() {
             {flashActive && (deals.length > 0 || flashEndsAt) ? (
               <ProductCarousel
                 title="پیشنهاد شگفت‌انگیز"
-                viewAllHref="/products?featured=1"
+                viewAllHref="/محصولات?featured=1"
                 products={deals}
                 liveQuery={{ featured: true, pageSize: 8 }}
                 leading={
@@ -292,7 +292,7 @@ export default async function HomePage() {
           {bestsellers.length > 0 ? (
             <ProductCarousel
               title="پرفروش‌ترین‌ها"
-              viewAllHref="/products?sort=popular"
+              viewAllHref="/محصولات?sort=popular"
               products={bestsellers}
               liveQuery={{ sort: "popular", pageSize: 12 }}
             />

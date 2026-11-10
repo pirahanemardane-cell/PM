@@ -57,11 +57,11 @@ export function TabChat() {
       ) : (
         <p className="text-muted-foreground text-sm">
           لینک واتساپ هنوز توسط فروشگاه تنظیم نشده. از{" "}
-          <Link href="/dashboard?tab=tickets" className="underline">
+          <Link href="/داشبورد?tab=tickets" className="underline">
             تیکت پشتیبانی
           </Link>{" "}
           یا{" "}
-          <Link href="/contact" className="underline">
+          <Link href="/تماس" className="underline">
             تماس
           </Link>{" "}
           استفاده کنید.

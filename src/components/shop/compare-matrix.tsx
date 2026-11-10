@@ -16,7 +16,7 @@ export function CompareMatrix() {
     return (
       <div className="border-border rounded-xl border p-8 text-center text-sm">
         <p className="text-muted-foreground mb-3">لیست مقایسه خالی است.</p>
-        <Link href="/products" className="text-primary underline">
+        <Link href="/محصولات" className="text-primary underline">
           رفتن به فروشگاه
         </Link>
       </div>
@@ -91,7 +91,7 @@ export function CompareMatrix() {
         </tbody>
       </table>
       <div className="border-border border-t p-3 text-xs">
-        <Link href="/dashboard?tab=compare" className="text-primary underline">
+        <Link href="/مقایسه" className="text-primary underline">
           مشاهده در داشبورد
         </Link>
       </div>

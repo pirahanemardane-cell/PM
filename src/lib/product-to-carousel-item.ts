@@ -77,7 +77,7 @@ export function productToCarouselCardItem(
       id: product.id,
       title: product.name,
       brand: brandName(product),
-      href: `/products/${product.slug}`,
+      href: `/محصولات/${product.slug}`,
       imageUrl,
       imageAlt: alt,
       price,
@@ -91,7 +91,7 @@ export function productToCarouselCardItem(
     return {
       id: product.id || "unknown",
       title: product.name || "محصول",
-      href: product.slug ? `/products/${product.slug}` : "/products",
+      href: product.slug ? `/محصولات/${product.slug}` : "/محصولات",
       imageUrl: FALLBACK_IMAGE,
       price: 0,
     };

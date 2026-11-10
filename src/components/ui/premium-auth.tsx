@@ -94,10 +94,10 @@ function resolvePostAuthDestination(opts: {
     opts.defaultNext.startsWith("/") &&
     !opts.defaultNext.startsWith("//")
       ? opts.defaultNext
-      : "/dashboard";
+      : "/داشبورد";
 
   let dest = qNext || fallback;
-  if (!dest.startsWith("/") || dest.startsWith("//")) dest = "/dashboard";
+  if (!dest.startsWith("/") || dest.startsWith("//")) dest = "/داشبورد";
 
   // مسیرهای auth/خانه بعد از ورود → پنل مشتری
   if (
@@ -107,19 +107,19 @@ function resolvePostAuthDestination(opts: {
     dest === "/register" ||
     dest === "/ثبت-نام"
   ) {
-    dest = "/dashboard";
+    dest = "/داشبورد";
   }
 
   // /admin فقط اگر صریحاً مجاز (نقش ادمین یا next/defaultNext ادمین از صفحهٔ لاگین ادمین)
   if (dest.startsWith("/admin") && !opts.allowAdmin) {
-    dest = "/dashboard";
+    dest = "/داشبورد";
   }
   return dest;
 }
 
 function navigateAfterAuth(dest?: string) {
   const target =
-    dest && dest.startsWith("/") && !dest.startsWith("//") ? dest : "/dashboard";
+    dest && dest.startsWith("/") && !dest.startsWith("//") ? dest : "/داشبورد";
   window.location.assign(target);
 }
 
@@ -272,7 +272,7 @@ export function AuthForm({
         ).startsWith("/admin");
         const dest = resolvePostAuthDestination({
           defaultNext:
-            defaultNext || (isAdmin ? "/admin/dashboard" : "/dashboard"),
+            defaultNext || (isAdmin ? "/admin/dashboard" : "/داشبورد"),
           allowAdmin:
             isAdmin ||
             qNextAdmin ||
@@ -326,7 +326,7 @@ export function AuthForm({
         const dest = resolvePostAuthDestination({
           defaultNext:
             defaultNext ||
-            (isAdmin && qNextAdmin ? "/admin/dashboard" : "/dashboard"),
+            (isAdmin && qNextAdmin ? "/admin/dashboard" : "/داشبورد"),
           allowAdmin,
         });
         setIsLoading(false);
@@ -491,7 +491,7 @@ export function AuthForm({
         }
         setSuccessMessage("رمز جدید ذخیره شد");
         setIsLoading(false);
-        navigateAfterAuth("/dashboard");
+        navigateAfterAuth("/داشبورد");
         return;
       }
 
@@ -650,7 +650,7 @@ export function AuthForm({
           } catch {}
           // همیشه پنل مشتری — نه تاخیر؛ مسیر ثابت /dashboard
           setIsLoading(false);
-          navigateAfterAuth("/dashboard");
+          navigateAfterAuth("/داشبورد");
           return;
         }
 
@@ -1145,7 +1145,7 @@ export function AuthForm({
                 } catch {}
                 navigateAfterAuth(
                   resolvePostAuthDestination({
-                    defaultNext: defaultNext || "/dashboard",
+                    defaultNext: defaultNext || "/داشبورد",
                     allowAdmin: false,
                   }),
                 );

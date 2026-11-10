@@ -37,7 +37,7 @@ export function TabReviews() {
           <article key={r.id} className="border-border rounded-xl border p-4 text-sm">
             <div className="mb-1 flex flex-wrap gap-2 text-xs">
               {r.product?.slug ? (
-                <Link href={`/products/${r.product.slug}`} className="font-medium underline">
+                <Link href={`/محصولات/${r.product.slug}`} className="font-medium underline">
                   {r.product.name}
                 </Link>
               ) : null}

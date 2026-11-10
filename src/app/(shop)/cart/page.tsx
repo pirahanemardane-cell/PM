@@ -236,7 +236,7 @@ export default function CartPage() {
           </p>
         </div>
         <Link
-          href="/products"
+          href="/محصولات"
           className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           ادامه خرید
@@ -256,7 +256,7 @@ export default function CartPage() {
           description="هنوز محصولی به سبد اضافه نکرده‌اید."
         />
           <Link
-            href="/products"
+            href="/محصولات"
             className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-xl px-5 text-sm font-medium"
           >
             مشاهده محصولات
@@ -407,7 +407,7 @@ export default function CartPage() {
               <p className="text-lg font-bold text-primary">{fmtPrice(total)}</p>
             </div>
             <Link
-              href="/checkout"
+              href="/تسویه-حساب"
               className="bg-primary text-primary-foreground inline-flex h-11 items-center rounded-xl px-6 text-sm font-bold"
             >
               تسویه حساب

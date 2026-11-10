@@ -37,7 +37,7 @@ export function TabQA() {
           <article key={q.id} className="border-border rounded-xl border p-4 text-sm">
             <div className="text-muted-foreground mb-1 flex flex-wrap gap-2 text-xs">
               {q.product?.slug ? (
-                <Link href={`/products/${q.product.slug}`} className="underline">
+                <Link href={`/محصولات/${q.product.slug}`} className="underline">
                   {q.product.name}
                 </Link>
               ) : null}

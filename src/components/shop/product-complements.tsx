@@ -24,7 +24,7 @@ export function ProductComplements({ productId }: { productId: string }) {
         {items.map((c) => (
           <Link
             key={c.id}
-            href={`/products/${c.product.slug}`}
+            href={`/محصولات/${c.product.slug}`}
             className="border-border hover:border-primary/40 rounded-xl border p-3 transition-colors"
           >
             <p className="text-muted-foreground text-[11px]">

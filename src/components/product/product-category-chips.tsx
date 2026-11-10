@@ -32,7 +32,7 @@ function buildHref(
     }
   }
   const qs = params.toString();
-  return qs ? `/products?${qs}` : "/products";
+  return qs ? `/محصولات?${qs}` : "/محصولات";
 }
 
 export function ProductCategoryChips({

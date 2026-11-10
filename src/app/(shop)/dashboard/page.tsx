@@ -297,7 +297,7 @@ useEffect(() => {
         if (!data.session?.user) {
           setAuthChecked(true);
           setAuthOk(false);
-          router.replace("/ورود?next=/dashboard");
+          router.replace("/ورود?next=/داشبورد");
           return;
         }
         setAuthOk(true);
@@ -316,7 +316,7 @@ useEffect(() => {
         if (!cancelled) {
           setAuthChecked(true);
           setAuthOk(false);
-          router.replace("/ورود?next=/dashboard");
+          router.replace("/ورود?next=/داشبورد");
         }
       }
     })();
@@ -630,7 +630,7 @@ useEffect(() => {
             <div className="flex flex-wrap items-center gap-2">
               {tab === "cart" ? (
                 <Link
-                  href="/checkout"
+                  href="/تسویه-حساب"
                   className="bg-primary text-primary-foreground inline-flex h-9 items-center rounded-xl px-3 text-xs font-medium"
                 >
                   تسویه حساب
@@ -737,7 +737,7 @@ useEffect(() => {
                             return;
                           }
                           setReorderMsg(`${res.added} قلم به سبد اضافه شد.`);
-                          window.location.href = "/dashboard?tab=cart";
+                          window.location.href = "/داشبورد?tab=cart";
                         }}
                       >
                         {reorderBusy === o.id ? "…" : "خرید مجدد"}
@@ -1049,7 +1049,7 @@ useEffect(() => {
                         }
                       }
                       setLogoutAllBusy(false);
-                      window.location.href = "/login";
+                      window.location.href = "/ورود";
                     }}
                   >
                     {logoutAllBusy ? "در حال خروج…" : "خروج از همه دستگاه‌ها"}
@@ -1361,7 +1361,7 @@ useEffect(() => {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-muted-foreground text-sm">محصولات فروشگاه</p>
                 <Link
-                  href="/products"
+                  href="/محصولات"
                   className="text-primary text-xs hover:underline"
                 >
                   همه محصولات
@@ -1532,7 +1532,7 @@ useEffect(() => {
                   ))}
                 </ul>
               )}
-              <Link href="/checkout" className="text-primary text-sm hover:underline">
+              <Link href="/تسویه-حساب" className="text-primary text-sm hover:underline">
                 رفتن به تسویه حساب
               </Link>
             </div>
@@ -1872,7 +1872,7 @@ useEffect(() => {
                         </button>
                         {line.slug ? (
                           <Link
-                            href={`/products/${line.slug}`}
+                            href={`/محصولات/${line.slug}`}
                             className="text-primary text-xs hover:underline"
                           >
                             مشاهده
@@ -1901,7 +1901,7 @@ useEffect(() => {
                     </span>
                   </div>
                   <Link
-                    href="/checkout"
+                    href="/تسویه-حساب"
                     className="bg-primary text-primary-foreground inline-flex h-11 w-full items-center justify-center rounded-xl text-sm font-medium"
                   >
                     تسویه حساب
@@ -1968,7 +1968,7 @@ useEffect(() => {
                           title: w.title,
                           price: w.price,
                           image: w.image,
-                          href: w.slug ? `/products/${w.slug}` : undefined,
+                          href: w.slug ? `/محصولات/${w.slug}` : undefined,
                         }))
                       : wishlist)
                   : recent;
@@ -1977,7 +1977,7 @@ useEffect(() => {
                   <div className="space-y-3" dir="rtl">
                     <div className="flex items-center justify-between gap-2">
                       <h2 className="text-base font-bold text-primary">مقایسه</h2>
-                      <Link href="/compare" className="text-primary text-xs underline">
+                      <Link href="/مقایسه" className="text-primary text-xs underline">
                         صفحه عمومی مقایسه
                       </Link>
                     </div>
@@ -2026,7 +2026,7 @@ useEffect(() => {
                         ) : null}
                         {(p.href || p.slug) ? (
                           <Link
-                            href={p.href || `/products/${p.slug}`}
+                            href={p.href || `/محصولات/${p.slug}`}
                             className="text-primary text-xs hover:underline"
                           >
                             مشاهده

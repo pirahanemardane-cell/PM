@@ -234,7 +234,7 @@ export default async function CategoryListingPage({
           }),
           breadcrumbSchema([
             { name: "خانه", url: siteBase + "/" },
-            { name: "فروشگاه", url: siteBase + "/products" },
+            { name: "فروشگاه", url: siteBase + "/محصولات" },
             {
               name: category.name,
               url: siteBase + "/" + encodeURIComponent(slug),

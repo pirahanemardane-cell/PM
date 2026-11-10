@@ -7,35 +7,13 @@ import {
 } from "@/lib/security/headers";
 import { REQUEST_ID_HEADER, resolveRequestId } from "@/lib/request-id";
 import { assertApiCsrf } from "@/lib/security/csrf-origin";
+import {
+  RESERVED_ROOT_SEGMENTS,
+  enPathToFaRedirect,
+  faPathToEnRewrite,
+} from "@/lib/seo/fa-routes";
 
-const PERSIAN_ROUTES: Record<string, string> = {
-  "/ورود": "/login",
-  "/ثبت-نام": "/register",
-  "/علاقه-مندی-ها": "/dashboard?tab=wishlist",
-  "/مقایسه": "/dashboard?tab=compare",
-  "/سبد-خرید": "/cart",
-  "/آخرین-مشاهده-ها": "/dashboard?tab=recent",
-  "/محصولات": "/products",
-  "/تماس": "/contact",
-  "/درباره-ما": "/about",
-  "/سوالات-متداول": "/faq",
-  "/شرایط-استفاده": "/terms",
-  "/حریم-خصوصی": "/privacy",
-  "/ارسال": "/shipping",
-  "/مرجوعی": "/returns",
-  "/راهنمای-سایز": "/size-guide",
-  "/پیگیری-سفارش": "/track",
-  "/پیگیری": "/track",
-};
-
-const RESERVED = new Set([
-  "", "admin", "api", "login", "register", "dashboard", "cart", "checkout",
-  "products", "brands", "blog", "contact", "about", "faq", "terms", "privacy",
-  "shipping", "returns", "size-guide", "track", "categories", "tag", "wishlist",
-  "compare", "recently-viewed", "_next", "favicon.ico", "robots.txt",
-  "sitemap.xml", "llms.txt", "ورود", "ثبت-نام", "علاقه-مندی-ها", "مقایسه",
-  "سبد-خرید", "محصولات",
-]);
+const RESERVED = new Set(RESERVED_ROOT_SEGMENTS);
 
 function decodeSeg(raw: string): string {
   let s = raw;
@@ -72,6 +50,18 @@ async function sessionRewrite(request: NextRequest, dest: string) {
   const rewrite = NextResponse.rewrite(url, { request: { headers: reqHeaders } });
   sessionRes.cookies.getAll().forEach((c) => rewrite.cookies.set(c.name, c.value));
   return applySecurityHeaders(rewrite, { requestId: rid, nonce });
+}
+
+async function sessionRedirect(request: NextRequest, destPath: string, status: 301 | 302 = 301) {
+  const rid = requestIdFrom(request);
+  const nonce = createCspNonce();
+  const url = request.nextUrl.clone();
+  url.pathname = destPath;
+  // preserve existing search params (e.g. next=, q=, featured=)
+  const sessionRes = await updateSession(request, withNonceRequest(request, nonce));
+  const redirect = NextResponse.redirect(url, status);
+  sessionRes.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
+  return applySecurityHeaders(redirect, { requestId: rid, nonce });
 }
 
 async function supabaseExists(
@@ -181,7 +171,7 @@ export async function proxy(request: NextRequest) {
   }
   if (pathname.startsWith("/admin") && !hasSupabaseAuthCookie(request)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/ورود";
     url.search = "";
     url.searchParams.set("next", "/admin/dashboard");
     const nonce = createCspNonce();
@@ -203,15 +193,24 @@ export async function proxy(request: NextRequest) {
     /* ignore lookup errors */
   }
 
-  let dest = PERSIAN_ROUTES[pathname];
-  if (!dest) {
+  // FA → EN rewrite (URL stays Persian)
+  const faDest = faPathToEnRewrite(pathname);
+  if (faDest) return sessionRewrite(request, faDest);
+
+  // EN → FA 301 (canonical); keep query string
+  const faRedirect = enPathToFaRedirect(pathname);
+  if (faRedirect && faRedirect !== pathname) {
+    // Avoid redirecting already-Persian or identical paths
+    let decoded = pathname;
     try {
-      dest = PERSIAN_ROUTES[decodeURIComponent(pathname)];
+      decoded = decodeURIComponent(pathname);
     } catch {
-      /* ignore */
+      /* keep */
+    }
+    if (faRedirect !== decoded) {
+      return sessionRedirect(request, faRedirect, 301);
     }
   }
-  if (dest) return sessionRewrite(request, dest);
 
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 1) {

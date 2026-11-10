@@ -109,9 +109,9 @@ export function ProductCard({ product }: Props) {
     (product as { categories?: { slug?: string }[] }).categories?.[0]?.slug;
 
   const categoryHref = categorySlug
-    ? `/products?category=${categorySlug}`
+    ? `/محصولات?category=${categorySlug}`
     : categoryName
-      ? `/products?category=${encodeURIComponent(categoryName)}`
+      ? `/محصولات?category=${encodeURIComponent(categoryName)}`
       : undefined;
 
   
@@ -123,7 +123,7 @@ export function ProductCard({ product }: Props) {
     (product as { brand?: { slug?: string } | null }).brand?.slug;
 
   const brandHref = brandSlug
-    ? `/brands/${brandSlug}`
+    ? `/${encodeURIComponent(brandSlug)}`
     : undefined;
 
   
@@ -174,7 +174,7 @@ export function ProductCard({ product }: Props) {
   return (
     <ProductCardUI
         productId={product.id}
-        href={`/products/${product.slug}`}
+        href={`/محصولات/${product.slug}`}
 
         category={categoryName}
         categoryHref={categoryHref}

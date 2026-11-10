@@ -46,7 +46,7 @@ function useCountdown(endsAt: string | null | undefined) {
 
 export function FlashSalePromoCard({
   endsAt: endsAtProp,
-  href = "/products?featured=1",
+  href = "/محصولات?featured=1",
   className,
 }: Props) {
   const [endsAt, setEndsAt] = useState<string | null | undefined>(endsAtProp);

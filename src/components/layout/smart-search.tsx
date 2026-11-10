@@ -130,9 +130,9 @@ export function SmartSearch({ className }: { className?: string }) {
         Boolean(category || brand || color || size || sort || minPrice || maxPrice) ||
         Object.keys(attrSel).length > 0;
       if (text && !hasFilter) {
-        router.push(`/search?q=${encodeURIComponent(text)}`);
+        router.push(`/جستجو?q=${encodeURIComponent(text)}`);
       } else {
-        router.push(qs ? `/products?${qs}` : "/products");
+        router.push(qs ? `/محصولات?${qs}` : "/محصولات");
       }
       setSuggestOpen(false);
       setFilterOpen(false);
@@ -347,14 +347,14 @@ export function SmartSearch({ className }: { className?: string }) {
               <p>برای «{q.trim()}» نتیجه‌ای یافت نشد</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Link
-                  href="/products"
+                  href="/محصولات"
                   onClick={() => setSuggestOpen(false)}
                   className="border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-xs"
                 >
                   همه محصولات
                 </Link>
                 <Link
-                  href="/products?sort=popular"
+                  href="/محصولات?sort=popular"
                   onClick={() => setSuggestOpen(false)}
                   className="border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-xs"
                 >
@@ -368,7 +368,7 @@ export function SmartSearch({ className }: { className?: string }) {
               {products.map((p) => (
                 <li key={p.slug}>
                   <Link
-                    href={`/products/${p.slug}`}
+                    href={`/محصولات/${p.slug}`}
                     onClick={() => setSuggestOpen(false)}
                     className="hover:bg-muted/60 flex items-center gap-3 px-3 py-2.5 text-sm"
                   >
@@ -409,7 +409,7 @@ export function SmartSearch({ className }: { className?: string }) {
                 {categories.map((c) => (
                   <li key={c.slug}>
                     <Link
-                      href={`/products?category=${encodeURIComponent(c.slug)}`}
+                      href={`/محصولات?category=${encodeURIComponent(c.slug)}`}
                       onClick={() => setSuggestOpen(false)}
                       className="hover:bg-muted/60 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
                     >
@@ -428,7 +428,7 @@ export function SmartSearch({ className }: { className?: string }) {
                 {brands.map((b) => (
                   <li key={b.slug}>
                     <Link
-                      href={`/brands/${b.slug}`}
+                      href={`/${encodeURIComponent(b.slug)}`}
                       onClick={() => setSuggestOpen(false)}
                       className="hover:bg-muted/60 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
                     >
@@ -447,7 +447,7 @@ export function SmartSearch({ className }: { className?: string }) {
                 {posts.map((post) => (
                   <li key={post.slug}>
                     <Link
-                      href={"/blog/" + post.slug}
+                      href={"/بلاگ/" + post.slug}
                       onClick={() => setSuggestOpen(false)}
                       className="hover:bg-muted/60 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
                     >

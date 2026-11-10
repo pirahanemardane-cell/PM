@@ -49,7 +49,7 @@ export function LiveBlogList({ initialItems }: { initialItems: Post[] }) {
       {items.map((post) => (
         <li key={post.id}>
           <Link
-            href={`/blog/${post.slug}`}
+            href={`/بلاگ/${post.slug}`}
             className="border-border hover:border-primary/40 block overflow-hidden rounded-2xl border transition"
           >
             <div className="flex flex-col gap-4 sm:flex-row">

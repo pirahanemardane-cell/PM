@@ -45,7 +45,7 @@ export function TabAlerts() {
           <article key={a.id} className="border-border flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-sm">
             <div>
               {a.product?.slug ? (
-                <Link href={`/products/${a.product.slug}`} className="font-medium underline">
+                <Link href={`/محصولات/${a.product.slug}`} className="font-medium underline">
                   {a.product.name}
                 </Link>
               ) : (

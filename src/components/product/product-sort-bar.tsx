@@ -29,7 +29,7 @@ function buildHref(sort: string, props: Omit<Props, "currentSort">) {
       if (v) params.set(k, v);
     }
   }
-  return `/products?${params.toString()}`;
+  return `/محصولات?${params.toString()}`;
 }
 
 export function ProductSortBar(props: Props) {

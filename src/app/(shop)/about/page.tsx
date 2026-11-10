@@ -19,7 +19,7 @@ export default function AboutPage() {
         description:
           "راهنمای سایز شفاف، تعویض آسان و پشتیبانی واقعی — برای اطمینان از فیت قبل و بعد از خرید.",
         buttonText: "مشاهده محصولات",
-        buttonUrl: "/products",
+        buttonUrl: "/محصولات",
       }}
       companiesTitle="تمرکز ما"
       companies={[]}

@@ -65,7 +65,7 @@ export function TabMySize() {
       <h2 className="text-base font-bold text-primary">سایز من</h2>
       <p className="text-muted-foreground text-sm">
         اندازه‌های خود را ذخیره کنید و با{" "}
-        <Link href="/size-guide" className="underline">
+        <Link href="/راهنمای-سایز" className="underline">
           راهنمای سایز
         </Link>{" "}
         تطبیق دهید.
