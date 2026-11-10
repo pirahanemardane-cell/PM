@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { ProductBuyBox } from "@/components/product/product-buy-box";
 import { TrackRecentlyViewed } from "@/components/product/track-recently-viewed";
 import { ProductReviews } from "@/components/shop/product-reviews";
+import { ProductQA } from "@/components/shop/product-qa";
+import { ProductComplements } from "@/components/shop/product-complements";
+import { WhatsAppSalesEntry } from "@/components/shop/whatsapp-sales-entry";
 import { PriceHistory } from "@/components/product/price-history";
 import { ProductPdpGalleryAndBuy } from "@/components/product/product-pdp-media";
 import { ProductSpecs } from "@/components/product/product-specs";
@@ -414,6 +417,10 @@ export default async function ProductDetailPage({ params }: Props) {
 
 
 
+      <div className="mt-10 w-full max-w-none">
+        <ProductComplements productId={product.id} />
+      </div>
+
       {relatedProducts?.length ? (
         <div className="mt-12 w-full max-w-none">
           <RelatedStrip
@@ -436,8 +443,12 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-12 w-full max-w-none">
+      <div className="mt-12 w-full max-w-none space-y-10">
         <ProductReviews productId={product.id} />
+        <ProductQA productId={product.id} />
+        <div className="flex justify-start">
+          <WhatsAppSalesEntry />
+        </div>
       </div>
     </main>
   );

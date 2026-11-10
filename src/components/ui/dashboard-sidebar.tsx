@@ -19,6 +19,12 @@ import {
   GitCompare,
   History,
   ShoppingCart,
+  Ruler,
+  MessageSquare,
+  Star,
+  Shield,
+  Gift,
+  MessageCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -39,10 +45,17 @@ const NAV_MAIN: CustomerNavItem[] = [
   { id: "wishlist", title: "علاقه‌مندی‌ها", icon: Heart },
   { id: "compare", title: "مقایسه", icon: GitCompare },
   { id: "recent", title: "بازدید اخیر", icon: History },
+  { id: "my-size", title: "سایز من", icon: Ruler },
+  { id: "reviews", title: "نظرات من", icon: Star },
+  { id: "qa", title: "پرسش‌ها", icon: MessageSquare },
+  { id: "alerts", title: "اطلاع موجودی", icon: Bell },
   { id: "addresses", title: "آدرس‌ها", icon: MapPin },
   { id: "coupons", title: "کد تخفیف", icon: Tag },
+  { id: "loyalty", title: "باشگاه امتیاز", icon: Gift },
   { id: "tickets", title: "پشتیبانی", icon: Ticket },
+  { id: "chat", title: "مشاوره", icon: MessageCircle },
   { id: "returns", title: "بازگشت کالا", icon: RotateCcw },
+  { id: "claims", title: "ادعا / گارانتی", icon: Shield },
   { id: "notifications", title: "اعلان‌ها", icon: Bell },
 ];
 

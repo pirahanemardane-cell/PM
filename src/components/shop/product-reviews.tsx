@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import {
   createProductReviewAction,
   listProductReviewsAction,
+  uploadReviewImageAction,
 } from "@/app/(shop)/actions/reviews";
 import { ComposerInput } from "@/components/ui/composer-input";
-import { formatJalaliDate, formatJalaliDateTime } from "@/lib/dates/jalali";
+import { formatJalaliDate } from "@/lib/dates/jalali";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
-
 
 type Review = {
   id: string;
@@ -20,6 +21,7 @@ type Review = {
   is_verified?: boolean | null;
   created_at: string;
   user?: { full_name: string | null } | null;
+  images?: { id?: string; url: string; sort_order?: number }[];
 };
 
 export function ProductReviews({ productId }: { productId: string }) {
@@ -28,10 +30,12 @@ export function ProductReviews({ productId }: { productId: string }) {
   const [title, setTitle] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingUrls, setPendingUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
     const res = await listProductReviewsAction(productId);
-    if (res.ok) setItems(res.items as Review[]);
+    if (res.ok) setItems(res.items as unknown as Review[]);
   }, [productId]);
 
   useEffect(() => {
@@ -42,6 +46,29 @@ export function ProductReviews({ productId }: { productId: string }) {
     void load();
   });
 
+  async function onPickFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading(true);
+    setMsg("");
+    const next = [...pendingUrls];
+    for (const file of Array.from(files).slice(0, 4 - next.length)) {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await uploadReviewImageAction(fd);
+      if (res.ok && res.url) next.push(res.url);
+      else {
+        const map: Record<string, string> = {
+          login_required: "برای ارسال تصویر وارد شوید",
+          too_large: "حجم تصویر حداکثر ۳ مگابایت",
+          not_image: "فقط تصویر مجاز است",
+        };
+        setMsg(map[res.error || ""] || "آپلود تصویر ناموفق");
+      }
+    }
+    setPendingUrls(next.slice(0, 4));
+    setUploading(false);
+  }
+
   async function onSend(body: string) {
     setBusy(true);
     setMsg("");
@@ -50,6 +77,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       rating,
       title: title || undefined,
       body,
+      imageUrls: pendingUrls,
     });
     setBusy(false);
     if (!res.ok) {
@@ -64,6 +92,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       return;
     }
     setTitle("");
+    setPendingUrls([]);
     setMsg("نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود.");
     void load();
   }
@@ -76,28 +105,39 @@ export function ProductReviews({ productId }: { productId: string }) {
         {items.map((r) => (
           <article key={r.id} className="border-border rounded-xl border p-4 text-sm">
             <div className="mb-1 flex flex-wrap items-center gap-2">
-              <span className="font-medium">
-                {r.user?.full_name?.trim() || "خریدار"}
-              </span>
+              <span className="font-medium">{r.user?.full_name?.trim() || "خریدار"}</span>
               {r.is_verified ? (
                 <span
-                  title="این نظر پس از خرید ثبت شده" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-md px-1.5 py-0.5 text-[10px] font-medium">
+                  title="این نظر پس از خرید ثبت شده"
+                  className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                >
                   خریدار
                 </span>
               ) : null}
               <span className="text-amber-600">{"★".repeat(r.rating)}</span>
-              <time className="text-muted-foreground text-xs">
-                {formatJalaliDate(r.created_at)}
-              </time>
+              <time className="text-muted-foreground text-xs">{formatJalaliDate(r.created_at)}</time>
             </div>
             {r.title ? <p className="font-medium">{r.title}</p> : null}
             <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{r.body}</p>
+            {(r.images ?? []).length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(r.images ?? []).map((img) => (
+                  <a
+                    key={img.url}
+                    href={img.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative h-20 w-20 overflow-hidden rounded-lg border"
+                  >
+                    <Image src={img.url} alt="" fill className="object-cover" sizes="80px" unoptimized />
+                  </a>
+                ))}
+              </div>
+            ) : null}
             {r.admin_reply ? (
               <div className="bg-muted/50 mt-3 rounded-lg border-r-2 border-primary p-3 text-xs">
                 <p className="mb-1 font-medium text-primary">پاسخ فروشگاه</p>
-                <p className="text-muted-foreground whitespace-pre-wrap">
-                  {r.admin_reply}
-                </p>
+                <p className="text-muted-foreground whitespace-pre-wrap">{r.admin_reply}</p>
               </div>
             ) : null}
           </article>
@@ -130,13 +170,41 @@ export function ProductReviews({ productId }: { productId: string }) {
             dir="rtl"
           />
         </div>
+        <div className="space-y-2">
+          <label className="text-xs">عکس محصول (اختیاری، تا ۴ تصویر)</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={uploading || pendingUrls.length >= 4}
+            onChange={(e) => void onPickFiles(e.target.files)}
+            className="block w-full text-xs"
+          />
+          {pendingUrls.length ? (
+            <div className="flex flex-wrap gap-2">
+              {pendingUrls.map((u) => (
+                <div key={u} className="relative h-16 w-16 overflow-hidden rounded border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    className="absolute inset-x-0 bottom-0 bg-black/60 text-[10px] text-white"
+                    onClick={() => setPendingUrls((p) => p.filter((x) => x !== u))}
+                  >
+                    حذف
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <ComposerInput
           onSend={onSend}
-          placeholder="نظر خود را بنویسید... (بدون لینک و تصویر)"
+          placeholder="نظر خود را بنویسید... (متن بدون لینک؛ عکس جداگانه)"
           sendLabel="ارسال نظر"
-          disabled={busy}
+          disabled={busy || uploading}
         />
-        {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}
+        {msg ? <p className="text-muted-foreground text-sm">{msg}</p> : null}
       </div>
     </section>
   );
