@@ -63,13 +63,13 @@ export function AnimatedTicket({
         </div>
         <div className="border-border flex gap-2 border-t p-4">
           <Link
-            href={`/dashboard?tab=orders&order=${ticketId}`}
+            href={`/داشبورد?tab=orders&order=${ticketId}`}
             className="bg-primary text-primary-foreground flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-medium"
           >
             مشاهده سفارش
           </Link>
           <Link
-            href="/products"
+            href="/محصولات"
             className="border-border flex h-10 flex-1 items-center justify-center rounded-xl border text-sm"
           >
             ادامه خرید

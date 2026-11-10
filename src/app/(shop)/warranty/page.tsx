@@ -22,12 +22,12 @@ export default async function WarrantyPage() {
       </div>
       <div className="mt-8 flex flex-wrap gap-3 text-sm">
         <Link
-          href="/dashboard?tab=claims"
+          href="/داشبورد?tab=claims"
           className="bg-primary text-primary-foreground rounded-xl px-4 py-2"
         >
           ثبت ادعا
         </Link>
-        <Link href="/returns" className="border-border rounded-xl border px-4 py-2">
+        <Link href="/مرجوعی" className="border-border rounded-xl border px-4 py-2">
           سیاست مرجوعی
         </Link>
       </div>

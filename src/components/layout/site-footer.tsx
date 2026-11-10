@@ -39,14 +39,14 @@ export function SiteFooter() {
         
       ]}
       navLinks={[
-        { label: "درباره ما", href: "/about" },
-        { label: "راهنمای سایز", href: "/size-guide" },
-        { label: "ارسال", href: "/shipping" },
-        { label: "مرجوعی", href: "/returns" },
-        { label: "سوالات متداول", href: "/faq" },
-        { label: "شرایط استفاده", href: "/terms" },
-        { label: "حریم خصوصی", href: "/privacy" },
-        { label: "تماس", href: "/contact" },
+        { label: "درباره ما", href: "/درباره-ما" },
+        { label: "راهنمای سایز", href: "/راهنمای-سایز" },
+        { label: "ارسال", href: "/ارسال" },
+        { label: "مرجوعی", href: "/مرجوعی" },
+        { label: "سوالات متداول", href: "/سوالات-متداول" },
+        { label: "شرایط استفاده", href: "/شرایط-استفاده" },
+        { label: "حریم خصوصی", href: "/حریم-خصوصی" },
+        { label: "تماس", href: "/تماس" },
       ]}
       brandIcon={<Logo size="footer" className="pointer-events-none" />}
     />

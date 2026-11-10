@@ -168,7 +168,7 @@ function TrackForm() {
             ))}
           </ul>
           <Link
-            href="/dashboard?tab=orders"
+            href="/داشبورد?tab=orders"
             className="border-border inline-flex h-9 items-center rounded-xl border px-3 text-xs"
           >
             پنل خریدار

@@ -64,7 +64,7 @@ export function TabClaims() {
         <h2 className="text-base font-bold text-primary">ادعا / گارانتی</h2>
         <p className="text-muted-foreground text-sm">
           جزئیات سیاست در{" "}
-          <Link href="/warranty" className="underline">
+          <Link href="/گارانتی" className="underline">
             صفحه گارانتی
           </Link>
         </p>

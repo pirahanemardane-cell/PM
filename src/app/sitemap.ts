@@ -2,11 +2,18 @@ import type { MetadataRoute } from "next";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isSiteIndexable, SITE_URL } from "@/lib/seo/indexing";
 import { isBlockedBrand } from "@/lib/brands/blocked";
+import {
+  FA_STATIC_SITEMAP_PATHS,
+  blogPostHref,
+  brandOrCategoryHref,
+  productHref,
+} from "@/lib/seo/fa-routes";
 
 /**
- * زیرساخت sitemap آماده است.
+ * تولید sitemap آماده است.
  * تا noindex: خروجی خالی (ایندکس نمی‌شود).
  * بعد از ALLOW_INDEX=true: صفحات استاتیک + محصولات + دسته‌ها + برندها + بلاگ.
+ * مسیرهای صفحهٔ استاتیک و پیشوند لیست‌ها فارسی‌canonical هستند؛ اسلاگ موجودیت‌ها انگلیسی می‌مانند.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!isSiteIndexable()) {
@@ -14,29 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const now = new Date();
-  const staticPaths = [
-    "",
-    "/products",
-    "/categories",
-    "/brands",
-    "/blog",
-    "/about",
-    "/contact",
-    "/faq",
-    "/shipping",
-    "/returns",
-    "/privacy",
-    "/terms",
-    "/size-guide",
-    "/search",
-    "/track",
-  ];
 
-  const entries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
+  const entries: MetadataRoute.Sitemap = FA_STATIC_SITEMAP_PATHS.map((path) => ({
     url: `${SITE_URL}${path}`,
     lastModified: now,
     changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : path === "/products" ? 0.9 : 0.6,
+    priority: path === "" ? 1 : path === "/محصولات" ? 0.9 : 0.6,
   }));
 
   try {
@@ -54,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const slug = (p as { slug?: string }).slug;
       if (!slug) continue;
       entries.push({
-        url: `${SITE_URL}/products/${slug}`,
+        url: `${SITE_URL}${productHref(slug)}`,
         lastModified: (p as { updated_at?: string }).updated_at
           ? new Date(String((p as { updated_at: string }).updated_at))
           : now,
@@ -73,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const slug = (c as { slug?: string }).slug;
       if (!slug) continue;
       entries.push({
-        url: `${SITE_URL}/categories/${slug}`,
+        url: `${SITE_URL}${brandOrCategoryHref(slug)}`,
         lastModified: now,
         changeFrequency: "weekly",
         priority: 0.7,
@@ -91,7 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const name = (b as { name?: string }).name;
       if (!slug || isBlockedBrand({ slug, name })) continue;
       entries.push({
-        url: `${SITE_URL}/brands/${slug}`,
+        url: `${SITE_URL}${brandOrCategoryHref(slug)}`,
         lastModified: now,
         changeFrequency: "weekly",
         priority: 0.7,
@@ -108,7 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const slug = (post as { slug?: string }).slug;
         if (!slug) continue;
         entries.push({
-          url: `${SITE_URL}/blog/${slug}`,
+          url: `${SITE_URL}${blogPostHref(slug)}`,
           lastModified: (post as { updated_at?: string }).updated_at
             ? new Date(String((post as { updated_at: string }).updated_at))
             : now,

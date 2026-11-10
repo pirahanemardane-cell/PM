@@ -3,10 +3,16 @@ import type { Metadata } from "next";
 import { applySeoTemplate } from "@/lib/seo/template";
 import { isSiteIndexable } from "@/lib/seo/indexing";
 
+const DEFAULT_CANONICAL: Record<"shop_plp" | "blog_plp", string> = {
+  shop_plp: "/محصولات",
+  blog_plp: "/بلاگ",
+};
+
 export async function metadataFromSeoPage(
   page_key: "shop_plp" | "blog_plp",
   fallback: { title: string; description: string },
 ): Promise<Metadata> {
+  const defaultCanonical = DEFAULT_CANONICAL[page_key];
   try {
     const supabase = await createClient();
     const { data } = await supabase
@@ -15,7 +21,11 @@ export async function metadataFromSeoPage(
       .eq("page_key", page_key)
       .maybeSingle();
     if (!data) {
-      return { title: fallback.title, description: fallback.description };
+      return {
+        title: fallback.title,
+        description: fallback.description,
+        alternates: { canonical: defaultCanonical },
+      };
     }
     const ctx = { name: data.title || fallback.title, title: data.title || fallback.title };
     const title = applySeoTemplate(data.meta_title, ctx) || data.title || fallback.title;
@@ -24,7 +34,9 @@ export async function metadataFromSeoPage(
     return {
       title,
       description,
-      alternates: data.canonical_url ? { canonical: data.canonical_url } : undefined,
+      alternates: {
+        canonical: data.canonical_url || defaultCanonical,
+      },
       robots: {
         index: isSiteIndexable() && data.robots_index !== false,
         follow: isSiteIndexable() && data.robots_follow !== false,
@@ -36,6 +48,10 @@ export async function metadataFromSeoPage(
       },
     };
   } catch {
-    return { title: fallback.title, description: fallback.description };
+    return {
+      title: fallback.title,
+      description: fallback.description,
+      alternates: { canonical: defaultCanonical },
+    };
   }
 }

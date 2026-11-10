@@ -586,7 +586,7 @@ export default function CheckoutPage() {
     return (
       <div className="w-full max-w-none space-y-4 px-4 py-16 text-center" dir="rtl">
         <p>سبد خرید خالی است.</p>
-        <Link href="/products" className="text-primary underline">
+        <Link href="/محصولات" className="text-primary underline">
           بازگشت به فروشگاه
         </Link>
       </div>
@@ -716,7 +716,7 @@ export default function CheckoutPage() {
                 </ul>
                 <div className="flex gap-2 pt-2">
                   <Link
-                    href="/cart"
+                    href="/سبد-خرید"
                     className="border-border flex h-11 flex-1 items-center justify-center rounded-xl border text-sm"
                   >
                     ویرایش سبد
@@ -1202,14 +1202,14 @@ export default function CheckoutPage() {
                     </button>
                   ) : (
                     <Link
-                      href="/dashboard?tab=orders"
+                      href="/داشبورد?tab=orders"
                       className="bg-primary text-primary-foreground flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-medium"
                     >
                       پیگیری سفارش
                     </Link>
                   )}
                   <Link
-                    href="/products"
+                    href="/محصولات"
                     className="border-border flex h-11 flex-1 items-center justify-center rounded-xl border text-sm"
                   >
                     بازگشت به فروشگاه

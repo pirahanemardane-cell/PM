@@ -71,7 +71,7 @@ export function HeaderAuthButton({ className, onNavigate, fullWidth }: Props) {
   if (label) {
     return (
       <Link
-        href="/dashboard?tab=profile"
+        href="/داشبورد?tab=profile"
         onClick={onNavigate}
         title={label}
         className={userClass}

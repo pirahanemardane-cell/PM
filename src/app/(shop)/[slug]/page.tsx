@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryService } from "@/services/category.service";
 import { BrandService } from "@/services/brand.service";
+import { RESERVED_ROOT_SEGMENTS } from "@/lib/seo/fa-routes";
 import CategoryListingPage, {
   generateMetadata as categoryMeta,
 } from "../categories/[slug]/page";
@@ -30,12 +31,7 @@ function decodeSlug(raw: string): string {
   return s;
 }
 
-const RESERVED = new Set([
-  "about", "blog", "brands", "cart", "categories", "checkout", "contact",
-  "dashboard", "faq", "login", "products", "register", "privacy", "returns",
-  "shipping", "size-guide", "terms", "track", "tag", "wishlist", "compare",
-  "api", "admin", "ورود", "ثبت-نام", "علاقه-مندی-ها", "مقایسه", "سبد-خرید", "محصولات",
-]);
+const RESERVED = new Set(RESERVED_ROOT_SEGMENTS.filter(Boolean));
 
 async function resolvedProps(props: Props): Promise<Props> {
   const raw = (await props.params).slug;

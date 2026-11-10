@@ -6,7 +6,7 @@ import { AuthForm } from "@/components/ui/premium-auth";
 
 function safeNextPath(raw: string): string {
   const n = (raw || "").trim();
-  if (!n.startsWith("/") || n.startsWith("//")) return "/dashboard";
+  if (!n.startsWith("/") || n.startsWith("//")) return "/داشبورد";
   return n;
 }
 
@@ -20,7 +20,7 @@ function LoginInner() {
           initialMode="login"
           hideRegister={admin}
           // پاس‌دادن خود next تا ?next=/admin/dashboard بعد از ورود حفظ شود
-          defaultNext={admin ? next || "/admin/dashboard" : next || "/dashboard"}
+          defaultNext={admin ? next || "/admin/dashboard" : next || "/داشبورد"}
         />
       </div>
     </div>

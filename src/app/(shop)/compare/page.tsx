@@ -4,7 +4,7 @@ import { CompareMatrix } from "@/components/shop/compare-matrix";
 export const metadata: Metadata = {
   title: "مقایسه محصولات | پیراهن مردانه",
   description: "مقایسه کنارهم مشخصات، قیمت و موجودی پیراهن‌های انتخابی.",
-  alternates: { canonical: "/compare" },
+  alternates: { canonical: "/مقایسه" },
 };
 
 export default function ComparePage() {

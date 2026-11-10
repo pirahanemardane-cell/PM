@@ -12,7 +12,7 @@ export default async function AdminLayout({
 
   if (!gate.ok) {
     if (gate.error === "login_required") {
-      redirect("/login?next=/admin/dashboard");
+      redirect("/ورود?next=/admin/dashboard");
     }
     redirect("/");
   }

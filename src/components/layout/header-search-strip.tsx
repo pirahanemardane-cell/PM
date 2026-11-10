@@ -13,19 +13,19 @@ export function HeaderSearchStrip() {
           <SmartSearch />
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="relative rounded-lg border border-border bg-background p-2" title="سبد">
+          <Link href="/داشبورد" className="relative rounded-lg border border-border bg-background p-2" title="سبد">
             <ShoppingCart className="h-4 w-4" />
             <CountBadge count={counts.cart} />
           </Link>
-          <Link href="/dashboard" className="relative rounded-lg border border-border bg-background p-2" title="علاقه‌مندی">
+          <Link href="/داشبورد" className="relative rounded-lg border border-border bg-background p-2" title="علاقه‌مندی">
             <Heart className="h-4 w-4" />
             <CountBadge count={counts.wishlist} />
           </Link>
-          <Link href="/dashboard" className="relative rounded-lg border border-border bg-background p-2" title="مقایسه">
+          <Link href="/داشبورد" className="relative rounded-lg border border-border bg-background p-2" title="مقایسه">
             <GitCompareArrows className="h-4 w-4" />
             <CountBadge count={counts.compare} />
           </Link>
-          <Link href="/dashboard" className="relative rounded-lg border border-border bg-background p-2" title="اخیر">
+          <Link href="/داشبورد" className="relative rounded-lg border border-border bg-background p-2" title="اخیر">
             <History className="h-4 w-4" />
             <CountBadge count={counts.recent} />
           </Link>

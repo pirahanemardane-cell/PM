@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?next=/dashboard");
+    redirect("/ورود?next=/داشبورد");
   }
 
   return children;

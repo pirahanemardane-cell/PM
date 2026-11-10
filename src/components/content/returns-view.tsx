@@ -34,7 +34,7 @@ export function ReturnsView({ content }: { content: TextPageContent }) {
           درخواست مرجوعی از داشبورد مشتری
         </p>
         <Link
-          href="/dashboard"
+          href="/داشبورد"
           className="bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium"
         >
           رفتن به داشبورد

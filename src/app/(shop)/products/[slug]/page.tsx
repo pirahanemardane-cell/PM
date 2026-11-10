@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     undefined;
   const allow = isSiteIndexable();
   const canonical =
-    p.canonical_url || `${SITE_URL}/products/${p.slug}`;
+    p.canonical_url || `${SITE_URL}/محصولات/${p.slug}`;
   return {
     title,
     description,
@@ -237,7 +237,7 @@ export default async function ProductDetailPage({ params }: Props) {
         }
         productId={product.id}
         productName={product.name}
-        href={`/products/${product.slug}`}
+        href={`/محصولات/${product.slug}`}
         fallbackImage={primaryImage?.url}
         images={(images ?? [])
           .slice()
@@ -271,14 +271,14 @@ export default async function ProductDetailPage({ params }: Props) {
                 </Badge>
               ) : null}
               {product.category?.slug ? (
-                <Link href={`/products?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
+                <Link href={`/محصولات?category=${encodeURIComponent(product.category.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
                   <Badge className="inline-flex h-6 items-center border-0 bg-sky-100 px-2.5 text-xs text-sky-800 shadow-none transition-none hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-900/40 dark:text-sky-200 dark:hover:bg-sky-900/40 dark:hover:text-sky-200">
                     {product.category.name}
                   </Badge>
                 </Link>
               ) : null}
               {product.brand?.slug ? (
-                <Link href={`/brands/${product.brand.slug}`} className="no-underline hover:no-underline hover:opacity-100">
+                <Link href={`/${encodeURIComponent(product.brand.slug)}`} className="no-underline hover:no-underline hover:opacity-100">
                   <Badge className="inline-flex h-6 items-center border-0 bg-violet-100 px-2.5 text-xs text-violet-800 shadow-none transition-none hover:bg-violet-100 hover:text-violet-800 dark:bg-violet-900/40 dark:text-violet-200 dark:hover:bg-violet-900/40 dark:hover:text-violet-200">
                     {product.brand.name}
                   </Badge>
@@ -316,15 +316,15 @@ export default async function ProductDetailPage({ params }: Props) {
           }),
           breadcrumbSchema([
             { name: "خانه", url: siteBase + "/" },
-            { name: "محصولات", url: siteBase + "/products" },
+            { name: "محصولات", url: siteBase + "/محصولات" },
             {
               name: (product as { category?: { name?: string } | null }).category?.name || "دسته",
               url:
                 siteBase +
-                "/categories/" +
+                "/" +
                 ((product as { category?: { slug?: string } | null }).category?.slug || ""),
             },
-            { name: product.name, url: siteBase + "/products/" + product.slug },
+            { name: product.name, url: siteBase + "/محصولات/" + product.slug },
           ]),
         ]}
       />
@@ -334,7 +334,7 @@ export default async function ProductDetailPage({ params }: Props) {
               title={String(product.name ?? "")}
               price={Number((product as { price?: number }).price ?? 0)}
               image={primaryImage?.url}
-              href={`/products/${product.slug}`}
+              href={`/محصولات/${product.slug}`}
             />
           </>
         }
@@ -349,7 +349,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <SizeGuideSnippet guide={sizeGuide} />
                 </div>
                 <div>
-                  <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                  <Link href="/ارسال" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
                     شرایط ارسال
                   </Link>
                   <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
@@ -357,7 +357,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   </p>
                 </div>
                 <div>
-                  <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+                  <Link href="/مرجوعی" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
                     مرجوعی
                   </Link>
                   <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
@@ -387,7 +387,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <SizeGuideSnippet guide={sizeGuide} />
           </div>
           <div>
-            <Link href="/shipping" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+            <Link href="/ارسال" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
               شرایط ارسال
             </Link>
             <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
@@ -395,7 +395,7 @@ export default async function ProductDetailPage({ params }: Props) {
             </p>
           </div>
           <div>
-            <Link href="/returns" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
+            <Link href="/مرجوعی" className="text-muted-foreground font-medium underline-offset-4 hover:underline">
               مرجوعی
             </Link>
             <p className="text-muted-foreground mt-1 text-[11px] leading-relaxed">
@@ -431,7 +431,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   (p as { title?: string }).title ??
                   "",
               ),
-              href: `/products/${(p as { slug: string }).slug}`,
+              href: `/محصولات/${(p as { slug: string }).slug}`,
               image:
                 (p as { image_url?: string; primary_image_url?: string })
                   .image_url ??

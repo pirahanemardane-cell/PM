@@ -62,7 +62,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
         <p className="text-muted-foreground mt-2 text-sm">
           عبارت جستجو را وارد کنید (حداقل ۲ کاراکتر).
         </p>
-        <Link href="/products" className="text-primary mt-4 inline-block text-sm underline">
+        <Link href="/محصولات" className="text-primary mt-4 inline-block text-sm underline">
           مشاهده همه محصولات
         </Link>
       </main>
@@ -152,7 +152,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-primary">محصولات</h2>
           <Link
-            href={`/products?q=${encodeURIComponent(q)}`}
+            href={`/محصولات?q=${encodeURIComponent(q)}`}
             className="text-muted-foreground text-xs underline"
           >
             مشاهده در فروشگاه با فیلتر
@@ -174,7 +174,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
               return (
                 <Link
                   key={p.id}
-                  href={`/products/${p.slug}`}
+                  href={`/محصولات/${p.slug}`}
                   className="border-border group overflow-hidden rounded-2xl border transition hover:shadow-sm"
                 >
                   <div className="bg-muted relative aspect-[3/4] overflow-hidden">
@@ -219,7 +219,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
             {categories.map((c) => (
               <Link
                 key={c.slug}
-                href={`/products?category=${encodeURIComponent(c.slug)}`}
+                href={`/محصولات?category=${encodeURIComponent(c.slug)}`}
                 className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
               >
                 {c.name}
@@ -236,7 +236,7 @@ export default async function SearchResultsPage({ searchParams }: Props) {
             {brands.map((b) => (
               <Link
                 key={b.slug}
-                href={`/brands/${b.slug}`}
+                href={`/${encodeURIComponent(b.slug)}`}
                 className="border-border hover:bg-muted rounded-xl border px-3 py-2 text-sm"
               >
                 {b.name}

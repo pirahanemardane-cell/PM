@@ -39,7 +39,7 @@ export default async function BrandsIndexPage() {
             {brands.map((b) => (
               <Link
                 key={b.id}
-                href={`/brands/${b.slug}`}
+                href={`/${encodeURIComponent(b.slug)}`}
                 className="bg-card hover:border-foreground/20 flex h-24 items-center justify-center rounded-2xl border px-3 text-center text-sm font-medium transition-colors hover:bg-muted/40"
               >
                 {b.name}

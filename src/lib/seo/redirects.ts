@@ -83,5 +83,6 @@ export async function upsertUrlRedirect(input: {
 
 export function productPathFromSlug(slug: string): string {
   const s = String(slug || "").trim().replace(/^\/+|\/+$/g, "");
-  return `/products/${s}`;
+  // Canonical storefront PDP uses FA prefix + English slug
+  return `/محصولات/${s}`;
 }

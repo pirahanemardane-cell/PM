@@ -7,7 +7,7 @@ export function SizeGuideSnippet({ guide }: { guide: SizeGuideView | null }) {
     return (
       <p className="text-muted-foreground text-xs">
         <Link
-          href="/size-guide"
+          href="/راهنمای-سایز"
           className="text-primary font-medium underline-offset-4 hover:underline"
         >
           راهنمای سایز کامل
@@ -26,7 +26,7 @@ export function SizeGuideSnippet({ guide }: { guide: SizeGuideView | null }) {
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">جدول سایز</p>
         <Link
-          href="/size-guide"
+          href="/راهنمای-سایز"
           className="text-primary text-xs font-medium underline-offset-4 hover:underline"
         >
           راهنمای کامل

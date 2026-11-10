@@ -158,7 +158,7 @@ export function brandPageSchema(input: {
     "@type": "Brand",
     name: input.name,
     description: input.description || undefined,
-    url: `${SITE}/brands/${input.slug}`,
+    url: `${SITE}/${encodeURIComponent(input.slug)}`,
     logo: input.logo || undefined,
   };
 }

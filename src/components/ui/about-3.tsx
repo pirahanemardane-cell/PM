@@ -47,7 +47,7 @@ export function About3({
     description:
       "از راهنمای سایز شفاف تا تعویض آسان — هدف ما اعتماد به فیت قبل از خرید است.",
     buttonText: "مشاهده محصولات",
-    buttonUrl: "/products",
+    buttonUrl: "/محصولات",
   },
   companiesTitle = "تمرکز ما",
   companies = [],
@@ -92,7 +92,7 @@ export function About3({
               ) : null}
             </div>
             <Link
-              href={breakout.buttonUrl || "/products"}
+              href={breakout.buttonUrl || "/محصولات"}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "border-secondary text-secondary hover:bg-secondary/10 ml-auto",

@@ -300,7 +300,7 @@ export function HeroScroll() {
                 transition: "opacity 40ms linear",
               }}
             >
-              <ArrowFillButton href="/products" btnText="خرید آنلاین" className="pointer-events-auto" />
+              <ArrowFillButton href="/محصولات" btnText="خرید آنلاین" className="pointer-events-auto" />
             </div>
 
 

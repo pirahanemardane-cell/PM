@@ -15,13 +15,13 @@ import { Heart, GitCompareArrows, ShoppingCart, History, Menu, X, Sun, Moon, Use
 import { cn } from "@/lib/utils";
 import { CategorySvgIcon } from "@/components/home/category-icons"; const MAIN_NAV = [
   { href: "/", label: "خانه", mega: null as null | "categories" | "brands" | "sale" },
-  { href: "/products", label: "فروشگاه", mega: null },
-  { href: "/contact", label: "تماس با ما", mega: null },
-  { href: "/blog", label: "بلاگ", mega: null },
-  { href: "/products", label: "دسته‌بندی‌ها", mega: "categories" as const },
-  { href: "/brands", label: "برندها", mega: "brands" as const },
-  { href: "/products?featured=1", label: "شگفت‌انگیز", mega: null },
-]; const EXTRA_NAV = [ { href: "/blog", label: "بلاگ" }, { href: "/about", label: "درباره ما" }, { href: "/contact", label: "تماس با ما" },
+  { href: "/محصولات", label: "فروشگاه", mega: null },
+  { href: "/تماس", label: "تماس با ما", mega: null },
+  { href: "/بلاگ", label: "بلاگ", mega: null },
+  { href: "/دسته-بندی-ها", label: "دسته‌بندی‌ها", mega: "categories" as const },
+  { href: "/برندها", label: "برندها", mega: "brands" as const },
+  { href: "/محصولات?featured=1", label: "شگفت‌انگیز", mega: null },
+]; const EXTRA_NAV = [ { href: "/بلاگ", label: "بلاگ" }, { href: "/درباره-ما", label: "درباره ما" }, { href: "/تماس", label: "تماس با ما" },
 ];
 function ThemeToggle() { const [dark, setDark] = useState(false); useEffect(() => { const root = document.documentElement; const stored = localStorage.getItem("theme"); const isDark = stored === "dark" || (!stored && root.classList.contains("dark")); setDark(isDark); root.classList.toggle("dark", isDark); }, []); function toggle() { const next = !dark; setDark(next); document.documentElement.classList.toggle("dark", next); localStorage.setItem("theme", next ? "dark" : "light"); } return ( <button type="button" onClick={toggle} className="border-border hover:bg-primary hover:text-primary-foreground relative inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-background" aria-label="تغییر تم" > {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />} </button> );
 } function HeaderIcons({ onOpenPanel, hideCart }: { onOpenPanel?: (tab: string) => void; hideCart?: boolean }) { const counts = useShopCounts(); const item = "border-border hover:bg-primary hover:text-primary-foreground relative inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-background"; return ( <div className="flex flex-wrap items-center justify-center gap-1.5"> <button type="button" className={item} title="علاقه‌مندی‌ها" onClick={() => onOpenPanel?.("wishlist")}> <Heart className="h-4 w-4" /> <CountBadge count={counts.wishlist} /> </button> <button type="button" className={item} title="مقایسه" onClick={() => onOpenPanel?.("compare")}> <GitCompareArrows className="h-4 w-4" /> <CountBadge count={counts.compare} /> </button> <button type="button" className={item} title="بازدیدهای اخیر" onClick={() => onOpenPanel?.("recent")}> <History className="h-4 w-4" /> <CountBadge count={counts.recent} /> </button> <ThemeToggle /> <button type="button" className={item} title="اعلان‌ها" onClick={() => onOpenPanel?.("notifications")}><Bell className="h-4 w-4" /><NotificationCountBadge /></button> 
@@ -46,7 +46,7 @@ function ThemeToggle() { const [dark, setDark] = useState(false); useEffect(() =
     return (
       <div className="py-5">
         <Link
-          href="/products?featured=1"
+          href="/محصولات?featured=1"
           onClick={onNavigate}
           className="from-primary/20 via-primary/10 to-transparent group flex flex-col gap-2 rounded-2xl bg-gradient-to-l p-6 transition hover:from-primary/30"
         >
@@ -78,7 +78,7 @@ function ThemeToggle() { const [dark, setDark] = useState(false); useEffect(() =
             <p className="text-muted-foreground text-xs">انتخاب بر اساس سبک، فیت و پارچه</p>
           </div>
           <Link
-            href="/products"
+            href="/محصولات"
             onClick={onNavigate}
             className="bg-primary text-primary-foreground hover:bg-primary/90 hidden rounded-full px-4 py-1.5 text-xs font-medium sm:inline-flex"
           >
@@ -140,7 +140,7 @@ function ThemeToggle() { const [dark, setDark] = useState(false); useEffect(() =
         </div>
         <div className="mt-4 flex justify-center sm:hidden">
           <Link
-            href="/products"
+            href="/محصولات"
             onClick={onNavigate}
             className="bg-primary text-primary-foreground rounded-full px-5 py-2 text-xs font-medium"
           >
@@ -164,7 +164,7 @@ function ThemeToggle() { const [dark, setDark] = useState(false); useEffect(() =
           <p className="text-muted-foreground text-xs">انتخاب برند مورد علاقه</p>
         </div>
         <Link
-          href="/brands"
+          href="/برندها"
           onClick={onNavigate}
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-1.5 text-xs font-medium"
         >
@@ -242,7 +242,7 @@ export function SiteHeader({ className }: { className?: string }) {
   const counts = useShopCounts();
   const [menuOpen, setMenuOpen] = useState(false); const [panelOpen, setPanelOpen] = useState(false); const [panelTab, setPanelTab] = useState<ActivityTab>("cart"); const [trackCode, setTrackCode] = useState(""); const [mega, setMega] = useState<null | "categories" | "brands" | "sale">(null);
   const megaTimer = useRef<ReturnType<typeof setTimeout> | null>(null); useEffect(() => { const unsub = useShopStore.subscribe((state, prev) => { if (!prev) return; if (state.cart.length > prev.cart.length) { setPanelTab("cart"); setPanelOpen(true); setMenuOpen(false); } else if (state.wishlist.length > prev.wishlist.length) { setPanelTab("wishlist"); setPanelOpen(true); setMenuOpen(false); } else if (state.compare.length > prev.compare.length) { setPanelTab("compare"); setPanelOpen(true); setMenuOpen(false); } }); 
-  return () => unsub(); }, []); useEffect(() => { function onOpen(e: Event) { const detail = (e as CustomEvent).detail as { tab?: ActivityTab } | undefined; setPanelTab(detail?.tab || "cart"); setPanelOpen(true); setMenuOpen(false); } window.addEventListener("pm:open-panel", onOpen as EventListener); return () => window.removeEventListener("pm:open-panel", onOpen as EventListener); }, []); useEffect(() => { document.body.style.overflow = menuOpen || panelOpen ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [menuOpen, panelOpen]); function openPanel(tab: string) { setPanelTab(tab as ActivityTab); setPanelOpen(true); setMenuOpen(false); } function openMega(type: "categories" | "brands" | "sale") { if (megaTimer.current) clearTimeout(megaTimer.current); setMega(type); } function closeMegaDelayed() { if (megaTimer.current) clearTimeout(megaTimer.current); megaTimer.current = setTimeout(() => setMega(null), 150); } function submitTrack(e: React.FormEvent) { e.preventDefault(); const code = trackCode.trim(); if (!code) return; window.location.href = `/track?code=${encodeURIComponent(code)}`; setMenuOpen(false); } 
+  return () => unsub(); }, []); useEffect(() => { function onOpen(e: Event) { const detail = (e as CustomEvent).detail as { tab?: ActivityTab } | undefined; setPanelTab(detail?.tab || "cart"); setPanelOpen(true); setMenuOpen(false); } window.addEventListener("pm:open-panel", onOpen as EventListener); return () => window.removeEventListener("pm:open-panel", onOpen as EventListener); }, []); useEffect(() => { document.body.style.overflow = menuOpen || panelOpen ? "hidden" : ""; return () => { document.body.style.overflow = ""; }; }, [menuOpen, panelOpen]); function openPanel(tab: string) { setPanelTab(tab as ActivityTab); setPanelOpen(true); setMenuOpen(false); } function openMega(type: "categories" | "brands" | "sale") { if (megaTimer.current) clearTimeout(megaTimer.current); setMega(type); } function closeMegaDelayed() { if (megaTimer.current) clearTimeout(megaTimer.current); megaTimer.current = setTimeout(() => setMega(null), 150); } function submitTrack(e: React.FormEvent) { e.preventDefault(); const code = trackCode.trim(); if (!code) return; window.location.href = `/پیگیری-سفارش?code=${encodeURIComponent(code)}`; setMenuOpen(false); } 
   const pathname = usePathname();
   const [hideForHeroIntro, setHideForHeroIntro] = useState(false);
 
