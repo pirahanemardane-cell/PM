@@ -60,6 +60,14 @@ import {
   revokeMySessionAction,
   signOutOtherDevicesAction,
 } from "@/app/(shop)/actions/auth";
+import { TabMySize } from "@/components/dashboard/tab-my-size";
+import { TabQA } from "@/components/dashboard/tab-qa";
+import { TabReviews } from "@/components/dashboard/tab-reviews";
+import { TabClaims } from "@/components/dashboard/tab-claims";
+import { TabLoyalty } from "@/components/dashboard/tab-loyalty";
+import { TabChat } from "@/components/dashboard/tab-chat";
+import { TabAlerts } from "@/components/dashboard/tab-alerts";
+import { CompareMatrix } from "@/components/shop/compare-matrix";
 
 const ProductCard = nextDynamic(
   () => import("@/components/product/product-card").then((m) => m.ProductCard),
@@ -80,10 +88,17 @@ const TABS = [
   { id: "wishlist", label: "علاقه‌مندی‌ها" },
   { id: "compare", label: "مقایسه" },
   { id: "recent", label: "بازدید اخیر" },
+  { id: "my-size", label: "سایز من" },
+  { id: "reviews", label: "نظرات من" },
+  { id: "qa", label: "پرسش‌ها" },
+  { id: "alerts", label: "اطلاع موجودی" },
   { id: "addresses", label: "آدرس‌ها" },
   { id: "coupons", label: "کد تخفیف" },
+  { id: "loyalty", label: "باشگاه امتیاز" },
   { id: "tickets", label: "پشتیبانی" },
+  { id: "chat", label: "مشاوره" },
   { id: "returns", label: "بازگشت کالا" },
+  { id: "claims", label: "ادعا / گارانتی" },
   { id: "notifications", label: "اعلان‌ها" },
   { id: "profile", label: "پروفایل" },
 ] as const;
@@ -1750,6 +1765,20 @@ useEffect(() => {
                 </ul>
               )}
             </div>
+          ) : tab === "my-size" ? (
+            <TabMySize />
+          ) : tab === "qa" ? (
+            <TabQA />
+          ) : tab === "reviews" ? (
+            <TabReviews />
+          ) : tab === "claims" ? (
+            <TabClaims />
+          ) : tab === "loyalty" ? (
+            <TabLoyalty />
+          ) : tab === "chat" ? (
+            <TabChat />
+          ) : tab === "alerts" ? (
+            <TabAlerts />
           ) : tab === "cart" ? (
             cartLoading ? (
               <div className="flex justify-center py-10" dir="rtl"><LumaSpin /></div>
@@ -1942,9 +1971,20 @@ useEffect(() => {
                           href: w.slug ? `/products/${w.slug}` : undefined,
                         }))
                       : wishlist)
-                  : tab === "compare"
-                    ? compare
-                    : recent;
+                  : recent;
+              if (tab === "compare") {
+                return (
+                  <div className="space-y-3" dir="rtl">
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-base font-bold text-primary">مقایسه</h2>
+                      <Link href="/compare" className="text-primary text-xs underline">
+                        صفحه عمومی مقایسه
+                      </Link>
+                    </div>
+                    <CompareMatrix />
+                  </div>
+                );
+              }
               if (list.length === 0) {
                 return (
                   <p className="text-muted-foreground text-sm">
@@ -1982,15 +2022,6 @@ useEffect(() => {
                             onClick={() => void handleRemoveWishlist(p.id)}
                           >
                             حذف
-                          </button>
-                        ) : null}
-                        {tab === "compare" ? (
-                          <button
-                            type="button"
-                            className="text-destructive text-xs"
-                            onClick={() => toggleCompare(p)}
-                          >
-                            حذف از مقایسه
                           </button>
                         ) : null}
                         {(p.href || p.slug) ? (

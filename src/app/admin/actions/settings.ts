@@ -79,6 +79,8 @@ const STORE_KEYS = [
   "order_sms_enabled",
   "store_support_phone",
   "store_support_email",
+  "store_whatsapp",
+  "store_chat_label",
 ] as const;
 
 export type StoreSettingsMap = Record<(typeof STORE_KEYS)[number], string>;
@@ -101,6 +103,8 @@ export async function adminGetStoreSettingsAction() {
       order_sms_enabled: "true",
       store_support_phone: "",
       store_support_email: "",
+      store_whatsapp: "",
+      store_chat_label: "مشاوره واتساپ",
     };
     for (const row of data ?? []) {
       const k = String((row as { key?: string }).key || "");
@@ -123,6 +127,8 @@ export async function adminSaveStoreSettingsAction(input: {
   order_sms_enabled: boolean;
   store_support_phone: string;
   store_support_email: string;
+  store_whatsapp?: string;
+  store_chat_label?: string;
 }) {
   const gate = await requirePermission("admin.settings");
   if (!gate.ok) return { ok: false as const, error: gate.error };
@@ -147,6 +153,14 @@ export async function adminSaveStoreSettingsAction(input: {
     {
       key: "store_support_email",
       value: (input.store_support_email || "").trim(),
+    },
+    {
+      key: "store_whatsapp",
+      value: (input.store_whatsapp || "").trim(),
+    },
+    {
+      key: "store_chat_label",
+      value: (input.store_chat_label || "").trim() || "مشاوره واتساپ",
     },
   ];
 

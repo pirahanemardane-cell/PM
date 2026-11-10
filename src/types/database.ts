@@ -1184,6 +1184,288 @@ export type Database = {
         Relationships: [];
       };
 
+      user_measurements: {
+        Row: {
+          user_id: string;
+          chest_cm: number | null;
+          waist_cm: number | null;
+          shoulder_cm: number | null;
+          sleeve_cm: number | null;
+          length_cm: number | null;
+          neck_cm: number | null;
+          preferred_size: string | null;
+          notes: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          chest_cm?: number | null;
+          waist_cm?: number | null;
+          shoulder_cm?: number | null;
+          sleeve_cm?: number | null;
+          length_cm?: number | null;
+          neck_cm?: number | null;
+          preferred_size?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          chest_cm?: number | null;
+          waist_cm?: number | null;
+          shoulder_cm?: number | null;
+          sleeve_cm?: number | null;
+          length_cm?: number | null;
+          neck_cm?: number | null;
+          preferred_size?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      review_images: {
+        Row: {
+          id: string;
+          review_id: string;
+          url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          review_id: string;
+          url: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          review_id?: string;
+          url?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      product_questions: {
+        Row: {
+          id: string;
+          product_id: string;
+          user_id: string;
+          body: string;
+          is_approved: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          user_id: string;
+          body: string;
+          is_approved?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          user_id?: string;
+          body?: string;
+          is_approved?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      product_answers: {
+        Row: {
+          id: string;
+          question_id: string;
+          user_id: string | null;
+          body: string;
+          is_staff: boolean;
+          is_approved: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          user_id?: string | null;
+          body: string;
+          is_staff?: boolean;
+          is_approved?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          question_id?: string;
+          user_id?: string | null;
+          body?: string;
+          is_staff?: boolean;
+          is_approved?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      product_complements: {
+        Row: {
+          id: string;
+          product_id: string;
+          complement_product_id: string;
+          label: string | null;
+          sort_order: number;
+          is_bundle: boolean;
+          bundle_price: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          complement_product_id: string;
+          label?: string | null;
+          sort_order?: number;
+          is_bundle?: boolean;
+          bundle_price?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          complement_product_id?: string;
+          label?: string | null;
+          sort_order?: number;
+          is_bundle?: boolean;
+          bundle_price?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      warranty_claims: {
+        Row: {
+          id: string;
+          user_id: string;
+          order_id: string | null;
+          product_id: string | null;
+          claim_type: string;
+          status: string;
+          body: string;
+          admin_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          order_id?: string | null;
+          product_id?: string | null;
+          claim_type?: string;
+          status?: string;
+          body: string;
+          admin_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          order_id?: string | null;
+          product_id?: string | null;
+          claim_type?: string;
+          status?: string;
+          body?: string;
+          admin_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      loyalty_accounts: {
+        Row: {
+          user_id: string;
+          points: number;
+          lifetime_points: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          points?: number;
+          lifetime_points?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          points?: number;
+          lifetime_points?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      loyalty_rules: {
+        Row: {
+          id: string;
+          key: string;
+          label: string;
+          points: number;
+          is_active: boolean;
+          meta: Json;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          label: string;
+          points?: number;
+          is_active?: boolean;
+          meta?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          label?: string;
+          points?: number;
+          is_active?: boolean;
+          meta?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      loyalty_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          points: number;
+          reason: string;
+          order_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          points: number;
+          reason: string;
+          order_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          points?: number;
+          reason?: string;
+          order_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
       site_settings: {
         Row: { key: string; value: Json | null; updated_at: string; };
         Insert: { key: string; value?: Json | null; updated_at?: string; };

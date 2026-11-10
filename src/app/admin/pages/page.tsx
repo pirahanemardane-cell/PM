@@ -9,7 +9,7 @@ import {
 import type { FaqItem, TextPageContent } from "@/lib/content/static-pages";
 import { LumaSpin } from "@/components/ui/luma-spin";
 
-type Tab = "faq" | "terms" | "privacy" | "shipping" | "returns";
+type Tab = "faq" | "terms" | "privacy" | "shipping" | "returns" | "warranty";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "faq", label: "سوالات متداول" },
@@ -17,6 +17,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "privacy", label: "حریم خصوصی" },
   { id: "shipping", label: "ارسال و تحویل" },
   { id: "returns", label: "سیاست مرجوعی" },
+  { id: "warranty", label: "گارانتی / تعویض" },
 ];
 
 export default function AdminContentPagesPage() {

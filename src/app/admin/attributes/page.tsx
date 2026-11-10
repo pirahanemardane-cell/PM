@@ -222,7 +222,10 @@ export default function AdminAttributesPage() {
     <div className="space-y-6 p-6" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">مشخصات محصول</h1>
+          <h1 className="text-2xl font-bold text-primary">فیلترها و مشخصات</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            تاکسونومی فیلتر PLP: یقه، پارچه، فیت، آستین، مناسبت و … — مشخصه‌های فیلترپذیر روی صفحه محصولات نمایش داده می‌شوند.
+          </p>
           <p className="text-muted-foreground mt-1 text-xs">
             برای مشخصه رنگ: نام + کد هگز (سواچ)
           </p>

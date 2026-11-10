@@ -1,10 +1,11 @@
 import { getStoreContact } from "@/lib/store-contact";
 import { toPersianDigits } from "@/lib/numbers";
+import { WhatsAppSalesEntry } from "@/components/shop/whatsapp-sales-entry";
 
 /** تماس پشتیبانی از تنظیمات ادمین */
 export async function FooterContact() {
   const c = await getStoreContact();
-  if (!c.phone && !c.email) return null;
+  if (!c.phone && !c.email && !c.whatsapp) return null;
 
   return (
     <div className="space-y-1 text-sm" dir="rtl">
@@ -23,6 +24,7 @@ export async function FooterContact() {
           </a>
         </p>
       ) : null}
+      <WhatsAppSalesEntry compact />
     </div>
   );
 }

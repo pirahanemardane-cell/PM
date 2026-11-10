@@ -68,7 +68,7 @@ export async function adminReplyTicketAction(ticketId: string, bodyRaw: string) 
 }
 
 export async function adminListReturnsAction() {
-  const gate = await requirePermission("admin.content");
+  const gate = await requirePermission("admin.returns");
   if (!gate.ok) return { ok: false as const, error: gate.error, items: [] };
   try {
     const { data, error } = await gate.supabase
@@ -89,7 +89,7 @@ export async function adminSetReturnStatusAction(
   status: "pending" | "approved" | "rejected" | "received" | "refunded",
   adminNote?: string,
 ) {
-  const gate = await requirePermission("admin.content");
+  const gate = await requirePermission("admin.returns");
   if (!gate.ok) return { ok: false as const, error: gate.error };
   try {
     const { data: prev } = await gate.supabase

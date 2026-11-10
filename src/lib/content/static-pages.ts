@@ -67,6 +67,14 @@ export const DEFAULT_PAGES: Record<string, TextPageContent> = {
       "هزینه ارسال برگشت در موارد خاص طبق قوانین فروشگاه مشخص می‌شود.",
     ],
   },
+  warranty: {
+    title: "گارانتی دوخت و تعویض آسان",
+    paragraphs: [
+      "دوخت و کیفیت ساخت محصولات تحت پوشش گارانتی محدود فروشگاه است؛ ایراد دوخت در بازه اعلام‌شده قابل پیگیری است.",
+      "تعویض آسان برای کالای نو، با برچسب و بدون استفاده، طبق شرایط فروشگاه از داشبورد قابل ثبت است.",
+      "برای ثبت ادعا وارد حساب شوید و از تب «ادعا / گارانتی» درخواست بفرستید.",
+    ],
+  },
 };
 
 export const CONTENT_KEYS = {
@@ -75,6 +83,7 @@ export const CONTENT_KEYS = {
   privacy: "page_privacy",
   shipping: "page_shipping",
   returns: "page_returns",
+  warranty: "page_warranty",
 } as const;
 
 export type ContentPageSlug = keyof typeof CONTENT_KEYS;

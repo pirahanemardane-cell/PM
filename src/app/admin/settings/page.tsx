@@ -145,6 +145,8 @@ function StoreOpsSettingsForm() {
   const [orderSms, setOrderSms] = useState(true);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [chatLabel, setChatLabel] = useState("مشاوره واتساپ");
 
   useEffect(() => {
     void (async () => {
@@ -161,6 +163,8 @@ function StoreOpsSettingsForm() {
       setOrderSms(String(s.order_sms_enabled).toLowerCase() !== "false");
       setPhone(String(s.store_support_phone || ""));
       setEmail(String(s.store_support_email || ""));
+      setWhatsapp(String(s.store_whatsapp || ""));
+      setChatLabel(String(s.store_chat_label || "مشاوره واتساپ"));
     })();
   }, []);
 
@@ -175,6 +179,8 @@ function StoreOpsSettingsForm() {
       order_sms_enabled: orderSms,
       store_support_phone: phone,
       store_support_email: email,
+      store_whatsapp: whatsapp,
+      store_chat_label: chatLabel,
     });
     setBusy(false);
     if (!res.ok) {
@@ -255,6 +261,27 @@ function StoreOpsSettingsForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="support@..."
+        />
+      </label>
+
+      <label className="block space-y-1 text-sm">
+        <span>واتساپ فروش / مشاوره (شماره با کد کشور یا ۰۹…)</span>
+        <input
+          className="border-border bg-background w-full rounded-lg border px-3 py-2"
+          dir="ltr"
+          value={whatsapp}
+          onChange={(e) => setWhatsapp(e.target.value)}
+          placeholder="0912... یا 98912..."
+        />
+      </label>
+
+      <label className="block space-y-1 text-sm">
+        <span>برچسب دکمه چت</span>
+        <input
+          className="border-border bg-background w-full rounded-lg border px-3 py-2"
+          value={chatLabel}
+          onChange={(e) => setChatLabel(e.target.value)}
+          placeholder="مشاوره واتساپ"
         />
       </label>
 
