@@ -113,11 +113,10 @@ export function Footer({
               "pointer-events-auto relative mx-0 box-border flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-2xl border p-1.5 shadow-sm sm:p-2",
               /* Clamp keeps the plate inside the row on phone/tablet; never exceed 5.5rem */
               "h-[clamp(2.75rem,11vw,5.5rem)] w-[clamp(2.75rem,11vw,5.5rem)] max-h-[5.5rem] max-w-[min(100%,5.5rem)]",
-              /* Frosted / matte glass — translucent so PirahanMardane under the chip stays perceptible */
-              "border-white/50 bg-white/25 backdrop-blur-xl backdrop-saturate-150",
-              "supports-[backdrop-filter]:bg-white/15",
-              "dark:border-white/20 dark:bg-white/[0.08] dark:supports-[backdrop-filter]:bg-white/[0.06]",
-              "transition-colors duration-300 hover:border-primary/70",
+              /* Colorless frosted glass — clear/white film + blur only (no tint/saturate) */
+              "border-white/40 bg-white/20 backdrop-blur-xl",
+              "supports-[backdrop-filter]:bg-white/10",
+              "dark:border-white/25 dark:bg-white/10 dark:supports-[backdrop-filter]:bg-white/5",
             )}
           >
             <div className="relative flex h-full w-full min-h-0 min-w-0 items-center justify-center overflow-hidden">
