@@ -12,26 +12,16 @@ const sizes = {
   sm: { width: 100, height: 30, className: "h-7 w-auto max-h-7 max-w-[6.5rem]" },
   md: { width: 140, height: 42, className: "h-8 w-auto max-h-8 max-w-[8rem]" },
   lg: { width: 160, height: 48, className: "h-9 w-auto max-h-9 max-w-[9rem]" },
-  /* Fits the footer glass plate — must not overflow the rounded square */
-  footer: {
-    width: 96,
-    height: 96,
-    className: "h-full w-full max-h-full max-w-full object-contain",
-  },
+  footer: { width: 220, height: 66, className: "h-12 w-auto max-h-12 max-w-[11rem] sm:h-14 sm:max-h-14 sm:max-w-[13rem]" },
 };
 
 export function Logo({ className, priority, size = "md" }: Props) {
   const s = sizes[size];
-  const fillPlate = size === "footer";
 
   return (
     <Link
       href="/"
-      className={cn(
-        "inline-flex shrink-0 items-center",
-        fillPlate && "h-full w-full min-h-0 min-w-0 justify-center overflow-hidden",
-        className,
-      )}
+      className={cn("inline-flex shrink-0 items-center", className)}
       aria-label="پیراهن مردانه"
     >
       <Image
