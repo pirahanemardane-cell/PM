@@ -312,6 +312,10 @@ export type CartLineDTO = {
   sizes?: string[];
   /** وزن یک واحد به گرم — برای محاسبه ارسال */
   weightGrams?: number;
+  /** قیمت ویژه باندل اگر روی خط سبد ست شده باشد */
+  unitPriceOverride?: number | null;
+  bundleComplementId?: string | null;
+  isBundlePrice?: boolean;
 };
 
 export async function getCartAction(): Promise<{
@@ -323,11 +327,18 @@ export async function getCartAction(): Promise<{
     const cartId = await resolveCartId();
     const cartRepo = new CartRepository();
     const rows = await cartRepo.listItems(cartId);
+    const linePrice = (row: any) => {
+      const v = row.product_variants;
+      const override = Number(row.unit_price_override ?? 0);
+      if (override > 0) return override;
+      return Number(v?.price ?? 0);
+    };
+
     const cartItemsForDiscount = (rows as any[]).map((row) => {
       const v = row.product_variants;
       return {
         productId: String(v?.product_id ?? v?.products?.id ?? ""),
-        price: Number(v?.price ?? 0),
+        price: linePrice(row),
         quantity: Number(row.quantity ?? 0),
       };
     });
@@ -351,11 +362,12 @@ export async function getCartAction(): Promise<{
         );
       // بدون variant_id = گالری/شاخص؛ با variant_id = عکس همان واریانت
       const image = byVariant?.url ?? sorted.find((im) => !im.variant_id)?.url ?? sorted[0]?.url;
+      const override = Number(row.unit_price_override ?? 0);
       return {
         itemId: row.id,
         variantId: row.variant_id,
         quantity: row.quantity,
-        price: Number(v?.price ?? 0),
+        price: linePrice(row),
         productId: product?.id ?? v?.product_id ?? "",
         title: product?.name ?? "محصول",
         slug: product?.slug ?? "",
@@ -364,6 +376,9 @@ export async function getCartAction(): Promise<{
         color: v?.color_name ?? (typeof v?.color === "string" ? v.color : v?.color?.name) ?? undefined,
         colorHex: v?.color_hex ?? v?.color?.hex_code ?? undefined,
         weightGrams: Math.max(0, Number(v?.weight_grams ?? 0) || 0) || undefined,
+        unitPriceOverride: override > 0 ? override : null,
+        bundleComplementId: row.bundle_complement_id ?? null,
+        isBundlePrice: override > 0,
       };
     });
 
@@ -463,6 +478,7 @@ export type CreateOrderPayload = {
   postal?: string;
   note?: string;
   discountCode?: string;
+  loyaltyPoints?: number;
   paymentMethod?: "cod" | "online";
   shippingMethodId?: string;
 };
@@ -479,11 +495,17 @@ export async function createOrderAction(payload: CreateOrderPayload) {
     const raw = await cartRepo.listItems(cartId);
     if (!raw.length) return { ok: false as const, error: "empty_cart" };
 
+    const resolveUnitPrice = (row: any) => {
+      const override = Number(row.unit_price_override ?? 0);
+      if (override > 0) return override;
+      return Number(row.product_variants?.price ?? 0);
+    };
+
     const cartItemsForDiscount = (raw as any[]).map((row) => {
       const v = row.product_variants;
       return {
         productId: String(v?.product_id ?? v?.products?.id ?? ""),
-        price: Number(v?.price ?? 0),
+        price: resolveUnitPrice(row),
         quantity: Number(row.quantity ?? 0),
       };
     });
@@ -492,7 +514,7 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       const v = row.product_variants;
       const prod = v?.products;
       const title = prod?.name ?? "محصول";
-      const unitPrice = Number(v?.price ?? 0);
+      const unitPrice = resolveUnitPrice(row);
       return {
         variantId: row.variant_id as string,
         productId: (v?.product_id ?? prod?.id) as string,
@@ -547,6 +569,31 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       if (maxUses != null && usedCount >= Number(maxUses)) {
         return { ok: false as const, error: "discount_max_uses" };
       }
+    }
+
+    let loyaltyPointsRedeemed = 0;
+    let loyaltyDiscountAmount = 0;
+    const wantLoyalty = Math.max(0, Math.floor(Number(payload.loyaltyPoints) || 0));
+    if (wantLoyalty > 0) {
+      if (!user?.id) {
+        return { ok: false as const, error: "loyalty_login_required" };
+      }
+      const {
+        getLoyaltyBalance,
+        getPointValueToman,
+        clampRedeemPreview,
+      } = await import("@/lib/loyalty/award");
+      const balance = await getLoyaltyBalance(user.id);
+      const pointValue = await getPointValueToman();
+      const afterCoupon = Math.max(0, subtotal - Math.min(discountAmount, subtotal));
+      const clamped = clampRedeemPreview({
+        balance,
+        wantPoints: wantLoyalty,
+        subtotalToman: afterCoupon,
+        pointValueToman: pointValue,
+      });
+      loyaltyPointsRedeemed = clamped.points;
+      loyaltyDiscountAmount = clamped.discountToman;
     }
 
     const nameOk = assertNoLinkOrImage(payload.name, "نام");
@@ -605,17 +652,21 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       weightGrams,
       destCity: cityOk.text || undefined,
       destProvince: provinceOk.text || undefined,
-      parcelValueToman: Math.max(0, subtotal - discountAmount),
+      parcelValueToman: Math.max(
+        0,
+        subtotal - discountAmount - loyaltyDiscountAmount,
+      ),
     });
     if (!quoteRes.ok || !quoteRes.quote.ok) {
       return { ok: false as const, error: "shipping_quote_failed" };
     }
     shippingMethodTitle = quoteRes.title || null;
     shippingFee = Math.max(0, Math.floor(Number(quoteRes.quote.fee) || 0));
-    const orderGrandTotal = Math.max(
+    const afterDiscounts = Math.max(
       0,
-      subtotal - Math.min(discountAmount, subtotal) + shippingFee,
+      subtotal - Math.min(discountAmount, subtotal) - loyaltyDiscountAmount,
     );
+    const orderGrandTotal = afterDiscounts + shippingFee;
 
     const orderRepo = new OrderRepository();
     const orderId = await orderRepo.createFromCart({
@@ -635,8 +686,26 @@ export async function createOrderAction(payload: CreateOrderPayload) {
       note: noteOk.text || undefined,
       discountCode,
       discountAmount,
+      loyaltyPointsRedeemed,
+      loyaltyDiscountAmount,
       paymentMethod: payload.paymentMethod === "online" ? "online" : "cod",
     });
+
+    if (loyaltyPointsRedeemed > 0 && user?.id) {
+      try {
+        const { redeemLoyaltyAtCheckout } = await import("@/lib/loyalty/award");
+        const redeemed = await redeemLoyaltyAtCheckout({
+          userId: user.id,
+          orderId,
+          points: loyaltyPointsRedeemed,
+        });
+        if (!redeemed.ok) {
+          console.error("[createOrder loyalty redeem]", redeemed.error);
+        }
+      } catch (le) {
+        console.error("[createOrder loyalty redeem]", le);
+      }
+    }
 
     await cartRepo.clearCart(cartId);
 

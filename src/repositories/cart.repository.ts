@@ -45,9 +45,19 @@ export class CartRepository {
     throw new Error("userId or sessionId required");
   }
 
-  async addItem(cartId: string, variantId: string, quantity = 1): Promise<void> {
+  async addItem(
+    cartId: string,
+    variantId: string,
+    quantity = 1,
+    opts?: { unitPriceOverride?: number | null; bundleComplementId?: string | null },
+  ): Promise<void> {
     const supabase = this.getClient();
     const qtyAdd = Math.max(1, Number(quantity) || 1);
+    const override =
+      opts?.unitPriceOverride != null && Number(opts.unitPriceOverride) > 0
+        ? Math.round(Number(opts.unitPriceOverride))
+        : null;
+    const bundleId = opts?.bundleComplementId || null;
 
     const { data: variant, error: vErr } = await supabase
       .from("product_variants")
@@ -70,11 +80,23 @@ export class CartRepository {
     if (existing) {
       const next = Number(existing.quantity) + qtyAdd;
       if (next > stock) throw new Error(`insufficient_stock:${stock}`);
+      const patch: {
+        quantity: number;
+        unit_price_override?: number | null;
+        bundle_complement_id?: string | null;
+      } = { quantity: next };
+      if (override != null) patch.unit_price_override = override;
+      if (bundleId) patch.bundle_complement_id = bundleId;
       const { error } = await supabase
         .from("cart_items")
-        .update({ quantity: next })
+        .update(patch)
         .eq("id", existing.id);
       if (error) throw error;
+      // touch cart for abandoned-cart staleness
+      await supabase
+        .from("carts")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", cartId);
       return;
     }
 
@@ -83,8 +105,14 @@ export class CartRepository {
       cart_id: cartId,
       variant_id: variantId,
       quantity: qtyAdd,
+      unit_price_override: override,
+      bundle_complement_id: bundleId,
     });
     if (error) throw error;
+    await supabase
+      .from("carts")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", cartId);
   }
 
   async setQuantity(cartId: string, variantId: string, quantity: number): Promise<void> {
@@ -143,6 +171,8 @@ export class CartRepository {
         id,
         quantity,
         variant_id,
+        unit_price_override,
+        bundle_complement_id,
         product_variants(
           id,
           price,

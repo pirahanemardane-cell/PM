@@ -4,10 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { normalizeIranMobile } from "@/lib/numbers";
 
+function normalizeEmail(raw: string): string | null {
+  const e = (raw || "").trim().toLowerCase();
+  if (!e) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return null;
+  return e;
+}
+
 export async function subscribeStockAlertAction(input: {
   variantId: string;
   productId: string;
   phone?: string;
+  email?: string;
 }) {
   try {
     const variantId = (input.variantId || "").trim();
@@ -23,11 +31,16 @@ export async function subscribeStockAlertAction(input: {
 
     const phoneRaw = (input.phone || "").trim();
     const phone = phoneRaw ? normalizeIranMobile(phoneRaw) : null;
-    if (!user && !phone) {
-      return { ok: false as const, error: "auth_or_phone_required" };
-    }
     if (phoneRaw && !phone) {
       return { ok: false as const, error: "invalid_phone" };
+    }
+    const email = normalizeEmail(input.email || "");
+    if ((input.email || "").trim() && !email) {
+      return { ok: false as const, error: "invalid_email" };
+    }
+
+    if (!user && !phone && !email) {
+      return { ok: false as const, error: "auth_or_contact_required" };
     }
 
     const { data: variant } = await supabase
@@ -55,29 +68,45 @@ export async function subscribeStockAlertAction(input: {
       const { error } = await service.from("stock_alerts").insert({
         user_id: user.id,
         phone: phone,
+        email: email || user.email || null,
         variant_id: variantId,
         product_id: productId,
         status: "pending",
+        is_active: true,
       });
       if (error) throw error;
       return { ok: true as const };
     }
 
-    const { data: existingPh } = await service
-      .from("stock_alerts")
-      .select("id")
-      .eq("variant_id", variantId)
-      .eq("phone", phone!)
-      .eq("status", "pending")
-      .maybeSingle();
-    if (existingPh) return { ok: true as const, already: true as const };
+    if (phone) {
+      const { data: existingPh } = await service
+        .from("stock_alerts")
+        .select("id")
+        .eq("variant_id", variantId)
+        .eq("phone", phone)
+        .eq("status", "pending")
+        .maybeSingle();
+      if (existingPh) return { ok: true as const, already: true as const };
+    }
+    if (email) {
+      const { data: existingEm } = await service
+        .from("stock_alerts")
+        .select("id")
+        .eq("variant_id", variantId)
+        .eq("email", email)
+        .eq("status", "pending")
+        .maybeSingle();
+      if (existingEm) return { ok: true as const, already: true as const };
+    }
 
     const { error } = await service.from("stock_alerts").insert({
       user_id: null,
-      phone: phone!,
+      phone: phone,
+      email: email,
       variant_id: variantId,
       product_id: productId,
       status: "pending",
+      is_active: true,
     });
     if (error) throw error;
     return { ok: true as const };

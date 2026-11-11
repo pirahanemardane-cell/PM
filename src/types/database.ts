@@ -649,6 +649,8 @@ export type Database = {
           cart_id: string;
           variant_id: string;
           quantity: number;
+          unit_price_override: number | null;
+          bundle_complement_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -657,6 +659,8 @@ export type Database = {
           cart_id: string;
           variant_id: string;
           quantity?: number;
+          unit_price_override?: number | null;
+          bundle_complement_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -665,6 +669,8 @@ export type Database = {
           cart_id?: string;
           variant_id?: string;
           quantity?: number;
+          unit_price_override?: number | null;
+          bundle_complement_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -738,6 +744,8 @@ export type Database = {
           session_id: string | null;
           shipping_method_id: string | null;
           shipping_method_title: string | null;
+          loyalty_points_redeemed: number;
+          loyalty_discount_amount: number;
           created_at: string; updated_at: string;
         };
         Insert: {
@@ -752,6 +760,8 @@ export type Database = {
           session_id?: string | null;
           shipping_method_id?: string | null;
           shipping_method_title?: string | null;
+          loyalty_points_redeemed?: number;
+          loyalty_discount_amount?: number;
           created_at?: string; updated_at?: string;
         };
         Update: {
@@ -766,6 +776,8 @@ export type Database = {
           session_id?: string | null;
           shipping_method_id?: string | null;
           shipping_method_title?: string | null;
+          loyalty_points_redeemed?: number;
+          loyalty_discount_amount?: number;
           created_at?: string; updated_at?: string;
         };
         Relationships: [];
@@ -1381,6 +1393,59 @@ export type Database = {
           admin_note?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      warranty_claim_images: {
+        Row: {
+          id: string;
+          claim_id: string;
+          url: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          claim_id: string;
+          url: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          claim_id?: string;
+          url?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      abandoned_cart_nudges: {
+        Row: {
+          id: string;
+          cart_id: string;
+          user_id: string | null;
+          channel: string;
+          notified_at: string;
+          meta: Record<string, unknown>;
+        };
+        Insert: {
+          id?: string;
+          cart_id: string;
+          user_id?: string | null;
+          channel?: string;
+          notified_at?: string;
+          meta?: Record<string, unknown>;
+        };
+        Update: {
+          id?: string;
+          cart_id?: string;
+          user_id?: string | null;
+          channel?: string;
+          notified_at?: string;
+          meta?: Record<string, unknown>;
         };
         Relationships: [];
       };

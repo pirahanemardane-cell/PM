@@ -35,10 +35,19 @@ export async function updateReviewApproval(id: string, isApproved: boolean) {
         title: "نظر شما تأیید شد",
         body: "نظر شما روی محصول منتشر شد. از بازخوردتان سپاسگزاریم.",
         type: "system",
-        link: "/dashboard?tab=notifications",
+        link: "/داشبورد?tab=notifications",
       });
     } catch (ne) {
       console.error("[updateReviewApproval notify]", ne);
+    }
+    try {
+      const { awardReviewApprovedLoyalty } = await import("@/lib/loyalty/award");
+      await awardReviewApprovedLoyalty({
+        userId: (prev as { user_id: string }).user_id,
+        reviewId: id,
+      });
+    } catch (loyErr) {
+      console.warn("[updateReviewApproval loyalty]", loyErr);
     }
   }
 

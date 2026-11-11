@@ -76,6 +76,26 @@ export default function AdminWarrantyPage() {
                   {c.product?.name ? <span>{c.product.name}</span> : null}
                 </div>
                 <p className="whitespace-pre-wrap">{c.body}</p>
+                {c.order_id ? (
+                  <p className="text-muted-foreground text-xs" dir="ltr">
+                    سفارش: {c.order_id}
+                  </p>
+                ) : null}
+                {c.images?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {c.images.map((im, i) => (
+                      <a
+                        key={i}
+                        href={im.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary text-xs underline"
+                      >
+                        مدرک {i + 1}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
                 <textarea
                   className="border-input bg-background w-full rounded-lg border px-3 py-2 text-sm"
                   rows={2}

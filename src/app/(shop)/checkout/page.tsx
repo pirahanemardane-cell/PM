@@ -15,6 +15,10 @@ import {
   type CartLineDTO,
 } from "@/app/(shop)/actions/shop";
 import {
+  getMyLoyaltyAction,
+  previewLoyaltyRedeemAction,
+} from "@/app/(shop)/actions/loyalty";
+import {
   listActiveShippingMethodsAction,
   quoteShippingAction,
 } from "@/app/(shop)/actions/shipping";
@@ -260,6 +264,13 @@ export default function CheckoutPage() {
   } | null>(null);
   const [discountError, setDiscountError] = useState<string | null>(null);
   const [discountLoading, setDiscountLoading] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [loyaltyPointValue, setLoyaltyPointValue] = useState(1000);
+  const [loyaltyWant, setLoyaltyWant] = useState(0);
+  const [loyaltyPreview, setLoyaltyPreview] = useState<{
+    points: number;
+    discountToman: number;
+  } | null>(null);
   const orderPlacedRef = useRef(false);
   const [reserveExpiresAt, setReserveExpiresAt] = useState<string | null>(null);
   const [reserveHint, setReserveHint] = useState<string | null>(null);
@@ -420,8 +431,21 @@ export default function CheckoutPage() {
     () => items.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
     [items],
   );
-  const afterDiscount = discountPreview?.finalTotal ?? subtotal;
+  const couponOff = discountPreview?.discountAmount ?? 0;
+  const loyaltyOff = loyaltyPreview?.discountToman ?? 0;
+  const afterDiscount = Math.max(0, subtotal - couponOff - loyaltyOff);
   const payable = Math.max(0, afterDiscount + shipFee);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await getMyLoyaltyAction();
+      if (!res.ok || !res.account) return;
+      setLoyaltyBalance(Number((res.account as { points?: number }).points ?? 0));
+      if (typeof (res as { pointValueToman?: number }).pointValueToman === "number") {
+        setLoyaltyPointValue((res as { pointValueToman: number }).pointValueToman);
+      }
+    })();
+  }, []);
 
   function fullName() {
     return `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
@@ -533,6 +557,7 @@ export default function CheckoutPage() {
           .filter(Boolean)
           .join(" | ") || undefined,
       discountCode: (discountPreview?.code || discountCode).trim() || undefined,
+      loyaltyPoints: loyaltyPreview?.points || undefined,
       paymentMethod: payMethod,
       shippingMethodId: shipMethod || undefined,
     });
@@ -1094,6 +1119,58 @@ export default function CheckoutPage() {
                   ) : null}
                 </div>
 
+                {loyaltyBalance > 0 ? (
+                  <div className="space-y-2 pt-2">
+                    <p className="text-sm font-medium">
+                      امتیاز باشگاه ({toPersianDigits(String(loyaltyBalance))} امتیاز — هر امتیاز{" "}
+                      {toPersianDigits(String(loyaltyPointValue))} تومان)
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        max={loyaltyBalance}
+                        value={loyaltyWant || ""}
+                        onChange={(e) => {
+                          setLoyaltyWant(Math.max(0, Math.floor(Number(e.target.value) || 0)));
+                          setLoyaltyPreview(null);
+                        }}
+                        placeholder="تعداد امتیاز"
+                        className="border-input bg-background h-10 flex-1 rounded-xl border px-3 text-sm"
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        className="border-border h-10 shrink-0 rounded-xl border px-4 text-sm"
+                        onClick={async () => {
+                          const afterCoupon = Math.max(0, subtotal - couponOff);
+                          const res = await previewLoyaltyRedeemAction({
+                            wantPoints: loyaltyWant || loyaltyBalance,
+                            subtotalToman: afterCoupon,
+                          });
+                          if (!res.ok) {
+                            setLoyaltyPreview(null);
+                            return;
+                          }
+                          setLoyaltyWant(res.points);
+                          setLoyaltyPreview({
+                            points: res.points,
+                            discountToman: res.discountToman,
+                          });
+                        }}
+                      >
+                        اعمال
+                      </button>
+                    </div>
+                    {loyaltyPreview && loyaltyPreview.points > 0 ? (
+                      <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                        {toPersianDigits(String(loyaltyPreview.points))} امتیاز ≈{" "}
+                        <Price amount={loyaltyPreview.discountToman} size="sm" />
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="bg-muted/40 space-y-1 rounded-xl p-3 text-sm">
                   <p>
                     <span className="text-muted-foreground">گیرنده: </span>
@@ -1250,12 +1327,21 @@ export default function CheckoutPage() {
                 <span className="text-muted-foreground">جمع کالا</span>
                 <Price amount={subtotal} size="sm" />
               </div>
-              {discountPreview ? (
+              {couponOff > 0 ? (
                 <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
                   <span>تخفیف</span>
                   <span>
                     −
-                    <Price amount={discountPreview.discountAmount} size="sm" />
+                    <Price amount={couponOff} size="sm" />
+                  </span>
+                </div>
+              ) : null}
+              {loyaltyOff > 0 ? (
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400">
+                  <span>امتیاز باشگاه</span>
+                  <span>
+                    −
+                    <Price amount={loyaltyOff} size="sm" />
                   </span>
                 </div>
               ) : null}

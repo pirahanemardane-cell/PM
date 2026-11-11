@@ -1,16 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useShopStore } from "@/lib/shop-store";
 import { Price } from "@/components/ui/price";
 
 function productHref(p: { href?: string; id: string }) {
-  return p.href || `/products`;
+  return p.href || `/محصولات`;
 }
 
 export function CompareMatrix() {
   const compare = useShopStore((s) => s.compare);
   const toggleCompare = useShopStore((s) => s.toggleCompare);
+
+  const attrRows = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const p of compare) {
+      for (const a of p.attrs || []) {
+        const key = (a.slug || a.label).trim();
+        if (!key) continue;
+        if (!labels.has(key)) labels.set(key, a.label || key);
+      }
+    }
+    return [...labels.entries()];
+  }, [compare]);
 
   if (!compare.length) {
     return (
@@ -88,11 +101,26 @@ export function CompareMatrix() {
               </td>
             ))}
           </tr>
+          {attrRows.map(([key, label]) => (
+            <tr key={key} className="border-border border-t">
+              <td className="text-muted-foreground p-3">{label}</td>
+              {compare.map((p) => {
+                const hit = (p.attrs || []).find(
+                  (a) => (a.slug || a.label).trim() === key,
+                );
+                return (
+                  <td key={p.id} className="p-3">
+                    {hit?.value || "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
         </tbody>
       </table>
       <div className="border-border border-t p-3 text-xs">
         <Link href="/مقایسه" className="text-primary underline">
-          مشاهده در داشبورد
+          صفحه مقایسه کامل
         </Link>
       </div>
     </div>

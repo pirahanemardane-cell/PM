@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { getLiveRecentlyViewedAction } from "@/app/(shop)/actions/shop";
+import { getCompareProductsAction } from "@/app/(shop)/actions/compare";
 import { useShopStore } from "@/lib/shop-store";
 import { useRtEvent } from "@/hooks/use-rt-event";
 import { RT } from "@/lib/realtime/events";
@@ -12,7 +12,7 @@ export function CompareSync() {
       const list = useShopStore.getState().compare || [];
       if (!list.length) return;
       const ids = list.map((x) => x.id).filter(Boolean);
-      const res = await getLiveRecentlyViewedAction(ids);
+      const res = await getCompareProductsAction(ids);
       if (!res.ok) return;
       const byId = new Map(res.items.map((x) => [x.id, x]));
       const next = ids
@@ -24,18 +24,30 @@ export function CompareSync() {
           price: x.price,
           image: x.image,
           brand: x.brand,
+          category: x.category,
           href: x.href,
+          colors: x.colors,
+          sizes: x.sizes,
+          attrs: x.attrs,
         }));
       const prev = useShopStore.getState().compare;
       const same =
         prev.length === next.length &&
-        prev.every(
-          (p, i) =>
-            p.id === next[i]?.id &&
-            p.price === next[i]?.price &&
-            p.title === next[i]?.title &&
-            (p.image || "") === (next[i]?.image || ""),
-        );
+        prev.every((p, i) => {
+          const n = next[i];
+          if (!n) return false;
+          return (
+            p.id === n.id &&
+            p.price === n.price &&
+            p.title === n.title &&
+            (p.image || "") === (n.image || "") &&
+            (p.category || "") === (n.category || "") &&
+            JSON.stringify(p.colors || []) === JSON.stringify(n.colors || []) &&
+            JSON.stringify(p.sizes || []) === JSON.stringify(n.sizes || []) &&
+            JSON.stringify((p as { attrs?: unknown }).attrs || []) ===
+              JSON.stringify(n.attrs || [])
+          );
+        });
       if (!same) {
         useShopStore.setState({ compare: next });
       }

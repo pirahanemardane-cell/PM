@@ -717,6 +717,12 @@ useEffect(() => {
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/فاکتور/${o.id}`}
+                        className="border-border inline-flex h-9 items-center rounded-lg border px-3 text-xs font-medium"
+                      >
+                        فاکتور / رسید
+                      </Link>
                       <button
                         type="button"
                         disabled={reorderBusy === o.id}

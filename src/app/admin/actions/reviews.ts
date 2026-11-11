@@ -34,11 +34,13 @@ export async function adminSetReviewApprovedAction(id: string, is_approved: bool
   try {
     const { data: row, error: fetchErr } = await gate.supabase
       .from("reviews")
-      .select("id, product_id")
+      .select("id, product_id, user_id, is_approved")
       .eq("id", id)
       .maybeSingle();
     if (fetchErr) throw fetchErr;
     if (!row) return { ok: false as const, error: "not_found" };
+
+    const wasApproved = !!(row as { is_approved?: boolean }).is_approved;
 
     const { error } = await gate.supabase
       .from("reviews")
@@ -53,6 +55,18 @@ export async function adminSetReviewApprovedAction(id: string, is_approved: bool
       });
     } catch (e) {
       console.error("[adminSetReviewApproved recompute]", e);
+    }
+
+    if (is_approved && !wasApproved && (row as { user_id?: string }).user_id) {
+      try {
+        const { awardReviewApprovedLoyalty } = await import("@/lib/loyalty/award");
+        await awardReviewApprovedLoyalty({
+          userId: (row as { user_id: string }).user_id,
+          reviewId: id,
+        });
+      } catch (loyErr) {
+        console.warn("[adminSetReviewApproved loyalty]", loyErr);
+      }
     }
     return { ok: true as const };
   } catch {
