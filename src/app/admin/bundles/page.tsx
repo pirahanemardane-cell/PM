@@ -25,6 +25,7 @@ export default function AdminBundlesPage() {
   const [compId, setCompId] = useState<Hit | null>(null);
   const [label, setLabel] = useState("");
   const [isBundle, setIsBundle] = useState(false);
+  const [bundlePrice, setBundlePrice] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -73,11 +74,13 @@ export default function AdminBundlesPage() {
       return;
     }
     setBusy(true);
+    const priceNum = bundlePrice.trim() ? Math.round(Number(bundlePrice.replace(/,/g, ""))) : null;
     const res = await adminAddComplementAction({
       productId: productId.id,
       complementProductId: compId.id,
       label,
       isBundle,
+      bundlePrice: priceNum && priceNum > 0 ? priceNum : null,
     });
     setBusy(false);
     if (!res.ok) {
@@ -91,6 +94,8 @@ export default function AdminBundlesPage() {
       return;
     }
     setLabel("");
+    setBundlePrice("");
+    setIsBundle(false);
     setProductId(null);
     setCompId(null);
     setProductQ("");
@@ -166,8 +171,16 @@ export default function AdminBundlesPage() {
         />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={isBundle} onChange={(e) => setIsBundle(e.target.checked)} />
-          باندل (قیمت ویژه اختیاری بعداً)
+          باندل با قیمت ویژه
         </label>
+        <input
+          className="border-input bg-background rounded-lg border px-3 py-2 text-sm"
+          placeholder="قیمت باندل (تومان)"
+          value={bundlePrice}
+          onChange={(e) => setBundlePrice(e.target.value)}
+          dir="ltr"
+          disabled={!isBundle}
+        />
         <button
           type="button"
           disabled={busy}
@@ -193,13 +206,14 @@ export default function AdminBundlesPage() {
                 <th className="p-3 text-right">مکمل</th>
                 <th className="p-3 text-right">برچسب</th>
                 <th className="p-3 text-right">باندل</th>
+                <th className="p-3 text-right">قیمت ویژه</th>
                 <th className="p-3 text-right">حذف</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-muted-foreground p-6 text-center">
+                  <td colSpan={6} className="text-muted-foreground p-6 text-center">
                     هنوز مکملی ثبت نشده
                   </td>
                 </tr>
@@ -218,6 +232,11 @@ export default function AdminBundlesPage() {
                     </td>
                     <td className="p-3">{row.label || "—"}</td>
                     <td className="p-3">{row.is_bundle ? "بله" : "خیر"}</td>
+                    <td className="p-3" dir="ltr">
+                      {row.bundle_price != null && Number(row.bundle_price) > 0
+                        ? Number(row.bundle_price).toLocaleString("en-US")
+                        : "—"}
+                    </td>
                     <td className="p-3">
                       <button
                         type="button"

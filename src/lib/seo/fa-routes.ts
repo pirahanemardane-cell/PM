@@ -36,6 +36,7 @@ export const FA_PAGE_ROUTES: readonly FaRoute[] = [
   { fa: "/جستجو", en: "/search" },
   { fa: "/تسویه-حساب", en: "/checkout" },
   { fa: "/گارانتی", en: "/warranty" },
+  { fa: "/فاکتور", en: "/invoice" },
 ] as const;
 
 /** Extra EN aliases that 301 to an existing FA canonical. */
@@ -139,6 +140,8 @@ export const RESERVED_ROOT_SEGMENTS: readonly string[] = [
   "جستجو",
   "تسویه-حساب",
   "گارانتی",
+  "فاکتور",
+  "invoice",
 ];
 
 function stripTrailingSlash(path: string): string {
@@ -232,6 +235,10 @@ export function enPathToFaRedirect(pathname: string): string | null {
     const rest = p.slice("/blog/".length);
     if (rest) return `/بلاگ/${rest}`;
   }
+  if (p.startsWith("/invoice/")) {
+    const rest = p.slice("/invoice/".length);
+    if (rest) return `/فاکتور/${rest}`;
+  }
   if (p.startsWith("/brands/")) {
     const slug = p.slice("/brands/".length);
     if (slug && !slug.includes("/")) return `/${slug}`;
@@ -266,6 +273,10 @@ export function faPathToEnRewrite(pathname: string): string | null {
     const rest = p.slice("/بلاگ/".length);
     if (rest) return `/blog/${rest}`;
   }
+  if (p.startsWith("/فاکتور/")) {
+    const rest = p.slice("/فاکتور/".length);
+    if (rest) return `/invoice/${rest}`;
+  }
 
   return null;
 }
@@ -279,6 +290,7 @@ export function nextFaRewrites(): { source: string; destination: string }[] {
   out.push(
     { source: "/محصولات/:path*", destination: "/products/:path*" },
     { source: "/بلاگ/:path*", destination: "/blog/:path*" },
+    { source: "/فاکتور/:path*", destination: "/invoice/:path*" },
     { source: "/%D9%88%D8%B1%D9%88%D8%AF", destination: "/login" },
     { source: "/%D8%AB%D8%A8%D8%AA-%D9%86%D8%A7%D9%85", destination: "/register" },
   );

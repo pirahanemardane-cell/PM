@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendTransactionalEmail } from "@/lib/email/send";
 
 export async function notifyStockAlertsForVariant(variantId: string): Promise<{
   notified: number;
@@ -17,7 +18,7 @@ export async function notifyStockAlertsForVariant(variantId: string): Promise<{
 
   const { data: alerts } = await service
     .from("stock_alerts")
-    .select("id, user_id, phone")
+    .select("id, user_id, phone, email")
     .eq("variant_id", variantId)
     .eq("status", "pending")
     .limit(500);
@@ -34,7 +35,10 @@ export async function notifyStockAlertsForVariant(variantId: string): Promise<{
   const size = (variant as { size?: string | null }).size ?? "";
   const color = (variant as { color_name?: string | null }).color_name ?? "";
   const label = [titleName, color, size].filter(Boolean).join(" · ");
-  const link = slug ? `/products/${slug}` : "/";
+  const link = slug ? `/محصولات/${slug}` : "/محصولات";
+  const absoluteUrl = slug
+    ? `https://pirahanmardane.ir/محصولات/${encodeURIComponent(slug)}`
+    : "https://pirahanmardane.ir/محصولات";
 
   let n = 0;
   for (const a of alerts) {
@@ -51,9 +55,26 @@ export async function notifyStockAlertsForVariant(variantId: string): Promise<{
       if (a.phone) {
         await service.from("sms_outbox").insert({
           phone: a.phone,
-          body: `${label} موجود شد.`,
+          body: `${label} موجود شد. ${absoluteUrl}`,
           status: "queued",
           meta: { variant_id: variantId, alert_id: a.id },
+        });
+      }
+      let emailTo = String((a as { email?: string | null }).email ?? "").trim();
+      if (!emailTo && a.user_id) {
+        try {
+          const { data: u } = await service.auth.admin.getUserById(a.user_id);
+          emailTo = String(u?.user?.email ?? "").trim();
+        } catch {
+          /* optional */
+        }
+      }
+      if (emailTo) {
+        await sendTransactionalEmail({
+          to: emailTo,
+          subject: `${titleName} موجود شد — پیراهن مردانه`,
+          html: `<p><strong>${label}</strong> دوباره موجود شد.</p><p><a href="${absoluteUrl}">مشاهده محصول</a></p>`,
+          text: `${label} موجود شد: ${absoluteUrl}`,
         });
       }
       await service

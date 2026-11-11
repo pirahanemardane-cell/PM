@@ -15,6 +15,8 @@ export type ShopProduct = {
   variantId?: string;
   colors?: string[];
   sizes?: string[];
+  /** Facet / spec rows for compare matrix */
+  attrs?: { slug?: string; label: string; value: string }[];
   quantity?: number;
   href?: string;
 };

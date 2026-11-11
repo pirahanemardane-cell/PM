@@ -119,6 +119,7 @@ export function ProductBuyBox({
   const [alertLoading, setAlertLoading] = useState(false);
   const [alertDone, setAlertDone] = useState(false);
   const [guestPhone, setGuestPhone] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
 
   const match = useMemo(() => {
     const colorEq = (a?: string | null, b?: string | null) => {
@@ -327,9 +328,17 @@ export function ProductBuyBox({
           <input
             type="tel"
             inputMode="numeric"
-            placeholder="موبایل برای خبر (اگر وارد نیستید)"
+            placeholder="موبایل برای خبر (اختیاری)"
             value={guestPhone}
             onChange={(e) => setGuestPhone(e.target.value)}
+            className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
+            dir="ltr"
+          />
+          <input
+            type="email"
+            placeholder="ایمیل برای خبر (مهمان — بدون SMS)"
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
             className="border-border bg-background w-full rounded-xl border px-3 py-2 text-sm"
             dir="ltr"
           />
@@ -352,11 +361,14 @@ export function ProductBuyBox({
                     variantId: match.id,
                     productId,
                     phone: guestPhone.trim() || undefined,
+                    email: guestEmail.trim() || undefined,
                   });
                   if (!res.ok) {
                     const map: Record<string, string> = {
-                      auth_or_phone_required: "وارد شوید یا موبایل وارد کنید",
+                      auth_or_phone_required: "وارد شوید یا موبایل/ایمیل وارد کنید",
+                      auth_or_contact_required: "وارد شوید یا موبایل/ایمیل وارد کنید",
                       invalid_phone: "شماره موبایل معتبر نیست",
+                      invalid_email: "ایمیل معتبر نیست",
                       already_in_stock: "الان موجود است — صفحه را تازه کنید",
                       variant_not_found: "واریانت یافت نشد",
                     };

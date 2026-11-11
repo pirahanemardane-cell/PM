@@ -233,5 +233,21 @@ export async function verifyAndApplyPayment(
     console.warn("[email payment]", emErr);
   }
 
+  try {
+    const { awardOrderPaidLoyalty } = await import("@/lib/loyalty/award");
+    await awardOrderPaidLoyalty({
+      userId: String((order as { user_id?: string }).user_id ?? ""),
+      orderId,
+      orderTotalToman: Number(
+        (order as { total_amount?: number }).total_amount ??
+          (order as { total?: number }).total ??
+          amount ??
+          0,
+      ),
+    });
+  } catch (loyErr) {
+    console.warn("[loyalty order_paid]", loyErr);
+  }
+
   return { ok: true, alreadyProcessed: false, refId, paymentStatus: "paid" };
 }

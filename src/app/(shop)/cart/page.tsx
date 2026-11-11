@@ -24,6 +24,7 @@ import { toPersianDigits } from "@/lib/numbers";
 import { LumaSpin } from "@/components/ui/luma-spin";
 import { EmptyBlock } from "@/components/ui/ui-state-blocks";
 import { track } from "@/lib/analytics/track";
+import { CartComplementStrip } from "@/components/shop/product-complements";
 
 export const dynamic = "force-dynamic";
 
@@ -413,6 +414,15 @@ export default function CartPage() {
               تسویه حساب
             </Link>
           </div>
+          <CartComplementStrip
+            productIds={[
+              ...new Set(
+                lines
+                  .map((l) => (l as { productId?: string }).productId || (l as { id?: string }).id || "")
+                  .filter(Boolean),
+              ),
+            ]}
+          />
         </>
       )}
     </main>

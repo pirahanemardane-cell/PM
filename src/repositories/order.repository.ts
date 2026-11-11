@@ -25,6 +25,8 @@ export type CreateOrderInput = {
   note?: string;
   discountCode?: string | null;
   discountAmount?: number;
+  loyaltyPointsRedeemed?: number;
+  loyaltyDiscountAmount?: number;
   paymentMethod?: "cod" | "online";
 };
 
@@ -122,7 +124,11 @@ export class OrderRepository extends BaseRepository {
     );
     const shipFee = Math.max(0, Math.floor(Number(input.shippingFee) || 0));
     const discount = Math.max(0, Math.floor(Number(input.discountAmount) || 0));
-    const grandTotal = Math.max(0, itemsTotal - Math.min(discount, itemsTotal) + shipFee);
+    const loyaltyDisc = Math.max(0, Math.floor(Number(input.loyaltyDiscountAmount) || 0));
+    const loyaltyPts = Math.max(0, Math.floor(Number(input.loyaltyPointsRedeemed) || 0));
+    const afterCoupon = Math.max(0, itemsTotal - Math.min(discount, itemsTotal));
+    const afterLoyalty = Math.max(0, afterCoupon - Math.min(loyaltyDisc, afterCoupon));
+    const grandTotal = afterLoyalty + shipFee;
 
     const payStatus = input.paymentMethod === "cod" ? "cod" : "pending";
     const { data: order, error: oErr } = await service
@@ -133,7 +139,9 @@ export class OrderRepository extends BaseRepository {
         payment_status: payStatus,
         total_amount: grandTotal,
         discount_code: input.discountCode ?? null,
-        discount_amount: discount,
+        discount_amount: discount + loyaltyDisc,
+        loyalty_points_redeemed: loyaltyPts,
+        loyalty_discount_amount: loyaltyDisc,
         shipping_fee: shipFee,
         shipping_method_id: input.shippingMethodId ?? null,
         shipping_method_title: input.shippingMethodTitle ?? null,
@@ -380,6 +388,20 @@ export class OrderRepository extends BaseRepository {
       }
     }
 
+    let prevPayment: string | null = null;
+    let prevUserId: string | null = null;
+    let prevTotal = 0;
+    if (status === "paid") {
+      const { data: before } = await supabase
+        .from("orders")
+        .select("user_id, total_amount, payment_status")
+        .eq("id", orderId)
+        .maybeSingle();
+      prevPayment = String((before as { payment_status?: string } | null)?.payment_status || "");
+      prevUserId = String((before as { user_id?: string } | null)?.user_id || "") || null;
+      prevTotal = Number((before as { total_amount?: number } | null)?.total_amount ?? 0);
+    }
+
     const patch: Record<string, unknown> = {
       status,
       updated_at: new Date().toISOString(),
@@ -396,6 +418,19 @@ export class OrderRepository extends BaseRepository {
       .update(patch as any)
       .eq("id", orderId);
     if (error) throw error;
+
+    if (status === "paid" && prevPayment !== "paid" && prevUserId) {
+      try {
+        const { awardOrderPaidLoyalty } = await import("@/lib/loyalty/award");
+        await awardOrderPaidLoyalty({
+          userId: prevUserId,
+          orderId,
+          orderTotalToman: prevTotal,
+        });
+      } catch (loyErr) {
+        console.warn("[updateStatus loyalty]", loyErr);
+      }
+    }
     return true;
   }
 

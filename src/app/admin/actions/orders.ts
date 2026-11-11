@@ -222,6 +222,12 @@ export async function adminUpdatePaymentStatusAction(
     if (paymentStatus === "refunded") {
       // فقط وضعیت پرداخت؛ سفارش ممکن است delivered/cancelled باشد
     }
+    const { data: before } = await service
+      .from("orders")
+      .select("id, user_id, total_amount, total, payment_status")
+      .eq("id", orderId)
+      .maybeSingle();
+
     const { error } = await service
       .from("orders")
       .update(patch as any)
@@ -240,6 +246,27 @@ export async function adminUpdatePaymentStatusAction(
       meta: { paymentStatus },
       actorId: gate.userId ?? null,
     });
+
+    if (
+      paymentStatus === "paid" &&
+      before &&
+      String((before as { payment_status?: string }).payment_status || "") !== "paid"
+    ) {
+      try {
+        const { awardOrderPaidLoyalty } = await import("@/lib/loyalty/award");
+        await awardOrderPaidLoyalty({
+          userId: String((before as { user_id?: string }).user_id ?? ""),
+          orderId,
+          orderTotalToman: Number(
+            (before as { total_amount?: number }).total_amount ??
+              (before as { total?: number }).total ??
+              0,
+          ),
+        });
+      } catch (loyErr) {
+        console.warn("[adminUpdatePaymentStatus loyalty]", loyErr);
+      }
+    }
 
     return { ok: true as const };
   } catch (e) {

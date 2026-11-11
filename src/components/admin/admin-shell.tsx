@@ -63,6 +63,7 @@ const NAV: NavItem[] = [
   { href: "/admin/returns", label: "مرجوعی", icon: Package, permission: "admin.returns" },
   { href: "/admin/warranty", label: "گارانتی / ادعا", icon: Ticket, permission: "admin.returns" },
   { href: "/admin/stock-alerts", label: "لیست انتظار موجودی", icon: Bell, permission: "admin.products" },
+  { href: "/admin/abandoned-carts", label: "سبدهای رهاشده", icon: ShoppingCart, permission: "admin.orders" },
   { href: "/admin/reports", label: "گزارش فروش", icon: FileSpreadsheet, permission: "admin.reports" },
   { href: "/admin/analytics", label: "آمار", icon: BarChart3, permission: "admin.reports" },
   { href: "/admin/health", label: "سلامت سیستم", icon: Activity, permission: "admin.settings" },
