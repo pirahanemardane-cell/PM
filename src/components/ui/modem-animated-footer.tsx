@@ -105,13 +105,24 @@ export function Footer({
         {/* Logo + side borders — خط‌ها حذف نشوند؛ نزدیک لوگو پررنگ، لبه محو */}
         <div
           dir="ltr"
-          className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20 md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)]"
+          className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] max-w-full -translate-x-1/2 items-center overflow-hidden px-4 sm:bottom-14 md:bottom-20 md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)]"
         >
           <div className="bg-gradient-to-r from-transparent to-primary/70 h-px min-w-0 flex-1" />
           <div
-            className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
+            className={cn(
+              "pointer-events-auto relative mx-0 box-border flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-2xl border p-1.5 shadow-sm sm:p-2",
+              /* Clamp keeps the plate inside the row on phone/tablet; never exceed 5.5rem */
+              "h-[clamp(2.75rem,11vw,5.5rem)] w-[clamp(2.75rem,11vw,5.5rem)] max-h-[5.5rem] max-w-[min(100%,5.5rem)]",
+              /* Frosted / matte glass — translucent so PirahanMardane under the chip stays perceptible */
+              "border-white/50 bg-white/25 backdrop-blur-xl backdrop-saturate-150",
+              "supports-[backdrop-filter]:bg-white/15",
+              "dark:border-white/20 dark:bg-white/[0.08] dark:supports-[backdrop-filter]:bg-white/[0.06]",
+              "transition-colors duration-300 hover:border-primary/70",
+            )}
           >
-            {brandIcon}
+            <div className="relative flex h-full w-full min-h-0 min-w-0 items-center justify-center overflow-hidden">
+              {brandIcon}
+            </div>
           </div>
           <div className="bg-gradient-to-l from-transparent to-primary/70 h-px min-w-0 flex-1" />
         </div>
