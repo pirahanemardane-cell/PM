@@ -105,23 +105,13 @@ export function Footer({
         {/* Logo + side borders — خط‌ها حذف نشوند؛ نزدیک لوگو پررنگ، لبه محو */}
         <div
           dir="ltr"
-          className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] max-w-full -translate-x-1/2 items-center overflow-hidden px-4 sm:bottom-14 md:bottom-20 md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)]"
+          className="pointer-events-none absolute bottom-12 left-1/2 z-10 flex w-[min(100%,42rem)] -translate-x-1/2 items-center px-4 sm:bottom-14 md:bottom-20 md:w-[min(100%,56rem)] lg:w-[min(100%,64rem)]"
         >
           <div className="bg-gradient-to-r from-transparent to-primary/70 h-px min-w-0 flex-1" />
           <div
-            className={cn(
-              "pointer-events-auto relative mx-0 flex shrink-0 items-center justify-center overflow-hidden rounded-2xl border p-1.5 shadow-sm sm:p-2",
-              "h-[clamp(2.75rem,12vw,5.5rem)] w-[clamp(2.75rem,12vw,5.5rem)] max-h-full max-w-[min(100%,5.5rem)]",
-              /* Matte glass: letters under the plate (n/M) stay softly readable */
-              "border-white/55 bg-white/40 backdrop-blur-xl backdrop-saturate-150",
-              "supports-[backdrop-filter]:bg-white/30",
-              "dark:border-white/15 dark:bg-white/10 dark:supports-[backdrop-filter]:bg-white/10",
-              "transition-colors duration-300 hover:border-primary/70",
-            )}
+            className="border-border/60 bg-background/70 pointer-events-auto relative mx-0 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border p-2 shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-primary supports-[backdrop-filter]:bg-background/60 sm:h-20 sm:w-20 md:h-24 md:w-24"
           >
-            <div className="relative flex h-full w-full min-h-0 min-w-0 items-center justify-center overflow-hidden">
-              {brandIcon}
-            </div>
+            {brandIcon}
           </div>
           <div className="bg-gradient-to-l from-transparent to-primary/70 h-px min-w-0 flex-1" />
         </div>
