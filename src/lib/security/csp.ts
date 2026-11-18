@@ -24,7 +24,7 @@ export function buildContentSecurityPolicy(nonce: string): string {
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://media.pirahanmardane.ir https://*.supabase.co https://*.r2.dev https://placehold.co",
+    "img-src 'self' data: blob: https://media.pirahanmardane.ir https://*.supabase.co https://*.r2.dev https://placehold.co https://cdn.21st.dev",
     "font-src 'self' data:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://rest.payamak-panel.com",
     "media-src 'self' https://media.pirahanmardane.ir",

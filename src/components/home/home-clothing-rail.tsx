@@ -4,121 +4,149 @@ import Link from "next/link";
 import ClothingRailHero from "@/components/ui/product-rail-gallery";
 import type { RailGarment } from "@/components/ui/product-rail-gallery";
 
-/** Fallback illustrations when the catalog has no photo-ready featured items. */
-const DEMO_ITEMS: RailGarment[] = [
+/** Exact 21st.dev ClothingRailHeroDemo items (cdn.21st.dev mirror images). */
+export const RAIL_DEMO_ITEMS: RailGarment[] = [
   {
-    id: "shirt-white",
-    name: "پیراهن رسمی سفید",
-    kind: "shirt",
-    color: "#F4F1EA",
-    trim: "#2a2a2a",
-    tag: "رسمی",
-    description: "پیراهن کلاسیک روزمره و رسمی با برش تمیز.",
-    details: ["نخی", "یقه کلاسیک", "آستین بلند"],
-  },
-  {
-    id: "shirt-sky",
-    name: "پیراهن آبی آسمانی",
-    kind: "shirt",
-    color: "#9EC9E0",
-    trim: "#1e3a4c",
-    tag: "کژوال",
-    description: "آبی ملایم برای استایل روز و محل کار.",
-    details: ["اکسفورد", "دکمه پایین"],
-  },
-  {
-    id: "tee-bone",
-    name: "تی‌شرت استخوانی",
+    id: "bone-tee",
+    name: "Heavyweight tee · Bone",
     kind: "tee",
-    color: "#EDE8DF",
-    trim: "#444",
-    tag: "بیسیک",
-    description: "تی‌شرت ضخیم برای لایه‌بندی زیر پیراهن.",
-    details: ["پنبه‌ای", "فیت معمولی"],
+    color: "#EFEBE2",
+    tag: "$48",
+    description: "240 gsm organic cotton with a tonal DHxWHY embroidery on the chest.",
+    details: ["240 gsm", "Regular fit", "Tonal embroidery"],
+    image: "https://cdn.21st.dev/assets/mirror/14/1485bf44725b18fcdba71bfae54d67d648ab3bff4b24215a042c0cc4c895a2e6.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/69/69937e656430ae33d950303e0d53051273e5b02189750ef1e7429ec4bbf95e20.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/83/838468c32f16b4acba62e4601276737411156052444712ff2534fefe994a7bed.webp",
   },
   {
-    id: "shirt-navy",
-    name: "پیراهن سرمه‌ای",
+    id: "cc-graphic",
+    name: "Graphic tee · CCgather",
+    kind: "tee",
+    color: "#101214",
+    tag: "$52",
+    description: "Black tee with the CCgather wordmark printed front and back.",
+    details: ["240 gsm", "Regular fit", "Screen print"],
+    image: "https://cdn.21st.dev/assets/mirror/d7/d769f183472d0fd98a7aff2a643593748cd36ef9da1497d9bf6f0d87d1025a9b.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/fe/fec6f7e96b198cc5b9aad333ca2c4c10968a746d87f6dc11d9c118607b509058.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/b3/b3b6984ea94b8b8cd19fb15387e89dca457ac0f947115c2a54a33217e4fb4571.webp",
+  },
+  {
+    id: "oxford-sky",
+    name: "Oxford shirt · Sky",
     kind: "shirt",
-    color: "#1B2A4A",
-    trim: "#c9a227",
-    tag: "رسمی",
-    description: "سرمه‌ای تیره با جزئیات ظریف.",
-    details: ["نخی", "یقه فرنچ"],
+    color: "#A3D3EB",
+    tag: "$74",
+    description: "Pale sky oxford with a button-down collar and a tiny Maestiq embroidery.",
+    details: ["Oxford cotton", "Button-down collar", "Chest pocket"],
+    image: "https://cdn.21st.dev/assets/mirror/47/470a7723cef068f81e8a4c09d1ab3f8630c61b734c2168b10f3858e45efbf31f.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/9b/9be14e5dce879756775677e2d82dadc2ad9a1690b7df2f82de360cb3600d0ee5.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/59/5984d5ca60fd1aeee7e688ec33c2219a1c537fcde90d2accab813c13985f8632.webp",
   },
   {
-    id: "knit-olive",
-    name: "بافت زیتونی",
+    id: "cardigan-olive",
+    name: "Knit cardigan · Olive",
     kind: "knit",
-    color: "#6E7A4E",
-    trim: "#2c2c2c",
-    tag: "پاییزه",
-    description: "لایه میانی گرم برای فصل خنک.",
-    details: ["بافت", "یقه هفت"],
+    color: "#758151",
+    tag: "$96",
+    description: "Chunky olive wool cardigan with wooden buttons and ribbed trims.",
+    details: ["Lambswool", "Wooden buttons", "V-neck"],
+    image: "https://cdn.21st.dev/assets/mirror/58/581b13c5ca241c653dc94d2c8048c92a60f022cfbaaf153261076d3a6655827e.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/d9/d9178d906d37268565cf10af3431aee543aacfc73610f7fa7b0fa4758c498cb3.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/de/dee1c529600e0460413f1a9b07a29bedb7ea7dc96181fce5d9d6501231e6e45d.webp",
   },
   {
-    id: "shirt-light",
-    name: "پیراهن روشن اداری",
-    kind: "shirt",
-    color: "#E8EEF5",
-    trim: "#3d4f66",
-    tag: "اداری",
-    description: "انتخاب مطمئن برای محیط کار.",
-    details: ["نخی", "آسان‌اتو"],
+    id: "hoodie-heather",
+    name: "Hoodie · Maestiq",
+    kind: "hoodie",
+    color: "#A0A5AB",
+    tag: "$88",
+    description: "Heather fleece hoodie with the Maestiq wordmark across the chest.",
+    details: ["400 gsm fleece", "Kangaroo pocket", "Chest print"],
+    image: "https://cdn.21st.dev/assets/mirror/51/51750ba098dd622df46695bca781b3f0ec336a36b93b070e638cc04455def6d6.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/e7/e75c4ac8fb7f14caae756338a31f81f1437bb312b78e0d7d906e9f956e7968fa.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/a2/a2eb2463d52146c341ede6bb9f6067e917a23eb29b7b1d1d4c40ac084a01c7ce.webp",
+  },
+  {
+    id: "sweat-lilac",
+    name: "Crewneck sweatshirt · Lilac",
+    kind: "knit",
+    color: "#CCB2E0",
+    tag: "$78",
+    description: "Muted lilac fleece crewneck with a raised DHxWHY puff print.",
+    details: ["400 gsm fleece", "Ribbed trims", "Puff print"],
+    image: "https://cdn.21st.dev/assets/mirror/8e/8e38660e2add9637c27846d9b8d620f2abb228a5a153ccfd7b1c808b6845e1f8.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/b9/b9214a6e009ce4b3044595a51ea010c299135bab5b26775c43d7175c86e77898.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/59/591872e42b483c43c1cd08a3ac4d7d40c0b5fa2bc585a36096faded2e696e84e.webp",
+  },
+  {
+    id: "polo-forest",
+    name: "Piqué polo · Forest",
+    kind: "tee",
+    color: "#185B37",
+    tag: "$62",
+    description: "Forest piqué polo with a bone CCgather embroidery on the chest.",
+    details: ["Piqué knit", "Two-button placket", "Embroidered"],
+    image: "https://cdn.21st.dev/assets/mirror/19/19fe43cb681195ae227e3164088d86a07a1b6e33cc54c6e35637374736a16894.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/e0/e095182b1a7f04e600c5662aa871b4c055c294b152586817d84e312c22f744cf.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/00/005a8e10be234bc40917f3153208b8196ba1610c53c987e39942da1f4a7cd808.webp",
+  },
+  {
+    id: "henley-brick",
+    name: "Henley · Brick",
+    kind: "knit",
+    color: "#B05139",
+    tag: "$56",
+    description: "Dusty brick henley with a three-button placket, worn in from day one.",
+    details: ["Slub cotton", "Three buttons", "Long sleeve"],
+    image: "https://cdn.21st.dev/assets/mirror/84/84aa4b0e21ed11fcbc083647a607b94ee3a6c21cb66c114cfb1dad0792c15499.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/01/01c299df56a29afca8dad4a64858bd506667338bfbd0435118e6c3698c7881b3.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/9c/9ca38eeb156aae7d199d3c1ffb7947e395f77d1f094eea006c1b5fbb22352b4e.webp",
+  },
+  {
+    id: "breton",
+    name: "Breton long sleeve",
+    kind: "knit",
+    color: "#E4DFD3",
+    tag: "$58",
+    description: "Classic ink-and-bone Breton stripe with a boat neck.",
+    details: ["220 gsm", "Boat neck", "Long sleeve"],
+    image: "https://cdn.21st.dev/assets/mirror/09/096002a95aba7de9c197de4cb5c78cbbe17c1677b19c547cc20c6dbef47a899c.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/74/74408a7dbb4f4fc6761ebb8d6ed93187248cddf75e1c2e70d38d04dfdd328776.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/ed/eda3afca537071a80d7d82b3f0d1055b56f1f3263c20772224bae6660bf4072c.webp",
+  },
+  {
+    id: "oversized-ochre",
+    name: "Oversized tee · CCgather",
+    kind: "tee",
+    color: "#DE9C31",
+    tag: "$52",
+    description: "Boxy ochre tee with a small chest mark and a large CCgather back print.",
+    details: ["Oversized", "Dropped shoulder", "Back print"],
+    image: "https://cdn.21st.dev/assets/mirror/72/7208c811f54e123dd7b1a5c1c3926f43ca832f6c4c20c45de10671ffd544409d.webp",
+    backImage: "https://cdn.21st.dev/assets/mirror/d3/d356989b7bc741c5cfc934cac34983dfb24d5d6a6b6e7b8b7f6b27cd3eceae69.webp",
+    sideImage: "https://cdn.21st.dev/assets/mirror/bf/bf94beeafb21f9cb21aa45057a67dc8a2e23ba95c7ac0f79dd27ba3ce4a1230c.webp",
   },
 ];
 
-export type HomeRailCatalogItem = {
-  id: string;
-  name: string;
-  image?: string;
-  backImage?: string;
-  tag?: string;
-  description?: string;
-  details?: string[];
-};
-
-type Props = {
-  /** Live catalog garments (prefer photos). Falls back to demo illustrations. */
-  items?: HomeRailCatalogItem[];
-};
-
-export function HomeClothingRail({ items }: Props) {
-  const catalog: RailGarment[] = (items ?? [])
-    .filter((item) => Boolean(item.image))
-    .slice(0, 8)
-    .map((item) => ({
-      id: item.id,
-      name: item.name,
-      image: item.image,
-      backImage: item.backImage,
-      tag: item.tag,
-      description: item.description,
-      details: item.details,
-    }));
-
-  const usePhotos = catalog.length >= 3;
-  const railItems = usePhotos ? catalog : DEMO_ITEMS;
-
+/**
+ * Homepage weekly rail — same ClothingRailHeroDemo props pattern
+ * (hanger="none", autoplay, RAIL_DEMO_ITEMS), with Persian heading.
+ */
+export function HomeClothingRail() {
   return (
-    <section
-      aria-label="پیشنهاد هفته"
-      className="overflow-hidden rounded-3xl border bg-card"
-    >
+    <section aria-label="پیشنهاد هفته" className="overflow-hidden rounded-3xl border bg-card">
       <ClothingRailHero
-        items={railItems}
-        hanger={usePhotos ? "none" : "wood"}
+        items={RAIL_DEMO_ITEMS}
+        hanger="none"
         autoplay
-        interval={2800}
+        heading="پیشنهاد هفته"
+        caption="روی هر لباس بکشید یا لمس کنید تا جلو بیاید"
         labels={{
           front: "جلو",
           back: "پشت",
           close: "بستن",
           show: "نمایش",
         }}
-        eyebrow="منتخب فروشگاه"
-        heading="پیشنهاد هفته"
-        caption="روی هر لباس بکشید یا لمس کنید تا جلو بیاید"
         action={
           <Link
             href="/محصولات"

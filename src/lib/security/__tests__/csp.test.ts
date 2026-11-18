@@ -16,5 +16,6 @@ describe("csp", () => {
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("https://cdn.21st.dev");
   });
 });
