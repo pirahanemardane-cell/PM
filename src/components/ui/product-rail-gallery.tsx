@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { toPersianDigits } from "@/lib/numbers";
 
 export type GarmentKind = "tee" | "knit" | "hoodie" | "shirt" | "jacket" | "coat";
 
@@ -64,7 +65,7 @@ const GAP = 0.035;
 const MAX_H = 400;
 const MIN_WIDE_H = 200;
 const CAROUSEL_H = 340;
-const DEFAULT_LABELS: ClothingRailHeroLabels = { front: "Front", back: "Back", close: "Close", show: "Show" };
+const DEFAULT_LABELS: ClothingRailHeroLabels = { front: "جلو", back: "پشت", close: "بستن", show: "نمایش" };
 
 type Tone = { d: string; t: number };
 type Art = {
@@ -924,7 +925,7 @@ export function ClothingRailHero({
       data-slot="clothing-rail-hero"
       data-mode={size.carousel ? "carousel" : "rail"}
       data-active={active ?? ""}
-      aria-roledescription="clothing rail"
+      aria-roledescription="ریل لباس"
       className={`relative isolate w-full overflow-hidden bg-background text-foreground ${className ?? ""}`}
     >
       <Defs uid={uid} />
@@ -940,7 +941,7 @@ export function ClothingRailHero({
         ref={stageRef}
         data-stage
         role="group"
-        aria-label={heading ?? "Clothing rail"}
+        aria-label={heading ?? "ریل لباس"}
         className="relative mt-5 w-full touch-pan-y select-none"
         style={{ height: Math.round(railY + h * bottom + h * 0.05 + 12), overflowX: "clip" }}
         onPointerMove={onPointerMove}
@@ -1210,7 +1211,7 @@ function Detail({ uid, item, index, total, hanger, labels, reduced, source, onLi
       <div className="relative grid w-full max-w-5xl items-center gap-10 pt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
         {stage}
         <div className={`flex flex-col gap-4 text-center transition-[opacity,transform] delay-150 duration-500 motion-reduce:transition-none md:text-left ${shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>
-          <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground">{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</p>
+          <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground">{toPersianDigits(String(index + 1).padStart(2, "0"))} / {toPersianDigits(String(total).padStart(2, "0"))}</p>
           <h3 id={titleId} className="text-2xl font-medium tracking-tight sm:text-3xl">{item.name}</h3>
           {item.description && <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
           {item.details && item.details.length > 0 && (
