@@ -1234,4 +1234,3 @@ function Detail({ uid, item, index, total, hanger, labels, reduced, source, onLi
 }
 
 export default ClothingRailHero;
-

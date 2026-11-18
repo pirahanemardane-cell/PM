@@ -13,7 +13,6 @@ import { getFlashSaleEndsAtAction } from "@/app/admin/actions/flash-sale";
 import { HeroScroll } from "@/components/home/hero-scroll";
 import { HomeAfterHero } from "@/components/home/home-after-hero";
 import type { ProductWithRelations } from "@/repositories/product.repository";
-import { formatToman, getCardPrice } from "@/lib/product/card-price";
 
 // Below-fold client islands — SSR HTML kept; JS deferred from critical path.
 const HomeClothingRail = dynamic(
@@ -187,36 +186,13 @@ export default async function HomePage() {
     { title: "پشتیبانی", desc: "همراه شما قبل و بعد خرید", icon: Headphones },
   ];
 
-  const railSource =
-    featured.length > 0 ? featured : newest.length > 0 ? newest : bestsellers;
-  const railItems = railSource.slice(0, 8).map((p) => {
-    const urls = (p.images ?? [])
-      .slice()
-      .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
-      .map((img) => img.url)
-      .filter(Boolean);
-    const { amount } = getCardPrice(p);
-    const details = [p.category?.name, p.brand?.name].filter(
-      (x): x is string => Boolean(x),
-    );
-    return {
-      id: p.id,
-      name: p.name,
-      image: urls[0],
-      backImage: urls[1],
-      tag: amount != null ? `${formatToman(amount)} تومان` : undefined,
-      description: p.brand?.name ? `${p.brand.name}` : undefined,
-      details: details.length ? details : undefined,
-    };
-  });
-
   return (
     <>
       <HomeHeroPreloads />
       <HeroScroll />
       <HomeAfterHero>
         <main className="mx-auto w-full max-w-none space-y-14 px-4 py-10 md:py-14">
-          <HomeClothingRail items={railItems} />
+          <HomeClothingRail />
 
           <section
             aria-label="اعتماد"
