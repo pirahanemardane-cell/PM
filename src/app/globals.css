@@ -502,12 +502,19 @@ code {
 }
 /* === PM-TOAST-POS-END === */
 
-/* full-width + no horizontal overflow (all devices) */
-html,
+/* full-width + no horizontal overflow (all devices)
+   Only html owns overflow-x — setting non-visible overflow on BOTH
+   html and body creates a dual scrollport / thin gutter beside the scrollbar.
+   Prefer clip over hidden so position:sticky keeps working. */
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
 body {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 *,
 *::before,
@@ -527,15 +534,6 @@ canvas {
 }
 
 /* === FULL WIDTH LAYOUT (site-wide) === */
-html {
-  width: 100%;
-  max-width: 100%;
-}
-body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: clip; /* بهتر از hidden برای sticky در مرورگرهای جدید */
-}
 img, video, canvas, svg {
   max-width: 100%;
   height: auto;

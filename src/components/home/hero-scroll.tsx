@@ -230,11 +230,9 @@ export function HeroScroll() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-screen max-w-[100vw]"
+      className="relative w-full max-w-full"
       style={{
         height: `${SCROLL_VH}vh`,
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
       }}
       aria-label="هیرو"
       dir="rtl"
@@ -262,11 +260,11 @@ export function HeroScroll() {
 
       <div
         ref={stageRef}
-        className="sticky top-0 left-0 w-full overflow-hidden"
+        className="sticky top-0 left-0 w-full max-w-full overflow-hidden"
         style={{
           height: "100dvh",
           minHeight: "100vh",
-          width: "100vw",
+          width: "100%",
           backgroundColor: "#1a2228",
         }}
       >
