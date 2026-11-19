@@ -4,6 +4,17 @@ import Link from "next/link";
 import ClothingRailHero from "@/components/ui/product-rail-gallery";
 import type { RailGarment } from "@/components/ui/product-rail-gallery";
 
+/**
+ * Demo USD hang-tag → IRR label.
+ * Catalog UI uses تومان; carriers (e.g. tipax) treat ریال as تومان×۱۰.
+ * Scale keeps tee/shirt demos near ~۲–۵ میلیون تومان.
+ */
+function railRialTag(usd: number): string {
+  const toman = usd * 50_000;
+  const rial = toman * 10;
+  return `${rial.toLocaleString("fa-IR")} ریال`;
+}
+
 /** Exact 21st.dev ClothingRailHeroDemo items (cdn.21st.dev mirror images), Persian copy. */
 export const RAIL_DEMO_ITEMS: RailGarment[] = [
   {
@@ -11,7 +22,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "تی‌شرت سنگین · استخوانی",
     kind: "tee",
     color: "#EFEBE2",
-    tag: "$۴۸",
+    tag: railRialTag(48),
     description: "پنبه ارگانیک ۲۴۰ گرم بر مترمربع با گلدوزی تونال DHxWHY روی سینه.",
     details: ["۲۴۰ گرم بر مترمربع", "فیت معمولی", "گلدوزی تونال"],
     image: "https://cdn.21st.dev/assets/mirror/14/1485bf44725b18fcdba71bfae54d67d648ab3bff4b24215a042c0cc4c895a2e6.webp",
@@ -23,7 +34,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "تی‌شرت گرافیکی · CCgather",
     kind: "tee",
     color: "#101214",
-    tag: "$۵۲",
+    tag: railRialTag(52),
     description: "تی‌شرت مشکی با لوگوی CCgather چاپ‌شده در جلو و پشت.",
     details: ["۲۴۰ گرم بر مترمربع", "فیت معمولی", "چاپ سیلک"],
     image: "https://cdn.21st.dev/assets/mirror/d7/d769f183472d0fd98a7aff2a643593748cd36ef9da1497d9bf6f0d87d1025a9b.webp",
@@ -35,7 +46,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "پیراهن آکسفورد · آسمانی",
     kind: "shirt",
     color: "#A3D3EB",
-    tag: "$۷۴",
+    tag: railRialTag(74),
     description: "آکسفورد آبی آسمانی با یقه دکمه‌دار و گلدوزی کوچک Maestiq.",
     details: ["پنبه آکسفورد", "یقه دکمه‌دار", "جیب سینه"],
     image: "https://cdn.21st.dev/assets/mirror/47/470a7723cef068f81e8a4c09d1ab3f8630c61b734c2168b10f3858e45efbf31f.webp",
@@ -47,7 +58,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "کاردیگان بافت · زیتونی",
     kind: "knit",
     color: "#758151",
-    tag: "$۹۶",
+    tag: railRialTag(96),
     description: "کاردیگان پشمی ضخیم زیتونی با دکمه‌های چوبی و حاشیه کشباف.",
     details: ["پشم بره", "دکمه‌های چوبی", "یقه هفت"],
     image: "https://cdn.21st.dev/assets/mirror/58/581b13c5ca241c653dc94d2c8048c92a60f022cfbaaf153261076d3a6655827e.webp",
@@ -59,7 +70,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "هودی · Maestiq",
     kind: "hoodie",
     color: "#A0A5AB",
-    tag: "$۸۸",
+    tag: railRialTag(88),
     description: "هودی فلیسی ملانژ با لوگوی Maestiq روی سینه.",
     details: ["فلیس ۴۰۰ گرم بر مترمربع", "جیب کانگورویی", "چاپ سینه"],
     image: "https://cdn.21st.dev/assets/mirror/51/51750ba098dd622df46695bca781b3f0ec336a36b93b070e638cc04455def6d6.webp",
@@ -71,7 +82,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "سویشرت یقه گرد · یاسی",
     kind: "knit",
     color: "#CCB2E0",
-    tag: "$۷۸",
+    tag: railRialTag(78),
     description: "سویشرت فلیسی یاسی ملایم با چاپ برجسته DHxWHY.",
     details: ["فلیس ۴۰۰ گرم بر مترمربع", "حاشیه کشباف", "چاپ پاف"],
     image: "https://cdn.21st.dev/assets/mirror/8e/8e38660e2add9637c27846d9b8d620f2abb228a5a153ccfd7b1c808b6845e1f8.webp",
@@ -83,7 +94,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "پولو پیکه · جنگلی",
     kind: "tee",
     color: "#185B37",
-    tag: "$۶۲",
+    tag: railRialTag(62),
     description: "پولو پیکه سبز جنگلی با گلدوزی استخوانی CCgather روی سینه.",
     details: ["بافت پیکه", "پلاکت دو دکمه", "گلدوزی‌شده"],
     image: "https://cdn.21st.dev/assets/mirror/19/19fe43cb681195ae227e3164088d86a07a1b6e33cc54c6e35637374736a16894.webp",
@@ -95,7 +106,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "هنلی · آجری",
     kind: "knit",
     color: "#B05139",
-    tag: "$۵۶",
+    tag: railRialTag(56),
     description: "هنلی آجری خاکی با پلاکت سه دکمه؛ از روز اول حس پوشیده می‌دهد.",
     details: ["پنبه اسلاب", "سه دکمه", "آستین بلند"],
     image: "https://cdn.21st.dev/assets/mirror/84/84aa4b0e21ed11fcbc083647a607b94ee3a6c21cb66c114cfb1dad0792c15499.webp",
@@ -107,7 +118,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "آستین‌بلند برتون",
     kind: "knit",
     color: "#E4DFD3",
-    tag: "$۵۸",
+    tag: railRialTag(58),
     description: "راه‌راه کلاسیک جوهر و استخوانی برتون با یقه قایقی.",
     details: ["۲۲۰ گرم بر مترمربع", "یقه قایقی", "آستین بلند"],
     image: "https://cdn.21st.dev/assets/mirror/09/096002a95aba7de9c197de4cb5c78cbbe17c1677b19c547cc20c6dbef47a899c.webp",
@@ -119,7 +130,7 @@ export const RAIL_DEMO_ITEMS: RailGarment[] = [
     name: "تی‌شرت اورسایز · CCgather",
     kind: "tee",
     color: "#DE9C31",
-    tag: "$۵۲",
+    tag: railRialTag(52),
     description: "تی‌شرت جعبه‌ای اخرایی با نشان کوچک سینه و چاپ بزرگ CCgather پشت.",
     details: ["اورسایز", "شانه افتاده", "چاپ پشت"],
     image: "https://cdn.21st.dev/assets/mirror/72/7208c811f54e123dd7b1a5c1c3926f43ca832f6c4c20c45de10671ffd544409d.webp",
