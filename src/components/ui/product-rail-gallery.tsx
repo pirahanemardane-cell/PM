@@ -917,7 +917,14 @@ export function ClothingRailHero({
   const boxW = h * ASPECT;
   const railY = Math.round(h * 0.07) + 10;
   const railR = Math.max(3, Math.round((RAIL_R / VB_H) * h * 10) / 10);
-  const bottom = count ? Math.max(...items.map((item) => (item.image ? VB_H : SIDE[item.kind ?? "tee"].hem + 8))) / VB_H : 1;
+  // Photo cutouts rarely fill the full 310 viewBox — trim stage so hem sits nearer the caption.
+  const bottom = count
+    ? Math.max(
+        ...items.map((item) =>
+          item.image ? 0.86 : (SIDE[item.kind ?? "tee"].hem + 8) / VB_H,
+        ),
+      )
+    : 1;
 
   return (
     <section
@@ -933,7 +940,7 @@ export function ClothingRailHero({
       {(eyebrow || heading) && (
         <header className="relative z-10 flex flex-col items-center gap-2 px-6 pt-8 text-center">
           {eyebrow && <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">{eyebrow}</p>}
-          {heading && <h2 className="text-balance text-2xl font-medium tracking-tight sm:text-3xl">{heading}</h2>}
+          {heading && <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">{heading}</h2>}
         </header>
       )}
 
@@ -943,7 +950,7 @@ export function ClothingRailHero({
         role="group"
         aria-label={heading ?? "ریل لباس"}
         className="relative mt-5 w-full touch-pan-y select-none"
-        style={{ height: Math.round(railY + h * bottom + h * 0.05 + 12), overflowX: "clip" }}
+        style={{ height: Math.round(railY + h * bottom + 4), overflowX: "clip" }}
         onPointerMove={onPointerMove}
         onPointerDown={onPointerDown}
         onPointerUp={(event) => finishPointer(event, false)}
@@ -1012,7 +1019,7 @@ export function ClothingRailHero({
                 {item.tag && (
                   <span ref={(node) => { tags.current[i] = node; }} aria-hidden="true" className="pointer-events-none absolute left-1/2 origin-top" style={{ top: (32 / VB_H) * h, transform: "rotate(-12deg)" }}>
                     <span className="block h-[14px] w-px translate-x-[3px] bg-foreground/35" />
-                    <span className="block -translate-x-1/2 translate-x-[3px] whitespace-nowrap rounded-[3px] border border-foreground/10 bg-card px-1.5 pb-1 pt-2 text-[9px] font-semibold leading-none tracking-wide text-card-foreground shadow-[0_2px_6px_color-mix(in_oklab,var(--color-foreground)_18%,transparent)]">
+                    <span dir="rtl" className="block -translate-x-1/2 translate-x-[3px] whitespace-nowrap rounded-[3px] border border-foreground/10 bg-card px-1.5 pb-1 pt-2 text-[8px] font-semibold leading-none tracking-wide text-card-foreground shadow-[0_2px_6px_color-mix(in_oklab,var(--color-foreground)_18%,transparent)]">
                       <span className="absolute left-1/2 top-[3px] size-[3px] -translate-x-1/2 rounded-full bg-foreground/30" />
                       {item.tag}
                     </span>
@@ -1032,8 +1039,8 @@ export function ClothingRailHero({
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col items-center gap-4 px-6 pb-8 pt-4 text-center">
-        <div id={`${uid}-caption`} aria-live="polite" className="min-h-[3.25rem]">
+      <div className="relative z-10 flex flex-col items-center gap-3 px-6 pb-6 pt-1 text-center">
+        <div id={`${uid}-caption`} aria-live="polite" className="min-h-[1.25rem]">
           <p key={current?.id ?? "caption"} className="animate-in fade-in text-sm font-medium [animation-duration:300ms] motion-reduce:animate-none">{current ? current.name : caption}</p>
           {current?.description && <p key={`${current.id}-d`} className="mx-auto mt-1 max-w-[42ch] text-[13px] leading-relaxed text-muted-foreground">{current.description}</p>}
         </div>
