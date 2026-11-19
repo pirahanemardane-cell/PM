@@ -191,7 +191,7 @@ export default async function HomePage() {
       <HomeHeroPreloads />
       <HeroScroll />
       <HomeAfterHero>
-        <main className="mx-auto w-full max-w-none space-y-14 px-4 py-10 md:py-14">
+        <main className="mx-auto w-full max-w-none space-y-14 px-4 pt-10 pb-6 md:pt-14 md:pb-8">
           <HomeClothingRail />
 
           <section
